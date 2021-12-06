@@ -35,16 +35,16 @@ type constr =
   | AtomEq   of atom * permuted_atom
   | AtomNeq  of atom * permuted_atom
 
-val ( #: ) : atom -> term -> constr
+let ( #: ) a t = Fresh (a, t)
 
-val ( =: ) : term -> term -> constr
+let ( =: ) t1 t2 = Eq (t1, t2)
 
-val ( !=: ) : term -> term -> constr
+let ( !=: ) t1 t2 = Neq (t1, t2)
 
-val ( ~: ) : term -> term -> constr
+let ( ~: ) t1 t2 = Shape (t1, t2)
 
-val ( <: ) : term -> term -> constr
+let ( <: ) t1 t2 = Subshape (t1, t2)
 
-val ( ==: ) : atom -> permuted_atom -> constr
+let ( ==: ) a alpha = AtomEq (a, alpha)
 
-val ( !==: ) : atom -> permuted_atom -> constr
+let ( !==: ) a alpha = AtomNeq (a, alpha)
