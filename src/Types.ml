@@ -29,7 +29,6 @@ type shape =
 type constr =
   | Fresh    of atom * term
   | Eq       of term * term
-  | Neq      of term * term
   | Shape    of term * term
   | Subshape of term * term
   | AtomEq   of atom * permuted_atom
@@ -38,8 +37,6 @@ type constr =
 let ( #: ) a t = Fresh (a, t)
 
 let ( =: ) t1 t2 = Eq (t1, t2)
-
-let ( !=: ) t1 t2 = Neq (t1, t2)
 
 let ( ~: ) t1 t2 = Shape (t1, t2)
 
