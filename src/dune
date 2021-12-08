@@ -1,3 +1,2 @@
 (executable
- (name main)
- (modules_without_implementation types))
+ (name main))

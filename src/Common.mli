@@ -1,5 +1,3 @@
-open Types
+val ( $ ) : ('a -> 'b) -> 'a -> 'b
 
-val free_vars_of : term -> var list
-
-val subst : var -> term -> term -> term
+val ( >> ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
