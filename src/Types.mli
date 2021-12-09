@@ -1,12 +1,10 @@
+open Permutation
+
 type atom = A of string
 
 type var = V of string
 
 type symbol = string
-
-type 'a permutation = (('a, 'a) permuted * ('a, 'a) permuted) list
-
-and ('a, 'x) permuted = Just of 'x | Permuted of 'a permutation * 'x
 
 type permuted_atom = (atom, atom) permuted
 

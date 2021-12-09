@@ -1,8 +1,18 @@
 open Types
+open Permutation
 
-let string_of_atom = function Just (A a) -> a | Permuted (_, A a) -> "pi " ^ a
+let rec string_of_permutation pi =
+  List.fold_left
+    (fun str (a, b) -> "(" ^ string_of_atom a ^ " " ^ string_of_atom b ^ ")" ^ str)
+    "" pi
 
-let string_of_var = function Just (V x) -> x | Permuted (_, V x) -> "pi " ^ x
+and string_of_atom = function
+  | Just (A a)         -> a
+  | Permuted (pi, A a) -> string_of_permutation pi ^ a
+
+let string_of_var = function
+  | Just (V x)         -> x
+  | Permuted (pi, V x) -> string_of_permutation pi ^ x
 
 let rec string_of_term = function
   | Atom a       -> string_of_atom a
