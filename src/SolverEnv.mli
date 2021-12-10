@@ -13,9 +13,5 @@ module SolverEnv : sig
 
   val is_neq : t -> atom -> atom -> bool
 
-  (* val add_constr : t -> constr -> t option *)
-
-  (* val subst_atom : t -> atom -> atom -> t option *)
-
-  (* val subst_term : t -> var -> term -> t * constr list *)
+  val add_assumption : t -> constr -> t option
 end
