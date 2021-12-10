@@ -13,3 +13,5 @@ let permute pi x =
   | pi, Permuted (pi', a) -> Permuted (pi' @ pi, a)
 
 let reverse = List.rev
+
+let rec free_vars_of = function [] -> [] | (a, b) :: pi -> a :: b :: free_vars_of pi

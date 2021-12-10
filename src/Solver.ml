@@ -40,7 +40,7 @@ module Solver = struct
     | App (t1, t2) -> solve_fresh env a t1 && solve_fresh env a t2
     | Fun _ -> true
 
-  let rec solve_eq env e1 e2 =
+  and solve_eq env e1 e2 =
     match (e1, e2) with
     | Atom (Just a), Atom (Just a') -> a = a'
     | Atom (Permuted (pi, a)), Atom b ->
@@ -49,10 +49,16 @@ module Solver = struct
         (* TODO: add assumptions to env *)
         solve_eq env $ Atom (Just a) $ Atom (Just b)
     | Var (Just x), Var (Just x') -> x = x'
-    | Var (Permuted (pi, x)), Var y -> solve_eq env $ Var (Just x) $ Var (permute pi y)
-    | Var (Just x), Var (Permuted (_, y)) ->
-        (* TODO: add assumptions to env *)
-        solve_eq env $ Var (Just x) $ Var (Just y)
+    | Var (Permuted (pi, x)), Var x' -> solve_eq env $ Var (Just x) $ Var (permute pi x')
+    | Var (Just x), Var (Permuted (pi, x')) when x = x' ->
+        let test alpha =
+          solve_eq env (Atom alpha) (Atom (permute pi alpha))
+          ||
+          match alpha with
+          | Just a            -> solve_fresh env a $ Var (Just x)
+          | Permuted (pi', a) -> solve_fresh env a $ Var (permute $ reverse pi' $ Just x)
+        in
+        List.for_all test $ free_vars_of pi
     | Lam ((Just a1 as alpha1), t1), Lam (alpha2, t2) ->
         solve_fresh env a1 e2 && solve_eq env t1 $ permute_term [(alpha1, alpha2)] t2
     | Lam ((Permuted (pi, a1) as alpha1), t1), Lam (alpha2, t2) ->

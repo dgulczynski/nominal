@@ -9,3 +9,5 @@ val decons : 'a permutation -> ('a swap * 'a permutation) option
 val permute : 'a permutation -> ('a, 'b) permuted -> ('a, 'b) permuted
 
 val reverse : 'a permutation -> 'a permutation
+
+val free_vars_of : 'a permutation -> ('a, 'a) permuted list
