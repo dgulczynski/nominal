@@ -7,12 +7,12 @@ let rec string_of_permutation pi =
     "" pi
 
 and string_of_atom = function
-  | Just (A a)         -> a
-  | Permuted (pi, A a) -> string_of_permutation pi ^ a
+  | {perm= []; symb= A a} -> a
+  | {perm= pi; symb= A a} -> string_of_permutation pi ^ a
 
 let string_of_var = function
-  | Just (V x)         -> x
-  | Permuted (pi, V x) -> string_of_permutation pi ^ x
+  | {perm= []; symb= V x} -> x
+  | {perm= pi; symb= V x} -> string_of_permutation pi ^ x
 
 let rec string_of_term = function
   | Atom a       -> string_of_atom a

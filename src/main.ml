@@ -10,9 +10,11 @@ let print_solver c =
 
 let examples =
   let a_ = A "a" and b_ = A "b" and c_ = A "c" in
-  let a = Just a_ and b = Just b_ and c = Just c_ in
+  let a = {perm= []; symb= a_}
+  and b = {perm= []; symb= b_}
+  and c = {perm= []; symb= c_} in
   let pi = [(b, c)] in
-  let x = Var (Just (V "x")) in
+  let x = Var {perm= []; symb= V "x"} in
   [ x =: x
   ; a_ #: (Lam (a, Atom a))
   ; a_ #: (permute_term [] (Lam (b, Atom b)))

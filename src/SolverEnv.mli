@@ -12,6 +12,4 @@ module SolverEnv : sig
   val is_fresh : t -> atom -> var -> bool
 
   val is_neq : t -> atom -> atom -> bool
-
-  val add_assumption : t -> constr -> t option
 end

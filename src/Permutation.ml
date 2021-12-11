@@ -2,16 +2,10 @@ type 'a permutation = 'a swap list
 
 and 'a swap = ('a, 'a) permuted * ('a, 'a) permuted
 
-and ('a, 'x) permuted = Just of 'x | Permuted of 'a permutation * 'x
+and ('a, 'x) permuted = {perm: 'a permutation; symb: 'x}
 
-let decons = function [] -> None | x :: xs -> Some (x, xs)
-
-let permute pi x =
-  match (pi, x) with
-  | [], x                 -> x
-  | pi, Just x            -> Permuted (pi, x)
-  | pi, Permuted (pi', a) -> Permuted (pi' @ pi, a)
+let permute pi {perm; symb} = {perm= pi @ perm; symb}
 
 let reverse = List.rev
 
-let rec free_vars_of = function [] -> [] | (a, b) :: pi -> a :: b :: free_vars_of pi
+let free_vars_of pi = List.fold_left (fun acc (a, b) -> a :: b :: acc) [] pi
