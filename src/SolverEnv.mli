@@ -12,4 +12,8 @@ module SolverEnv : sig
   val is_fresh : t -> atom -> var -> bool
 
   val is_neq : t -> atom -> atom -> bool
+
+  val subst_atom : t -> atom -> atom -> t
+
+  val string_of : t -> string
 end

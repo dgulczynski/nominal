@@ -1,4 +1,5 @@
 open Types
+open Common
 
 module SolverEnv = struct
   type atom_assumption = AFresh of atom * var | ANeq of atom * atom
@@ -19,4 +20,22 @@ module SolverEnv = struct
       gamma
 
   let is_fresh gamma a x = List.mem (AFresh (a, x)) gamma
+
+  let subst_atom gamma a b =
+    List.map
+      (function
+        | ANeq (a1, a2) -> ANeq (sub a b a1, sub a b a2)
+        | AFresh (c, t) -> AFresh (sub a b c, t) )
+      gamma
+
+  let string_of gamma =
+    List.fold_right
+      (fun g str ->
+        str
+        ^ Printing.string_of_constr
+            ( match g with
+            | AFresh (a, v) -> Fresh (a, Var {perm= []; symb= v})
+            | ANeq (a, b)   -> AtomNeq (a, {perm= []; symb= b}) )
+        ^ "," )
+      gamma ""
 end
