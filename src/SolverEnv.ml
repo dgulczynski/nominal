@@ -21,12 +21,18 @@ module SolverEnv = struct
 
   let is_fresh gamma a x = List.mem (AFresh (a, x)) gamma
 
+  let add_constr gamma = function
+    | ANeq (a1, a2) -> add_neq gamma a1 a2
+    | AFresh (a, v) -> Some (add_fresh gamma a v)
+
+  let subst_atom_constr a b = function
+    | ANeq (a1, a2) -> ANeq (sub a b a1, sub a b a2)
+    | AFresh (c, v) -> AFresh (sub a b c, v)
+
   let subst_atom gamma a b =
-    List.map
-      (function
-        | ANeq (a1, a2) -> ANeq (sub a b a1, sub a b a2)
-        | AFresh (c, t) -> AFresh (sub a b c, t) )
-      gamma
+    List.fold_left
+      (fun env constr -> Option.bind env (flip add_constr $ subst_atom_constr a b constr))
+      (Some []) gamma
 
   let string_of gamma =
     List.fold_right

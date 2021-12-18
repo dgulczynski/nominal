@@ -5,6 +5,8 @@ let ( $ ) f x = f x
 
 let ( >> ) f g x = f (g x)
 
+let flip f x y = f y x
+
 let rec permute_term (pi : atom permutation) = function
   | Atom a       -> Atom (permute pi a)
   | Var x        -> Var (permute pi x)

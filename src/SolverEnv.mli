@@ -13,7 +13,7 @@ module SolverEnv : sig
 
   val is_neq : t -> atom -> atom -> bool
 
-  val subst_atom : t -> atom -> atom -> t
+  val subst_atom : t -> atom -> atom -> t option
 
   val string_of : t -> string
 end

@@ -28,25 +28,30 @@ module Solver = struct
   let rec solve_fresh env assmpts a e =
     match e with
     | Atom {perm; symb= b} -> (
-      match inner_swap perm with
-      | None                        -> SolverEnv.is_neq env a b
-      | Some ((alpha1, alpha2), pi) ->
+      match outer_swap perm with
+      | None -> SolverEnv.is_neq env a b
+      | Some ((({perm= pi1; symb= a1} as alpha1), ({perm= pi2; symb= a2} as alpha2)), pi)
+        ->
           (* TODO: convert to cps *)
-          solve_ env (AtomNeq (b, alpha1) :: AtomNeq (b, alpha2) :: assmpts)
-          $ Fresh (a, Atom {perm= pi; symb= b})
-          && solve_ env (AtomEq (b, alpha1) :: assmpts)
-             $ Fresh (a, Atom (permute pi alpha2))
-          && solve_ env (AtomEq (b, alpha2) :: assmpts)
-             $ Fresh (a, Atom (permute pi alpha1)) )
+          let beta = {perm= pi; symb= b} in
+          solve_ env
+            (AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts)
+            (Fresh (a, Atom beta))
+          && solve_ env
+               (AtomEq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts)
+               (Fresh (a2, Atom (permute (reverse pi2) beta)))
+          && solve_ env
+               (AtomEq (a, alpha2) :: assmpts)
+               (Fresh (a1, Atom (permute (reverse pi1) beta))) )
     | Var {perm; symb= x}  -> (
       match outer_swap perm with
       | None                        -> SolverEnv.is_fresh env a x
       | Some ((alpha1, alpha2), pi) ->
-          let c = Fresh (a, Var {perm= pi; symb= x}) in
+          let goal = Fresh (a, Var {perm= pi; symb= x}) in
           (* TODO: convert to cps *)
-          solve_ env (AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts) c
-          && solve_ env (AtomNeq (a, alpha1) :: AtomEq (a, alpha2) :: assmpts) c
-          && solve_ env (AtomEq (a, alpha1) :: assmpts) c )
+          solve_ env (AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts) goal
+          && solve_ env (AtomNeq (a, alpha1) :: AtomEq (a, alpha2) :: assmpts) goal
+          && solve_ env (AtomEq (a, alpha1) :: assmpts) goal )
     | Lam (alpha, t)       -> solve_ env (AtomNeq (a, alpha) :: assmpts) $ Fresh (a, t)
     | App (t1, t2)         -> solve_fresh env assmpts a t1 && solve_fresh env assmpts a t2
     | Fun _                -> true
@@ -108,11 +113,13 @@ module Solver = struct
         && solve_ env
              (AtomEq (b, alpha2) :: AtomNeq (a, permute pi' alpha1) :: assmpts)
              goal
-    | AtomEq (a, {perm= []; symb= b}) ->
-        let env' = SolverEnv.subst_atom env a b in
-        let assmpts' = List.map (subst_atom_constr a b) assmpts in
-        let goal' = subst_atom_constr a b goal in
-        solve_ env' assmpts' goal'
+    | AtomEq (a, {perm= []; symb= b}) -> (
+      match SolverEnv.subst_atom env a b with
+      | None      -> true
+      | Some env' ->
+          let assmpts' = List.map (subst_atom_constr a b) assmpts in
+          let goal' = subst_atom_constr a b goal in
+          solve_ env' assmpts' goal' )
     | assmpt ->
         let error_str =
           "This should not happen: Assumption "
@@ -120,7 +127,7 @@ module Solver = struct
           ^ " was chosen to be reduced, but solver doesn't know how to reduce it"
         in
         let _ = Printf.eprintf "%s\n" error_str in
-        solve_by_case env (assmpt :: assmpts) goal
+        false
 
   and solve_by_case env assmpts = function
     | Eq (t1, t2)  -> solve_eq env assmpts t1 t2

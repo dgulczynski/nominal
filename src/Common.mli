@@ -5,6 +5,8 @@ val ( $ ) : ('a -> 'b) -> 'a -> 'b
 
 val ( >> ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 
+val flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c
+
 val permute_term : atom permutation -> term -> term
 
 val const : 'a -> 'b -> 'a
