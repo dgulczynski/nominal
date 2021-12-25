@@ -149,7 +149,34 @@ module Solver = struct
     | Eq (Atom {perm= pi; symb= a}, Atom beta) ->
         solve_assumption env assmpts goal
         $ Eq (Atom {perm= []; symb= a}, Atom (permute pi beta))
-    | assmpt ->
+    | Fresh (a, Var {perm= pi; symb= x}) -> (
+      match outer_swap pi with
+      | None                         -> solve_ (SolverEnv.add_fresh env a x) assmpts goal
+      | Some ((alpha1, alpha2), pi') ->
+          (* TODO: convert to cps *)
+          solve_ env
+            ( AtomNeq (a, alpha1)
+            :: AtomNeq (a, alpha2)
+            :: Fresh (a, Var {perm= pi'; symb= x})
+            :: assmpts )
+            goal
+          && solve_ env
+               ( AtomEq (a, alpha1)
+               :: AtomNeq (a, alpha2)
+               :: Fresh (a, Var {perm= pi'; symb= x})
+               :: assmpts )
+               goal
+          && solve_ env
+               (AtomEq (a, alpha2) :: Fresh (a, Var {perm= pi'; symb= x}) :: assmpts)
+               goal )
+    | Fresh (a, Lam (alpha, t)) ->
+        solve_ env (AtomNeq (a, alpha) :: Fresh (a, t) :: assmpts) goal
+    | Fresh (a, App (t1, t2)) ->
+        solve_ env (Fresh (a, t1) :: Fresh (a, t2) :: assmpts) goal
+    | Fresh (_, Fun _) -> solve_ env assmpts goal
+    | Eq _ as assmpt ->
+        raise $ SolverException ("Unimplemented " ^ Printing.string_of_constr assmpt)
+    | (Shape _ | Subshape _) as assmpt ->
         raise
         $ SolverException
             ("Solver doesn't know how to reduce " ^ Printing.string_of_constr assmpt)
