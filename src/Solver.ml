@@ -3,6 +3,8 @@ open SolverEnv
 open Common
 open Permutation
 
+exception SolverException of string
+
 module Solver = struct
   let reduce env assmpts =
     let simple, rest =
@@ -15,11 +17,17 @@ module Solver = struct
     let update_env env = function
       | Fresh (a, Atom {perm= []; symb= b}) | AtomNeq (a, {perm= []; symb= b}) ->
           Option.bind env (fun env -> SolverEnv.add_neq env a b)
-      | _ -> env
+      | constr ->
+          raise
+          $ SolverException
+              ( "Solver cannot update env with constraint "
+              ^ Printing.string_of_constr constr )
     in
     let found, assmpts' =
       find_first
-        (function AtomEq _ | AtomNeq _ | Fresh (_, Atom _) -> true | _ -> false)
+        (function
+          | Eq _ | AtomEq _ | AtomNeq _ | Fresh _ -> true | Shape _ | Subshape _ -> false
+          )
         rest
     in
     let env' = List.fold_left update_env (Some env) simple in
@@ -113,21 +121,38 @@ module Solver = struct
         && solve_ env
              (AtomEq (b, alpha2) :: AtomNeq (a, permute pi' alpha1) :: assmpts)
              goal
-    | AtomEq (a, {perm= []; symb= b}) -> (
-      match SolverEnv.subst_atom env a b with
-      | None      -> true
-      | Some env' ->
-          let assmpts' = List.map (subst_atom_constr a b) assmpts in
-          let goal' = subst_atom_constr a b goal in
-          solve_ env' assmpts' goal' )
+    | Eq (Atom {perm= []; symb= a}, Atom {perm= pi; symb= b})
+     |AtomEq (a, {perm= pi; symb= b}) -> (
+      match outer_swap pi with
+      | None                         -> (
+        match SolverEnv.subst_atom env a b with
+        | None      -> true
+        | Some env' ->
+            let assmpts' = List.map (subst_atom_constr a b) assmpts in
+            let goal' = subst_atom_constr a b goal in
+            solve_ env' assmpts' goal' )
+      | Some ((alpha1, alpha2), pi') ->
+          let beta = {perm= pi'; symb= b} in
+          (* TODO: convert to cps *)
+          solve_ env
+            (AtomEq (a, beta) :: AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts)
+            goal
+          && solve_ env
+               ( Eq (Atom alpha1, Atom beta)
+               :: AtomNeq (a, alpha1)
+               :: AtomEq (a, alpha2)
+               :: assmpts )
+               goal
+          && solve_ env
+               (Eq (Atom alpha2, Atom beta) :: AtomEq (a, alpha1) :: assmpts)
+               goal )
+    | Eq (Atom {perm= pi; symb= a}, Atom beta) ->
+        solve_assumption env assmpts goal
+        $ Eq (Atom {perm= []; symb= a}, Atom (permute pi beta))
     | assmpt ->
-        let error_str =
-          "This should not happen: Assumption "
-          ^ Printing.string_of_constr assmpt
-          ^ " was chosen to be reduced, but solver doesn't know how to reduce it"
-        in
-        let _ = Printf.eprintf "%s\n" error_str in
-        false
+        raise
+        $ SolverException
+            ("Solver doesn't know how to reduce " ^ Printing.string_of_constr assmpt)
 
   and solve_by_case env assmpts = function
     | Eq (t1, t2)  -> solve_eq env assmpts t1 t2
