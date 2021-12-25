@@ -6,6 +6,8 @@ open Permutation
 exception SolverException of string
 
 module Solver = struct
+  let fresh {perm= pi; symb= a} t = Fresh (a, permute_term pi t)
+
   let reduce env assmpts =
     let simple, rest =
       List.partition
@@ -121,6 +123,31 @@ module Solver = struct
         && solve_ env
              (AtomEq (b, alpha2) :: AtomNeq (a, permute pi' alpha1) :: assmpts)
              goal
+    | Fresh (a, Var {perm= pi; symb= x}) -> (
+      match outer_swap pi with
+      | None                         -> solve_ (SolverEnv.add_fresh env a x) assmpts goal
+      | Some ((alpha1, alpha2), pi') ->
+          (* TODO: convert to cps *)
+          solve_ env
+            ( AtomNeq (a, alpha1)
+            :: AtomNeq (a, alpha2)
+            :: Fresh (a, Var {perm= pi'; symb= x})
+            :: assmpts )
+            goal
+          && solve_ env
+               ( AtomEq (a, alpha1)
+               :: AtomNeq (a, alpha2)
+               :: Fresh (a, Var {perm= pi'; symb= x})
+               :: assmpts )
+               goal
+          && solve_ env
+               (AtomEq (a, alpha2) :: Fresh (a, Var {perm= pi'; symb= x}) :: assmpts)
+               goal )
+    | Fresh (a, Lam (alpha, t)) ->
+        solve_ env (AtomNeq (a, alpha) :: Fresh (a, t) :: assmpts) goal
+    | Fresh (a, App (t1, t2)) ->
+        solve_ env (Fresh (a, t1) :: Fresh (a, t2) :: assmpts) goal
+    | Fresh (_, Fun _) -> solve_ env assmpts goal
     | Eq (Atom {perm= []; symb= a}, Atom {perm= pi; symb= b})
      |AtomEq (a, {perm= pi; symb= b}) -> (
       match outer_swap pi with
@@ -149,31 +176,15 @@ module Solver = struct
     | Eq (Atom {perm= pi; symb= a}, Atom beta) ->
         solve_assumption env assmpts goal
         $ Eq (Atom {perm= []; symb= a}, Atom (permute pi beta))
-    | Fresh (a, Var {perm= pi; symb= x}) -> (
-      match outer_swap pi with
-      | None                         -> solve_ (SolverEnv.add_fresh env a x) assmpts goal
-      | Some ((alpha1, alpha2), pi') ->
-          (* TODO: convert to cps *)
-          solve_ env
-            ( AtomNeq (a, alpha1)
-            :: AtomNeq (a, alpha2)
-            :: Fresh (a, Var {perm= pi'; symb= x})
-            :: assmpts )
-            goal
-          && solve_ env
-               ( AtomEq (a, alpha1)
-               :: AtomNeq (a, alpha2)
-               :: Fresh (a, Var {perm= pi'; symb= x})
-               :: assmpts )
-               goal
-          && solve_ env
-               (AtomEq (a, alpha2) :: Fresh (a, Var {perm= pi'; symb= x}) :: assmpts)
-               goal )
-    | Fresh (a, Lam (alpha, t)) ->
-        solve_ env (AtomNeq (a, alpha) :: Fresh (a, t) :: assmpts) goal
-    | Fresh (a, App (t1, t2)) ->
-        solve_ env (Fresh (a, t1) :: Fresh (a, t2) :: assmpts) goal
-    | Fresh (_, Fun _) -> solve_ env assmpts goal
+    | Eq (Var _, _) | Eq (_, Var _) ->
+        raise $ SolverException "Unimplemented assumption: Eq with var"
+    | Eq (Lam (a1, t1), Lam (a2, t2)) ->
+        solve_ env
+          (fresh a1 (Lam (a2, t2)) :: Eq (t1, permute_term [(a1, a2)] t2) :: assmpts)
+          goal
+    | Eq (App (t1, t2), App (t1', t2')) ->
+        solve_ env (Eq (t1, t2) :: Eq (t1', t2') :: assmpts) goal
+    | Eq (Fun f, Fun f') -> f != f' || solve_ env assmpts goal
     | Eq _ as assmpt ->
         raise $ SolverException ("Unimplemented " ^ Printing.string_of_constr assmpt)
     | (Shape _ | Subshape _) as assmpt ->
