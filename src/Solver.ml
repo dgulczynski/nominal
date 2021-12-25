@@ -6,7 +6,7 @@ open Permutation
 exception SolverException of string
 
 module Solver = struct
-  let fresh {perm= pi; symb= a} t = Fresh (a, permute_term pi t)
+  let fresh {perm= pi; symb= a} t = a #: (permute_term pi t)
 
   let reduce env assmpts =
     let simple, rest =
@@ -44,25 +44,22 @@ module Solver = struct
         ->
           (* TODO: convert to cps *)
           let beta = {perm= pi; symb= b} in
-          solve_ env
-            (AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts)
-            (Fresh (a, Atom beta))
+          solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) a #: (Atom beta)
           && solve_ env
-               (AtomEq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts)
-               (Fresh (a2, Atom (permute (reverse pi2) beta)))
-          && solve_ env
-               (AtomEq (a, alpha2) :: assmpts)
-               (Fresh (a1, Atom (permute (reverse pi1) beta))) )
+               ((a ==: alpha1) :: (a =/=: alpha2) :: assmpts)
+               a2 #: (Atom (permute (reverse pi2) beta))
+          && solve_ env ((a ==: alpha2) :: assmpts)
+               a1 #: (Atom (permute (reverse pi1) beta)) )
     | Var {perm; symb= x}  -> (
       match outer_swap perm with
       | None                        -> SolverEnv.is_fresh env a x
       | Some ((alpha1, alpha2), pi) ->
-          let goal = Fresh (a, Var {perm= pi; symb= x}) in
+          let goal = a #: (Var {perm= pi; symb= x}) in
           (* TODO: convert to cps *)
-          solve_ env (AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts) goal
-          && solve_ env (AtomNeq (a, alpha1) :: AtomEq (a, alpha2) :: assmpts) goal
-          && solve_ env (AtomEq (a, alpha1) :: assmpts) goal )
-    | Lam (alpha, t)       -> solve_ env (AtomNeq (a, alpha) :: assmpts) $ Fresh (a, t)
+          solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) goal
+          && solve_ env ((a =/=: alpha1) :: (a ==: alpha2) :: assmpts) goal
+          && solve_ env ((a ==: alpha1) :: assmpts) goal )
+    | Lam (alpha, t)       -> solve_ env ((a =/=: alpha) :: assmpts) a #: t
     | App (t1, t2)         -> solve_fresh env assmpts a t1 && solve_fresh env assmpts a t2
     | Fun _                -> true
 
@@ -74,10 +71,9 @@ module Solver = struct
       | Some ((alpha1, alpha2), pi) ->
           let b' = Atom {perm= pi; symb= b} in
           (* TODO: convert to cps *)
-          solve_ env (AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts) $ Eq (e1, b')
-          && solve_ env (AtomNeq (a, alpha1) :: AtomEq (a, alpha2) :: assmpts)
-             $ Eq (Atom alpha1, b')
-          && solve_ env (AtomEq (a, alpha1) :: assmpts) $ Eq (Atom alpha2, b') )
+          solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) (e1 =: b')
+          && solve_ env ((a =/=: alpha1) :: (a ==: alpha2) :: assmpts) (Atom alpha1 =: b')
+          && solve_ env ((a ==: alpha1) :: assmpts) (Atom alpha2 =: b') )
     | Atom {perm= pi; symb= a}, Atom b ->
         solve_eq env assmpts $ Atom (pure a) $ Atom (permute (reverse pi) b)
     | Var {perm= []; symb= x}, Var {perm= pi; symb= x'} ->
@@ -109,46 +105,32 @@ module Solver = struct
         let (alpha1, alpha2), pi' = Option.get $ outer_swap pi in
         (* TODO: convert to cps *)
         solve_ env
-          ( AtomNeq (a, alpha1)
-          :: AtomNeq (a, alpha2)
-          :: AtomNeq (a, {perm= pi'; symb= b})
-          :: assmpts )
+          ((a =/=: alpha1) :: (a =/=: alpha2) :: (a =/=: {perm= pi'; symb= b}) :: assmpts)
           goal
         && solve_ env
-             ( AtomEq (b, alpha1)
-             :: AtomNeq (b, alpha2)
-             :: AtomNeq (a, permute pi' alpha2)
-             :: assmpts )
+             ((b ==: alpha1) :: (b =/=: alpha2) :: (a =/=: permute pi' alpha2) :: assmpts)
              goal
-        && solve_ env
-             (AtomEq (b, alpha2) :: AtomNeq (a, permute pi' alpha1) :: assmpts)
-             goal
+        && solve_ env ((b ==: alpha2) :: (a =/=: permute pi' alpha1) :: assmpts) goal
     | Var {perm= pi; symb= x}  -> (
       match outer_swap pi with
       | None                         -> solve_ (SolverEnv.add_fresh env a x) assmpts goal
       | Some ((alpha1, alpha2), pi') ->
           (* TODO: convert to cps *)
           solve_ env
-            ( AtomNeq (a, alpha1)
-            :: AtomNeq (a, alpha2)
-            :: Fresh (a, Var {perm= pi'; symb= x})
+            ( (a =/=: alpha1) :: (a =/=: alpha2)
+            :: (a #: (Var {perm= pi'; symb= x}))
             :: assmpts )
             goal
           && solve_ env
-               ( AtomEq (a, alpha1)
-               :: AtomNeq (a, alpha2)
-               :: Fresh (a, Var {perm= pi'; symb= x})
+               ( (a ==: alpha1) :: (a =/=: alpha2)
+               :: (a #: (Var {perm= pi'; symb= x}))
                :: assmpts )
                goal
           && solve_ env
-               (AtomEq (a, alpha2) :: Fresh (a, Var {perm= pi'; symb= x}) :: assmpts)
+               ((a ==: alpha2) :: (a #: (Var {perm= pi'; symb= x})) :: assmpts)
                goal )
-    | Lam (alpha, t)           -> solve_ env
-                                    (AtomNeq (a, alpha) :: Fresh (a, t) :: assmpts)
-                                    goal
-    | App (t1, t2)             -> solve_ env
-                                    (Fresh (a, t1) :: Fresh (a, t2) :: assmpts)
-                                    goal
+    | Lam (alpha, t)           -> solve_ env ((a =/=: alpha) :: (a #: t) :: assmpts) goal
+    | App (t1, t2)             -> solve_ env ((a #: t1) :: (a #: t2) :: assmpts) goal
     | Fun _                    -> solve_ env assmpts goal
 
   and solve_assumption_eq env assmpts goal t1 t2 =
@@ -165,17 +147,10 @@ module Solver = struct
       | Some ((alpha1, alpha2), pi') ->
           let beta = {perm= pi'; symb= b} in
           (* TODO: convert to cps *)
-          solve_ env
-            (AtomEq (a, beta) :: AtomNeq (a, alpha1) :: AtomNeq (a, alpha2) :: assmpts)
-            goal
+          solve_ env ((a ==: beta) :: (a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) goal
+          && solve_ env ((Atom alpha2 =: Atom beta) :: (a ==: alpha1) :: assmpts) goal
           && solve_ env
-               ( Eq (Atom alpha1, Atom beta)
-               :: AtomNeq (a, alpha1)
-               :: AtomEq (a, alpha2)
-               :: assmpts )
-               goal
-          && solve_ env
-               (Eq (Atom alpha2, Atom beta) :: AtomEq (a, alpha1) :: assmpts)
+               ((Atom alpha1 =: Atom beta) :: (a =/=: alpha1) :: (a ==: alpha2) :: assmpts)
                goal )
     | Atom {perm= pi; symb= a}, Atom beta ->
         solve_assumption_eq env assmpts goal
@@ -192,10 +167,10 @@ module Solver = struct
         solve_assumption_eq env assmpts goal $ Var (pure x) $ permute_term pi t
     | Lam (a1, t1), Lam (a2, t2) ->
         solve_ env
-          (fresh a1 (Lam (a2, t2)) :: Eq (t1, permute_term [(a1, a2)] t2) :: assmpts)
+          (fresh a1 (Lam (a2, t2)) :: (t1 =: permute_term [(a1, a2)] t2) :: assmpts)
           goal
     | App (t1, t2), App (t1', t2') ->
-        solve_ env (Eq (t1, t2) :: Eq (t1', t2') :: assmpts) goal
+        solve_ env ((t1 =: t2) :: (t1' =: t2') :: assmpts) goal
     | Fun f, Fun f' -> f != f' || solve_ env assmpts goal
     | t1, t2 ->
         raise
