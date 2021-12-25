@@ -7,6 +7,8 @@ let ( >> ) f g x = f (g x)
 
 let flip f x y = f y x
 
+let id x = x
+
 let rec permute_term (pi : atom permutation) = function
   | Atom a       -> Atom (permute pi a)
   | Var x        -> Var (permute pi x)
@@ -32,7 +34,7 @@ let rec subst sub_atom sub_var = function
 
 let subst_atom a b = subst (sub a b) (fun x -> Var (pure x))
 
-let subst_var x t = subst (fun a -> a) (fun y -> if y = x then t else Var (pure y))
+let subst_var x t = subst id (fun y -> if y = x then t else Var (pure y))
 
 let const x _ = x
 
@@ -52,3 +54,17 @@ let subst_constr sub_atom sub_term = function
   | AtomNeq (a, alpha) -> AtomNeq (sub_atom a, sub_perm_atom sub_atom alpha)
 
 let subst_atom_constr a b = subst_constr (sub a b) (subst_atom a b)
+
+let subst_var_constr x t = subst_constr id (subst_var x t)
+
+let rec occurs_check x = function
+  | Var {perm= _; symb= x'} -> x' = x
+  | Lam (_, t)              -> occurs_check x t
+  | App (t1, t2)            -> occurs_check x t1 || occurs_check x t2
+  | Atom _ | Fun _          -> false
+
+let rec free_vars_of_term = function
+  | Var {perm= _; symb= x} -> [x]
+  | Lam (_, t)             -> free_vars_of_term t
+  | App (t1, t2)           -> free_vars_of_term t1 @ free_vars_of_term t2
+  | Fun _ | Atom _         -> []

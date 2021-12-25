@@ -178,10 +178,18 @@ module Solver = struct
                (Eq (Atom alpha2, Atom beta) :: AtomEq (a, alpha1) :: assmpts)
                goal )
     | Atom {perm= pi; symb= a}, Atom beta ->
-        solve_assumption env assmpts goal
-        $ Eq (Atom {perm= []; symb= a}, Atom (permute pi beta))
-    | Var _, _ | _, Var _ ->
-        raise $ SolverException "Unimplemented assumption: Eq with var"
+        solve_assumption_eq env assmpts goal
+        $ Atom {perm= []; symb= a}
+        $ Atom (permute pi beta)
+    | Var {perm= []; symb= x}, t | t, Var {perm= []; symb= x} ->
+        if occurs_check x t then false
+        else
+          let env' = SolverEnv.subst_var env x t in
+          let assmpts' = List.map (subst_var_constr x t) assmpts in
+          let goal' = subst_var_constr x t goal in
+          solve_ env' assmpts' goal'
+    | Var {perm= pi; symb= x}, t | t, Var {perm= pi; symb= x} ->
+        solve_assumption_eq env assmpts goal $ Var (pure x) $ permute_term pi t
     | Lam (a1, t1), Lam (a2, t2) ->
         solve_ env
           (fresh a1 (Lam (a2, t2)) :: Eq (t1, permute_term [(a1, a2)] t2) :: assmpts)

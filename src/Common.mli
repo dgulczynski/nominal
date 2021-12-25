@@ -20,3 +20,9 @@ val subst_atom : atom -> atom -> term -> term
 val subst_var : var -> term -> term -> term
 
 val subst_atom_constr : atom -> atom -> constr -> constr
+
+val subst_var_constr : var -> term -> constr -> constr
+
+val occurs_check : var -> term -> bool
+
+val free_vars_of_term : term -> var list

@@ -15,5 +15,7 @@ module SolverEnv : sig
 
   val subst_atom : t -> atom -> atom -> t option
 
+  val subst_var : t -> var -> term -> t
+
   val string_of : t -> string
 end
