@@ -6,7 +6,7 @@ open Permutation
 exception SolverException of string
 
 module Solver = struct
-  let fresh {perm= pi; symb= a} t = a #: (permute_term pi t)
+  let fresh {perm= pi; symb= a} t = a #: (permute_term (reverse pi) t)
 
   let reduce env assmpts =
     let simple, rest =
@@ -39,17 +39,13 @@ module Solver = struct
     match e with
     | Atom {perm; symb= b} -> (
       match outer_swap perm with
-      | None -> SolverEnv.is_neq env a b
-      | Some ((({perm= pi1; symb= a1} as alpha1), ({perm= pi2; symb= a2} as alpha2)), pi)
-        ->
+      | None                        -> SolverEnv.is_neq env a b
+      | Some ((alpha1, alpha2), pi) ->
           (* TODO: convert to cps *)
-          let beta = {perm= pi; symb= b} in
-          solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) a #: (Atom beta)
-          && solve_ env
-               ((a ==: alpha1) :: (a =/=: alpha2) :: assmpts)
-               a2 #: (Atom (permute (reverse pi2) beta))
-          && solve_ env ((a ==: alpha2) :: assmpts)
-               a1 #: (Atom (permute (reverse pi1) beta)) )
+          let beta = Atom {perm= pi; symb= b} in
+          solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) a #: beta
+          && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: assmpts) $ fresh alpha2 beta
+          && solve_ env ((a ==: alpha2) :: assmpts) $ fresh alpha1 beta )
     | Var {perm; symb= x}  -> (
       match outer_swap perm with
       | None                        -> SolverEnv.is_fresh env a x
@@ -60,7 +56,9 @@ module Solver = struct
           && solve_ env ((a =/=: alpha1) :: (a ==: alpha2) :: assmpts) goal
           && solve_ env ((a ==: alpha1) :: assmpts) goal )
     | Lam (alpha, t)       -> solve_ env ((a =/=: alpha) :: assmpts) a #: t
-    | App (t1, t2)         -> solve_fresh env assmpts a t1 && solve_fresh env assmpts a t2
+    | App (t1, t2)         ->
+        (* TODO: convert to cps? *)
+        solve_fresh env assmpts a t1 && solve_fresh env assmpts a t2
     | Fun _                -> true
 
   and solve_eq env assmpts e1 e2 =
@@ -76,13 +74,13 @@ module Solver = struct
           && solve_ env ((a ==: alpha1) :: assmpts) (Atom alpha2 =: b') )
     | Atom {perm= pi; symb= a}, Atom b ->
         solve_eq env assmpts $ Atom (pure a) $ Atom (permute (reverse pi) b)
-    | Var {perm= []; symb= x}, Var {perm= pi; symb= x'} ->
+    | Var {perm= []; symb= x}, Var {perm= pi; symb= x'} when x = x' ->
         (* TODO: convert to cps *)
         let test ({perm= pi; symb= a} as alpha) =
           solve_eq env assmpts (Atom alpha) (Atom (permute pi alpha))
           || solve_fresh env assmpts a $ Var {perm= reverse pi; symb= x}
         in
-        x = x' && List.for_all test $ free_vars_of pi
+        List.for_all test $ free_vars_of pi
     | Var {perm= pi; symb= x}, Var x' ->
         solve_eq env assmpts $ Var (pure x) $ Var (permute (reverse pi) x')
     | Lam (({perm= pi; symb= a1} as alpha1), t1), Lam (alpha2, t2) ->
@@ -90,6 +88,7 @@ module Solver = struct
         solve_fresh env assmpts a1 $ permute_term (reverse pi) e2
         && solve_eq env assmpts t1 $ permute_term [(alpha1, alpha2)] t2
     | App (t1, t2), App (t1', t2') ->
+        (* TODO: convert to cps? *)
         solve_eq env assmpts t1 t1' && solve_eq env assmpts t2 t2'
     | Fun f, Fun f' -> f = f'
     | _ -> false
@@ -103,14 +102,13 @@ module Solver = struct
   and solve_assumption_fresh env assmpts goal a = function
     | Atom {perm= pi; symb= b} ->
         let (alpha1, alpha2), pi' = Option.get $ outer_swap pi in
+        let beta = Atom {perm= pi'; symb= b} in
         (* TODO: convert to cps *)
-        solve_ env
-          ((a =/=: alpha1) :: (a =/=: alpha2) :: (a =/=: {perm= pi'; symb= b}) :: assmpts)
-          goal
+        solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: (a #: beta) :: assmpts) goal
         && solve_ env
-             ((b ==: alpha1) :: (b =/=: alpha2) :: (a =/=: permute pi' alpha2) :: assmpts)
+             ((a ==: alpha1) :: (a =/=: alpha2) :: fresh alpha2 beta :: assmpts)
              goal
-        && solve_ env ((b ==: alpha2) :: (a =/=: permute pi' alpha1) :: assmpts) goal
+        && solve_ env ((a ==: alpha2) :: fresh alpha1 beta :: assmpts) goal
     | Var {perm= pi; symb= x}  -> (
       match outer_swap pi with
       | None                         -> solve_ (SolverEnv.add_fresh env a x) assmpts goal

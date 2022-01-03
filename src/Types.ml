@@ -42,4 +42,4 @@ let ( <: ) t1 t2 = Subshape (t1, t2)
 
 let ( ==: ) a alpha = AtomEq (a, alpha)
 
-let ( !==: ) a alpha = AtomNeq (a, alpha)
+let ( =/=: ) a alpha = AtomNeq (a, alpha)

@@ -42,4 +42,4 @@ val ( <: ) : term -> term -> constr
 
 val ( ==: ) : atom -> permuted_atom -> constr
 
-val ( !==: ) : atom -> permuted_atom -> constr
+val ( =/=: ) : atom -> permuted_atom -> constr
