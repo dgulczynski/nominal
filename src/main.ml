@@ -19,6 +19,7 @@ let examples =
   ; a_ #: (Lam (a, Atom a))
   ; a_ #: (permute_term [] (Lam (b, Atom b)))
   ; a_ #: (permute_term pi (Lam (b, Atom b)))
-  ; App (Atom a, Atom b) =: App (Atom a, Atom b) ]
+  ; App (Atom a, Atom b) =: App (Atom a, Atom b)
+  ; Lam (a, Atom a) =: Lam (b, Atom b) ]
 
 let _ = List.iter print_solver examples
