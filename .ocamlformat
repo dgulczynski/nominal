@@ -4,7 +4,7 @@ break-fun-decl = smart
 wrap-comments = true
 match-indent-nested = auto
 nested-match = align
-margin = 90
+margin = 100
 align-cases
 align-constructors-decl
 align-variants-decl
