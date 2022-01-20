@@ -102,7 +102,7 @@ module Solver = struct
     | Fun _                -> true
 
   and solve_fresh_swap env assmpts a (alpha1, alpha2) e =
-    solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) a #: e
+    solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) $ a #: e
     && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: assmpts) $ fresh alpha2 e
     && solve_ env ((a ==: alpha2) :: assmpts) $ fresh alpha1 e
 
