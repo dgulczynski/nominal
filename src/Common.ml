@@ -9,6 +9,9 @@ let flip f x y = f y x
 
 let id x = x
 
+let curry f x y = f (x, y)
+let uncurry f (x, y) = f x y
+
 let rec permute_term (pi : atom permutation) = function
   | Atom a       -> Atom (permute pi a)
   | Var x        -> Var (permute pi x)
@@ -22,8 +25,7 @@ let rec subst_perm sub =
 
 let sub a b c = if c = a then b else c
 
-let sub_perm_atom sub_atom {perm= pi; symb= a} =
-  {perm= subst_perm sub_atom pi; symb= sub_atom a}
+let sub_perm_atom sub_atom {perm= pi; symb= a} = {perm= subst_perm sub_atom pi; symb= sub_atom a}
 
 let rec subst sub_atom sub_var = function
   | Atom alpha              -> Atom (sub_perm_atom sub_atom alpha)

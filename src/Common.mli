@@ -7,6 +7,12 @@ val ( >> ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 
 val flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c
 
+val id : 'a -> 'a
+
+val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
+
+val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
+
 val permute_term : atom permutation -> term -> term
 
 val const : 'a -> 'b -> 'a
