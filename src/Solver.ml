@@ -166,4 +166,6 @@ module Solver = struct
   let solve_with_env env = solve_ env []
 
   let solve = solve_with_env SolverEnv.empty
+
+  let solve_with_assumptions = solve_ SolverEnv.empty
 end

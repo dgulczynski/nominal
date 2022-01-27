@@ -10,6 +10,7 @@ let flip f x y = f y x
 let id x = x
 
 let curry f x y = f (x, y)
+
 let uncurry f (x, y) = f x y
 
 let rec permute_term (pi : atom permutation) = function

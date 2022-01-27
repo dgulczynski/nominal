@@ -30,8 +30,7 @@ module SolverEnv = struct
     | AFresh (c, v) -> AFresh (sub a b c, v)
 
   let subst_var_constr x t = function
-    | AFresh (a, x') when x = x' ->
-        List.map (fun z -> AFresh (a, z)) (free_vars_of_term t)
+    | AFresh (a, x') when x = x' -> List.map (fun z -> AFresh (a, z)) (free_vars_of_term t)
     | c -> [c]
 
   let subst_atom gamma a b =
@@ -44,14 +43,11 @@ module SolverEnv = struct
       (fun env constr -> List.fold_left (flip List.cons) env (subst_var_constr x t constr))
       empty gamma
 
-  let string_of gamma =
-    List.fold_right
-      (fun g str ->
-        str
-        ^ Printing.string_of_constr
-            ( match g with
-            | AFresh (a, v) -> Fresh (a, Var {perm= []; symb= v})
-            | ANeq (a, b)   -> AtomNeq (a, {perm= []; symb= b}) )
-        ^ "," )
-      gamma ""
+  let string_of_atom_assumption assmpt =
+    Printing.string_of_constr
+      ( match assmpt with
+      | AFresh (a, v) -> Fresh (a, Var {perm= []; symb= v})
+      | ANeq (a, b)   -> AtomNeq (a, {perm= []; symb= b}) )
+
+  let string_of = Printing.string_of_list string_of_atom_assumption
 end
