@@ -13,6 +13,8 @@ val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
 
 val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
 
+val hd_opt : 'a list -> 'a option
+
 val permute_term : atom permutation -> term -> term
 
 val const : 'a -> 'b -> 'a
@@ -28,6 +30,10 @@ val subst_var : var -> term -> term -> term
 val subst_atom_constr : atom -> atom -> constr -> constr
 
 val subst_var_constr : var -> term -> constr -> constr
+
+val subst_atom_kind : atom -> atom -> kind -> kind
+
+val subst_var_kind : var -> var -> kind -> kind
 
 val occurs_check : var -> term -> bool
 

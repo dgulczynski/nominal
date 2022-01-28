@@ -13,6 +13,10 @@ let curry f x y = f (x, y)
 
 let uncurry f (x, y) = f x y
 
+let hd_opt = function
+  | []     -> None
+  | x :: _ -> Some x
+
 let rec permute_term (pi : atom permutation) = function
   | Atom a       -> Atom (permute pi a)
   | Var x        -> Var (permute pi x)
@@ -71,3 +75,21 @@ let rec free_vars_of_term = function
   | Lam (_, t)             -> free_vars_of_term t
   | App (t1, t2)           -> free_vars_of_term t1 @ free_vars_of_term t2
   | Fun _ | Atom _         -> []
+
+let rec subst_atom_kind a b k =
+  let sub = subst_atom_kind a b in
+  match k with
+  | Prop               -> Prop
+  | Arrow (k1, k2)     -> Arrow (sub k1, sub k2)
+  | ForallTerm (x, k)  -> ForallTerm (x, sub k)
+  | ForallAtom (a', k) -> if a = a' then ForallAtom (a', k) else ForallAtom (a', sub k)
+  | Constr (c, k)      -> Constr (subst_atom_constr a b c, sub k)
+
+let rec subst_var_kind x y k =
+  let sub = subst_var_kind x y in
+  match k with
+  | Prop               -> Prop
+  | Arrow (k1, k2)     -> Arrow (sub k1, sub k2)
+  | ForallTerm (x, k)  -> if x = y then ForallTerm (x, k) else ForallTerm (x, sub k)
+  | ForallAtom (a', k) -> ForallAtom (a', sub k)
+  | Constr (c, k)      -> Constr (subst_var_constr x (Var (pure y)) c, sub k)

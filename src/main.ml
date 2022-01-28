@@ -32,7 +32,7 @@ let examples =
   ; App (Atom a, Atom b) =: App (Atom a, Atom b)
   ; Lam (a, Atom a) =: Lam (b, Atom b) ]
 
-let subkind_examples = [(Prop, Prop)]
+let subkind_examples = [(Prop, Prop); (ForallTerm (V "x", Prop), ForallTerm (V "y", Prop))]
 
 let kind_examples = [(F_Bot, Prop)]
 
