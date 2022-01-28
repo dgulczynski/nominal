@@ -1,5 +1,6 @@
 open Types
 open Common
+open Substitution
 
 module SolverEnv = struct
   type atom_assumption = AFresh of atom * var | ANeq of atom * atom
@@ -26,8 +27,8 @@ module SolverEnv = struct
     | AFresh (a, v) -> Some (add_fresh gamma a v)
 
   let subst_atom_constr a b = function
-    | ANeq (a1, a2) -> ANeq (sub a b a1, sub a b a2)
-    | AFresh (c, v) -> AFresh (sub a b c, v)
+    | ANeq (a1, a2) -> ANeq (subst a b a1, subst a b a2)
+    | AFresh (c, v) -> AFresh (subst a b c, v)
 
   let subst_var_constr x t = function
     | AFresh (a, x') when x = x' -> List.map (fun z -> AFresh (a, z)) (free_vars_of_term t)

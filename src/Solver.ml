@@ -2,6 +2,7 @@ open Types
 open SolverEnv
 open Common
 open Permutation
+open Substitution
 
 exception SolverException of string
 
@@ -132,8 +133,8 @@ module Solver = struct
         match SolverEnv.subst_atom env a b with
         | None      -> true
         | Some env' ->
-            let assmpts' = List.map (subst_atom_constr a b) assmpts in
-            let goal' = subst_atom_constr a b goal in
+            let assmpts' = List.map (subst_atom_in_constr a b) assmpts in
+            let goal' = subst_atom_in_constr a b goal in
             solve_ env' assmpts' goal' )
       | Some (swap, pi') ->
           let beta = Atom {perm= pi'; symb= b} in
@@ -144,8 +145,8 @@ module Solver = struct
         if occurs_check x t then false
         else
           let env' = SolverEnv.subst_var env x t in
-          let assmpts' = List.map (subst_var_constr x t) assmpts in
-          let goal' = subst_var_constr x t goal in
+          let assmpts' = List.map (subst_var_in_constr x t) assmpts in
+          let goal' = subst_var_in_constr x t goal in
           solve_ env' assmpts' goal'
     | Var {perm= pi; symb= x}, t | t, Var {perm= pi; symb= x} ->
         solve_assmpt_eq env assmpts goal $ Var (pure x) $ permute_term pi t
