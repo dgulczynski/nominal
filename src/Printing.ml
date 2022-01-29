@@ -1,11 +1,11 @@
 open Types
 open Permutation
 
-let string_of_list string_of_item = function
+let string_of_list string_of_item ?(sep = "; ") = function
   | []      -> "[]"
   | [x]     -> "[" ^ string_of_item x ^ "]"
   | x :: xs ->
-      List.fold_left (fun acc x -> acc ^ "; " ^ string_of_item x) ("[" ^ string_of_item x) xs ^ "]"
+      List.fold_left (fun acc x -> acc ^ sep ^ string_of_item x) ("[" ^ string_of_item x) xs ^ "]"
 
 let string_of_atom_arg (A a) = a
 
@@ -44,8 +44,8 @@ let rec string_of_formula =
   | F_Bot               -> "⊥"
   | F_Var x             -> string_of_fvar x
   | F_Constr c          -> string_of_constr c
-  | F_And (f1, f2)      -> string_of_binop f1 " ∧ " f2
-  | F_Or (f1, f2)       -> string_of_binop f1 " ∨ " f2
+  | F_And fs            -> string_of_list string_of_inner_formula ~sep:" ∧ " fs
+  | F_Or fs             -> string_of_list string_of_inner_formula ~sep:" ∨ " fs
   | F_Impl (f1, f2)     -> string_of_binop f1 " ⇒ " f2
   | F_ForallTerm (x, f) -> "∀ " ^ string_of_var_arg x ^ ". " ^ string_of_inner_formula f
   | F_ForallAtom (a, f) -> "∀ " ^ string_of_atom_arg a ^ ". " ^ string_of_inner_formula f
@@ -63,9 +63,9 @@ let rec string_of_formula =
       "fix " ^ string_of_var_arg x ^ "(" ^ string_of_var_arg y ^ ") : " ^ string_of_inner_formula f
 
 let rec string_of_kind = function
-  | Prop                     -> "Prop"
-  | Arrow ((Prop as k1), k2) -> string_of_kind k1 ^ " -> " ^ string_of_kind k2
-  | Arrow (k1, k2)           -> "(" ^ string_of_kind k1 ^ ") -> " ^ string_of_kind k2
-  | ForallAtom (a, k)        -> "∀ " ^ string_of_atom_arg a ^ ". " ^ string_of_kind k
-  | ForallTerm (x, k)        -> "∀ " ^ string_of_var_arg x ^ ". " ^ string_of_kind k
-  | Constr (c, k)            -> "[" ^ string_of_constr c ^ "] " ^ string_of_kind k
+  | K_Prop                       -> "*"
+  | K_Arrow ((K_Prop as k1), k2) -> string_of_kind k1 ^ " -> " ^ string_of_kind k2
+  | K_Arrow (k1, k2)             -> "(" ^ string_of_kind k1 ^ ") -> " ^ string_of_kind k2
+  | K_ForallAtom (a, k)          -> "∀ " ^ string_of_atom_arg a ^ ". " ^ string_of_kind k
+  | K_ForallTerm (x, k)          -> "∀ " ^ string_of_var_arg x ^ ". " ^ string_of_kind k
+  | K_Constr (c, k)              -> "[" ^ string_of_constr c ^ "] " ^ string_of_kind k

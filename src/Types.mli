@@ -40,27 +40,27 @@ val ( ==: ) : atom -> permuted_atom -> constr
 val ( =/=: ) : atom -> permuted_atom -> constr
 
 type kind =
-  | Prop
-  | Arrow      of kind * kind
-  | ForallTerm of var * kind
-  | ForallAtom of atom * kind
-  | Constr     of constr * kind
+  | K_Prop
+  | K_Arrow      of kind * kind
+  | K_ForallTerm of var * kind
+  | K_ForallAtom of atom * kind
+  | K_Constr     of constr * kind
 
 type fvar = var
 
 type formula =
-  | F_Var        of fvar
-  | F_Constr     of constr
-  | F_And        of formula * formula
-  | F_Or         of formula * formula
-  | F_Impl       of formula * formula
   | F_Bot
+  | F_Constr     of constr
+  | F_And        of formula list
+  | F_Or         of formula list
+  | F_Impl       of formula * formula
   | F_ForallTerm of var * formula
-  | F_ExistsTerm of var * formula
   | F_ForallAtom of atom * formula
+  | F_ExistsTerm of var * formula
   | F_ExistsAtom of atom * formula
   | F_ConstrAnd  of constr * formula
   | F_ConstrImpl of constr * formula
+  | F_Var        of fvar
   | F_Fun        of fvar * formula
   | F_App        of formula * formula
   | F_FunTerm    of var * formula

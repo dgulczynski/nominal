@@ -32,9 +32,9 @@ let examples =
   ; App (Atom a, Atom b) =: App (Atom a, Atom b)
   ; Lam (a, Atom a) =: Lam (b, Atom b) ]
 
-let subkind_examples = [(Prop, Prop); (ForallTerm (V "x", Prop), ForallTerm (V "y", Prop))]
+let subkind_examples = [(K_Prop, K_Prop); (K_ForallTerm (V "x", K_Prop), K_ForallTerm (V "y", K_Prop))]
 
-let kind_examples = [(F_Bot, Prop)]
+let kind_examples = [(F_Bot, K_Prop)]
 
 let _ = List.iter print_solver examples
 

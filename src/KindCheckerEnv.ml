@@ -56,5 +56,5 @@ module KindCheckerEnv = struct
     | BoundVar (x, y)  -> Printing.string_of_var_arg x ^ "↦" ^ Printing.string_of_var_arg y
     | BoundAtom (a, b) -> Printing.string_of_atom_arg a ^ "↦" ^ Printing.string_of_atom_arg b
 
-  let string_of = Printing.string_of_list string_of_kind_assumption
+  let string_of = Printing.string_of_list string_of_kind_assumption ~sep:", "
 end

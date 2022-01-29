@@ -38,17 +38,17 @@ let subst_var_in_constr x t = subst_in_constr id (subst_var_in_term x t)
 let rec subst_atom_in_kind a b k =
   let sub = subst_atom_in_kind a b in
   match k with
-  | Prop               -> Prop
-  | Arrow (k1, k2)     -> Arrow (sub k1, sub k2)
-  | ForallTerm (x, k)  -> ForallTerm (x, sub k)
-  | ForallAtom (a', k) -> if a = a' then ForallAtom (a', k) else ForallAtom (a', sub k)
-  | Constr (c, k)      -> Constr (subst_atom_in_constr a b c, sub k)
+  | K_Prop               -> K_Prop
+  | K_Arrow (k1, k2)     -> K_Arrow (sub k1, sub k2)
+  | K_ForallTerm (x, k)  -> K_ForallTerm (x, sub k)
+  | K_ForallAtom (a', k) -> if a = a' then K_ForallAtom (a', k) else K_ForallAtom (a', sub k)
+  | K_Constr (c, k)      -> K_Constr (subst_atom_in_constr a b c, sub k)
 
 let rec subst_var_in_kind x y k =
   let sub = subst_var_in_kind x y in
   match k with
-  | Prop               -> Prop
-  | Arrow (k1, k2)     -> Arrow (sub k1, sub k2)
-  | ForallTerm (x, k)  -> if x = y then ForallTerm (x, k) else ForallTerm (x, sub k)
-  | ForallAtom (a', k) -> ForallAtom (a', sub k)
-  | Constr (c, k)      -> Constr (subst_var_in_constr x (Var (pure y)) c, sub k)
+  | K_Prop               -> K_Prop
+  | K_Arrow (k1, k2)     -> K_Arrow (sub k1, sub k2)
+  | K_ForallTerm (x, k)  -> if x = y then K_ForallTerm (x, k) else K_ForallTerm (x, sub k)
+  | K_ForallAtom (a', k) -> K_ForallAtom (a', sub k)
+  | K_Constr (c, k)      -> K_Constr (subst_var_in_constr x (Var (pure y)) c, sub k)
