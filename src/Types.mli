@@ -11,21 +11,21 @@ type permuted_atom = (atom, atom) permuted
 type permuted_var = (atom, var) permuted
 
 type term =
-  | Var  of permuted_var
-  | Atom of permuted_atom
-  | Lam  of permuted_atom * term
-  | App  of term * term
-  | Fun  of symbol
+  | T_Var  of permuted_var
+  | T_Atom of permuted_atom
+  | T_Lam  of permuted_atom * term
+  | T_App  of term * term
+  | T_Fun  of symbol
 
-type shape = SVar of var | SAtom | SLam of shape | SApp of shape * shape | SFun of symbol
+type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of symbol
 
 type constr =
-  | Fresh    of atom * term
-  | Eq       of term * term
-  | Shape    of term * term
-  | Subshape of term * term
-  | AtomEq   of atom * permuted_atom
-  | AtomNeq  of atom * permuted_atom
+  | C_Fresh    of atom * term
+  | C_Eq       of term * term
+  | C_Shape    of term * term
+  | C_Subshape of term * term
+  | C_AtomEq   of atom * permuted_atom
+  | C_AtomNeq  of atom * permuted_atom
 
 val ( #: ) : atom -> term -> constr
 

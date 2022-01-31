@@ -1,10 +1,10 @@
 profile = ocamlformat
-break-cases = toplevel
-break-fun-decl = smart
+break-cases = fit-or-vertical
+break-fun-decl = fit-or-vertical
 wrap-comments = true
 match-indent-nested = auto
-nested-match = align
 margin = 100
 align-cases
 align-constructors-decl
 align-variants-decl
+indicate-nested-or-patterns = space

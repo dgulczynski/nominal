@@ -10,7 +10,9 @@ let reverse = List.rev
 
 let free_vars_of pi = List.fold_left (fun acc (a, b) -> a :: b :: acc) [] pi
 
-let inner_swap = function [] -> None | swap :: rest -> Some (swap, rest)
+let inner_swap = function
+  | []           -> None
+  | swap :: rest -> Some (swap, rest)
 
 let rec outer_swap = function
   | []      -> None

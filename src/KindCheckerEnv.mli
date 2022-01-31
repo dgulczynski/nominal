@@ -4,24 +4,22 @@ val fresh_var : unit -> var
 
 val fresh_atom : unit -> atom
 
-module KindCheckerEnv : sig
-  type t
+type t
 
-  val empty : t
+val empty : t
 
-  val map_var : t -> var -> var -> t
+val map_var : t -> var -> var -> t
 
-  val find_var : t -> var -> var option
+val find_var : t -> var -> var option
 
-  val map_atom : t -> atom -> atom -> t
+val map_atom : t -> atom -> atom -> t
 
-  val find_atom : t -> atom -> atom option
+val find_atom : t -> atom -> atom option
 
-  val add_constr : t -> constr -> t
+val add_constr : t -> constr -> t
 
-  val mem_constr : t -> constr -> bool
+val mem_constr : t -> constr -> bool
 
-  val constraints_of : t -> constr list
+val constraints_of : t -> constr list
 
-  val string_of : t -> string
-end
+val string_of : t -> string

@@ -21,19 +21,19 @@ let string_of_var_arg (V v) = v
 let string_of_var {perm= pi; symb= x} = string_of_permutation pi ^ string_of_var_arg x
 
 let rec string_of_term = function
-  | Atom a       -> string_of_atom a
-  | Var v        -> string_of_var v
-  | Lam (a, t)   -> string_of_atom a ^ "." ^ string_of_term t
-  | App (t1, t2) -> string_of_term t1 ^ " " ^ string_of_term t2
-  | Fun f        -> f
+  | T_Atom a       -> string_of_atom a
+  | T_Var v        -> string_of_var v
+  | T_Lam (a, t)   -> string_of_atom a ^ "." ^ string_of_term t
+  | T_App (t1, t2) -> string_of_term t1 ^ " " ^ string_of_term t2
+  | T_Fun f        -> f
 
 let string_of_constr = function
-  | Eq (t1, t2)        -> string_of_term t1 ^ " =: " ^ string_of_term t2
-  | Fresh (a, t)       -> string_of_atom_arg a ^ " #: " ^ string_of_term t
-  | AtomEq (a, alpha)  -> string_of_atom_arg a ^ " ==: " ^ string_of_atom alpha
-  | AtomNeq (a, alpha) -> string_of_atom_arg a ^ " =/=: " ^ string_of_atom alpha
-  | Shape (t1, t2)     -> string_of_term t1 ^ " ~: " ^ string_of_term t2
-  | Subshape (t1, t2)  -> string_of_term t1 ^ " <: " ^ string_of_term t2
+  | C_Eq (t1, t2)        -> string_of_term t1 ^ " =: " ^ string_of_term t2
+  | C_Fresh (a, t)       -> string_of_atom_arg a ^ " #: " ^ string_of_term t
+  | C_AtomEq (a, alpha)  -> string_of_atom_arg a ^ " ==: " ^ string_of_atom alpha
+  | C_AtomNeq (a, alpha) -> string_of_atom_arg a ^ " =/=: " ^ string_of_atom alpha
+  | C_Shape (t1, t2)     -> string_of_term t1 ^ " ~: " ^ string_of_term t2
+  | C_Subshape (t1, t2)  -> string_of_term t1 ^ " <: " ^ string_of_term t2
 
 let string_of_fvar (V x) = x
 

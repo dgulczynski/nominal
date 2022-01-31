@@ -11,33 +11,33 @@ type permuted_atom = (atom, atom) permuted
 type permuted_var = (atom, var) permuted
 
 type term =
-  | Var  of permuted_var
-  | Atom of permuted_atom
-  | Lam  of permuted_atom * term
-  | App  of term * term
-  | Fun  of symbol
+  | T_Var  of permuted_var
+  | T_Atom of permuted_atom
+  | T_Lam  of permuted_atom * term
+  | T_App  of term * term
+  | T_Fun  of symbol
 
-type shape = SVar of var | SAtom | SLam of shape | SApp of shape * shape | SFun of symbol
+type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of symbol
 
 type constr =
-  | Fresh    of atom * term
-  | Eq       of term * term
-  | Shape    of term * term
-  | Subshape of term * term
-  | AtomEq   of atom * permuted_atom
-  | AtomNeq  of atom * permuted_atom
+  | C_Fresh    of atom * term
+  | C_Eq       of term * term
+  | C_Shape    of term * term
+  | C_Subshape of term * term
+  | C_AtomEq   of atom * permuted_atom
+  | C_AtomNeq  of atom * permuted_atom
 
-let ( #: ) a t = Fresh (a, t)
+let ( #: ) a t = C_Fresh (a, t)
 
-let ( =: ) t1 t2 = Eq (t1, t2)
+let ( =: ) t1 t2 = C_Eq (t1, t2)
 
-let ( ~: ) t1 t2 = Shape (t1, t2)
+let ( ~: ) t1 t2 = C_Shape (t1, t2)
 
-let ( <: ) t1 t2 = Subshape (t1, t2)
+let ( <: ) t1 t2 = C_Subshape (t1, t2)
 
-let ( ==: ) a alpha = AtomEq (a, alpha)
+let ( ==: ) a alpha = C_AtomEq (a, alpha)
 
-let ( =/=: ) a alpha = AtomNeq (a, alpha)
+let ( =/=: ) a alpha = C_AtomNeq (a, alpha)
 
 type kind =
   | K_Prop
@@ -49,6 +49,7 @@ type kind =
 type fvar = var
 
 type formula =
+  (* Prop *)
   | F_Bot
   | F_Constr     of constr
   | F_And        of formula list
@@ -60,11 +61,16 @@ type formula =
   | F_ExistsAtom of atom * formula
   | F_ConstrAnd  of constr * formula
   | F_ConstrImpl of constr * formula
+  (* In env *)
   | F_Var        of fvar
+  (* Arrow *)
   | F_Fun        of fvar * formula
   | F_App        of formula * formula
+  (* Forall term *)
   | F_FunTerm    of var * formula
   | F_AppTerm    of formula * term
+  (* forall arom *)
   | F_FunAtom    of atom * formula
   | F_AppAtom    of formula * permuted_atom
+  (* in notes *)
   | F_Fix        of fvar * fvar * formula
