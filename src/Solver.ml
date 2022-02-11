@@ -63,14 +63,16 @@ and solve_eq env assmpts e1 e2 =
   | T_Atom {perm= []; symb= a}, T_Atom {perm; symb= b} -> (
     match outer_swap perm with
     | None            -> a = b
-    | Some (swap, pi) -> solve_eq_swap env assmpts a swap $ T_Atom {perm= pi; symb= b} )
+    | Some (swap, pi) ->
+        solve_swap_cases env a swap (const assmpts) (fun a ->
+            T_Atom a =: T_Atom {perm= pi; symb= b} ) )
   | T_Atom {perm= pi; symb= a}, T_Atom b ->
       solve_eq env assmpts $ T_Atom (pure a) $ T_Atom (permute (reverse pi) b)
   | T_Atom _, _ -> false
   | T_Var {perm= []; symb= x}, T_Var {perm= pi; symb= x'} when x = x' ->
       permutation_idempotent env assmpts pi x
   | T_Var {perm= pi; symb= x}, T_Var x' ->
-      solve_eq env assmpts $ T_Var (pure x) $ T_Var (permute (reverse pi) x')
+      solve_eq env assmpts $ var x $ T_Var (permute (reverse pi) x')
   | T_Var _, _ -> false
   | T_Lam (({perm= pi; symb= a1} as alpha1), t1), T_Lam (alpha2, t2) ->
       solve_fresh env assmpts a1 $ permute_term (reverse pi) e2
@@ -80,11 +82,6 @@ and solve_eq env assmpts e1 e2 =
   | T_App _, _ -> false
   | T_Fun f, T_Fun f' -> f = f'
   | T_Fun _, _ -> false
-
-and solve_eq_swap env assmpts a (alpha1, alpha2) e =
-  solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) (T_Atom (pure a) =: e)
-  && solve_ env ((a =/=: alpha1) :: (a ==: alpha2) :: assmpts) (T_Atom alpha1 =: e)
-  && solve_ env ((a ==: alpha1) :: assmpts) (T_Atom alpha2 =: e)
 
 and permutation_idempotent env assmpts pi x =
   let test ({perm= pi; symb= a} as alpha) =
@@ -122,21 +119,20 @@ and solve_assmpt_fresh env assmpts goal a = function
       (* Here we use Option.get because we are sure that the permutation is non-empty, because if it
          was, it would already be merged into the env by the reduce function *)
       let swap, pi = Option.get $ outer_swap pi in
-      solve_assmpt_fresh_swap env assmpts a swap (T_Atom {perm= pi; symb= b}) goal
+      solve_swap_cases env a swap
+        (fun a -> fresh a (T_Atom {perm= pi; symb= b}) :: assmpts)
+        (const goal)
   | T_Var {perm= pi; symb= x}  ->
       (* See comment above: we are sure the permutation is non-empty here *)
       let swap, pi = Option.get $ outer_swap pi in
-      solve_assmpt_fresh_swap env assmpts a swap (T_Var {perm= pi; symb= x}) goal
+      solve_swap_cases env a swap
+        (fun a -> fresh a (T_Var {perm= pi; symb= x}) :: assmpts)
+        (const goal)
   | T_Lam (alpha, t)           ->
       solve_ env ((a ==: alpha) :: assmpts) goal
       && solve_ env ((a =/=: alpha) :: (a #: t) :: assmpts) goal
   | T_App (t1, t2)             -> solve_ env ((a #: t1) :: (a #: t2) :: assmpts) goal
   | T_Fun _                    -> solve_ env assmpts goal
-
-and solve_assmpt_fresh_swap env assmpts a (alpha1, alpha2) e goal =
-  solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: (a #: e) :: assmpts) goal
-  && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: fresh alpha2 e :: assmpts) goal
-  && solve_ env ((a ==: alpha2) :: fresh alpha1 e :: assmpts) goal
 
 and solve_assmpt_eq env assmpts goal t1 t2 =
   match (t1, t2) with
@@ -150,8 +146,9 @@ and solve_assmpt_eq env assmpts goal t1 t2 =
           let goal = subst_atom_in_constr a b goal in
           solve_ env assmpts goal )
     | Some (swap, pi) ->
-        let beta = T_Atom {perm= pi; symb= b} in
-        solve_assmpt_eq_swap env assmpts a swap beta goal )
+        solve_swap_cases env a swap
+          (fun a -> (T_Atom a =: T_Atom {perm= pi; symb= b}) :: assmpts)
+          (const goal) )
   | T_Atom {perm= pi; symb= a}, T_Atom beta ->
       solve_assmpt_eq env assmpts goal $ T_Atom {perm= []; symb= a} $ T_Atom (permute pi beta)
   | T_Atom _, _ -> true
@@ -164,7 +161,7 @@ and solve_assmpt_eq env assmpts goal t1 t2 =
         let goal = subst_var_in_constr x t goal in
         solve_ env (env_assmpts @ assmpts) goal
   | T_Var {perm= pi; symb= x}, t | t, T_Var {perm= pi; symb= x} ->
-      solve_assmpt_eq env assmpts goal $ T_Var (pure x) $ permute_term pi t
+      solve_assmpt_eq env assmpts goal $ var x $ permute_term pi t
   | T_Lam (a1, t1), T_Lam (a2, t2) ->
       solve_ env (fresh a1 (T_Lam (a2, t2)) :: (t1 =: permute_term [(a1, a2)] t2) :: assmpts) goal
   | T_Lam _, _ -> true
@@ -173,10 +170,10 @@ and solve_assmpt_eq env assmpts goal t1 t2 =
   | T_Fun f, T_Fun f' -> f != f' || solve_ env assmpts goal
   | T_Fun _, _ -> true
 
-and solve_assmpt_eq_swap env assmpts a (alpha1, alpha2) e goal =
-  solve_ env ((T_Atom (pure a) =: e) :: (a =/=: alpha1) :: (a =/=: alpha2) :: assmpts) goal
-  && solve_ env ((T_Atom alpha2 =: e) :: (a ==: alpha1) :: assmpts) goal
-  && solve_ env ((T_Atom alpha1 =: e) :: (a =/=: alpha1) :: (a ==: alpha2) :: assmpts) goal
+and solve_swap_cases env a (alpha1, alpha2) assmpt_gen goal_gen =
+  solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpt_gen (pure a)) (goal_gen (pure a))
+  && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: assmpt_gen alpha2) (goal_gen alpha2)
+  && solve_ env ((a ==: alpha2) :: assmpt_gen alpha1) (goal_gen alpha1)
 
 let solve_with_env env = solve_ env []
 
