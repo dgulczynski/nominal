@@ -15,7 +15,7 @@ let print_subkind_solver (k1, k2) =
 let print_kind_solver (formula, kind) =
   print_result
   $ string_of_formula formula ^ " : " ^ string_of_kind kind
-  $ KindChecker.check kind formula
+  $ KindChecker.kind_check KindCheckerEnv.empty kind formula
 
 let examples =
   let a_ = A "a" and b_ = A "b" and c_ = A "c" in

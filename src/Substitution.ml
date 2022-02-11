@@ -20,9 +20,9 @@ let rec subst_in_term sub_atom sub_var = function
                                    , subst_in_term sub_atom sub_var t2 )
   | T_Fun f                   -> T_Fun f
 
-let subst_atom_in_term a b = subst_in_term (subst a b) (fun x -> T_Var (pure x))
+let subst_atom_in_term a b = subst_in_term (subst a b) (fun x -> var x)
 
-let subst_var_in_term x t = subst_in_term id (fun y -> if y = x then t else T_Var (pure y))
+let subst_var_in_term x t = subst_in_term id (fun y -> if y = x then t else var y)
 
 let subst_in_constr sub_atom sub_term = function
   | C_Fresh (a, t)       -> C_Fresh (sub_atom a, sub_term t)
@@ -52,4 +52,4 @@ let rec subst_var_in_kind x y k =
   | K_Arrow (k1, k2)     -> K_Arrow (sub k1, sub k2)
   | K_ForallTerm (x, k)  -> if x = y then K_ForallTerm (x, k) else K_ForallTerm (x, sub k)
   | K_ForallAtom (a', k) -> K_ForallAtom (a', sub k)
-  | K_Constr (c, k)      -> K_Constr (subst_var_in_constr x (T_Var (pure y)) c, sub k)
+  | K_Constr (c, k)      -> K_Constr (subst_var_in_constr x (var y) c, sub k)

@@ -44,3 +44,5 @@ let rec free_vars_of_term = function
   | T_Lam (_, t)             -> free_vars_of_term t
   | T_App (t1, t2)           -> free_vars_of_term t1 @ free_vars_of_term t2
   | T_Fun _ | T_Atom _       -> []
+
+let var x = T_Var (pure x)

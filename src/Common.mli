@@ -24,3 +24,5 @@ val permute_term : atom permutation -> term -> term
 val occurs_check : var -> term -> bool
 
 val free_vars_of_term : term -> var list
+
+val var : var -> term

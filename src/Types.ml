@@ -46,7 +46,7 @@ type kind =
   | K_ForallAtom of atom * kind
   | K_Constr     of constr * kind
 
-type fvar = var
+type fvar = FV of string
 
 type formula =
   (* Prop *)
@@ -73,4 +73,4 @@ type formula =
   | F_FunAtom    of atom * formula
   | F_AppAtom    of formula * permuted_atom
   (* in notes *)
-  | F_Fix        of fvar * fvar * formula
+  | F_Fix        of fvar * var * formula

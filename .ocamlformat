@@ -7,4 +7,4 @@ margin = 100
 align-cases
 align-constructors-decl
 align-variants-decl
-indicate-nested-or-patterns = space
+indicate-nested-or-patterns = unsafe-no

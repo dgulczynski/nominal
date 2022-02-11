@@ -4,6 +4,8 @@ val fresh_var : unit -> var
 
 val fresh_atom : unit -> atom
 
+val fresh_fvar : unit -> fvar
+
 type t
 
 val empty : t
@@ -15,6 +17,10 @@ val find_var : t -> var -> var option
 val map_atom : t -> atom -> atom -> t
 
 val find_atom : t -> atom -> atom option
+
+val map_fvar : t -> fvar -> kind -> t
+
+val find_fvar : t -> fvar -> kind option
 
 val add_constr : t -> constr -> t
 
