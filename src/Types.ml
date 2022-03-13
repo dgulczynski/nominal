@@ -49,7 +49,6 @@ type kind =
 type fvar = FV of string
 
 type formula =
-  (* Prop *)
   | F_Bot
   | F_Constr     of constr
   | F_And        of formula list
@@ -61,16 +60,11 @@ type formula =
   | F_ExistsAtom of atom * formula
   | F_ConstrAnd  of constr * formula
   | F_ConstrImpl of constr * formula
-  (* In env *)
   | F_Var        of fvar
-  (* Arrow *)
   | F_Fun        of fvar * formula
   | F_App        of formula * formula
-  (* Forall term *)
   | F_FunTerm    of var * formula
   | F_AppTerm    of formula * term
-  (* forall arom *)
   | F_FunAtom    of atom * formula
   | F_AppAtom    of formula * permuted_atom
-  (* in notes *)
   | F_Fix        of fvar * var * formula

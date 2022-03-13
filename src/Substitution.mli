@@ -9,3 +9,7 @@ val subst_var_in_constr : var -> term -> constr -> constr
 val subst_atom_in_kind : atom -> atom -> kind -> kind
 
 val subst_var_in_kind : var -> var -> kind -> kind
+
+val subst_atom_in_formula : atom -> atom -> formula -> formula
+
+val subst_var_in_formula : var -> term -> formula -> formula

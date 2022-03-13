@@ -17,6 +17,8 @@ val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
 
 val hd_opt : 'a list -> 'a option
 
+val to_option : 'a -> bool -> 'a option
+
 val find_first : ('a -> bool) -> 'a list -> 'a option * 'a list
 
 val permute_term : atom permutation -> term -> term

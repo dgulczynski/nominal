@@ -19,6 +19,8 @@ let hd_opt = function
 
 let const x _ = x
 
+let to_option a test = if test then Some a else None
+
 let rec find_first test = function
   | [] -> (None, [])
   | x :: xs when test x -> (Some x, xs)
