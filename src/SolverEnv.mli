@@ -20,7 +20,7 @@ val add_same_shape : t -> var -> var -> t
 
 val are_same_shape : t -> var -> var -> bool
 
-val add_subshape : t -> term -> var -> t
+val add_subshape : t -> term -> var -> t option
 
 val get_subshapes : t -> var -> term list
 

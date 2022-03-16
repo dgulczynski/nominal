@@ -202,6 +202,8 @@ and solve_assm_shape env assms goal t1 t2 =
   | T_Var {symb= x1; _}, T_Var {symb= x2; _} ->
       solve_ (SolverEnv.add_same_shape env x1 x2) assms goal
   | T_Var {symb= x; _}, t ->
+      occurs_check x t
+      ||
       let t = term_of_shape (shape_of_term t) in
       let env, env_assms = SolverEnv.subst_var env x t in
       let assms = List.map (subst_var_in_constr x t) (env_assms @ assms) in
@@ -217,7 +219,10 @@ and solve_assm_shape env assms goal t1 t2 =
   | T_Fun _, _ -> true
 
 and solve_assm_subshape env assms goal t1 = function
-  | T_Var {symb= x; _} -> solve_ (SolverEnv.add_subshape env t1 x) assms goal
+  | T_Var {symb= x; _} -> (
+    match SolverEnv.add_subshape env t1 x with
+    | Some env -> solve_ env assms goal
+    | None     -> true )
   | T_Lam (_, t2)      -> solve_assm_shape_and_subshape env assms goal t1 t2
   | T_App (t2, t2')    ->
       solve_assm_shape_and_subshape env assms goal t1 t2

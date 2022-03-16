@@ -24,7 +24,7 @@ let add_same_shape gamma x y =
 let add_subshape gamma t x =
   (* TODO: this function should utilise some kind of union-find, this trivial implementation won't
      work in general case *)
-  A_Subshape (t, x) :: gamma
+  if occurs_check x t then None else Some (A_Subshape (t, x) :: gamma)
 
 let is_neq gamma a1 a2 =
   List.exists
@@ -39,7 +39,7 @@ let add_constr gamma = function
   | A_Neq (a1, a2)    -> add_neq gamma a1 a2
   | A_Fresh (a, v)    -> Some (add_fresh gamma a v)
   | A_Shape (x, y)    -> Some (add_same_shape gamma x y)
-  | A_Subshape (t, x) -> Some (add_subshape gamma t x)
+  | A_Subshape (t, x) -> add_subshape gamma t x
 
 let subst_atom_constr a b = function
   | A_Neq (a1, a2)                  -> A_Neq (subst a b a1, subst a b a2)
