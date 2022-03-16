@@ -27,12 +27,19 @@ let rec string_of_term = function
   | T_App (t1, t2) -> string_of_term t1 ^ " " ^ string_of_term t2
   | T_Fun f        -> f
 
+let rec string_of_shape = function
+  | S_Var x        -> string_of_var_arg x
+  | S_Atom         -> "_"
+  | S_Lam s        -> "_." ^ string_of_shape s
+  | S_App (s1, s2) -> string_of_shape s1 ^ " " ^ string_of_shape s2
+  | S_Fun f        -> f
+
 let string_of_constr = function
-  | C_Eq (t1, t2)        -> string_of_term t1 ^ " =: " ^ string_of_term t2
   | C_Fresh (a, t)       -> string_of_atom_arg a ^ " #: " ^ string_of_term t
+  | C_Eq (t1, t2)        -> string_of_term t1 ^ " =: " ^ string_of_term t2
   | C_AtomEq (a, alpha)  -> string_of_atom_arg a ^ " ==: " ^ string_of_atom alpha
   | C_AtomNeq (a, alpha) -> string_of_atom_arg a ^ " =/=: " ^ string_of_atom alpha
-  | C_Shape (t1, t2)     -> string_of_term t1 ^ " ~: " ^ string_of_term t2
+  | C_Shape (t1, t2)     -> string_of_term t1 ^ " ~=: " ^ string_of_term t2
   | C_Subshape (t1, t2)  -> string_of_term t1 ^ " <: " ^ string_of_term t2
 
 let string_of_fvar (FV x) = x

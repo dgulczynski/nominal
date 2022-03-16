@@ -27,7 +27,9 @@ let examples =
   ; a_ #: (permute_term [] (T_Lam (b, T_Atom b)))
   ; a_ #: (permute_term pi (T_Lam (b, T_Atom b)))
   ; T_App (T_Atom a, T_Atom b) =: T_App (T_Atom a, T_Atom b)
-  ; T_Lam (a, T_Atom a) =: T_Lam (b, T_Atom b) ]
+  ; T_Lam (a, T_Atom a) =: T_Lam (b, T_Atom b)
+  ; T_Lam (a, T_Atom a) =~: T_Lam (b, T_Atom b)
+  ; T_Atom a <: T_Lam (b, T_Atom b) ]
 
 let subkind_examples =
   [(K_Prop, K_Prop); (K_ForallTerm (V "x", K_Prop), K_ForallTerm (V "y", K_Prop))]

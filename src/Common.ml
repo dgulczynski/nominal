@@ -19,6 +19,8 @@ let hd_opt = function
 
 let const x _ = x
 
+let pair_eq (x1, x2) (y1, y2) = (x1 = y1 && x2 = y2) || (x1 = y2 && x2 = y1)
+
 let to_option a test = if test then Some a else None
 
 let rec find_first test = function
@@ -47,4 +49,38 @@ let rec free_vars_of_term = function
   | T_App (t1, t2)           -> free_vars_of_term t1 @ free_vars_of_term t2
   | T_Fun _ | T_Atom _       -> []
 
+let atom a = T_Atom (pure a)
+
 let var x = T_Var (pure x)
+
+let fresh_generator prefix =
+  let counter = ref 0 in
+  fun () ->
+    counter := !counter + 1 ;
+    prefix ^ string_of_int !counter
+
+let fresh_var =
+  let generate = fresh_generator "_x" in
+  fun () -> V (generate ())
+
+let fresh_atom =
+  let generate = fresh_generator "_a" in
+  fun () -> A (generate ())
+
+let fresh_fvar =
+  let generate = fresh_generator "_X" in
+  fun () -> FV (generate ())
+
+let rec shape_of_term = function
+  | T_Var {symb= x; _} -> S_Var x
+  | T_Atom _           -> S_Atom
+  | T_Lam (_, t)       -> S_Lam (shape_of_term t)
+  | T_App (t1, t2)     -> S_App (shape_of_term t1, shape_of_term t2)
+  | T_Fun f            -> S_Fun f
+
+let rec term_of_shape = function
+  | S_Var x        -> var x
+  | S_Atom         -> atom $ fresh_atom ()
+  | S_Lam s        -> T_Lam (pure $ fresh_atom (), term_of_shape s)
+  | S_App (s1, s2) -> T_App (term_of_shape s1, term_of_shape s2)
+  | S_Fun f        -> T_Fun f

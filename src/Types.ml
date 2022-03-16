@@ -31,7 +31,7 @@ let ( #: ) a t = C_Fresh (a, t)
 
 let ( =: ) t1 t2 = C_Eq (t1, t2)
 
-let ( ~: ) t1 t2 = C_Shape (t1, t2)
+let ( =~: ) t1 t2 = C_Shape (t1, t2)
 
 let ( <: ) t1 t2 = C_Subshape (t1, t2)
 

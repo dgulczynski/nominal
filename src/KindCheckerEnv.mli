@@ -1,11 +1,5 @@
 open Types
 
-val fresh_var : unit -> var
-
-val fresh_atom : unit -> atom
-
-val fresh_fvar : unit -> fvar
-
 type t
 
 val empty : t

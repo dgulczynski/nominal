@@ -31,7 +31,7 @@ val ( #: ) : atom -> term -> constr
 
 val ( =: ) : term -> term -> constr
 
-val ( ~: ) : term -> term -> constr
+val ( =~: ) : term -> term -> constr
 
 val ( <: ) : term -> term -> constr
 

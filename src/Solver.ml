@@ -3,7 +3,7 @@ open Common
 open Permutation
 open Substitution
 
-exception SolverException of string
+(* exception SolverException of string *)
 
 let fresh {perm= pi; symb= a} t = a #: (permute_term (reverse pi) t)
 
@@ -50,13 +50,12 @@ and solve_by_case env assmpts = function
   | C_Subshape (t1, t2)  -> solve_subshape env assmpts t1 t2
 
 and solve_assmpt_by_case env assmpts goal = function
-  | C_Eq (t1, t2) -> solve_assmpt_eq env assmpts goal t1 t2
-  | C_AtomEq (a, b) -> solve_assmpt_eq env assmpts goal (T_Atom (pure a)) (T_Atom b)
-  | C_Fresh (a, t) -> solve_assmpt_fresh env assmpts goal a t
-  | C_AtomNeq (a, b) -> solve_assmpt_fresh env assmpts goal a (T_Atom b)
-  | (C_Shape _ | C_Subshape _) as assmpt ->
-      (* TODO: implement solve_assmpt_shape and solve_assmpt_subshape *)
-      raise $ SolverException ("Solver isn't yet able to reduce " ^ Printing.string_of_constr assmpt)
+  | C_Eq (t1, t2)       -> solve_assmpt_eq env assmpts goal t1 t2
+  | C_AtomEq (a, b)     -> solve_assmpt_eq env assmpts goal (T_Atom (pure a)) (T_Atom b)
+  | C_Fresh (a, t)      -> solve_assmpt_fresh env assmpts goal a t
+  | C_AtomNeq (a, b)    -> solve_assmpt_fresh env assmpts goal a (T_Atom b)
+  | C_Shape (t1, t2)    -> solve_assmpt_shape env assmpts goal t1 t2
+  | C_Subshape (t1, t2) -> solve_assmpt_subshape env assmpts goal t1 t2
 
 and solve_eq env assmpts e1 e2 =
   match (e1, e2) with
@@ -80,7 +79,7 @@ and solve_eq env assmpts e1 e2 =
   | T_Lam _, _ -> false
   | T_App (t1, t2), T_App (t1', t2') -> solve_eq env assmpts t1 t1' && solve_eq env assmpts t2 t2'
   | T_App _, _ -> false
-  | T_Fun f, T_Fun f' -> f = f'
+  | T_Fun f1, T_Fun f2 -> f1 = f2
   | T_Fun _, _ -> false
 
 and permutation_idempotent env assmpts pi x =
@@ -109,10 +108,40 @@ and solve_fresh_swap env assmpts a (alpha1, alpha2) e =
   && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: assmpts) $ fresh alpha2 e
   && solve_ env ((a ==: alpha2) :: assmpts) $ fresh alpha1 e
 
-(* TODO: Implement solve_shape and solve_subshape *)
-and solve_shape _ _ _ _ = false
+and solve_shape env assms t1 t2 =
+  match (t1, t2) with
+  | T_Var {symb= x1; _}, T_Var {symb= x2; _} -> SolverEnv.are_same_shape env x1 x2
+  | T_Var _, _ -> false
+  | T_Atom _, T_Atom _ -> true
+  | T_Atom _, _ -> false
+  | T_Lam (_, t1), T_Lam (_, t2) -> solve_shape env assms t1 t2
+  | T_Lam _, _ -> false
+  | T_App (t1, t1'), T_App (t2, t2') -> solve_shape env assms t1 t2 && solve_shape env assms t1' t2'
+  | T_App _, _ -> false
+  | T_Fun f1, T_Fun f2 -> f1 = f2
+  | T_Fun _, _ -> false
 
-and solve_subshape _ _ _ _ = false
+and solve_subshape env assms t1 = function
+  | T_Var {symb= x; _} ->
+      (*  (t2 <: x) ∈ G         (t2 <: x) ∈ G   *)
+      (*  G |- t1 ~=: t2        G |- t1 <: t2   *)
+      (* -----------------    ----------------- *)
+      (*   G |- t1 <: x          G |- t1 <: x   *)
+      List.exists (solve_subshape_or_shape_eq env assms t1) $ SolverEnv.get_subshapes env x
+  | T_Lam (_, t2)      ->
+      (*   G |- t1 ~=: t2         G |- t1 <: t2   *)
+      (* -----------------      ----------------- *)
+      (*  G |- t1 <: _.t2        G |- t1 <: _.t2  *)
+      solve_subshape_or_shape_eq env assms t1 t2
+  | T_App (t2, t2')    ->
+      (*   G |- t1 ~=: t2         G |- t1 <: t2         G |- t1 ~=: t2'        G |- t1 <: t2'    *)
+      (* -------------------   -------------------   --------------------   -------------------- *)
+      (*  G |- t1 <: t2 t2'     G |- t1 <: t2 t2'      G |- t1 <: t2 t2'      G |- t1 <: t2 t2'  *)
+      solve_subshape_or_shape_eq env assms t1 t2 || solve_subshape_or_shape_eq env assms t1 t2'
+  | T_Atom _ | T_Fun _ -> false
+
+and solve_subshape_or_shape_eq env assms t1 t2 =
+  solve_shape env assms t1 t2 || solve_subshape env assms t1 t2
 
 and solve_assmpt_fresh env assmpts goal a = function
   | T_Atom {perm= pi; symb= b} ->
@@ -174,6 +203,36 @@ and solve_swap_cases env a (alpha1, alpha2) assmpt_gen goal_gen =
   solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assmpt_gen (pure a)) (goal_gen (pure a))
   && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: assmpt_gen alpha2) (goal_gen alpha2)
   && solve_ env ((a ==: alpha2) :: assmpt_gen alpha1) (goal_gen alpha1)
+
+and solve_assmpt_shape env assms goal t1 t2 =
+  match (t1, t2) with
+  | T_Var {symb= x1; _}, T_Var {symb= x2; _} ->
+      solve_ (SolverEnv.add_same_shape env x1 x2) assms goal
+  | T_Var {symb= x; _}, t ->
+      let t = term_of_shape (shape_of_term t) in
+      let env, env_assms = SolverEnv.subst_var env x t in
+      let assms = List.map (subst_var_in_constr x t) (env_assms @ assms) in
+      solve_ env assms goal
+  | _, T_Var _ -> solve_assmpt_shape env assms goal t2 t1
+  | T_Atom _, T_Atom _ -> solve_ env assms goal
+  | T_Atom _, _ -> true
+  | T_Lam (_, t1), T_Lam (_, t2) -> solve_ env ((t1 =~: t2) :: assms) goal
+  | T_Lam _, _ -> true
+  | T_App (t1, t1'), T_App (t2, t2') -> solve_ env ((t1 =~: t2) :: (t1' =~: t2') :: assms) goal
+  | T_App _, _ -> true
+  | T_Fun f1, T_Fun f2 -> f1 != f2 || solve_ env assms goal
+  | T_Fun _, _ -> true
+
+and solve_assmpt_subshape env assms goal t1 = function
+  | T_Var {symb= x; _} -> solve_ (SolverEnv.add_subshape env t1 x) assms goal
+  | T_Lam (_, t2)      -> solve_assmpt_shape_and_subshape env assms goal t1 t2
+  | T_App (t2, t2')    ->
+      solve_assmpt_shape_and_subshape env assms goal t1 t2
+      && solve_assmpt_shape_and_subshape env assms goal t1 t2'
+  | T_Atom _ | T_Fun _ -> true
+
+and solve_assmpt_shape_and_subshape env assms goal t1 t2 =
+  solve_assmpt_shape env assms goal t1 t2 && solve_assmpt_subshape env assms goal t1 t2
 
 let solve_with_env env = solve_ env []
 

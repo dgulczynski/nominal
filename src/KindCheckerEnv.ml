@@ -1,24 +1,6 @@
 open Types
 open Common
 
-let fresh_generator prefix =
-  let counter = ref 0 in
-  fun () ->
-    counter := !counter + 1 ;
-    prefix ^ string_of_int !counter
-
-let fresh_var =
-  let generate = fresh_generator "_x" in
-  fun () -> V (generate ())
-
-let fresh_atom =
-  let generate = fresh_generator "_a" in
-  fun () -> A (generate ())
-
-let fresh_fvar =
-  let generate = fresh_generator "_X" in
-  fun () -> FV (generate ())
-
 type kind_assumption =
   | Constr    of constr
   | BoundVar  of var * var
