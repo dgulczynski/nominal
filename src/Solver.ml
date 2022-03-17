@@ -10,7 +10,7 @@ let fresh {perm= pi; symb= a} t = a #: (permute_term (reverse pi) t)
 let reduce env assms =
   let update_env env = function
     | C_Fresh (a, T_Atom {perm= []; symb= b}) | C_AtomNeq (a, {perm= []; symb= b}) ->
-        Option.bind env (fun env -> SolverEnv.add_neq env a b)
+        env >>= fun env -> SolverEnv.add_neq env a b
     | C_Fresh (a, T_Var {perm= []; symb= x}) ->
         Option.map (fun env -> SolverEnv.add_fresh env a x) env
     | _ ->
@@ -200,8 +200,11 @@ and solve_swap_cases env a (alpha1, alpha2) assm_gen goal_gen =
 and solve_assm_shape env assms goal t1 t2 =
   match (t1, t2) with
   | T_Var {symb= x1; _}, T_Var {symb= x2; _} ->
+      (* TODO: add_same_shape should occurs check all terms in Env that subshape x1 or x2 *)
       solve_ (SolverEnv.add_same_shape env x1 x2) assms goal
   | T_Var {symb= x; _}, t ->
+      (* TODO occurs check should check all other variables with same shape in Env, as well as the
+         terms that subshapes said values *)
       occurs_check x t
       ||
       let t = term_of_shape (shape_of_term t) in

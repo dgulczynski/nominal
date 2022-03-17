@@ -48,7 +48,7 @@ let subst_atom_constr a b = function
 
 let subst_atom gamma a b =
   List.fold_left
-    (fun env constr -> Option.bind env (flip add_constr $ subst_atom_constr a b constr))
+    (fun env constr -> env >>= (flip add_constr $ subst_atom_constr a b constr))
     (Some empty) gamma
 
 let subst_var gamma x t =

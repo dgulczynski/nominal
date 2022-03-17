@@ -3,7 +3,9 @@ open Permutation
 
 let ( $ ) f x = f x
 
-let ( >> ) f g x = f (g x)
+let ( % ) f g x = f (g x)
+
+let ( >>= ) = Option.bind
 
 let flip f x y = f y x
 

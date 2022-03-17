@@ -61,10 +61,10 @@ type formula =
   | F_ConstrAnd  of constr * formula
   | F_ConstrImpl of constr * formula
   | F_Var        of fvar
-  | F_Fun        of fvar * formula
+  | F_Fun        of fvar * kind * formula
   | F_App        of formula * formula
   | F_FunTerm    of var * formula
   | F_AppTerm    of formula * term
   | F_FunAtom    of atom * formula
-  | F_AppAtom    of formula * permuted_atom
+  | F_AppAtom    of formula * atom
   | F_Fix        of fvar * var * formula

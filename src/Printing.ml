@@ -42,6 +42,14 @@ let string_of_constr = function
   | C_Shape (t1, t2)     -> string_of_term t1 ^ " ~=: " ^ string_of_term t2
   | C_Subshape (t1, t2)  -> string_of_term t1 ^ " <: " ^ string_of_term t2
 
+let rec string_of_kind = function
+  | K_Prop                       -> "*"
+  | K_Arrow ((K_Prop as k1), k2) -> string_of_kind k1 ^ " -> " ^ string_of_kind k2
+  | K_Arrow (k1, k2)             -> "(" ^ string_of_kind k1 ^ ") -> " ^ string_of_kind k2
+  | K_ForallAtom (a, k)          -> "∀ " ^ string_of_atom_arg a ^ ". " ^ string_of_kind k
+  | K_ForallTerm (x, k)          -> "∀ " ^ string_of_var_arg x ^ ". " ^ string_of_kind k
+  | K_Constr (c, k)              -> "[" ^ string_of_constr c ^ "] " ^ string_of_kind k
+
 let string_of_fvar (FV x) = x
 
 let rec string_of_formula =
@@ -60,19 +68,12 @@ let rec string_of_formula =
   | F_ExistsAtom (a, f) -> "∃ " ^ string_of_atom_arg a ^ ". " ^ string_of_inner_formula f
   | F_ConstrAnd (c, f)  -> "[" ^ string_of_constr c ^ "] ∧ " ^ string_of_inner_formula f
   | F_ConstrImpl (c, f) -> "[" ^ string_of_constr c ^ "] ⇒ " ^ string_of_inner_formula f
-  | F_Fun (x, f)        -> string_of_fvar x ^ " → " ^ string_of_inner_formula f
+  | F_Fun (x, k, f)     -> string_of_fvar x ^ ":" ^ string_of_kind k ^ " → "
+                           ^ string_of_inner_formula f
   | F_FunTerm (x, f)    -> string_of_var_arg x ^ " → " ^ string_of_inner_formula f
   | F_FunAtom (a, f)    -> string_of_atom_arg a ^ " → " ^ string_of_inner_formula f
   | F_App (f1, f2)      -> string_of_binop f1 "" f2
   | F_AppTerm (f, e)    -> string_of_inner_formula f ^ " " ^ string_of_term e
-  | F_AppAtom (f, a)    -> string_of_inner_formula f ^ " " ^ string_of_atom a
+  | F_AppAtom (f, a)    -> string_of_inner_formula f ^ " " ^ string_of_atom_arg a
   | F_Fix (x, y, f)     ->
       "fix " ^ string_of_fvar x ^ "(" ^ string_of_var_arg y ^ ") : " ^ string_of_inner_formula f
-
-let rec string_of_kind = function
-  | K_Prop                       -> "*"
-  | K_Arrow ((K_Prop as k1), k2) -> string_of_kind k1 ^ " -> " ^ string_of_kind k2
-  | K_Arrow (k1, k2)             -> "(" ^ string_of_kind k1 ^ ") -> " ^ string_of_kind k2
-  | K_ForallAtom (a, k)          -> "∀ " ^ string_of_atom_arg a ^ ". " ^ string_of_kind k
-  | K_ForallTerm (x, k)          -> "∀ " ^ string_of_var_arg x ^ ". " ^ string_of_kind k
-  | K_Constr (c, k)              -> "[" ^ string_of_constr c ^ "] " ^ string_of_kind k

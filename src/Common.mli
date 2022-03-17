@@ -3,7 +3,9 @@ open Permutation
 
 val ( $ ) : ('a -> 'b) -> 'a -> 'b
 
-val ( >> ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
+val ( % ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
+
+val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
 
 val id : 'a -> 'a
 
