@@ -200,17 +200,15 @@ and solve_swap_cases env a (alpha1, alpha2) assm_gen goal_gen =
 and solve_assm_shape env assms goal t1 t2 =
   match (t1, t2) with
   | T_Var {symb= x1; _}, T_Var {symb= x2; _} ->
-      (* TODO: add_same_shape should occurs check all terms in Env that subshape x1 or x2 *)
-      solve_ (SolverEnv.add_same_shape env x1 x2) assms goal
+      let env, env_assms = SolverEnv.add_same_shape env x1 x2 in
+      solve_ env (env_assms @ assms) goal
   | T_Var {symb= x; _}, t ->
-      (* TODO occurs check should check all other variables with same shape in Env, as well as the
-         terms that subshapes said values *)
-      occurs_check x t
+      SolverEnv.occurs_check env x t
       ||
       let t = term_of_shape (shape_of_term t) in
       let env, env_assms = SolverEnv.subst_var env x t in
-      let assms = List.map (subst_var_in_constr x t) (env_assms @ assms) in
-      solve_ env assms goal
+      let assms = env_assms @ List.map (subst_var_in_constr x t) assms in
+      solve_ env assms $ subst_var_in_constr x t goal
   | _, T_Var _ -> solve_assm_shape env assms goal t2 t1
   | T_Atom _, T_Atom _ -> solve_ env assms goal
   | T_Atom _, _ -> true

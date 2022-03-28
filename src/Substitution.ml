@@ -45,19 +45,20 @@ let rec subst_atom_in_kind a b k =
   | K_ForallAtom (a', k) -> K_ForallAtom (a', if a = a' then k else sub k)
   | K_Constr (c, k)      -> K_Constr (subst_atom_in_constr a b c, sub k)
 
-let rec subst_var_in_kind x y k =
-  let sub = subst_var_in_kind x y in
+let rec subst_var_in_kind x t k =
+  let sub = subst_var_in_kind x t in
   match k with
   | K_Prop               -> K_Prop
   | K_Arrow (k1, k2)     -> K_Arrow (sub k1, sub k2)
-  | K_ForallTerm (x, k)  -> K_ForallTerm (x, if x = y then k else sub k)
-  | K_ForallAtom (a', k) -> K_ForallAtom (a', sub k)
-  | K_Constr (c, k)      -> K_Constr (subst_var_in_constr x (var y) c, sub k)
+  | K_ForallTerm (x', k) -> K_ForallTerm (x', if x = x' then k else sub k)
+  | K_ForallAtom (a, k)  -> K_ForallAtom (a, sub k)
+  | K_Constr (c, k)      -> K_Constr (subst_var_in_constr x t c, sub k)
 
 let rec subst_atom_in_formula a1 a2 f =
   let sub = subst_atom_in_formula a1 a2 in
   let sub_constr = subst_atom_in_constr a1 a2 in
   let sub_term = subst_atom_in_term a1 a2 in
+  let sub_kind = subst_atom_in_kind a1 a2 in
   match f with
   | F_Bot | F_Var _     -> f
   | F_Constr c          -> F_Constr (sub_constr c)
@@ -70,18 +71,19 @@ let rec subst_atom_in_formula a1 a2 f =
   | F_ExistsAtom (a, f) -> F_ExistsAtom (a, if a = a1 then f else sub f)
   | F_ConstrAnd (c, f)  -> F_ConstrAnd (sub_constr c, sub f)
   | F_ConstrImpl (c, f) -> F_ConstrImpl (sub_constr c, sub f)
-  | F_Fun (x, f)        -> F_Fun (x, sub f)
+  | F_Fun (x, k, f)     -> F_Fun (x, sub_kind k, sub f)
   | F_App (f1, f2)      -> F_App (sub f1, sub f2)
   | F_FunTerm (x, f)    -> F_FunTerm (x, sub f)
   | F_AppTerm (f, t)    -> F_AppTerm (sub f, sub_term t)
   | F_FunAtom (a, f)    -> F_FunAtom (a, if a = a1 then f else sub f)
-  | F_AppAtom (f, a)    -> F_AppAtom (sub f, sub_perm_atom (subst a1 a2) a)
+  | F_AppAtom (f, a)    -> F_AppAtom (sub f, subst a1 a2 a)
   | F_Fix (fix, x, f)   -> F_Fix (fix, x, sub f)
 
 let rec subst_var_in_formula y t f =
   let sub = subst_var_in_formula y t in
   let sub_constr = subst_var_in_constr y t in
   let sub_term = subst_var_in_term y t in
+  let sub_kind = subst_var_in_kind y t in
   match f with
   | F_Bot | F_Var _     -> f
   | F_Constr c          -> F_Constr (sub_constr c)
@@ -94,10 +96,16 @@ let rec subst_var_in_formula y t f =
   | F_ExistsAtom (a, f) -> F_ExistsAtom (a, sub f)
   | F_ConstrAnd (c, f)  -> F_ConstrAnd (sub_constr c, sub f)
   | F_ConstrImpl (c, f) -> F_ConstrImpl (sub_constr c, sub f)
-  | F_Fun (x, f)        -> F_Fun (x, sub f)
+  | F_Fun (x, k, f)     -> F_Fun (x, sub_kind k, sub f)
   | F_App (f1, f2)      -> F_App (sub f1, sub f2)
   | F_FunTerm (x, f)    -> F_FunTerm (x, if x = y then f else sub f)
   | F_AppTerm (f, t)    -> F_AppTerm (sub f, sub_term t)
   | F_FunAtom (a, f)    -> F_FunAtom (a, sub f)
   | F_AppAtom (f, a)    -> F_AppAtom (sub f, a)
   | F_Fix (fix, x, f)   -> F_Fix (fix, x, if x = y then f else sub f)
+
+let rec subst_var_in_shape x s = function
+  | S_Var x' when x = x' -> s
+  | S_Lam s' -> S_Lam (subst_var_in_shape x s s')
+  | S_App (s1, s2) -> S_App (subst_var_in_shape x s s1, subst_var_in_shape x s s2)
+  | (S_Var _ | S_Atom | S_Fun _) as s -> s

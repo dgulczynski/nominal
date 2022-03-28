@@ -16,12 +16,16 @@ val subst_atom : t -> atom -> atom -> t option
 
 val subst_var : t -> var -> term -> t * constr list
 
-val add_same_shape : t -> var -> var -> t
+val add_same_shape : t -> var -> var -> t * constr list
 
 val are_same_shape : t -> var -> var -> bool
 
 val add_subshape : t -> term -> var -> t option
 
+val get_shapes : t -> var -> var list
+
 val get_subshapes : t -> var -> term list
+
+val occurs_check : t -> var -> term -> bool
 
 val string_of : t -> string
