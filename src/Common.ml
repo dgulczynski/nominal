@@ -81,7 +81,7 @@ let rec shape_of_term = function
   | T_Fun f            -> S_Fun f
 
 let rec term_of_shape = function
-  | S_Var x        -> var x
+  | S_Var _        -> var $ fresh_var ()
   | S_Atom         -> atom $ fresh_atom ()
   | S_Lam s        -> T_Lam (pure $ fresh_atom (), term_of_shape s)
   | S_App (s1, s2) -> T_App (term_of_shape s1, term_of_shape s2)

@@ -67,4 +67,4 @@ type formula =
   | F_AppTerm    of formula * term
   | F_FunAtom    of atom * formula
   | F_AppAtom    of formula * atom
-  | F_Fix        of fvar * var * formula
+  | F_Fix        of fvar * var * kind * formula

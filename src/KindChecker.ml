@@ -32,11 +32,12 @@ let cast_to_forall_term =
   to_forall_term []
 
 let rec subkind env k1 k2 =
+  let fold f x = Option.fold ~none:false ~some:f x in
   match (k1, k2) with
   | K_Prop, K_Prop -> true
   | K_Prop, _ -> false
   | K_Arrow (k1, k1'), K_Arrow (k2, k2') -> subkind env k2 k1 && subkind env k1' k2'
-  | K_Arrow _, _ -> false
+  | (K_Arrow _ as k1), k2 -> fold (subkind env k1) (cast_to_arrow k2)
   | k1, K_Constr (c, k2) -> subkind (add_constr env c) k1 k2
   | K_Constr (c, k1), k2 -> solve env c && subkind env k1 k2
   | K_ForallTerm (x1, k1), K_ForallTerm (x2, k2) ->
@@ -45,14 +46,14 @@ let rec subkind env k1 k2 =
       let k1 = subst_var_in_kind x1 (var x) k1 in
       let k2 = subst_var_in_kind x2 (var x) k2 in
       subkind env k1 k2
-  | K_ForallTerm _, _ -> false
+  | (K_ForallTerm _ as k1), k2 -> fold (subkind env k1) (cast_to_forall_term k2)
   | K_ForallAtom (a1, k1), K_ForallAtom (a2, k2) ->
       let a = fresh_atom () in
       let env = map_atom (map_atom env a1 a) a2 a in
       let k1 = subst_atom_in_kind a1 a k1 in
       let k2 = subst_atom_in_kind a2 a k2 in
       subkind env k1 k2
-  | K_ForallAtom _, _ -> false
+  | (K_ForallAtom _ as k1), k2 -> fold (subkind env k1) (cast_to_forall_atom k2)
 
 let rec kind_check env kind formula =
   match (kind, formula) with
@@ -96,17 +97,17 @@ let rec kind_check env kind formula =
       let k = subst_var_in_kind x1 (var x) k in
       let f = subst_var_in_formula x2 (var x) f in
       kind_check env k f
-  | K_ForallTerm (x1, k), F_Fix (fix, x2, f) ->
-      (*  G, X : (forall y, [y < x] => K{y/x}) |- F : K  *)
+  | K_ForallTerm (x1, k1), F_Fix (fix, x2, k2, f) ->
+      (*  G, X : (forall y, [y < x] => K1{y/x}) |- F : K2  *)
       (* ----------------------------------------------- *)
-      (*         G |- fix X(x). F : forall x, K          *)
+      (*         G |- fix X(x) K1. F : forall x, K2          *)
       let x = fresh_var () in
       let env = map_var (map_var env x1 x) x2 x in
-      let k = subst_var_in_kind x1 (var x) k in
+      let k2 = subst_var_in_kind x1 (var x) k2 in
       let f = subst_var_in_formula x2 (var x) f in
       let y = fresh_var () in
-      let fix_kind = K_ForallTerm (y, K_Constr (var y <: var x, subst_var_in_kind x (var y) k)) in
-      kind_check (map_fvar env fix fix_kind) k f
+      let fix_kind = K_ForallTerm (y, K_Constr (var y <: var x, subst_var_in_kind x (var y) k2)) in
+      kind_check (map_fvar env fix fix_kind) k1 f
   | K_ForallTerm _, _ -> false
   | K_Constr (c, k), f -> kind_check (add_constr env c) k f
 
@@ -139,9 +140,7 @@ and kind_infer env f =
     match kind_infer env f >>= cast_to_forall_atom with
     | Some (K_ForallAtom (a', k)) -> Some (subst_atom_in_kind a' a k)
     | _                           -> None )
-  | F_Fix (fix, x, f) ->
-      (* TODO: now we assume k is Prop, but it could be anything? *)
-      let k = K_Prop in
+  | F_Fix (fix, x, k, f) ->
       let y = fresh_var () in
       let fix_k = K_ForallTerm (y, K_Constr (var y <: var x, subst_var_in_kind x (var y) k)) in
       Option.map (fun k -> K_ForallTerm (x, k)) (kind_infer (map_fvar env fix fix_k) f)
