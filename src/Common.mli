@@ -5,6 +5,8 @@ val ( $ ) : ('a -> 'b) -> 'a -> 'b
 
 val ( % ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 
+val ( <$> ) : ('a -> 'b) -> 'a option ->  'b option
+
 val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
 
 val id : 'a -> 'a
