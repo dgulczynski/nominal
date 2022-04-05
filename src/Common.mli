@@ -5,7 +5,7 @@ val ( $ ) : ('a -> 'b) -> 'a -> 'b
 
 val ( % ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 
-val ( <$> ) : ('a -> 'b) -> 'a option ->  'b option
+val ( <$> ) : ('a -> 'b) -> 'a option -> 'b option
 
 val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
 
@@ -29,7 +29,7 @@ val find_first : ('a -> bool) -> 'a list -> 'a option * 'a list
 
 val permute_term : atom permutation -> term -> term
 
-val occurs_check : var -> term -> bool
+val syntactic_occurs_check : var -> term -> bool
 
 val free_vars_of_term : term -> var list
 
@@ -45,4 +45,6 @@ val fresh_fvar : unit -> fvar
 
 val shape_of_term : term -> shape
 
-val term_of_shape : shape -> term
+(* Returns a new term with same shape up to alpha-equivalence and a mapping from the term's
+   variables to generated fresh ones *)
+val term_of_shape : shape -> term * (var * var) list

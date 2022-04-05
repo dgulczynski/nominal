@@ -3,8 +3,6 @@ open Common
 open Permutation
 open Substitution
 
-(* exception SolverException of string *)
-
 let fresh {perm= pi; symb= a} t = a #: (permute_term (reverse pi) t)
 
 let reduce env assms =
@@ -176,12 +174,7 @@ and solve_assm_eq env assms goal t1 t2 =
   | T_Atom _, _ -> true
   | T_Var {perm= []; symb= x}, T_Var {perm= []; symb= x'} when x = x' -> solve_ env assms goal
   | T_Var {perm= []; symb= x}, t | t, T_Var {perm= []; symb= x} ->
-      if occurs_check x t then true
-      else
-        let env, env_assms = SolverEnv.subst_var env x t in
-        let assms = List.map (subst_var_in_constr x t) assms in
-        let goal = subst_var_in_constr x t goal in
-        solve_ env (env_assms @ assms) goal
+      solve_assm_subst_var env assms goal x t
   | T_Var {perm= pi; symb= x}, t | t, T_Var {perm= pi; symb= x} ->
       solve_assm_eq env assms goal $ var x $ permute_term pi t
   | T_Lam (a1, t1), T_Lam (a2, t2) ->
@@ -199,16 +192,21 @@ and solve_swap_cases env a (alpha1, alpha2) assm_gen goal_gen =
 
 and solve_assm_shape env assms goal t1 t2 =
   match (t1, t2) with
-  | T_Var {symb= x1; _}, T_Var {symb= x2; _} ->
-      let env, env_assms = SolverEnv.add_same_shape env x1 x2 in
-      solve_ env (env_assms @ assms) goal
-  | T_Var {symb= x; _}, t ->
-      SolverEnv.occurs_check env x t
-      ||
-      let t = term_of_shape (shape_of_term t) in
-      let env, env_assms = SolverEnv.subst_var env x t in
-      let assms = env_assms @ List.map (subst_var_in_constr x t) assms in
-      solve_ env assms $ subst_var_in_constr x t goal
+  | T_Var {symb= x1; _}, T_Var {symb= x2; _} -> (
+    match SolverEnv.add_same_shape env x1 x2 with
+    | None     -> true
+    | Some env -> solve_ env assms goal )
+  | T_Var {symb= x; _}, t -> (
+      (* vs is the mapping from fresh variables to variables of original term t *)
+      let t, vs = term_of_shape (shape_of_term t) in
+      match
+        List.fold_left
+          (* and they must mantain the same shape *)
+            (fun env (x, y) -> env >>= fun env -> SolverEnv.add_same_shape env x y )
+          (Some env) vs
+      with
+      | None     -> true
+      | Some env -> solve_assm_subst_var env assms goal x t )
   | _, T_Var _ -> solve_assm_shape env assms goal t2 t1
   | T_Atom _, T_Atom _ -> solve_ env assms goal
   | T_Atom _, _ -> true
@@ -232,6 +230,14 @@ and solve_assm_subshape env assms goal t1 = function
 
 and solve_assm_shape_and_subshape env assms goal t1 t2 =
   solve_assm_shape env assms goal t1 t2 && solve_assm_subshape env assms goal t1 t2
+
+and solve_assm_subst_var env assms goal x t =
+  match SolverEnv.subst_var env x t with
+  | None                  -> true
+  | Some (env, env_assms) ->
+      let assms = List.map (subst_var_in_constr x t) assms in
+      let goal = subst_var_in_constr x t goal in
+      solve_ env (env_assms @ assms) goal
 
 let solve_with_env env = solve_ env []
 

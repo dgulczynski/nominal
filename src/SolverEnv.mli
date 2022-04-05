@@ -14,9 +14,9 @@ val is_neq : t -> atom -> atom -> bool
 
 val subst_atom : t -> atom -> atom -> t option
 
-val subst_var : t -> var -> term -> t * constr list
+val subst_var : t -> var -> term -> (t * constr list) option
 
-val add_same_shape : t -> var -> var -> t * constr list
+val add_same_shape : t -> var -> var -> t option
 
 val are_same_shape : t -> var -> var -> bool
 

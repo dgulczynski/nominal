@@ -41,10 +41,10 @@ let rec permute_term (pi : atom permutation) = function
   | T_App (t1, t2) -> T_App (permute_term pi t1, permute_term pi t2)
   | T_Fun _ as t   -> t
 
-let rec occurs_check x = function
+let rec syntactic_occurs_check x = function
   | T_Var {perm= _; symb= x'} -> x' = x
-  | T_Lam (_, t)              -> occurs_check x t
-  | T_App (t1, t2)            -> occurs_check x t1 || occurs_check x t2
+  | T_Lam (_, t)              -> syntactic_occurs_check x t
+  | T_App (t1, t2)            -> syntactic_occurs_check x t1 || syntactic_occurs_check x t2
   | T_Atom _ | T_Fun _        -> false
 
 let rec free_vars_of_term = function
@@ -83,8 +83,14 @@ let rec shape_of_term = function
   | T_Fun f            -> S_Fun f
 
 let rec term_of_shape = function
-  | S_Var _        -> var $ fresh_var ()
-  | S_Atom         -> atom $ fresh_atom ()
-  | S_Lam s        -> T_Lam (pure $ fresh_atom (), term_of_shape s)
-  | S_App (s1, s2) -> T_App (term_of_shape s1, term_of_shape s2)
-  | S_Fun f        -> T_Fun f
+  | S_Var x        ->
+      let y = fresh_var () in
+      (var y, [(x, y)])
+  | S_Atom         -> (atom $ fresh_atom (), [])
+  | S_Lam s        ->
+      let t, vs = term_of_shape s in
+      (T_Lam (pure $ fresh_atom (), t), vs)
+  | S_App (s1, s2) ->
+      let t1, vs1 = term_of_shape s1 and t2, vs2 = term_of_shape s2 in
+      (T_App (t1, t2), vs1 @ vs2)
+  | S_Fun f        -> (T_Fun f, [])
