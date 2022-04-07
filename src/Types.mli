@@ -1,13 +1,16 @@
 open Permutation
 
-type atom = A of string
+type atom = A of string  (** [atom] is a term-level variable *)
 
-type var = V of string
+type var = V of string  (** [var] is a meta-level variable *)
 
+(** [symbol] is a meta-level name for functions *)
 type symbol = string
 
+(** [permuted_atom] is an [atom] permuted with [atom permutation] *)
 type permuted_atom = (atom, atom) permuted
 
+(** [permuted_var] is a [var] permuted with [atom permutation] *)
 type permuted_var = (atom, var) permuted
 
 type term =
@@ -19,6 +22,8 @@ type term =
 
 type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of symbol
 
+(** [constr] is a goal of solver if it appears on the right-hand side of [|-] and an assumptions
+    otherwise *)
 type constr =
   | C_Fresh    of atom * term
   | C_Eq       of term * term
@@ -28,17 +33,24 @@ type constr =
   | C_AtomNeq  of atom * permuted_atom
 
 val ( #: ) : atom -> term -> constr
+(** [ a #: t] is a [constr] that [a] is fresh in [t] *)
 
 val ( =: ) : term -> term -> constr
+(** [ t1 =: t2] is a [constr] that [t1] is equal to [t2] *)
 
 val ( =~: ) : term -> term -> constr
+(** [ t1 =~: t2] is a [constr] that [t1] have same shape [t2] *)
 
 val ( <: ) : term -> term -> constr
+(** [ t1 <: t2] is a [constr] that shape of [t1] is a sub-shape of [t2]'s shape *)
 
 val ( ==: ) : atom -> permuted_atom -> constr
+(** [ a ==: α] is a [constr] that [a] is equal to [α] (same as [T_Atom (pure a) =: T_Atom α])*)
 
 val ( =/=: ) : atom -> permuted_atom -> constr
+(** [ a =/=: α] is a [constr] that [a] is not equal to [α] (same as [ a #: T_Atom α])*)
 
+(** [kind] is the type of [formula]s*)
 type kind =
   | K_Prop
   | K_Arrow      of kind * kind
@@ -46,6 +58,7 @@ type kind =
   | K_ForallAtom of atom * kind
   | K_Constr     of constr * kind
 
+(** [fvar] is a formula-level variable *)
 type fvar = FV of string
 
 type formula =

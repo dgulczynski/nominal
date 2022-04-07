@@ -9,8 +9,7 @@ let reduce env assms =
   let update_env env = function
     | C_Fresh (a, T_Atom {perm= []; symb= b}) | C_AtomNeq (a, {perm= []; symb= b}) ->
         env >>= fun env -> SolverEnv.add_neq env a b
-    | C_Fresh (a, T_Var {perm= []; symb= x}) ->
-        Option.map (fun env -> SolverEnv.add_fresh env a x) env
+    | C_Fresh (a, T_Var {perm= []; symb= x}) -> (fun env -> SolverEnv.add_fresh env a x) <$> env
     | _ ->
         (* This cannot happen as only "simple" constraints should be chosen for updating env *)
         assert false
@@ -239,8 +238,6 @@ and solve_assm_subst_var env assms goal x t =
       let goal = subst_var_in_constr x t goal in
       solve_ env (env_assms @ assms) goal
 
-let solve_with_env env = solve_ env []
-
-let solve = solve_with_env SolverEnv.empty
+let solve = solve_ SolverEnv.empty []
 
 let solve_with_assumptions = solve_ SolverEnv.empty

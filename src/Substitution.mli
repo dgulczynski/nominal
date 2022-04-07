@@ -1,6 +1,7 @@
 open Types
 
 val subst : 'a -> 'a -> 'a -> 'a
+(** [subst a b c = if c = a then b else c]*)
 
 val subst_atom_in_term : atom -> atom -> term -> term
 

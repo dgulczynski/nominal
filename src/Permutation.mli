@@ -13,5 +13,9 @@ val reverse : 'a permutation -> 'a permutation
 val free_vars_of : 'a permutation -> ('a, 'a) permuted list
 
 val inner_swap : 'a permutation -> ('a swap * 'a permutation) option
+(** short-hand getter for permutations: [inner_swap [] = None], [inner_swap ((x1, x2) :: xs) = Some
+    ((x1, x2), xs)] *)
 
 val outer_swap : 'a permutation -> ('a swap * 'a permutation) option
+(** short-hand getter for permutations: [inner_swap [] = None], [inner_swap (xs @ [(x1, x2)]) = Some
+    ((x1, x2), xs)] *)

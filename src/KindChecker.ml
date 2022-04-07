@@ -3,10 +3,12 @@ open Substitution
 open KindCheckerEnv
 open Common
 
+(** [solve env c] returns [[]; env |- c] *)
 let solve env c = mem_constr env c || Solver.solve_with_assumptions (constraints_of env) c
 
 let add_constr_to_kind constrs k = List.fold_left (fun k c -> K_Constr (c, k)) k constrs
 
+(** Pushes contraints downwards in the kind tree *)
 let normalize =
   let rec normalize constrs = function
     | K_Prop              -> K_Prop
@@ -52,6 +54,7 @@ let rec kind_check env kind formula =
   | Some k -> subkind env k kind
   | None   -> false
 
+  (** [kind_infer env f] returns [k] s.t. [[]; env |- f : k] *)
 and kind_infer env = function
   | F_Var x -> find_fvar env x
   | F_Bot | F_Constr _ -> Some K_Prop

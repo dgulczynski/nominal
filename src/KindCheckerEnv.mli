@@ -1,5 +1,9 @@
 open Types
 
+(** [KindCheckerEnv] is an environment for kind-checking and verifying subkinding. Other than the
+    assumptions of mapping [fvar]s to [kind]s, it keeps track of all the assumptions ([constr]s) we
+    encounter during [kind_check] or [subkind] procedures. *)
+
 type t
 
 val empty : t
