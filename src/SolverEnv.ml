@@ -43,16 +43,14 @@ let rec occurs_check gamma x t =
   (*  G, [t_1, ..., t_n] <: [x_1 ~...~ x ~...~ x_m] ; x ~= t, C |- c  *)
   syntactic_occurs_check_many xs t
   ||
-  let rec iter gamma = function
-    | []      -> false
-    | y :: ys ->
-        (*      y occurs syntatically in t       G |- x occurs in t_i       *)
-        (* ---------------------------------------------------------------- *)
-        (*  G, [t_1, ..., t_n] <: [y_1 ~...~ y ~...~ y_m] ; x ~= t, C |- c  *)
-        let ts, _, gamma = find_shapes gamma y in
-        List.exists (occurs_check gamma x) ts || iter gamma ys
+  let occurs_check_subshapes y =
+    (*      y occurs syntatically in t       G |- x occurs in t_i       *)
+    (* ---------------------------------------------------------------- *)
+    (*  G, [t_1, ..., t_n] <: [y_1 ~...~ y ~...~ y_m] ; x ~= t, C |- c  *)
+    let ts, _, gamma = find_shapes gamma y in
+    List.exists (occurs_check gamma x) ts
   in
-  iter gamma (free_vars_of_term t)
+  List.exists occurs_check_subshapes $ free_vars_of_term t
 
 let add_same_shape gamma x y =
   (*       G; C |- c           x ∈ xs     y ∈ zs    G, [ts] <: [zs]; C |- c  *)
@@ -80,8 +78,10 @@ let add_same_shape gamma x y =
     Option.some $ A_Shape (x_shapes @ y_shapes, x_vars @ y_vars) :: gamma
 
 let add_subshape gamma t x =
-  let ts, xs, gamma = find_shapes gamma x in
-  if syntactic_occurs_check_many xs t then None else Some (A_Shape (t :: ts, xs) :: gamma)
+  if occurs_check gamma x t then None
+  else
+    let ts, xs, gamma = find_shapes gamma x in
+    Some (A_Shape (t :: ts, xs) :: gamma)
 
 let is_neq gamma a1 a2 =
   List.exists
@@ -124,8 +124,9 @@ let subst_var gamma x t =
     $ List.fold_left
         (fun (env, assms) -> function
           | A_Fresh (a, x') when x = x' -> (env, (a #: t) :: assms)
+          (* as we occurs_checked [x] with [t] is is safe to just subst*)
           | A_Shape (ts, xs) -> (A_Shape (List.map (subst_var_in_term x t) ts, xs) :: env, assms)
-          | ac -> (ac :: env, assms) )
+          | (A_Fresh _ | A_Neq _) as ac -> (ac :: env, assms) )
         (empty, assms) gamma
 
 let string_of_atom_assumption = function
