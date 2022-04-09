@@ -49,8 +49,6 @@ let rec subkind env k1 k2 =
       subkind env k1 k2
   | K_ForallAtom _, _ -> false
 
-let ( <=. ) = subkind empty
-
 let rec kind_check env kind formula =
   match kind_infer env formula with
   | Some k -> subkind env k kind
@@ -89,3 +87,7 @@ and kind_infer env = function
       to_option $ K_ForallTerm (x, k) $ kind_check (map_fvar env fix fix_k) k f
 
 and is_prop env = kind_check env K_Prop
+
+let ( <=: ) = subkind empty
+
+let ( -: ) f k = kind_check empty k f

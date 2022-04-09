@@ -241,3 +241,5 @@ and solve_assm_subst_var env assms goal x t =
 let solve = solve_ SolverEnv.empty []
 
 let solve_with_assumptions = solve_ SolverEnv.empty
+
+let ( |-: ) = solve_with_assumptions
