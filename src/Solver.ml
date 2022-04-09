@@ -114,17 +114,17 @@ and solve_shape env assms t1 t2 =
 and solve_subshape env assms t1 = function
   | T_Var {symb= x; _} ->
       (*  (t2 <: x) ∈ G         (t2 <: x) ∈ G   *)
-      (*  G |- t1 ~=: t2        G |- t1 <: t2   *)
+      (*  G |- t1 =~: t2        G |- t1 <: t2   *)
       (* -----------------    ----------------- *)
       (*   G |- t1 <: x          G |- t1 <: x   *)
       List.exists (solve_shape_or_subshape env assms t1) $ SolverEnv.get_subshapes env x
   | T_Lam (_, t2)      ->
-      (*   G |- t1 ~=: t2         G |- t1 <: t2   *)
+      (*   G |- t1 =~: t2         G |- t1 <: t2   *)
       (* -----------------      ----------------- *)
       (*  G |- t1 <: _.t2        G |- t1 <: _.t2  *)
       solve_shape_or_subshape env assms t1 t2
   | T_App (t2, t2')    ->
-      (*   G |- t1 ~=: t2         G |- t1 <: t2         G |- t1 ~=: t2'        G |- t1 <: t2'    *)
+      (*   G |- t1 =~: t2         G |- t1 <: t2         G |- t1 =~: t2'        G |- t1 <: t2'    *)
       (* -------------------   -------------------   --------------------   -------------------- *)
       (*  G |- t1 <: t2 t2'     G |- t1 <: t2 t2'      G |- t1 <: t2 t2'      G |- t1 <: t2 t2'  *)
       solve_shape_or_subshape env assms t1 t2 || solve_shape_or_subshape env assms t1 t2'

@@ -39,7 +39,7 @@ let string_of_constr = function
   | C_Eq (t1, t2)        -> string_of_term t1 ^ " =: " ^ string_of_term t2
   | C_AtomEq (a, alpha)  -> string_of_atom_arg a ^ " ==: " ^ string_of_atom alpha
   | C_AtomNeq (a, alpha) -> string_of_atom_arg a ^ " =/=: " ^ string_of_atom alpha
-  | C_Shape (t1, t2)     -> string_of_term t1 ^ " ~=: " ^ string_of_term t2
+  | C_Shape (t1, t2)     -> string_of_term t1 ^ " =~: " ^ string_of_term t2
   | C_Subshape (t1, t2)  -> string_of_term t1 ^ " <: " ^ string_of_term t2
 
 let rec string_of_kind = function

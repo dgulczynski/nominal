@@ -49,12 +49,14 @@ let rec subkind env k1 k2 =
       subkind env k1 k2
   | K_ForallAtom _, _ -> false
 
+let ( <=. ) = subkind empty
+
 let rec kind_check env kind formula =
   match kind_infer env formula with
   | Some k -> subkind env k kind
   | None   -> false
 
-  (** [kind_infer env f] returns [k] s.t. [[]; env |- f : k] *)
+(** [kind_infer env f] returns [Some k] iff [[]; env |- f : k] *)
 and kind_infer env = function
   | F_Var x -> find_fvar env x
   | F_Bot | F_Constr _ -> Some K_Prop

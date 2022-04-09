@@ -22,8 +22,8 @@ type term =
 
 type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of symbol
 
-(** [constr] is a goal of solver if it appears on the right-hand side of [|-] and an assumptions
-    otherwise *)
+(** [constr] is constraint that the [Solver] solves. [ G; C |- c ] means that in [SolverEnv] [G]
+    with assumptions [C] (of type [constr list]) the goal constraint [c] ([constr]) is satisfied. *)
 type constr =
   | C_Fresh    of atom * term
   | C_Eq       of term * term
