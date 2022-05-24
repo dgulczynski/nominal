@@ -60,8 +60,8 @@ and solve_eq env assms e1 e2 =
   | T_Atom _, _ -> false
   | T_Var {perm= []; symb= x}, T_Var {perm= pi; symb= x'} when x = x' ->
       permutation_idempotent env assms pi x
-  | T_Var {perm= pi; symb= x}, T_Var x' ->
-      solve_eq env assms $ var x $ T_Var (permute (reverse pi) x')
+  | T_Var {perm= pi; symb= x}, T_Var {symb= x'; _} when x = x' ->
+      solve_eq env assms $ var x $ permute_term (reverse pi) e2
   | T_Var _, _ -> false
   | T_Lam (({perm= pi; symb= a1} as alpha1), t1), T_Lam (alpha2, t2) ->
       solve_fresh env assms a1 $ permute_term (reverse pi) e2
@@ -80,23 +80,19 @@ and permutation_idempotent env assms pi x =
   List.for_all test (free_vars_of pi)
 
 and solve_fresh env assms a e =
+  let solve_fresh_swap swap t = solve_swap_cases env a swap (const assms) (flip fresh t) in
   match e with
   | T_Atom {perm; symb= b} -> (
     match outer_swap perm with
     | None            -> SolverEnv.is_neq env a b
-    | Some (swap, pi) -> solve_fresh_swap env assms a swap $ T_Atom {perm= pi; symb= b} )
+    | Some (swap, pi) -> solve_fresh_swap swap $ T_Atom {perm= pi; symb= b} )
   | T_Var {perm; symb= x}  -> (
     match outer_swap perm with
     | None            -> SolverEnv.is_fresh env a x
-    | Some (swap, pi) -> solve_fresh_swap env assms a swap $ T_Var {perm= pi; symb= x} )
+    | Some (swap, pi) -> solve_fresh_swap swap $ T_Var {perm= pi; symb= x} )
   | T_Lam (alpha, t)       -> solve_ env ((a =/=: alpha) :: assms) a #: t
   | T_App (t1, t2)         -> solve_fresh env assms a t1 && solve_fresh env assms a t2
   | T_Fun _                -> true
-
-and solve_fresh_swap env assms a (alpha1, alpha2) e =
-  solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assms) $ a #: e
-  && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: assms) $ fresh alpha2 e
-  && solve_ env ((a ==: alpha2) :: assms) $ fresh alpha1 e
 
 and solve_shape env assms t1 t2 =
   match (t1, t2) with
@@ -196,6 +192,7 @@ and solve_assm_shape env assms goal t1 t2 =
     | None     -> true
     | Some env -> solve_ env assms goal )
   | T_Var {symb= x; _}, t -> (
+      (* Is this sound? Does it ever stop? Maybe not *)
       (* vs is the mapping from fresh variables to variables of original term t *)
       let t, vs = term_of_shape (shape_of_term t) in
       match

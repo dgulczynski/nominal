@@ -6,15 +6,18 @@ open Permutation
 open Printing
 open Solver
 
-let print_result expr res = print_endline $ " ⊢ " ^ expr ^ "\t" ^ if res then "✅" else "❌"
+let print_result env expr res = print_endline $ env ^ " ⊢ " ^ expr ^ "\t" ^ if res then "✅" else "❌"
 
-let print_solver c = print_result $ string_of_constr c $ solve c
+let print_solver assms c =
+  print_result
+  $ string_of_list string_of_constr assms
+  $ string_of_constr c $ solve_with_assumptions assms c
 
 let print_subkind_solver (k1, k2) =
-  print_result $ string_of_kind k1 ^ " ≤ " ^ string_of_kind k2 $ (k1 <=: k2)
+  print_result $ "[]" $ string_of_kind k1 ^ " ≤ " ^ string_of_kind k2 $ (k1 <=: k2)
 
 let print_kind_solver (formula, kind) =
-  print_result $ string_of_formula formula ^ " : " ^ string_of_kind kind $ formula -: kind
+  print_result $ "[]" $ string_of_formula formula ^ " : " ^ string_of_kind kind $ formula -: kind
 
 let examples =
   let a_ = A "a" and b_ = A "b" and c_ = A "c" in
@@ -35,7 +38,15 @@ let subkind_examples =
 
 let kind_examples = [(F_Bot, K_Prop)]
 
-let _ = List.iter print_solver examples
+let _ = List.iter (print_solver []) examples
+
+let _ = print_newline ()
+
+let _ =
+  let x = var (V "x") and y = var (V "y") and z = var (V "z") and a = pure (A "a") in
+  let t = T_Lam( a, T_Atom a) in
+  (print_solver [x <: y; y =~: z;  z =: t ]) (x <: t) ;
+  (print_solver [x <: y; y =~: z;  z =: t ]) (y =~: t)
 
 let _ = print_newline ()
 

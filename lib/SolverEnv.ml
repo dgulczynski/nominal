@@ -111,7 +111,9 @@ let subst_var gamma x t =
     (* ------------------------------------------------------------------- *)
     (*     (G, [t_1, ..., t_n] <: [x_1 ~...~ x ~...~ x_m]){t/x} ; C |- c   *)
     let ts, xs, gamma = find_shapes gamma x in
-    let assms = List.map (fun t' -> t' <: t) ts in
+    (* Here from [G |- x doesn't occur in t] we know that [G |- x doesn't occur in t_i] *)
+    (* So the [t_i <: t] is not needed? *)
+    let assms = List.map (fun t_i -> t_i <: t) ts in
     let gamma, assms =
       match List.filter (fun x' -> x' != x) xs with
       | [] -> (gamma, assms)
@@ -121,7 +123,7 @@ let subst_var gamma x t =
     $ List.fold_left
         (fun (env, assms) -> function
           | A_Fresh (a, x') when x = x' -> (env, (a #: t) :: assms)
-          (* as we occurs_checked x with t is is safe to just subst*)
+          (* as we occurs_checked x with t is is safe to just subst *)
           | A_Shape (ts, xs) -> (A_Shape (List.map (subst_var_in_term x t) ts, xs) :: env, assms)
           | (A_Fresh _ | A_Neq _) as ac -> (ac :: env, assms) )
         (empty, assms) gamma

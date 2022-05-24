@@ -40,7 +40,7 @@ val atom : atom -> term
 (** [atom a = T_Atom (pure a)] *)
 
 val var : var -> term
-(** [var x = T_Var (var x)] *)
+(** [var x = T_Var (pure x)] *)
 
 val fresh_var : unit -> var
 
