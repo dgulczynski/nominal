@@ -4,8 +4,6 @@ type atom = A of string
 
 type var = V of string
 
-type symbol = string
-
 type permuted_atom = (atom, atom) permuted
 
 type permuted_var = (atom, var) permuted
@@ -15,9 +13,9 @@ type term =
   | T_Atom of permuted_atom
   | T_Lam  of permuted_atom * term
   | T_App  of term * term
-  | T_Fun  of symbol
+  | T_Fun  of string
 
-type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of symbol
+type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of string
 
 type constr =
   | C_Fresh    of atom * term

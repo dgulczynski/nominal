@@ -4,9 +4,6 @@ type atom = A of string  (** [atom] is a term-level variable *)
 
 type var = V of string  (** [var] is a meta-level variable *)
 
-(** [symbol] is a meta-level name for functions *)
-type symbol = string
-
 (** [permuted_atom] is an [atom] permuted with [atom permutation] *)
 type permuted_atom = (atom, atom) permuted
 
@@ -18,9 +15,9 @@ type term =
   | T_Atom of permuted_atom
   | T_Lam  of permuted_atom * term
   | T_App  of term * term
-  | T_Fun  of symbol
+  | T_Fun  of string
 
-type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of symbol
+type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of string
 
 (** [constr] is constraint that the [Solver] solves. [ G; C |- c ] means that in [SolverEnv] [G]
     with assumptions [C] (of type [constr list]) the goal constraint [c] ([constr]) is satisfied. *)
