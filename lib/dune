@@ -1,3 +1,4 @@
 (library
  (name nominal)
- (public_name nominal))
+ (public_name nominal)
+ (libraries angstrom))
