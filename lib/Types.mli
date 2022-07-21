@@ -60,6 +60,7 @@ type fvar = FV of string
 
 type formula =
   | F_Bot
+  | F_Top
   | F_Constr     of constr
   | F_And        of formula list
   | F_Or         of formula list

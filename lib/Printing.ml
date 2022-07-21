@@ -57,6 +57,7 @@ let rec string_of_formula =
   let string_of_binop f1 op f2 = string_of_inner_formula f1 ^ op ^ string_of_inner_formula f2 in
   function
   | F_Bot                -> "⊥"
+  | F_Top                -> "⊤"
   | F_Var x              -> string_of_fvar x
   | F_Constr c           -> string_of_constr c
   | F_And fs             -> string_of_list string_of_inner_formula ~sep:" ∧ " fs
@@ -68,10 +69,10 @@ let rec string_of_formula =
   | F_ExistsAtom (a, f)  -> "∃ " ^ string_of_atom_arg a ^ ". " ^ string_of_inner_formula f
   | F_ConstrAnd (c, f)   -> "[" ^ string_of_constr c ^ "] ∧ " ^ string_of_inner_formula f
   | F_ConstrImpl (c, f)  -> "[" ^ string_of_constr c ^ "] ⇒ " ^ string_of_inner_formula f
-  | F_Fun (x, k, f)      -> string_of_fvar x ^ ":" ^ string_of_kind k ^ " → "
-                            ^ string_of_inner_formula f
-  | F_FunTerm (x, f)     -> string_of_var_arg x ^ " → " ^ string_of_inner_formula f
-  | F_FunAtom (a, f)     -> string_of_atom_arg a ^ " → " ^ string_of_inner_formula f
+  | F_Fun (x, k, f)      ->
+      "fun " ^ string_of_fvar x ^ ":" ^ string_of_kind k ^ " → " ^ string_of_inner_formula f
+  | F_FunTerm (x, f)     -> "fun " ^ string_of_var_arg x ^ ": term → " ^ string_of_inner_formula f
+  | F_FunAtom (a, f)     -> "fun " ^ string_of_atom_arg a ^ ": atom → " ^ string_of_inner_formula f
   | F_App (f1, f2)       -> string_of_binop f1 "" f2
   | F_AppTerm (f, e)     -> string_of_inner_formula f ^ " " ^ string_of_term e
   | F_AppAtom (f, a)     -> string_of_inner_formula f ^ " " ^ string_of_atom_arg a
