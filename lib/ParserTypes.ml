@@ -1,25 +1,25 @@
-open Types
 open Permutation
 
-type permuted_identifier = (atom, string) permuted
+type permuted_identifier = (string, string) permuted
 
 type pterm =
   | PT_Identifier of permuted_identifier
-  | PT_Lam        of atom * pterm
+  | PT_Lam        of string * pterm
   | PT_App        of pterm * pterm
 
 type pconstr =
-  | PC_Fresh    of atom * pterm
+  | PC_Fresh    of string * pterm
   | PC_Eq       of pterm * pterm
   | PC_Shape    of pterm * pterm
   | PC_Subshape of pterm * pterm
-  | PC_AtomNeq  of permuted_atom * permuted_atom
+  | PC_AtomNeq  of permuted_identifier * permuted_identifier
 
 type pkind =
   | PK_Prop
-  | PK_Forall of string * pkind
-  | PK_Constr of pconstr * pkind
-  | PK_Arrow  of pkind * pkind
+  | PK_ForallAtom of string * pkind
+  | PK_ForallTerm of string * pkind
+  | PK_Constr     of pconstr * pkind
+  | PK_Arrow      of pkind * pkind
 
 type pformula =
   | PF_Bot
@@ -42,3 +42,5 @@ type pformula =
   | PF_App          of pformula * pformula
   | PF_AppTerm      of pformula * pterm
   | PF_Fix          of string * string * pkind * pformula
+
+type pquantifier_kind = PQ_Atom | PQ_Term | PQ_Kind of pkind

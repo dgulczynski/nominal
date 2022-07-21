@@ -1,4 +1,8 @@
+open Common
+open Permutation
 open Angstrom
+
+exception ParserException of string
 
 let is_whitespace = function
   | '\x20' | '\x0a' | '\x0d' | '\x09' -> true
@@ -61,14 +65,46 @@ let vee = string {|\/|} <|> string "∨"
 
 let sep_by2 s p = p <* s >>= fun head -> sep_by1 s p >>| fun tail -> head :: tail
 
-let quantifier quantifier var =
-  quantifier *> whitespace1 *> var <* whitespace <* char '.' <* whitespace
+let swap =
+  bracketed
+  $ let* a1 = identifier in
+    let* _ = whitespace in
+    let* a2 = identifier in
+    return (pure a1, pure a2)
 
-let forall var = quantifier (string "forall" <|> string "∀") var
+let permuted p =
+  let* perm = many (swap <* whitespace) in
+  let* symb = p in
+  return {symb; perm}
 
-let exists var = quantifier (string "exists" <|> string "∃") var
+let annoted t = whitespace *> string ":" *> whitespace *> t
+
+let optional p = option None (p >>| Option.some)
+
+let typed p typ =
+  parens_op
+  $ let* x = p in
+    let* t = annoted typ in
+    return $ (x, t)
+
+let typed_op p typ =
+  parens_op
+  $ let* x = p in
+    let* t = optional $ annoted typ in
+    return $ (x, t)
+
+let quantifier q x = q *> whitespace1 *> x <* whitespace <* char '.' <* whitespace
+
+let forall x = quantifier (string_ci "forall" <|> string "∀") x
+
+let exists x = quantifier (string_ci "exists" <|> string "∃") x
+
+let quantifier_without_kind_annotation q x =
+  ParserException
+    (Printf.sprintf "%s %s quantifier must be used with '%s : atom' or '%s : term' kind annotation"
+       q x x x )
 
 let parse p s =
   match parse_string ~consume:Consume.All p s with
   | Ok v    -> v
-  | Error e -> failwith e
+  | Error e -> raise $ ParserException (Printf.sprintf "Syntax error %s" e)
