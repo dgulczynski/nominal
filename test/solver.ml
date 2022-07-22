@@ -6,7 +6,11 @@ open Permutation
 open Printing
 open Solver
 
-let print_result env expr res = print_endline $ env ^ " ⊢ " ^ expr ^ "\t" ^ if res then "✅" else "❌"
+let print_result env expr res =
+  Printf.printf "%s Solver %s: %s ⊢ %s\n"
+    (if res then "✅" else "❌")
+    (if res then "ran successfully" else "failed solving")
+    env expr
 
 let print_solver assms c =
   print_result
@@ -44,9 +48,9 @@ let _ = print_newline ()
 
 let _ =
   let x = var (V "x") and y = var (V "y") and z = var (V "z") and a = pure (A "a") in
-  let t = T_Lam( a, T_Atom a) in
-  (print_solver [x <: y; y =~: z;  z =: t ]) (x <: t) ;
-  (print_solver [x <: y; y =~: z;  z =: t ]) (y =~: t)
+  let t = T_Lam (a, T_Atom a) in
+  (print_solver [x <: y; y =~: z; z =: t]) (x <: t) ;
+  (print_solver [x <: y; y =~: z; z =: t]) (y =~: t)
 
 let _ = print_newline ()
 
@@ -55,3 +59,5 @@ let _ = List.iter print_subkind_solver subkind_examples
 let _ = print_newline ()
 
 let _ = List.iter print_kind_solver kind_examples
+
+let _ = print_newline ()

@@ -22,7 +22,7 @@ let test name parser convert string_of env source result =
       assert false
   in
   let pass = actual = result in
-  Printf.printf "%s Parsing %s \"%s\" into `%s` %s %s\n"
+  Printf.printf "%s Parsed %s \"%s\" into `%s` %s %s\n"
     (if pass then "✅" else "❌")
     name source (string_of result)
     ( match env with
@@ -66,6 +66,8 @@ let _ =
           , T_Lam (pure (A "a"), atom (A "a")) )
       , var (V "x") )
 
+let _ = print_newline ()
+
 let _ = test_constr [("a", PI_Atom)] "a = a" $ C_Eq (atom (A "a"), atom (A "a"))
 
 let _ = test_constr [("x", PI_Var)] "x = x" $ C_Eq (var (V "x"), var (V "x"))
@@ -90,6 +92,8 @@ let _ =
   $ C_AtomNeq
       (A "a", {perm= [(pure (A "a"), pure (A "b")); (pure (A "c"), pure (A "d"))]; symb= A "c"})
 
+let _ = print_newline ()
+
 let _ = test_kind [] "*" K_Prop
 
 let _ = test_kind [] "prop => prop" $ K_Arrow (K_Prop, K_Prop)
@@ -106,6 +110,8 @@ let _ =
   $ K_ForallAtom
       ( A "a"
       , K_ForallTerm (V "x", K_Constr (C_Fresh (A "a", var $ V "x"), K_Arrow (K_Prop, K_Prop))) )
+
+let _ = print_newline ()
 
 let _ =
   test_formula [] "FORALL a : ATOM. ForAll x : Term. [a # x] => TRUE"
@@ -125,3 +131,5 @@ let _ =
                   , F_AppTerm
                       ( F_AppTerm (F_AppAtom (F_Var (FV "f"), A "a"), var (V "x"))
                       , T_Var {perm= [(pure (A "a"), pure (A "a"))]; symb= V "x"} ) ) ) ) )
+
+let _ = print_newline ()
