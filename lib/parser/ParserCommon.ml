@@ -104,6 +104,9 @@ let quantifier_without_kind_annotation q x =
     (Printf.sprintf "%s %s quantifier must be used with '%s : atom' or '%s : term' kind annotation"
        q x x x )
 
+let list_of ?(sep = ";") ?(left = "") ?(right = "") elem =
+  string left *> sep_by (whitespace *> string sep <* whitespace) elem <* string right
+
 let parse p s =
   match parse_string ~consume:Consume.All p s with
   | Ok v    -> v

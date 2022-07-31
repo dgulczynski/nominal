@@ -1,8 +1,10 @@
 open Permutation
 
-type atom = A of string  (** [atom] is a term-level variable *)
+(** [atom] is a term-level variable *)
+type atom = A of string
 
-type var = V of string  (** [var] is a meta-level variable *)
+(** [var] is a meta-level variable *)
+type var = V of string
 
 (** [permuted_atom] is an [atom] permuted with [atom permutation] *)
 type permuted_atom = (atom, atom) permuted

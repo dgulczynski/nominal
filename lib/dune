@@ -2,3 +2,5 @@
  (name nominal)
  (public_name nominal)
  (libraries angstrom))
+
+(include_subdirs unqualified)

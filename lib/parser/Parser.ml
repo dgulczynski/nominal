@@ -108,3 +108,15 @@ let parse_constr s = pconstr_to_constr [] $ parse constr s
 let parse_kind s = pkind_to_kind [] $ parse kind s
 
 let parse_formula s = pformula_to_formula [] $ parse formula s
+
+let judgement assm goal =
+  let* env = list_of assm in
+  let* _ = whitespace *> string "|-" <* whitespace in
+  let* goal in
+  return (env, goal)
+
+let run_judgement penv s =
+  let env, goal = parse (judgement constr constr) s in
+  Solver.solve_with_assumptions
+    (List.map (pconstr_to_constr penv) env)
+    (pconstr_to_constr penv goal)

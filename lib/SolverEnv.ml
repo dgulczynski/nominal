@@ -3,8 +3,8 @@ open Common
 open Substitution
 
 (** Here one would expect constructors like [A_Shape of var * var] ([x_1 =~ x_2]) and [A_Subshape of
-    term * var], ([t <: x]), but we decided it is best to keep those assumptions in groupings like
-    [[t_1, ..., t_n] <: [x_1 ~...~ x_m]], where each [t_i] subshapes every [x_j], keeping
+    term * var], ([t < x]), but we decided it is best to keep those assumptions in groupings like
+    [[t_1, ..., t_n] < [x_1 ~...~ x_m]], where each [t_i] subshapes every [x_j], keeping
     _abstraction classes_ together *)
 type atom_assumption =
   | A_Fresh of atom * var
@@ -37,22 +37,22 @@ let rec occurs_check gamma x t =
   let _, xs, gamma = find_shapes gamma x in
   (*                    x_i occurs syntatically in t                  *)
   (* ---------------------------------------------------------------- *)
-  (*  G, [t_1, ..., t_n] <: [x_1 ~...~ x ~...~ x_m] ; x =~: t, C |- c  *)
+  (*  G, [t_1, ..., t_n] < [x_1 ~...~ x ~...~ x_m] ; x ~ t, C |- c  *)
   syntactic_occurs_check_many xs t
   ||
   let occurs_check_subshapes y =
     (*      y occurs syntatically in t       G |- x occurs in t_i       *)
     (* ---------------------------------------------------------------- *)
-    (*  G, [t_1, ..., t_n] <: [y_1 ~...~ y ~...~ y_m] ; x =~: t, C |- c  *)
+    (*  G, [t_1, ..., t_n] < [y_1 ~...~ y ~...~ y_m] ; x ~ t, C |- c  *)
     let ts, _, gamma = find_shapes gamma y in
     List.exists (occurs_check gamma x) ts
   in
   List.exists occurs_check_subshapes $ free_vars_of_term t
 
 let add_same_shape gamma x y =
-  (*       G; C |- c           x ∈ xs     y ∈ zs    G, [ts] <: [zs]; C |- c  *)
+  (*       G; C |- c           x ∈ xs     y ∈ zs    G, [ts] < [zs]; C |- c  *)
   (* --------------------     ---------------------------------------------- *)
-  (*  G; x =~: x, C |- c              G, [ts] <: [zs]; x =~: y, C |- c         *)
+  (*  G; x ~ x, C |- c              G, [ts] < [zs]; x ~ y, C |- c         *)
   if
     x = y
     || List.exists
@@ -63,13 +63,13 @@ let add_same_shape gamma x y =
   then Some gamma
     (*    G |- x ∈ y                  G |- y ∈ x     *)
     (* --------------------     -------------------- *)
-    (*  G; x =~: y, C |- c        G; x =~: y, C |- c   *)
+    (*  G; x ~ y, C |- c        G; x ~ y, C |- c   *)
   else if occurs_check gamma x (var y) || occurs_check gamma y (var x) then None
   else
-    (*  x ∈ xs     G |- x ∉ y     y ∈ ys     G |- y ∉ x  *)
-    (*        G, [ts @ ss] <: [xs @ ys]; C |- c          *)
+    (*  x ∈ xs     G |- x ∉ y    y ∈ ys     G |- y ∉ x  *)
+    (*         G, [ts @ ss] < [xs @ ys]; C |- c          *)
     (* ------------------------------------------------- *)
-    (*   G, [ts] <: [xs], [ss] <: [ys]; x =~: y, C |- c   *)
+    (*     G, [ts] < [xs], [ss] < [ys]; x ~ y, C |- c    *)
     let x_shapes, x_vars, gamma = find_shapes gamma x in
     let y_shapes, y_vars, gamma = find_shapes gamma y in
     Option.some $ A_Shape (x_shapes @ y_shapes, x_vars @ y_vars) :: gamma
@@ -106,13 +106,13 @@ let subst_atom gamma a b =
 let subst_var gamma x t =
   if occurs_check gamma x t then None
   else
-    (*  G{t/x}, [t_1, ..., t_n] <: [x_1 ~...~ x_m] ;                       *)
-    (*           t_1 <: t, ..., t_n <: t, x_1 =~: t, ..., x_m =~: t, C |- c  *)
+    (*  G{t/x}, [t_1, ..., t_n] < [x_1 ~...~ x_m] ;                       *)
+    (*           t_1 < t, ..., t_n < t, x_1 ~ t, ..., x_m ~ t, C |- c  *)
     (* ------------------------------------------------------------------- *)
-    (*     (G, [t_1, ..., t_n] <: [x_1 ~...~ x ~...~ x_m]){t/x} ; C |- c   *)
+    (*     (G, [t_1, ..., t_n] < [x_1 ~...~ x ~...~ x_m]){t/x} ; C |- c   *)
     let ts, xs, gamma = find_shapes gamma x in
     (* Here from [G |- x doesn't occur in t] we know that [G |- x doesn't occur in t_i] *)
-    (* So the [t_i <: t] is not needed? *)
+    (* So the [t_i < t] is not needed? *)
     let assms = List.map (fun t_i -> t_i <: t) ts in
     let gamma, assms =
       match List.filter (fun x' -> x' != x) xs with
@@ -133,7 +133,7 @@ let string_of_atom_assumption = function
   | A_Neq (a, b)     -> Printing.string_of_constr $ C_AtomNeq (a, {perm= []; symb= b})
   | A_Shape (ts, xs) ->
       Printing.string_of_list Printing.string_of_term ts
-      ^ " <: "
+      ^ " < "
       ^ Printing.string_of_list (Printing.string_of_term % var) xs
 
 let are_same_shape gamma x1 x2 =
