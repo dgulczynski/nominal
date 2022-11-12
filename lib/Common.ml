@@ -23,6 +23,8 @@ let hd_opt = function
 
 let const x _ = x
 
+let const2 x _ _ = x
+
 let pair_eq (x1, x2) (y1, y2) = (x1 = y1 && x2 = y2) || (x1 = y2 && x2 = y1)
 
 let to_option a test = if test then Some a else None
@@ -56,6 +58,8 @@ let rec free_vars_of_term = function
 let atom a = T_Atom (pure a)
 
 let var x = T_Var (pure x)
+
+let fvar x = F_Var x
 
 let fresh_generator prefix =
   let counter = ref 0 in

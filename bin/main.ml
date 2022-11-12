@@ -25,7 +25,8 @@ let rec loop iter () = iter () ; loop iter ()
 
 let _ =
   Printf.printf
-    "Input judgement of form << a_1; ...; a_n |- goal >> to run solver on goal\n\
-    \   with assumptions  a_1, ... a_n\n"
+    "\n\
+    \ Input judgement of form `a_1; ...; a_n |- c`\n\
+    \   to run solver on goal `c` with assumptions  `a_1, ... a_n`\n"
 
 let _ = loop iter ()

@@ -13,6 +13,8 @@ val id : 'a -> 'a
 
 val const : 'a -> 'b -> 'a
 
+val const2 : 'a -> 'b -> 'c -> 'a
+
 val flip : ('a -> 'b -> 'c) -> 'b -> 'a -> 'c
 
 val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
@@ -41,6 +43,9 @@ val atom : atom -> term
 
 val var : var -> term
 (** [var x = T_Var (pure x)] *)
+
+val fvar : fvar -> formula
+(** [fvar x = F_Var x] *)
 
 val fresh_var : unit -> var
 

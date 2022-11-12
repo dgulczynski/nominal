@@ -118,7 +118,7 @@ let _ =
   $ F_ForallAtom (A "a", F_ForallTerm (V "x", F_ConstrImpl (C_Fresh (A "a", var $ V "x"), F_Top)))
 
 let _ =
-  test_formula [] "fun f : prop -> forall a : atom. forall x : term. [a # x] => f a {x} {[a a] x}"
+  test_formula [] "fun f : prop -> forall a : atom. forall x : term. [a # x] => f a x {[a a] x}"
   $ F_Fun
       ( FV "f"
       , K_Prop
