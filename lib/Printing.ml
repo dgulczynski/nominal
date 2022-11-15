@@ -57,7 +57,14 @@ let rec pp_print_shape fmt = function
   | S_Var x        -> pp_print_var fmt x
   | S_Atom         -> pp_print_string fmt "_"
   | S_Lam s        -> pp_print_string fmt "_." ; pp_print_shape fmt s
-  | S_App (s1, s2) -> pp_print_shape fmt s1 ; print_space fmt () ; pp_print_shape fmt s2
+  | S_App (s1, s2) -> (
+      ( match s1 with
+      | S_Var _ | S_Atom | S_App _ | S_Fun _ -> pp_print_shape fmt s1
+      | S_Lam _ -> pp_print_parenthesized fmt pp_print_shape s1 ) ;
+      print_space fmt () ;
+      match s2 with
+      | S_Var _ | S_Atom | S_Fun _ -> pp_print_shape fmt s2
+      | S_Lam _ | S_App _          -> pp_print_parenthesized fmt pp_print_shape s2 )
   | S_Fun f        -> pp_print_string fmt f
 
 let pp_print_quantifier fmt quantifier variable = function
@@ -110,6 +117,10 @@ let rec pp_print_kind fmt c =
 let pp_print_fvar fmt (FV x) = pp_print_string fmt x
 
 let rec pp_print_formula fmt formula =
+  let is_atomic = function
+    | F_Bot | F_Top | F_Var _ -> true
+    | _                       -> false
+  in
   let pp_formula = pp_print_formula fmt in
   let pp_string = pp_print_string fmt in
   let space () = print_space fmt () in
@@ -124,18 +135,25 @@ let rec pp_print_formula fmt formula =
     space () ;
     pp_formula formula
   in
+  let pp_sep sep fmt () = pp_print_string fmt sep in
+  let pp_print_atomic_formula fmt f =
+    if is_atomic f then pp_print_formula fmt f else pp_print_parenthesized fmt pp_print_formula f
+  in
   match formula with
   | F_Bot                -> pp_string "⊥"
   | F_Top                -> pp_string "⊤"
   | F_Var x              -> pp_print_fvar fmt x
-  | F_And fs             -> pp_print_list
-                              ~pp_sep:(fun f () -> pp_print_string f " ∧ ")
-                              pp_print_formula fmt fs
-  | F_Or fs              -> pp_print_list
-                              ~pp_sep:(fun f () -> pp_print_string f " ∨ ")
-                              pp_print_formula fmt fs
+  | F_And fs             -> pp_print_list ~pp_sep:(pp_sep " ∧ ") pp_print_atomic_formula fmt fs
+  | F_Or fs              -> pp_print_list ~pp_sep:(pp_sep " ∨ ") pp_print_atomic_formula fmt fs
   | F_Constr c           -> pp_print_constr fmt c
-  | F_Impl (f1, f2)      -> pp_formula f1 ; space () ; pp_string "=>" ; space () ; pp_formula f2
+  | F_Impl (f1, f2)      -> (
+      pp_print_atomic_formula fmt f1 ;
+      space () ;
+      pp_string "=>" ;
+      space () ;
+      match f2 with
+      | F_Impl _ | F_Bot | F_Top | F_Var _ -> pp_formula f2
+      | _ -> pp_print_parenthesized fmt pp_print_formula f2 )
   | F_ForallTerm (x, f)  ->
       pp_forall fmt (string_of_var_arg x) "term" ;
       space () ;
@@ -167,7 +185,7 @@ let rec pp_print_formula fmt formula =
   | F_Fun (x, k, f)      -> pp_fun pp_print_fvar x pp_print_kind k f
   | F_FunTerm (x, f)     -> pp_fun pp_print_var x pp_print_string "term" f
   | F_FunAtom (a, f)     -> pp_fun pp_print_atom a pp_print_string "atom" f
-  | F_App (f1, f2)       -> pp_formula f1 ; space () ; pp_formula f2
+  | F_App (f1, f2)       -> pp_print_atomic_formula fmt f1 ; space () ; pp_formula f2
   | F_AppTerm (f, e)     ->
       pp_formula f ; space () ; pp_string "{" ; pp_print_term fmt e ; pp_string "}"
   | F_AppAtom (f, a)     ->
