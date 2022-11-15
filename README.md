@@ -3,7 +3,7 @@ This is repository of my master thesis concerning domain logic for reasoning abo
 Code and thesis text is still under development.
 
 # Usage
-Run via command: `dune exec nominal` or see examples via `dune test`.
+Run via command: `dune exec nominal`, try it yourself with via `dune utop`, or check that examples are still working via `dune test`.
 
 # Features / TODO list
 - [x] Solver, testing wether $c_1, ..., c_n \vdash c$
