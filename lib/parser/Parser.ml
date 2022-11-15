@@ -15,10 +15,6 @@ let formula : pformula t = ParserFormula.formula
 
 let parse = ParserCommon.parse
 
-type pidentifier_kind = PI_Atom | PI_Var | PI_FVar
-
-type pidentifier_env = (string * pidentifier_kind) list
-
 let unbound_variable x = ParserException (Printf.sprintf "Unbound variable %s" x)
 
 let wrong_use expected x actual = ParserException (Printf.sprintf "%s %s used %s" expected x actual)
@@ -107,7 +103,9 @@ let parse_constr s = pconstr_to_constr [] $ parse constr s
 
 let parse_kind s = pkind_to_kind [] $ parse kind s
 
-let parse_formula s = pformula_to_formula [] $ parse formula s
+let parse_formula_in_env env s = pformula_to_formula env $ parse formula s
+
+let parse_formula = parse_formula_in_env []
 
 let judgement assm goal =
   let* env = list_of assm in
@@ -120,3 +118,9 @@ let run_judgement penv s =
   Solver.solve_with_assumptions
     (List.map (pconstr_to_constr penv) env)
     (pconstr_to_constr penv goal)
+
+let atoms_env xs = List.map (fun a -> (a, PI_Atom)) xs
+
+let vars_env xs = List.map (fun x -> (x, PI_Var)) xs
+
+let fvars_env xs = List.map (fun x -> (x, PI_FVar)) xs

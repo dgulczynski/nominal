@@ -2,15 +2,7 @@ open Nominal.Parser
 open Nominal.ParserCommon
 open Nominal.Common
 
-let env =
-  [ ("a", PI_Atom)
-  ; ("b", PI_Atom)
-  ; ("c", PI_Atom)
-  ; ("d", PI_Atom)
-  ; ("x", PI_Var)
-  ; ("y", PI_Var)
-  ; ("z", PI_Var)
-  ; ("w", PI_Var) ]
+let env = atoms_env ["a"; "b"; "c"; "d"] @ vars_env ["x"; "y"; "z"; "w"]
 
 let iter () =
   try
