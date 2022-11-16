@@ -1,14 +1,15 @@
 open Nominal.Common
 open Nominal.IncProof
 open Nominal.Parser
-open Nominal.Prover
 open Nominal.ProofPrinting
+open Nominal.Prover
+open Nominal.ProverException
 
 let test_proof theorem proof =
   Printf.printf "Checking proof of `%s` ... " $ string_of_judgement theorem ;
   let _ =
     try theorem |> proof |> qed |> iproof_to_proof
-    with Failure e ->
+    with ProverException e ->
       Printf.printf "❌ \n%s\n" e ;
       assert false
   in

@@ -1,6 +1,6 @@
 open Types
 open Common
-open Printing
+open ProverException
 
 type proof =
   | P_Ax      of judgement
@@ -40,13 +40,9 @@ let imp_i f p =
 let imp_e p1 p2 =
   match (label p1, label p2) with
   | F_Impl (f2', f), f2 when f2 === f2' -> P_Apply ((env_union (env p1) (env p2), f), p1, p2)
-  | f1, f2 ->
-      failwith
-      $ Printf.sprintf "%s is not an implication with hypothesis %s" (string_of_formula f1)
-          (string_of_formula f2)
+  | f1, f2 -> raise $ conclusion_mismatch f1 f2
 
 let bot_e f p =
   match label p with
   | F_Bot -> P_ExFalso ((env p, f), p)
-  | f'    -> failwith
-             $ Printf.sprintf "%s is not %s" (string_of_formula f') (string_of_formula F_Bot)
+  | f'    -> raise $ formula_mismatch F_Bot f'
