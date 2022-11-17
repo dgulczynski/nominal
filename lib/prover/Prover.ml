@@ -40,7 +40,6 @@ and find_goal_in_ctx iproof = function
     and [[]] otherwise *)
 let destruct_impl conclusion f =
   let rec aux = function
-    | F_Impl (_, F_Bot) as f -> Some [f]
     | F_Impl (_, f2) as f when f2 === conclusion -> Some [f]
     | F_Impl (_, f2) as f -> List.cons f <$> aux f2
     | _ -> None
@@ -100,6 +99,8 @@ let intro h = function
         U_Unfinished (goal', PC_Intro (to_judgement goal, ctx))
     | _               -> raise $ not_an_implication f )
   | U_Finished _ -> raise finished
+
+let intros = List.fold_right intro
 
 let apply h uproof =
   let env = goal_env uproof in

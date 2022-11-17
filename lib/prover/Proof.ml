@@ -24,6 +24,8 @@ let equiv f1 f2 = f1 = f2
 
 let ( === ) = equiv
 
+let ( =/= ) f1 f2 = not (f1 === f2)
+
 let env_remove env f = List.filter (fun f' -> not (f === f')) env
 
 let env_union e1 e2 = List.merge compare e1 e2
@@ -40,7 +42,7 @@ let imp_i f p =
 let imp_e p1 p2 =
   match (label p1, label p2) with
   | F_Impl (f2', f), f2 when f2 === f2' -> P_Apply ((env_union (env p1) (env p2), f), p1, p2)
-  | f1, f2 -> raise $ conclusion_mismatch f1 f2
+  | f1, f2 -> raise $ premise_mismatch f1 f2
 
 let bot_e f p =
   match label p with
