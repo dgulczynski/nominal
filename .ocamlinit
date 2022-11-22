@@ -7,6 +7,8 @@ open Nominal.Proof;;
 open Nominal.ProofContext;;
 open Nominal.ProofPrinting;;
 open Nominal.Prover;;
+open Nominal.ProverException;;
+open Nominal.Tactics;;
 open Nominal.Types ;;
 #install_printer pp_print_assm;;
 #install_printer pp_print_constr;;
