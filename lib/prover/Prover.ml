@@ -58,6 +58,10 @@ let goal = function
   | U_Finished _           -> raise finished
   | U_Unfinished (goal, _) -> goal
 
+let context = function
+  | U_Finished _          -> raise finished
+  | U_Unfinished (_, ctx) -> ctx
+
 let goal_env = fst % goal
 
 let lookup env h_name =
@@ -117,10 +121,14 @@ let ex_falso = function
   | U_Finished _                 -> raise finished
   | U_Unfinished ((env, f), ctx) -> U_Unfinished ((env, F_Bot), PC_ExFalso ((to_env env, f), ctx))
 
+let truth uproof =
+  match goal uproof with
+  | env, F_Top -> find_goal_in_ctx (axiom env F_Top) (context uproof)
+  | _, f       -> raise $ formula_mismatch F_Top f
+
 let qed = function
-  | U_Unfinished ((env, F_Top), _) -> axiom env F_Top
-  | U_Unfinished (goal, _)         -> raise $ unproven goal
-  | U_Finished iproof              -> (
+  | U_Unfinished (goal, _) -> raise $ unproven goal
+  | U_Finished iproof      -> (
     match find_goal_in_proof PC_Root iproof with
     | U_Finished _           -> iproof
     | U_Unfinished (goal, _) -> raise $ unproven goal )
