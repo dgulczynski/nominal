@@ -1,7 +1,7 @@
 open Types
 open Proof
 open Common
-open ProverException
+open ProofException
 
 (** Possibly incomplete proof with the same structure as [proof], but with _holes_ *)
 type incproof =
@@ -50,3 +50,7 @@ let rec iproof_to_proof = function
   | PI_Intro ((_, F_Impl (f, _)), iproof) -> imp_i f $ iproof_to_proof iproof
   | PI_Intro ((_, f), _) -> raise $ not_an_implication f
   | PI_Hole _ -> raise hole_in_proof
+
+let hole env f = PI_Hole (env, f)
+
+let axiom env f = PI_Axiom (env, f)

@@ -1,6 +1,6 @@
 open Types
 open Common
-open ProverException
+open ProofException
 
 type proof =
   | P_Ax      of judgement
