@@ -1,8 +1,10 @@
 open IncProof
-open ProofContext
+open IncProofContext
+open ProverGoal
 open Types
 
-type prover_state
+(** Type of in-progress proof of [Prover]. For ease of development it is defined here, but in future it will be abstract *)
+type prover_state = S_Unfinished of {goal: goal; context: proof_context} | S_Finished of incproof
 
 type tactic = prover_state -> prover_state
 

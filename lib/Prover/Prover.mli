@@ -1,8 +1,9 @@
 open IncProof
+open ProofEnv
 open ProverInternals
 open Types
 
-val proof : formula list -> formula -> prover_state
+val proof : formula env -> formula -> prover_state
 
 val intro : string -> tactic
 

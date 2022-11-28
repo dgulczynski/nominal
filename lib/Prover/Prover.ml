@@ -1,9 +1,10 @@
 open Types
 open Common
-open Proof
 open IncProof
-open ProofContext
+open IncProofContext
 open ProofException
+open ProofEnv
+open ProverGoal
 open ProverInternals
 
 let proof env f =
@@ -14,7 +15,7 @@ let intro h state =
   match goal_formula state with
   | F_Impl (f1, f2) as f ->
       let env = goal_env state in
-      let goal = (env_add h f1 env, f2) in
+      let goal = (add (h, f1) env, f2) in
       let context = PC_Intro (to_judgement (env, f), context state) in
       unfinished goal context
   | f                    -> raise $ not_an_implication f
@@ -23,7 +24,7 @@ let apply h state =
   let env = goal_env state in
   apply_internal (hole env h) None state
 
-let apply_thm iproof state = apply_internal iproof None state
+let apply_thm incproof state = apply_internal incproof None state
 
 let apply_assm h_name state =
   let env = goal_env state in

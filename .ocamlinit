@@ -4,7 +4,7 @@ open Nominal.IncProof;;
 open Nominal.Parser ;;
 open Nominal.Printing ;;
 open Nominal.Proof;;
-open Nominal.ProofContext;;
+open Nominal.IncProofContext;;
 open Nominal.ProofPrinting;;
 open Nominal.Prover;;
 open Nominal.ProofException;;

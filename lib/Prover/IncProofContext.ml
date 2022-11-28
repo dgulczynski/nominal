@@ -1,5 +1,5 @@
-open Proof
 open IncProof
+open Proof
 
 type proof_context =
   | PC_Root
