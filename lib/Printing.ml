@@ -3,6 +3,8 @@ open Permutation
 open Format
 open Common
 
+type 'a printer = formatter -> 'a -> unit
+
 let print_space fmt () = pp_print_string fmt " "
 
 let string_of_list string_of_item ?(sep = "; ") = function

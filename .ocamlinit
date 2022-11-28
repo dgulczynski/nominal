@@ -1,0 +1,18 @@
+open Nominal;;
+open Nominal.Common;;
+open Nominal.IncProof;;
+open Nominal.Parser ;;
+open Nominal.Printing ;;
+open Nominal.Proof;;
+open Nominal.IncProofContext;;
+open Nominal.ProofPrinting;;
+open Nominal.Prover;;
+open Nominal.ProofException;;
+open Nominal.Tactics;;
+open Nominal.Types ;;
+#install_printer pp_print_assm;;
+#install_printer pp_print_constr;;
+#install_printer pp_print_formula;;
+#install_printer pp_print_judgement;;
+#install_printer pp_print_goal;;
+#install_printer pp_print_term;;

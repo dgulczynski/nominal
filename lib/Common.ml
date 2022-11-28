@@ -5,6 +5,8 @@ let ( $ ) f x = f x
 
 let ( % ) f g x = f (g x)
 
+let ( %% ) f g x = f % g x
+
 let ( <$> ) = Option.map
 
 let ( >>= ) = Option.bind
@@ -98,3 +100,9 @@ let rec term_of_shape = function
       let t1, vs1 = term_of_shape s1 and t2, vs2 = term_of_shape s2 in
       (T_App (t1, t2), vs1 @ vs2)
   | S_Fun f        -> (T_Fun f, [])
+
+let equiv f1 f2 = f1 = f2
+
+let ( === ) = equiv
+
+let ( =/= ) = not %% ( === )
