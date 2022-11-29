@@ -1,5 +1,6 @@
 open Format
 open Common
+open Printing
 
 type 'a env = 'a list
 
@@ -23,4 +24,4 @@ let remove env test = List.filter (not % test) env
 
 let pp_print_env pp_print_assupmtion =
   let pp_sep fmt () = pp_print_string fmt "; " in
-  pp_print_list ~pp_sep pp_print_assupmtion
+  pp_print_bracketed $ pp_print_list ~pp_sep pp_print_assupmtion

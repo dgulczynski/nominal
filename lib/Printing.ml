@@ -17,20 +17,20 @@ let string_of_atom_arg (A a) = a
 
 let string_of_var_arg (V v) = v
 
-let pp_print_parenthesized ?(left = '(') ?(right = ')') fmt pp_x x =
+let pp_print_parenthesized ?(left = '(') ?(right = ')') pp_x fmt x =
   pp_print_char fmt left ; pp_x fmt x ; pp_print_char fmt right
 
-let pp_print_bracketed fmt = pp_print_parenthesized ~left:'[' ~right:']' fmt
+let pp_print_bracketed printer = pp_print_parenthesized ~left:'[' ~right:']' printer
 
-let rec pp_print_swap fmt (a, b) =
-  pp_print_bracketed fmt
+let rec pp_print_swap fmt =
+  pp_print_bracketed
     (fun fmt (a, b) ->
       pp_print_atom_permuted fmt a ; print_space fmt () ; pp_print_atom_permuted fmt b )
-    (a, b)
+    fmt
 
-and pp_print_permutation fmt pi =
+and pp_print_permutation fmt =
   let pp_sep = const2 () in
-  pp_print_list ~pp_sep pp_print_swap fmt pi
+  pp_print_list ~pp_sep pp_print_swap fmt
 
 and pp_print_atom_permuted fmt {perm= pi; symb= a} =
   pp_print_permutation fmt pi ; pp_print_atom fmt a
@@ -48,11 +48,11 @@ let rec pp_print_term fmt = function
   | T_App (t1, t2) -> (
       ( match t1 with
       | T_Atom _ | T_Var _ | T_App _ | T_Fun _ -> pp_print_term fmt t1
-      | T_Lam _ -> pp_print_parenthesized fmt pp_print_term t1 ) ;
+      | T_Lam _ -> pp_print_parenthesized pp_print_term fmt t1 ) ;
       print_space fmt () ;
       match t2 with
       | T_Atom _ | T_Var _ | T_Fun _ -> pp_print_term fmt t2
-      | T_Lam _ | T_App _            -> pp_print_parenthesized fmt pp_print_term t2 )
+      | T_Lam _ | T_App _            -> pp_print_parenthesized pp_print_term fmt t2 )
   | T_Fun f        -> pp_print_string fmt f
 
 let rec pp_print_shape fmt = function
@@ -62,11 +62,11 @@ let rec pp_print_shape fmt = function
   | S_App (s1, s2) -> (
       ( match s1 with
       | S_Var _ | S_Atom | S_App _ | S_Fun _ -> pp_print_shape fmt s1
-      | S_Lam _ -> pp_print_parenthesized fmt pp_print_shape s1 ) ;
+      | S_Lam _ -> pp_print_parenthesized pp_print_shape fmt s1 ) ;
       print_space fmt () ;
       match s2 with
       | S_Var _ | S_Atom | S_Fun _ -> pp_print_shape fmt s2
-      | S_Lam _ | S_App _          -> pp_print_parenthesized fmt pp_print_shape s2 )
+      | S_Lam _ | S_App _          -> pp_print_parenthesized pp_print_shape fmt s2 )
   | S_Fun f        -> pp_print_string fmt f
 
 let pp_print_quantifier fmt quantifier variable = function
@@ -99,7 +99,7 @@ let rec pp_print_kind fmt c =
   | K_Prop               -> pp_print_char fmt '*'
   | K_Arrow (K_Prop, k2) -> pp_print_string fmt "* =>" ; print_space fmt () ; pp_kind k2
   | K_Arrow (k1, k2)     ->
-      pp_print_parenthesized fmt pp_print_kind k1 ;
+      pp_print_parenthesized pp_print_kind fmt k1 ;
       print_space fmt () ;
       pp_print_string fmt "=>" ;
       print_space fmt () ;
@@ -113,7 +113,7 @@ let rec pp_print_kind fmt c =
       print_space fmt () ;
       pp_kind k
   | K_Constr (c, k)      ->
-      pp_print_bracketed fmt pp_print_constr c ;
+      pp_print_bracketed pp_print_constr fmt c ;
       pp_kind k
 
 let pp_print_fvar fmt (FV x) = pp_print_string fmt x
@@ -139,7 +139,7 @@ let rec pp_print_formula fmt formula =
   in
   let pp_sep sep fmt () = pp_print_string fmt sep in
   let pp_print_atomic_formula fmt f =
-    if is_atomic f then pp_print_formula fmt f else pp_print_parenthesized fmt pp_print_formula f
+    if is_atomic f then pp_print_formula fmt f else pp_print_parenthesized pp_print_formula fmt f
   in
   match formula with
   | F_Bot                -> pp_string "⊥"
@@ -155,7 +155,7 @@ let rec pp_print_formula fmt formula =
       space () ;
       match f2 with
       | F_Impl _ | F_Bot | F_Top | F_Var _ -> pp_formula f2
-      | _ -> pp_print_parenthesized fmt pp_print_formula f2 )
+      | _ -> pp_print_parenthesized pp_print_formula fmt f2 )
   | F_ForallTerm (x, f)  ->
       pp_forall fmt (string_of_var_arg x) "term" ;
       space () ;
@@ -173,13 +173,13 @@ let rec pp_print_formula fmt formula =
       space () ;
       pp_formula f
   | F_ConstrAnd (c, f)   ->
-      pp_print_bracketed fmt pp_print_constr c ;
+      pp_print_bracketed pp_print_constr fmt c ;
       space () ;
       pp_string "∧" ;
       space () ;
       pp_formula f
   | F_ConstrImpl (c, f)  ->
-      pp_print_bracketed fmt pp_print_constr c ;
+      pp_print_bracketed pp_print_constr fmt c ;
       space () ;
       pp_string "=>" ;
       space () ;
@@ -198,7 +198,7 @@ let rec pp_print_formula fmt formula =
       pp_print_string fmt "fix" ;
       space () ;
       pp_print_fvar fmt fix ;
-      pp_print_parenthesized fmt pp_print_var x ;
+      pp_print_parenthesized pp_print_var fmt x ;
       pp_print_char fmt ':' ;
       pp_print_kind fmt k ;
       space () ;
