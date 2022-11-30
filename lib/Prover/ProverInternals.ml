@@ -2,6 +2,7 @@ open Types
 open Common
 open IncProof
 open IncProofContext
+open ProofCommon
 open ProofEnv
 open ProofException
 open ProverGoal
@@ -73,15 +74,7 @@ let lookup env h_name =
   | None        -> raise $ unknown_hypothesis h_name
   | Some (_, h) -> h
 
-let premise = function
-  | F_Impl (p, _) -> p
-  | f             -> raise $ not_an_implication f
-
-let conclusion = function
-  | F_Impl (_, c) -> c
-  | f             -> raise $ not_an_implication f
-
-let apply_internal h_proof h_name =
+let apply_internal ?(h_name = "") h_proof =
   let apply_impl_list env =
     let apply_next incproof f =
       PI_Apply (to_judgement (env, conclusion f), hole env (premise f), incproof)

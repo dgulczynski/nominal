@@ -1,5 +1,6 @@
 open Types
 open Common
+open ProofCommon
 open ProofEnv
 open ProofException
 

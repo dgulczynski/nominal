@@ -22,14 +22,14 @@ let intro h state =
 
 let apply h state =
   let env = goal_env state in
-  apply_internal (hole env h) None state
+  apply_internal (hole env h) state
 
-let apply_thm incproof state = apply_internal incproof None state
+let apply_thm incproof state = apply_internal incproof state
 
 let apply_assm h_name state =
   let env = goal_env state in
   let h = lookup env h_name in
-  apply_internal (axiom (to_env env) h) (Some h_name) state
+  apply_internal ~h_name (axiom (to_env env) h) state
 
 let ex_falso state =
   let context = PC_ExFalso (to_judgement $ goal state, context state) in

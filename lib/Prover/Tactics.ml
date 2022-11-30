@@ -1,4 +1,5 @@
 open Common
+open ProofCommon
 open ProofException
 open Prover
 open ProverInternals

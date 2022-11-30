@@ -9,10 +9,9 @@ let unknown_hypothesis h_name =
   ProofException exn
 
 let hypothesis_goal_mismatch h_name h_formula goal =
-  let h_name' = Option.value ~default:"" h_name in
   let h_formula' = string_of_formula h_formula in
   let goal' = string_of_formula goal in
-  let exn = Printf.sprintf "Cannot apply hypothesis %s`%s` on goal `%s`" h_name' h_formula' goal' in
+  let exn = Printf.sprintf "Cannot apply hypothesis %s`%s` on goal `%s`" h_name h_formula' goal' in
   ProofException exn
 
 let not_an_implication f =
