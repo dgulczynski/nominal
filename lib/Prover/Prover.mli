@@ -1,4 +1,4 @@
-open IncProof
+open Proof
 open ProofEnv
 open ProverInternals
 open Types
@@ -9,7 +9,7 @@ val intro : string -> tactic
 
 val apply : formula -> tactic
 
-val apply_thm : incproof -> tactic
+val apply_thm : proof -> tactic
 
 val apply_assm : string -> tactic
 
@@ -17,4 +17,4 @@ val ex_falso : tactic
 
 val truth : tactic
 
-val qed : prover_state -> incproof
+val qed : prover_state -> proof

@@ -1,5 +1,4 @@
 open Nominal.Common
-open Nominal.IncProof
 open Nominal.Parser
 open Nominal.ProofPrinting
 open Nominal.ProofEnv
@@ -10,7 +9,7 @@ open Nominal.Tactics
 let test_proof theorem proof =
   Printf.printf "Checking proof of `%s` ... " $ string_of_judgement theorem ;
   let _ =
-    try theorem |> proof |> qed |> incproof_to_proof
+    try theorem |> proof |> qed
     with ProofException e ->
       Printf.printf "❌ \n%s\n" e ;
       assert false
@@ -25,8 +24,8 @@ let th2 =
   (empty, parse_formula_in_env (fvars_env ["p"; "q"; "r"]) "(p => q => r) => (p => q) => p => r")
 
 let proof2 th2 =
-  proof' th2 |> intro "HPQR" |> intro "HPQ" |> intro "HP" |> apply_assm "HPQR" |> apply_assm "HPQ"
-  |> apply_assm "HP" |> assumption
+  proof' th2 |> intro "HPQR" |> intro "HPQ" |> intro "HP" |> apply_assm "HPQR" |> assumption
+  |> apply_assm "HPQ" |> apply_assm "HP"
 
 let th3 =
   (empty, parse_formula_in_env (fvars_env ["p"]) "(((p => ⊥) => p) => p) => ((p => ⊥) => ⊥) => p")
@@ -43,7 +42,7 @@ let proof4 th4 =
   |> intros ["H1"; "H2"]
   |> apply_assm "H2" |> intro "H3"
   |> apply (parse_formula_in_env (fvars_env ["p"]) "(p => ⊥) => p => ⊥")
-  |> apply_assm "H1" |> apply_assm "H3" |> apply_assm "H3" |> trivial
+  |> trivial |> assumption |> apply_assm "H1" |> assumption
 
 let _ = test_proof th1 proof1
 

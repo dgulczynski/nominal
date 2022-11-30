@@ -2,7 +2,7 @@ open Printing
 
 exception ProofException of string
 
-let finished = ProofException "Proof finished"
+let proof_finished = ProofException "Proof finished"
 
 let unknown_hypothesis h_name =
   let exn = Printf.sprintf "Hypothesis \"%s\" not in environment" h_name in

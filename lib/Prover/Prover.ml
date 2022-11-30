@@ -1,7 +1,6 @@
 open Types
 open Common
 open IncProof
-open IncProofContext
 open ProofException
 open ProofEnv
 open ProverGoal
@@ -22,14 +21,14 @@ let intro h state =
 
 let apply h state =
   let env = goal_env state in
-  apply_internal (hole env h) state
+  apply_internal (proof_hole env h) state
 
-let apply_thm incproof state = apply_internal incproof state
+let apply_thm proof state = apply_internal (proven proof) state
 
 let apply_assm h_name state =
   let env = goal_env state in
   let h = lookup env h_name in
-  apply_internal ~h_name (axiom (to_env env) h) state
+  apply_internal ~h_name (proof_axiom h) state
 
 let ex_falso state =
   let context = PC_ExFalso (to_judgement $ goal state, context state) in
@@ -37,8 +36,8 @@ let ex_falso state =
   unfinished goal context
 
 let truth state =
-  match goal state with
-  | env, F_Top -> find_goal_in_ctx (axiom (to_env env) F_Top) (context state)
-  | _, f       -> raise $ formula_mismatch F_Top f
+  match goal_formula state with
+  | F_Top -> find_goal_in_ctx (proof_axiom F_Top) (context state)
+  | f     -> raise $ formula_mismatch F_Top f
 
 let qed = finish

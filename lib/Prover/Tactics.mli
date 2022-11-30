@@ -1,4 +1,3 @@
-open Types
 open Proof
 open ProverInternals
 
@@ -8,7 +7,7 @@ val contradiction : tactic
 
 val intros : string list -> tactic
 
-val proof' : proof_env * formula -> prover_state
+val proof' : judgement -> prover_state
 
 val trivial : tactic
 
