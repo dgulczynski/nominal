@@ -30,18 +30,18 @@ let rec pterm_to_term env = function
   | PT_Lam (a, e)              -> T_Lam (pure (A a), pterm_to_term ((a, PI_Atom) :: env) e)
   | PT_Identifier {perm; symb} -> (
     match List.assoc_opt symb env with
-    | Some PI_Atom -> T_Atom {perm= idperm_to_aperm perm; symb= A symb}
-    | Some PI_Var  -> T_Var {perm= idperm_to_aperm perm; symb= V symb}
-    | Some PI_FVar -> raise $ wrong_use "Logical variable" symb "in term context"
-    | None         -> raise $ unbound_variable symb )
+    | Some PI_Atom     -> T_Atom {perm= idperm_to_aperm perm; symb= A symb}
+    | Some PI_Var      -> T_Var {perm= idperm_to_aperm perm; symb= V symb}
+    | Some (PI_FVar _) -> raise $ wrong_use "Logical variable" symb "in term context"
+    | None             -> raise $ unbound_variable symb )
 
 let pconstr_to_constr env =
   let check_atom a =
     match List.assoc_opt a env with
-    | Some PI_Atom -> A a
-    | Some PI_Var  -> raise $ wrong_use "Term variable" a "like an atom"
-    | Some PI_FVar -> raise $ wrong_use "Logical variable" a "like an atom"
-    | None         -> raise $ unbound_variable a
+    | Some PI_Atom     -> A a
+    | Some PI_Var      -> raise $ wrong_use "Term variable" a "like an atom"
+    | Some (PI_FVar _) -> raise $ wrong_use "Logical variable" a "like an atom"
+    | None             -> raise $ unbound_variable a
   in
   function
   | PC_Fresh (a, e) -> C_Fresh (check_atom a, pterm_to_term env e)
@@ -76,26 +76,28 @@ let rec pformula_to_formula env = function
   | PF_ConstrImpl (c, f)   -> F_ConstrImpl (pconstr_to_constr env c, pformula_to_formula env f)
   | PF_Var x               -> (
     match List.assoc_opt x env with
-    | Some PI_Atom -> raise $ wrong_use "Atom" x "as a logical variable"
-    | Some PI_Var  -> raise $ wrong_use "Term variable" x "as a logical variable"
-    | Some PI_FVar -> F_Var (FV x)
-    | None         -> raise $ unbound_variable x )
+    | Some PI_Atom     -> raise $ wrong_use "Atom" x "as a logical variable"
+    | Some PI_Var      -> raise $ wrong_use "Term variable" x "as a logical variable"
+    | Some (PI_FVar i) -> F_Var (FV i)
+    | None             -> raise $ unbound_variable x )
   | PF_Fun (x, k, f)       ->
-      let env = (x, PI_FVar) :: env in
-      F_Fun (FV x, pkind_to_kind env k, pformula_to_formula env f)
+      let i = fresh_fvar_arg () in
+      let env = (x, PI_FVar i) :: env in
+      F_Fun (FV i, pkind_to_kind env k, pformula_to_formula env f)
   | PF_FunAtom (a, f)      -> F_FunAtom (A a, pformula_to_formula ((a, PI_Atom) :: env) f)
   | PF_FunTerm (x, f)      -> F_FunTerm (V x, pformula_to_formula ((x, PI_Atom) :: env) f)
   | PF_AppIdentfier (f, x) -> (
     match List.assoc_opt x env with
-    | Some PI_Atom -> F_AppAtom (pformula_to_formula env f, A x)
-    | Some PI_Var  -> F_AppTerm (pformula_to_formula env f, var (V x))
-    | Some PI_FVar -> F_App (pformula_to_formula env f, F_Var (FV x))
-    | None         -> raise $ unbound_variable x )
+    | Some PI_Atom     -> F_AppAtom (pformula_to_formula env f, A x)
+    | Some PI_Var      -> F_AppTerm (pformula_to_formula env f, var (V x))
+    | Some (PI_FVar i) -> F_App (pformula_to_formula env f, F_Var (FV i))
+    | None             -> raise $ unbound_variable x )
   | PF_App (f1, f2)        -> F_App (pformula_to_formula env f1, pformula_to_formula env f2)
   | PF_AppTerm (f, t)      -> F_AppTerm (pformula_to_formula env f, pterm_to_term env t)
   | PF_Fix (x, fix, k, f)  ->
-      let env = (x, PI_FVar) :: (fix, PI_Var) :: env in
-      F_Fix (FV x, V fix, pkind_to_kind env k, pformula_to_formula env f)
+      let i = fresh_fvar_arg () in
+      let env = (x, PI_FVar i) :: (fix, PI_Var) :: env in
+      F_Fix (FV i, V fix, pkind_to_kind env k, pformula_to_formula env f)
 
 let parse_term s = pterm_to_term [] $ parse term s
 
@@ -123,4 +125,4 @@ let atoms_env xs = List.map (fun a -> (a, PI_Atom)) xs
 
 let vars_env xs = List.map (fun x -> (x, PI_Var)) xs
 
-let fvars_env xs = List.map (fun x -> (x, PI_FVar)) xs
+let fvars_env xs = List.map (fun x -> (x, PI_FVar (fresh_fvar_arg ()))) xs

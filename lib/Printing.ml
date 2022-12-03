@@ -116,7 +116,7 @@ let rec pp_print_kind fmt c =
       pp_print_bracketed pp_print_constr fmt c ;
       pp_kind k
 
-let pp_print_fvar fmt (FV x) = pp_print_string fmt x
+let pp_print_fvar fmt (FV x) = pp_print_char fmt 'p' ; pp_print_int fmt x
 
 let rec pp_print_formula fmt formula =
   let is_atomic = function

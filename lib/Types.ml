@@ -44,7 +44,7 @@ type kind =
   | K_ForallAtom of atom * kind
   | K_Constr     of constr * kind
 
-type fvar = FV of string
+type fvar = FV of int
 
 type formula =
   | F_Bot

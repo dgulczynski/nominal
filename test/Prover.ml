@@ -34,14 +34,15 @@ let proof3 th3 =
   proof' th3 |> intro "H1" |> intro "H2" |> apply_assm "H1" |> intro "H3" |> ex_falso
   |> apply_assm "H2" |> apply_assm "H3"
 
-let th4 =
-  (empty, parse_formula_in_env (fvars_env ["p"]) "(((p => ⊥) => ⊥) => p) => ((p => ⊥) => p) => p")
+let env4 = fvars_env ["p"]
+
+let th4 = (empty, parse_formula_in_env env4 "(((p => ⊥) => ⊥) => p) => ((p => ⊥) => p) => p")
 
 let proof4 th4 =
   proof' th4
   |> intros ["H1"; "H2"]
   |> apply_assm "H2" |> intro "H3"
-  |> apply (parse_formula_in_env (fvars_env ["p"]) "(p => ⊥) => p => ⊥")
+  |> apply (parse_formula_in_env env4 "(p => ⊥) => p => ⊥")
   |> trivial |> assumption |> apply_assm "H1" |> assumption
 
 let _ = test_proof th1 proof1

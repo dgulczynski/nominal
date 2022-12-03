@@ -45,6 +45,6 @@ type pformula =
 
 type pquantifier_kind = PQ_Atom | PQ_Term | PQ_Kind of pkind
 
-type pidentifier_kind = PI_Atom | PI_Var | PI_FVar
+type pidentifier_kind = PI_Atom | PI_Var | PI_FVar of int (* [FVar]s are represented by [int]*)
 
 type pidentifier_env = (string * pidentifier_kind) list

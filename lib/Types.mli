@@ -57,8 +57,8 @@ type kind =
   | K_ForallAtom of atom * kind
   | K_Constr     of constr * kind
 
-(** [fvar] is a formula-level variable *)
-type fvar = FV of string
+(** [fvar] is a formula-level variable. Int is the internal representation of variables, but the user shall think it is simply a name. *)
+type fvar = FV of int
 
 type formula =
   | F_Bot
