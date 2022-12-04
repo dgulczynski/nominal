@@ -4,6 +4,7 @@ open Common
 open Permutation
 open ParserTypes
 open ParserCommon
+open Substitution
 
 let term : pterm t = ParserTerm.term
 
@@ -62,42 +63,47 @@ let rec pkind_to_kind env = function
   | PK_ForallTerm (x, k) -> K_ForallTerm (V x, pkind_to_kind ((x, PI_Var) :: env) k)
 
 let rec pformula_to_formula env = function
-  | PF_Top                 -> F_Top
-  | PF_Bot                 -> F_Bot
-  | PF_Constr c            -> F_Constr (pconstr_to_constr env c)
-  | PF_Or fs               -> F_Or (List.map (pformula_to_formula env) fs)
-  | PF_And fs              -> F_And (List.map (pformula_to_formula env) fs)
-  | PF_Impl (f1, f2)       -> F_Impl (pformula_to_formula env f1, pformula_to_formula env f2)
-  | PF_ForallTerm (v, f)   -> F_ForallTerm (V v, pformula_to_formula ((v, PI_Var) :: env) f)
-  | PF_ForallAtom (a, f)   -> F_ForallAtom (A a, pformula_to_formula ((a, PI_Atom) :: env) f)
-  | PF_ExistsTerm (v, f)   -> F_ExistsTerm (V v, pformula_to_formula ((v, PI_Var) :: env) f)
-  | PF_ExistsAtom (a, f)   -> F_ExistsAtom (A a, pformula_to_formula ((a, PI_Atom) :: env) f)
-  | PF_ConstrAnd (c, f)    -> F_ConstrAnd (pconstr_to_constr env c, pformula_to_formula env f)
-  | PF_ConstrImpl (c, f)   -> F_ConstrImpl (pconstr_to_constr env c, pformula_to_formula env f)
-  | PF_Var x               -> (
+  | PF_Top                     -> F_Top
+  | PF_Bot                     -> F_Bot
+  | PF_Constr c                -> F_Constr (pconstr_to_constr env c)
+  | PF_Or fs                   -> F_Or (List.map (pformula_to_formula env) fs)
+  | PF_And fs                  -> F_And (List.map (pformula_to_formula env) fs)
+  | PF_Impl (f1, f2)           -> F_Impl (pformula_to_formula env f1, pformula_to_formula env f2)
+  | PF_ForallTerm (v, f)       -> F_ForallTerm (V v, pformula_to_formula ((v, PI_Var) :: env) f)
+  | PF_ForallAtom (a, f)       -> F_ForallAtom (A a, pformula_to_formula ((a, PI_Atom) :: env) f)
+  | PF_ExistsTerm (v, f)       -> F_ExistsTerm (V v, pformula_to_formula ((v, PI_Var) :: env) f)
+  | PF_ExistsAtom (a, f)       -> F_ExistsAtom (A a, pformula_to_formula ((a, PI_Atom) :: env) f)
+  | PF_ConstrAnd (c, f)        -> F_ConstrAnd (pconstr_to_constr env c, pformula_to_formula env f)
+  | PF_ConstrImpl (c, f)       -> F_ConstrImpl (pconstr_to_constr env c, pformula_to_formula env f)
+  | PF_Var x                   -> (
     match List.assoc_opt x env with
-    | Some PI_Atom     -> raise $ wrong_use "Atom" x "as a logical variable"
-    | Some PI_Var      -> raise $ wrong_use "Term variable" x "as a logical variable"
-    | Some (PI_FVar i) -> F_Var (FV i)
-    | None             -> raise $ unbound_variable x )
-  | PF_Fun (x, k, f)       ->
+    | Some PI_Atom          -> raise $ wrong_use "Atom" x "as a logical variable"
+    | Some PI_Var           -> raise $ wrong_use "Term variable" x "as a logical variable"
+    | Some (PI_FVar (i, _)) -> fvar i
+    | None                  -> raise $ unbound_variable x )
+  | PF_Fun (x, k, f)           ->
       let i = fresh_fvar_arg () in
-      let env = (x, PI_FVar i) :: env in
-      F_Fun (FV i, pkind_to_kind env k, pformula_to_formula env f)
-  | PF_FunAtom (a, f)      -> F_FunAtom (A a, pformula_to_formula ((a, PI_Atom) :: env) f)
-  | PF_FunTerm (x, f)      -> F_FunTerm (V x, pformula_to_formula ((x, PI_Atom) :: env) f)
-  | PF_AppIdentfier (f, x) -> (
+      let k = pkind_to_kind env k in
+      let env = (x, PI_FVar (i, k)) :: env in
+      F_Fun (FV_Bind (x, i, k), pformula_to_formula env f)
+  | PF_FunAtom (a, f)          -> F_FunAtom (A a, pformula_to_formula ((a, PI_Atom) :: env) f)
+  | PF_FunTerm (x, f)          -> F_FunTerm (V x, pformula_to_formula ((x, PI_Atom) :: env) f)
+  | PF_AppIdentfier (f, x)     -> (
     match List.assoc_opt x env with
-    | Some PI_Atom     -> F_AppAtom (pformula_to_formula env f, A x)
-    | Some PI_Var      -> F_AppTerm (pformula_to_formula env f, var (V x))
-    | Some (PI_FVar i) -> F_App (pformula_to_formula env f, F_Var (FV i))
-    | None             -> raise $ unbound_variable x )
-  | PF_App (f1, f2)        -> F_App (pformula_to_formula env f1, pformula_to_formula env f2)
-  | PF_AppTerm (f, t)      -> F_AppTerm (pformula_to_formula env f, pterm_to_term env t)
-  | PF_Fix (x, fix, k, f)  ->
-      let i = fresh_fvar_arg () in
-      let env = (x, PI_FVar i) :: (fix, PI_Var) :: env in
-      F_Fix (FV i, V fix, pkind_to_kind env k, pformula_to_formula env f)
+    | Some PI_Atom          -> F_AppAtom (pformula_to_formula env f, A x)
+    | Some PI_Var           -> F_AppTerm (pformula_to_formula env f, var (V x))
+    | Some (PI_FVar (i, _)) -> F_App (pformula_to_formula env f, fvar i)
+    | None                  -> raise $ unbound_variable x )
+  | PF_App (f1, f2)            -> F_App (pformula_to_formula env f1, pformula_to_formula env f2)
+  | PF_AppTerm (f, t)          -> F_AppTerm (pformula_to_formula env f, pterm_to_term env t)
+  | PF_Fix (fix_name, x, k, f) ->
+      let y = fresh_var () in
+      let env' = (x, PI_Var) :: env in
+      let k = pkind_to_kind env k in
+      let fix_k = fix_kind (V x) y k in
+      let fix_i = fresh_fvar_arg () in
+      let env'' = (fix_name, PI_FVar (fix_i, fix_k)) :: env' in
+      F_Fix (FV_Bind (fix_name, fix_i, fix_k), V x, k, pformula_to_formula env'' f)
 
 let parse_term s = pterm_to_term [] $ parse term s
 
@@ -125,4 +131,4 @@ let atoms_env xs = List.map (fun a -> (a, PI_Atom)) xs
 
 let vars_env xs = List.map (fun x -> (x, PI_Var)) xs
 
-let fvars_env xs = List.map (fun x -> (x, PI_FVar (fresh_fvar_arg ()))) xs
+let fvars_env xs = List.map (fun (x, k) -> (x, PI_FVar (fresh_fvar_arg (), k))) xs

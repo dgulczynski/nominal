@@ -1,13 +1,14 @@
 open Nominal.Common
 open Nominal.Parser
-open Nominal.ProofPrinting
 open Nominal.ProofEnv
 open Nominal.ProofException
 open Nominal.Prover
+open Nominal.ProverGoal
 open Nominal.Tactics
+open Nominal.Types
 
 let test_proof theorem proof =
-  Printf.printf "Checking proof of `%s` ... " $ string_of_judgement theorem ;
+  Printf.printf "Checking proof of `%s` ... " $ string_of_goal theorem ;
   let _ =
     try theorem |> proof |> qed
     with ProofException e ->
@@ -16,25 +17,32 @@ let test_proof theorem proof =
   in
   Printf.printf "✅\n"
 
-let th1 = (empty, parse_formula_in_env (fvars_env ["p"; "q"]) "(p => q) => p => q")
+let th1 =
+  (empty, parse_formula_in_env (fvars_env [("p", K_Prop); ("q", K_Prop)]) "(p => q) => p => q")
 
 let proof1 th1 = proof' th1 |> intro "HPQ" |> intro "HP" |> apply_assm "HPQ" |> apply_assm "HP"
 
 let th2 =
-  (empty, parse_formula_in_env (fvars_env ["p"; "q"; "r"]) "(p => q => r) => (p => q) => p => r")
+  ( empty
+  , parse_formula_in_env
+      (fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)])
+      "(p => q => r) => (p => q) => p => r" )
 
 let proof2 th2 =
   proof' th2 |> intro "HPQR" |> intro "HPQ" |> intro "HP" |> apply_assm "HPQR" |> assumption
   |> apply_assm "HPQ" |> apply_assm "HP"
 
 let th3 =
-  (empty, parse_formula_in_env (fvars_env ["p"]) "(((p => ⊥) => p) => p) => ((p => ⊥) => ⊥) => p")
+  let p_i = fresh_fvar_arg () in
+  let env = [("p", PI_FVar (p_i, K_Prop))] in
+  ( empty |> add_fvar "p" p_i K_Prop
+  , parse_formula_in_env env "(((p => ⊥) => p) => p) => ((p => ⊥) => ⊥) => p" )
 
 let proof3 th3 =
   proof' th3 |> intro "H1" |> intro "H2" |> apply_assm "H1" |> intro "H3" |> ex_falso
   |> apply_assm "H2" |> apply_assm "H3"
 
-let env4 = fvars_env ["p"]
+let env4 = fvars_env [("p", K_Prop)]
 
 let th4 = (empty, parse_formula_in_env env4 "(((p => ⊥) => ⊥) => p) => ((p => ⊥) => p) => p")
 

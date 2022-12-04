@@ -7,16 +7,15 @@ open ProverGoal
 open ProverInternals
 
 let proof env f =
-  let goal = (to_goal_env env, f) in
+  let goal = (env, f) in
   unfinished goal PC_Root
 
 let intro h state =
   match goal_formula state with
   | F_Impl (f1, f2) as f ->
-      let env = goal_env state in
-      let goal = (add (h, f1) env, f2) in
+      let env = goal_env state |> add_assumption (h, f1) in
       let context = PC_Intro (to_judgement (env, f), context state) in
-      unfinished goal context
+      unfinished (env, f2) context
   | f                    -> raise $ not_an_implication f
 
 let apply h state =

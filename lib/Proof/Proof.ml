@@ -26,7 +26,7 @@ let by_assumption f = P_Ax (singleton f, f)
 
 let imp_i f p =
   let f' = label p in
-  let env = remove (env p) (equiv f) in
+  let env = env p |> remove_assumptions (equiv f) in
   P_Intro ((env, F_Impl (f, f')), p)
 
 let imp_e p1 p2 =

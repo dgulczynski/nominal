@@ -68,7 +68,7 @@ let goal_formula = formula_of % goal
 
 let lookup env h_name =
   let test (name, _) = h_name = name in
-  match lookup env test with
+  match lookup_assumption test env with
   | None        -> raise $ unknown_hypothesis h_name
   | Some (_, h) -> h
 

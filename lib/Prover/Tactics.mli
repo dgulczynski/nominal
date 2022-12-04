@@ -1,4 +1,4 @@
-open Proof
+open ProverGoal
 open ProverInternals
 
 val assumption : tactic
@@ -7,7 +7,7 @@ val contradiction : tactic
 
 val intros : string list -> tactic
 
-val proof' : judgement -> prover_state
+val proof' : goal -> prover_state
 
 val trivial : tactic
 

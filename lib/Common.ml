@@ -61,7 +61,7 @@ let atom a = T_Atom (pure a)
 
 let var x = T_Var (pure x)
 
-let fvar x = F_Var x
+let fvar x = F_Var (FV x)
 
 let fresh_generator from_number =
   let counter = ref 0 in
