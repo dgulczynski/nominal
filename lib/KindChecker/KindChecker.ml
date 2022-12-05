@@ -2,6 +2,7 @@ open Types
 open Substitution
 open KindCheckerEnv
 open Common
+open Utils
 
 (** [solve env c] returns [[]; env |- c] *)
 let solve env c = mem_constr env c || Solver.solve_with_assumptions (constraints_of env) c

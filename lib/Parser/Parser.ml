@@ -4,7 +4,7 @@ open Common
 open Permutation
 open ParserTypes
 open ParserCommon
-open Substitution
+open Utils
 
 let term : pterm t = ParserTerm.term
 
