@@ -2,6 +2,7 @@ open Types
 open Substitution
 open KindCheckerEnv
 open Common
+open Utils
 
 (** [solve env c] returns [[]; env |- c] *)
 let solve env c = mem_constr env c || Solver.solve_with_assumptions (constraints_of env) c
@@ -25,29 +26,31 @@ let normalize =
 
 let rec subkind env k1 k2 =
   match (k1, k2) with
-  | k1, K_Constr (c, k2) -> subkind (add_constr env c) k1 k2
+  | k1, K_Constr (c, k2) -> add_constr env c |> (k1 <=: k2)
   | (K_Constr _ as k1), k2 -> (
     match normalize k1 with
-    | K_Constr (c, k1) -> solve env c && subkind env k1 k2
-    | k1               -> subkind env k1 k2 )
+    | K_Constr (c, k1) -> solve env c && env |> (k1 <=: k2)
+    | k1               -> (k1 <=: k2) env )
   | K_Prop, K_Prop -> true
   | K_Prop, _ -> false
-  | K_Arrow (k1, k1'), K_Arrow (k2, k2') -> subkind env k2 k1 && subkind env k1' k2'
+  | K_Arrow (k1, k1'), K_Arrow (k2, k2') -> env |> (k2 <=: k1) && env |> (k1' <=: k2')
   | K_Arrow _, _ -> false
   | K_ForallTerm (x1, k1), K_ForallTerm (x2, k2) ->
       let x = fresh_var () in
       let env = map_var (map_var env x1 x) x2 x in
       let k1 = subst_var_in_kind x1 (var x) k1 in
       let k2 = subst_var_in_kind x2 (var x) k2 in
-      subkind env k1 k2
+      env |> (k1 <=: k2)
   | K_ForallTerm _, _ -> false
   | K_ForallAtom (a1, k1), K_ForallAtom (a2, k2) ->
       let a = fresh_atom () in
       let env = map_atom (map_atom env a1 a) a2 a in
       let k1 = subst_atom_in_kind a1 a k1 in
       let k2 = subst_atom_in_kind a2 a k2 in
-      subkind env k1 k2
+      env |> (k1 <=: k2)
   | K_ForallAtom _, _ -> false
+
+and ( <=: ) k1 k2 env = subkind env k1 k2
 
 let rec kind_check env kind formula =
   match kind_infer env formula with
@@ -63,10 +66,11 @@ and kind_infer env = function
   | F_ForallTerm (_, f) | F_ForallAtom (_, f) | F_ExistsTerm (_, f) | F_ExistsAtom (_, f) ->
       to_option K_Prop (is_prop env f)
   | F_ConstrAnd (c, f) | F_ConstrImpl (c, f) -> to_option K_Prop (is_prop (add_constr env c) f)
-  | F_Fun (x, k, f) -> (fun fk -> K_Arrow (k, fk)) <$> kind_infer (map_fvar env x k) f
+  | F_Fun (FV_Bind (x, i, k), f) ->
+      (fun fk -> K_Arrow (k, fk)) <$> kind_infer (map_fvar env x (FV i) k) f
   | F_App (f1, f2) -> (
     match normalize <$> kind_infer env f1 with
-    | Some (K_Arrow (k2, k)) when kind_check env k2 f2 -> Some k
+    | Some (K_Arrow (k2, k)) when env |> f2 -: k2 -> Some k
     | _ -> None )
   | F_FunTerm (x, f) -> (fun k -> K_ForallTerm (x, k)) <$> kind_infer env f
   | F_AppTerm (f, t) -> (
@@ -78,16 +82,15 @@ and kind_infer env = function
     match normalize <$> kind_infer env f with
     | Some (K_ForallAtom (a', k)) -> Some (subst_atom_in_kind a' a k)
     | _                           -> None )
-  | F_Fix (fix, x, k, f) ->
+  | F_Fix (FV_Bind (fix_name, fix, fix_k), x, k, f) ->
       (*  G, X : (forall y, [y < x] => K{y/x}) |- F : K  *)
       (* ----------------------------------------------- *)
       (*        G |- fix X(x). (F : K) : forall x, K     *)
       let y = fresh_var () in
-      let fix_k = K_ForallTerm (y, K_Constr (var y <: var x, subst_var_in_kind x (var y) k)) in
-      to_option $ K_ForallTerm (x, k) $ kind_check (map_fvar env fix fix_k) k f
+      let fix_k_proper = env |> (fix_k <=: fix_kind x y k) in
+      let env = map_fvar env fix_name (FV fix) fix_k in
+      to_option (K_ForallTerm (x, k)) (fix_k_proper && env |> f -: k)
 
-and is_prop env = kind_check env K_Prop
+and is_prop env f = env |> f -: K_Prop
 
-let ( <=: ) = subkind empty
-
-let ( -: ) f k = kind_check empty k f
+and ( -: ) f k env = kind_check env k f

@@ -46,12 +46,14 @@ val atom : atom -> term
 val var : var -> term
 (** [var x = T_Var (pure x)] *)
 
-val fvar : fvar -> formula
-(** [fvar x = F_Var x] *)
+val fvar : int -> formula
+(** [fvar x = F_Var (FV x)] *)
 
 val fresh_var : unit -> var
 
 val fresh_atom : unit -> atom
+
+val fresh_fvar_arg : unit -> int
 
 val fresh_fvar : unit -> fvar
 

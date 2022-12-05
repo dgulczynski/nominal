@@ -60,24 +60,24 @@ let rec subst_atom_in_formula a1 a2 f =
   let sub_term = subst_atom_in_term a1 a2 in
   let sub_kind = subst_atom_in_kind a1 a2 in
   match f with
-  | F_Bot | F_Top | F_Var _ -> f
-  | F_Constr c              -> F_Constr (sub_constr c)
-  | F_And fs                -> F_And (List.map sub fs)
-  | F_Or fs                 -> F_Or (List.map sub fs)
-  | F_Impl (f1, f2)         -> F_Impl (sub f1, sub f2)
-  | F_ForallTerm (x, f)     -> F_ForallTerm (x, sub f)
-  | F_ForallAtom (a, f)     -> F_ForallAtom (a, if a = a1 then f else sub f)
-  | F_ExistsTerm (x, f)     -> F_ExistsTerm (x, sub f)
-  | F_ExistsAtom (a, f)     -> F_ExistsAtom (a, if a = a1 then f else sub f)
-  | F_ConstrAnd (c, f)      -> F_ConstrAnd (sub_constr c, sub f)
-  | F_ConstrImpl (c, f)     -> F_ConstrImpl (sub_constr c, sub f)
-  | F_Fun (x, k, f)         -> F_Fun (x, sub_kind k, sub f)
-  | F_App (f1, f2)          -> F_App (sub f1, sub f2)
-  | F_FunTerm (x, f)        -> F_FunTerm (x, sub f)
-  | F_AppTerm (f, t)        -> F_AppTerm (sub f, sub_term t)
-  | F_FunAtom (a, f)        -> F_FunAtom (a, if a = a1 then f else sub f)
-  | F_AppAtom (f, a)        -> F_AppAtom (sub f, subst a1 a2 a)
-  | F_Fix (fix, x, k, f)    -> F_Fix (fix, x, sub_kind k, sub f)
+  | F_Bot | F_Top | F_Var _      -> f
+  | F_Constr c                   -> F_Constr (sub_constr c)
+  | F_And fs                     -> F_And (List.map sub fs)
+  | F_Or fs                      -> F_Or (List.map sub fs)
+  | F_Impl (f1, f2)              -> F_Impl (sub f1, sub f2)
+  | F_ForallTerm (x, f)          -> F_ForallTerm (x, sub f)
+  | F_ForallAtom (a, f)          -> F_ForallAtom (a, if a = a1 then f else sub f)
+  | F_ExistsTerm (x, f)          -> F_ExistsTerm (x, sub f)
+  | F_ExistsAtom (a, f)          -> F_ExistsAtom (a, if a = a1 then f else sub f)
+  | F_ConstrAnd (c, f)           -> F_ConstrAnd (sub_constr c, sub f)
+  | F_ConstrImpl (c, f)          -> F_ConstrImpl (sub_constr c, sub f)
+  | F_Fun (FV_Bind (x, i, k), f) -> F_Fun (FV_Bind (x, i, sub_kind k), sub f)
+  | F_App (f1, f2)               -> F_App (sub f1, sub f2)
+  | F_FunTerm (x, f)             -> F_FunTerm (x, sub f)
+  | F_AppTerm (f, t)             -> F_AppTerm (sub f, sub_term t)
+  | F_FunAtom (a, f)             -> F_FunAtom (a, if a = a1 then f else sub f)
+  | F_AppAtom (f, a)             -> F_AppAtom (sub f, subst a1 a2 a)
+  | F_Fix (fix, x, k, f)         -> F_Fix (fix, x, sub_kind k, sub f)
 
 let rec subst_var_in_formula y t f =
   let sub = subst_var_in_formula y t in
@@ -85,25 +85,25 @@ let rec subst_var_in_formula y t f =
   let sub_term = subst_var_in_term y t in
   let sub_kind = subst_var_in_kind y t in
   match f with
-  | F_Bot | F_Top | F_Var _ -> f
-  | F_Constr c              -> F_Constr (sub_constr c)
-  | F_And fs                -> F_And (List.map sub fs)
-  | F_Or fs                 -> F_Or (List.map sub fs)
-  | F_Impl (f1, f2)         -> F_Impl (sub f1, sub f2)
-  | F_ForallTerm (x, f)     -> F_ForallTerm (x, if x = y then f else sub f)
-  | F_ForallAtom (a, f)     -> F_ForallAtom (a, sub f)
-  | F_ExistsTerm (x, f)     -> F_ExistsTerm (x, if x = y then f else sub f)
-  | F_ExistsAtom (a, f)     -> F_ExistsAtom (a, sub f)
-  | F_ConstrAnd (c, f)      -> F_ConstrAnd (sub_constr c, sub f)
-  | F_ConstrImpl (c, f)     -> F_ConstrImpl (sub_constr c, sub f)
-  | F_Fun (x, k, f)         -> F_Fun (x, sub_kind k, sub f)
-  | F_App (f1, f2)          -> F_App (sub f1, sub f2)
-  | F_FunTerm (x, f)        -> F_FunTerm (x, if x = y then f else sub f)
-  | F_AppTerm (f, t)        -> F_AppTerm (sub f, sub_term t)
-  | F_FunAtom (a, f)        -> F_FunAtom (a, sub f)
-  | F_AppAtom (f, a)        -> F_AppAtom (sub f, a)
-  | F_Fix (fix, x, k, f)    -> if x = y then F_Fix (fix, x, k, f)
-                               else F_Fix (fix, x, sub_kind k, sub f)
+  | F_Bot | F_Top | F_Var _      -> f
+  | F_Constr c                   -> F_Constr (sub_constr c)
+  | F_And fs                     -> F_And (List.map sub fs)
+  | F_Or fs                      -> F_Or (List.map sub fs)
+  | F_Impl (f1, f2)              -> F_Impl (sub f1, sub f2)
+  | F_ForallTerm (x, f)          -> F_ForallTerm (x, if x = y then f else sub f)
+  | F_ForallAtom (a, f)          -> F_ForallAtom (a, sub f)
+  | F_ExistsTerm (x, f)          -> F_ExistsTerm (x, if x = y then f else sub f)
+  | F_ExistsAtom (a, f)          -> F_ExistsAtom (a, sub f)
+  | F_ConstrAnd (c, f)           -> F_ConstrAnd (sub_constr c, sub f)
+  | F_ConstrImpl (c, f)          -> F_ConstrImpl (sub_constr c, sub f)
+  | F_Fun (FV_Bind (x, i, k), f) -> F_Fun (FV_Bind (x, i, sub_kind k), sub f)
+  | F_App (f1, f2)               -> F_App (sub f1, sub f2)
+  | F_FunTerm (x, f)             -> F_FunTerm (x, if x = y then f else sub f)
+  | F_AppTerm (f, t)             -> F_AppTerm (sub f, sub_term t)
+  | F_FunAtom (a, f)             -> F_FunAtom (a, sub f)
+  | F_AppAtom (f, a)             -> F_AppAtom (sub f, a)
+  | F_Fix (fix, x, k, f)         -> if x = y then F_Fix (fix, x, k, f)
+                                    else F_Fix (fix, x, sub_kind k, sub f)
 
 let rec subst_var_in_shape x s = function
   | S_Var x' when x = x' -> s

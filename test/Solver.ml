@@ -18,10 +18,14 @@ let print_solver assms c =
   $ string_of_constr c $ solve_with_assumptions assms c
 
 let print_subkind_solver (k1, k2) =
-  print_result $ "[]" $ string_of_kind k1 ^ " ≤ " ^ string_of_kind k2 $ (k1 <=: k2)
+  print_result "[]"
+  $ string_of_kind k1 ^ " ≤ " ^ string_of_kind k2
+  $ (k1 <=: k2) KindCheckerEnv.empty
 
 let print_kind_solver (formula, kind) =
-  print_result $ "[]" $ string_of_formula formula ^ " : " ^ string_of_kind kind $ formula -: kind
+  print_result $ "[]"
+  $ string_of_formula formula ^ " : " ^ string_of_kind kind
+  $ (formula -: kind) KindCheckerEnv.empty
 
 let examples =
   let a_ = A "a" and b_ = A "b" and c_ = A "c" in

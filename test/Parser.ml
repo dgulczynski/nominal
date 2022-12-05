@@ -4,16 +4,6 @@ open Nominal.Permutation
 open Nominal.Types
 open Nominal.Common
 open Nominal.Printing
-open Nominal.ParserTypes
-
-let string_of_penv env =
-  let string_of_pidkind = function
-    | PI_Atom -> "atom"
-    | PI_Var  -> "var"
-    | PI_FVar -> "l.var"
-  in
-  let string_of_pid (x, k) = Printf.sprintf "%s : %s" x (string_of_pidkind k) in
-  string_of_list string_of_pid env
 
 let test name parser convert string_of env source result =
   let actual =
@@ -28,7 +18,7 @@ let test name parser convert string_of env source result =
     name source (string_of result)
     ( match env with
     | []  -> ""
-    | env -> Printf.sprintf "with %s " $ string_of_penv env )
+    | env -> Printf.sprintf "with %s " $ string_of_identifier_env env )
     (if pass then "" else Printf.sprintf "instead of `%s`" $ string_of actual) ;
   assert pass
 
@@ -38,7 +28,7 @@ let test_constr = test "constr" constr pconstr_to_constr string_of_constr
 
 let test_kind = test "kind" kind pkind_to_kind string_of_kind
 
-let test_formula = test "formula" formula pformula_to_formula string_of_formula
+let test_formula env = test "formula" formula pformula_to_formula (string_of_formula_in_env env) env
 
 let _ = test_term (atoms_env ["a"]) "a" $ atom (A "a")
 
@@ -118,15 +108,25 @@ let _ =
   test_formula [] "FORALL a : ATOM. ForAll x : Term. [a # x] => TRUE"
   $ F_ForallAtom (A "a", F_ForallTerm (V "x", F_ConstrImpl (C_Fresh (A "a", var $ V "x"), F_Top)))
 
-let _ =
-  test_formula (fvars_env ["p"; "q"]) "(p => q) => (p => (q))"
-  $ F_Impl (F_Impl (fvar $ FV "p", fvar $ FV "q"), F_Impl (fvar $ FV "p", fvar $ FV "q"))
+let fvar_representation env x =
+  let to_representation = function
+    | PI_FVar (i, _) -> i
+    | _              -> failwith $ x ^ " is not an l.var"
+  in
+  to_representation (List.assoc x env)
 
 let _ =
+  let env = fvars_env [("p", K_Prop); ("q", K_Prop)] in
+  let p = fvar $ fvar_representation env "p" in
+  let q = fvar $ fvar_representation env "q" in
+  test_formula env "(p => q) => (p => (q))" $ F_Impl (F_Impl (p, q), F_Impl (p, q))
+
+let _ =
+  let f = fresh_fvar_arg () + 1 in
+  (* very hacky: f will be assigned next fresh number, which will be current fresh number + 1 *)
   test_formula [] "fun f : prop -> forall a : atom. forall x : term. [a # x] => f a x {[a a] x}"
   $ F_Fun
-      ( FV "f"
-      , K_Prop
+      ( FV_Bind ("f", f, K_Prop)
       , F_ForallAtom
           ( A "a"
           , F_ForallTerm
@@ -134,7 +134,7 @@ let _ =
               , F_ConstrImpl
                   ( C_Fresh (A "a", var $ V "x")
                   , F_AppTerm
-                      ( F_AppTerm (F_AppAtom (F_Var (FV "f"), A "a"), var (V "x"))
+                      ( F_AppTerm (F_AppAtom (fvar f, A "a"), var (V "x"))
                       , T_Var {perm= [(pure (A "a"), pure (A "a"))]; symb= V "x"} ) ) ) ) )
 
 let _ = print_newline ()

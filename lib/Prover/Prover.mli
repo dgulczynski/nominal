@@ -1,9 +1,9 @@
 open Proof
-open ProofEnv
+open ProverGoal
 open ProverInternals
 open Types
 
-val proof : formula env -> formula -> prover_state
+val proof : goal_env -> formula -> prover_state
 
 val intro : string -> tactic
 

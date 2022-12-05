@@ -25,11 +25,12 @@ let assumption state =
   let env, f = goal state in
   let exn = Printf.sprintf "No assumption matching goal `%s`" $ string_of_formula f in
   let on_fail _ = raise $ ProofException exn in
-  match ProofEnv.lookup env (equiv f % snd) with
+  match ProofEnv.lookup_assumption (equiv f % snd) env with
   | Some (h_name, _) -> apply_assm h_name state
   | None             ->
       let to_tactic = apply_assm % fst in
-      let tactics = List.map to_tactic $ ProofEnv.to_list env in
+      let assumptions = ProofEnv.assumptions env in
+      let tactics = List.map to_tactic assumptions in
       try_many on_fail tactics state
 
 let contradiction = assumption % ex_falso

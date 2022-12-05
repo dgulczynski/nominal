@@ -61,25 +61,25 @@ let atom a = T_Atom (pure a)
 
 let var x = T_Var (pure x)
 
-let fvar x = F_Var x
+let fvar x = F_Var (FV x)
 
-let fresh_generator prefix =
-  let counter = ref 0 in
-  fun () ->
-    counter := !counter + 1 ;
-    prefix ^ string_of_int !counter
+let fresh_generator ?(start = 0) from_number =
+  let counter = ref (start - 1) in
+  fun () -> incr counter ; from_number !counter
+
+let string_from_number ?(prefix = "") number = prefix ^ string_of_int number
 
 let fresh_var =
-  let generate = fresh_generator "_x" in
-  fun () -> V (generate ())
+  let from_number i = V (string_from_number ~prefix:"_v" i) in
+  fresh_generator from_number
 
 let fresh_atom =
-  let generate = fresh_generator "_a" in
-  fun () -> A (generate ())
+  let from_number i = A (string_from_number ~prefix:"_a" i) in
+  fresh_generator from_number
 
-let fresh_fvar =
-  let generate = fresh_generator "_X" in
-  fun () -> FV (generate ())
+let fresh_fvar_arg = fresh_generator id
+
+let fresh_fvar () = FV (fresh_fvar_arg ())
 
 let rec shape_of_term = function
   | T_Var {symb= x; _} -> S_Var x

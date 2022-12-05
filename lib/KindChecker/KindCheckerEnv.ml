@@ -5,7 +5,7 @@ type kind_assumption =
   | Constr    of constr
   | BoundVar  of var * var
   | BoundAtom of atom * atom
-  | BoundFVar of fvar * kind
+  | BoundFVar of string * fvar * kind
 
 type t = kind_assumption list
 
@@ -41,19 +41,19 @@ let constraints_of =
     | _        -> None )
 
 let string_of_kind_assumption = function
-  | Constr c         -> Printing.string_of_constr c
-  | BoundVar (x, y)  -> Printing.string_of_var_arg x ^ "↦" ^ Printing.string_of_var_arg y
-  | BoundAtom (a, b) -> Printing.string_of_atom_arg a ^ "↦" ^ Printing.string_of_atom_arg b
-  | BoundFVar (x, k) -> Printing.string_of_fvar x ^ "↦" ^ Printing.string_of_kind k
+  | Constr c                 -> Printing.string_of_constr c
+  | BoundVar (x, y)          -> Printing.string_of_var_arg x ^ "↦" ^ Printing.string_of_var_arg y
+  | BoundAtom (a, b)         -> Printing.string_of_atom_arg a ^ "↦" ^ Printing.string_of_atom_arg b
+  | BoundFVar (x_name, _, k) -> x_name ^ "↦" ^ Printing.string_of_kind k
 
 let string_of = Printing.string_of_list string_of_kind_assumption ~sep:", "
 
-let map_fvar gamma x k = BoundFVar (x, k) :: gamma
+let map_fvar gamma x_name x k = BoundFVar (x_name, x, k) :: gamma
 
 let find_fvar gamma x =
   hd_opt
   $ List.filter_map
       (function
-        | BoundFVar (x', k) when x = x' -> Some k
+        | BoundFVar (_, x', k) when x = x' -> Some k
         | _ -> None )
       gamma
