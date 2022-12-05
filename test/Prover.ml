@@ -18,25 +18,22 @@ let test_proof theorem proof =
   Printf.printf "✅\n"
 
 let th1 =
-  (empty, parse_formula_in_env (fvars_env [("p", K_Prop); ("q", K_Prop)]) "(p => q) => p => q")
+  let env1 = fvars_env [("p", K_Prop); ("q", K_Prop)] in
+  (env env1 [] [], parse_formula_in_env env1 "(p => q) => p => q")
 
 let proof1 th1 = proof' th1 |> intro "HPQ" |> intro "HP" |> apply_assm "HPQ" |> apply_assm "HP"
 
 let th2 =
-  ( empty
-  , parse_formula_in_env
-      (fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)])
-      "(p => q => r) => (p => q) => p => r" )
+  let env2 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)] in
+  (env env2 [] [], parse_formula_in_env env2 "(p => q => r) => (p => q) => p => r")
 
 let proof2 th2 =
   proof' th2 |> intro "HPQR" |> intro "HPQ" |> intro "HP" |> apply_assm "HPQR" |> assumption
   |> apply_assm "HPQ" |> apply_assm "HP"
 
 let th3 =
-  let p_i = fresh_fvar_arg () in
-  let env = [("p", PI_FVar (p_i, K_Prop))] in
-  ( empty |> add_fvar "p" p_i K_Prop
-  , parse_formula_in_env env "(((p => ⊥) => p) => p) => ((p => ⊥) => ⊥) => p" )
+  let env3 = fvars_env [("p", K_Prop)] in
+  (env env3 [] [], parse_formula_in_env env3 "(((p => ⊥) => p) => p) => ((p => ⊥) => ⊥) => p")
 
 let proof3 th3 =
   proof' th3 |> intro "H1" |> intro "H2" |> apply_assm "H1" |> intro "H3" |> ex_falso
@@ -44,7 +41,8 @@ let proof3 th3 =
 
 let env4 = fvars_env [("p", K_Prop)]
 
-let th4 = (empty, parse_formula_in_env env4 "(((p => ⊥) => ⊥) => p) => ((p => ⊥) => p) => p")
+let th4 =
+  (env env4 [] [], parse_formula_in_env env4 "(((p => ⊥) => ⊥) => p) => ((p => ⊥) => p) => p")
 
 let proof4 th4 =
   proof' th4

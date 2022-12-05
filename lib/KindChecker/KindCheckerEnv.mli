@@ -16,7 +16,7 @@ val map_atom : t -> atom -> atom -> t
 
 val find_atom : t -> atom -> atom option
 
-val map_fvar : t -> fvar -> kind -> t
+val map_fvar : t -> string -> fvar -> kind -> t
 
 val find_fvar : t -> fvar -> kind option
 

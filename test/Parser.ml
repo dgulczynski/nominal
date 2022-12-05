@@ -28,7 +28,7 @@ let test_constr = test "constr" constr pconstr_to_constr string_of_constr
 
 let test_kind = test "kind" kind pkind_to_kind string_of_kind
 
-let test_formula = test "formula" formula pformula_to_formula string_of_formula
+let test_formula env = test "formula" formula pformula_to_formula (string_of_formula_in_env env) env
 
 let _ = test_term (atoms_env ["a"]) "a" $ atom (A "a")
 

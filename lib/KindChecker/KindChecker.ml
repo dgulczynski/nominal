@@ -65,8 +65,8 @@ and kind_infer env = function
   | F_ForallTerm (_, f) | F_ForallAtom (_, f) | F_ExistsTerm (_, f) | F_ExistsAtom (_, f) ->
       to_option K_Prop (is_prop env f)
   | F_ConstrAnd (c, f) | F_ConstrImpl (c, f) -> to_option K_Prop (is_prop (add_constr env c) f)
-  | F_Fun (FV_Bind (_, i, k), f) ->
-      (fun fk -> K_Arrow (k, fk)) <$> kind_infer (map_fvar env (FV i) k) f
+  | F_Fun (FV_Bind (x, i, k), f) ->
+      (fun fk -> K_Arrow (k, fk)) <$> kind_infer (map_fvar env x (FV i) k) f
   | F_App (f1, f2) -> (
     match normalize <$> kind_infer env f1 with
     | Some (K_Arrow (k2, k)) when env |> f2 -: k2 -> Some k
@@ -81,11 +81,11 @@ and kind_infer env = function
     match normalize <$> kind_infer env f with
     | Some (K_ForallAtom (a', k)) -> Some (subst_atom_in_kind a' a k)
     | _                           -> None )
-  | F_Fix (FV_Bind (_, fix, fix_k), x, k, f) ->
+  | F_Fix (FV_Bind (fix_name, fix, fix_k), x, k, f) ->
       (*  G, X : (forall y, [y < x] => K{y/x}) |- F : K  *)
       (* ----------------------------------------------- *)
       (*        G |- fix X(x). (F : K) : forall x, K     *)
-      let env = map_fvar env (FV fix) fix_k in
+      let env = map_fvar env fix_name (FV fix) fix_k in
       let y = fresh_var () in
       let fix_k' = K_ForallTerm (y, K_Constr (var y <: var x, subst_var_in_kind x (var y) k)) in
       let check = (fix_k <=: fix_k') env && (f -: k) env in
