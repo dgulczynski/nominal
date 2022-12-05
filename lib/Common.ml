@@ -63,27 +63,21 @@ let var x = T_Var (pure x)
 
 let fvar x = F_Var (FV x)
 
-let fresh_generator from_number =
-  let counter = ref 0 in
-  fun () ->
-    counter := !counter + 1 ;
-    from_number !counter
+let fresh_generator ?(start = 0) from_number =
+  let counter = ref (start - 1) in
+  fun () -> incr counter ; from_number !counter
 
 let string_from_number ?(prefix = "") number = prefix ^ string_of_int number
 
 let fresh_var =
-  let prefix = "_v" in
-  let generate = fresh_generator (string_from_number ~prefix) in
-  fun () -> V (generate ())
+  let from_number i = V (string_from_number ~prefix:"_v" i) in
+  fresh_generator from_number
 
 let fresh_atom =
-  let prefix = "_a" in
-  let generate = fresh_generator (string_from_number ~prefix) in
-  fun () -> A (generate ())
+  let from_number i = A (string_from_number ~prefix:"_a" i) in
+  fresh_generator from_number
 
-let fresh_fvar_arg =
-  let generate = fresh_generator id in
-  fun () -> generate ()
+let fresh_fvar_arg = fresh_generator id
 
 let fresh_fvar () = FV (fresh_fvar_arg ())
 

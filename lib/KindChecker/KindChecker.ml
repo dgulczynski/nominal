@@ -25,28 +25,28 @@ let normalize =
 
 let rec subkind env k1 k2 =
   match (k1, k2) with
-  | k1, K_Constr (c, k2) -> (k1 <=: k2) (add_constr env c)
+  | k1, K_Constr (c, k2) -> add_constr env c |> (k1 <=: k2)
   | (K_Constr _ as k1), k2 -> (
     match normalize k1 with
-    | K_Constr (c, k1) -> solve env c && (k1 <=: k2) env
+    | K_Constr (c, k1) -> solve env c && env |> (k1 <=: k2)
     | k1               -> (k1 <=: k2) env )
   | K_Prop, K_Prop -> true
   | K_Prop, _ -> false
-  | K_Arrow (k1, k1'), K_Arrow (k2, k2') -> (k2 <=: k1) env && (k1' <=: k2') env
+  | K_Arrow (k1, k1'), K_Arrow (k2, k2') -> env |> (k2 <=: k1) && env |> (k1' <=: k2')
   | K_Arrow _, _ -> false
   | K_ForallTerm (x1, k1), K_ForallTerm (x2, k2) ->
       let x = fresh_var () in
       let env = map_var (map_var env x1 x) x2 x in
       let k1 = subst_var_in_kind x1 (var x) k1 in
       let k2 = subst_var_in_kind x2 (var x) k2 in
-      (k1 <=: k2) env
+      env |> (k1 <=: k2)
   | K_ForallTerm _, _ -> false
   | K_ForallAtom (a1, k1), K_ForallAtom (a2, k2) ->
       let a = fresh_atom () in
       let env = map_atom (map_atom env a1 a) a2 a in
       let k1 = subst_atom_in_kind a1 a k1 in
       let k2 = subst_atom_in_kind a2 a k2 in
-      (k1 <=: k2) env
+      env |> (k1 <=: k2)
   | K_ForallAtom _, _ -> false
 
 and ( <=: ) k1 k2 env = subkind env k1 k2
@@ -85,11 +85,10 @@ and kind_infer env = function
       (*  G, X : (forall y, [y < x] => K{y/x}) |- F : K  *)
       (* ----------------------------------------------- *)
       (*        G |- fix X(x). (F : K) : forall x, K     *)
-      let env = map_fvar env fix_name (FV fix) fix_k in
       let y = fresh_var () in
-      let fix_k' = K_ForallTerm (y, K_Constr (var y <: var x, subst_var_in_kind x (var y) k)) in
-      let check = (fix_k <=: fix_k') env && (f -: k) env in
-      to_option (K_ForallTerm (x, k)) check
+      let fix_k_proper = env |> (fix_k <=: fix_kind x y k) in
+      let env = map_fvar env fix_name (FV fix) fix_k in
+      to_option (K_ForallTerm (x, k)) (fix_k_proper && env |> f -: k)
 
 and is_prop env f = env |> f -: K_Prop
 
