@@ -120,7 +120,7 @@ let pp_print_with_prefix prefix printer fmt x = pp_print_string fmt prefix ; pri
 
 let pp_print_fvar env fmt x =
   let test_map = function
-    | x_name, PI_FVar (x_rep, _) when x_rep = x -> Some x_name
+    | x_name, K_FVar (x_rep, _) when x_rep = x -> Some x_name
     | _ -> None
   in
   match List.find_map test_map env with
@@ -195,7 +195,7 @@ let rec pp_print_formula env fmt formula =
       space () ;
       pp_formula env f
   | F_Fun (FV_Bind (x_name, x, k), f) ->
-      let env = (x_name, PI_FVar (x, k)) :: env in
+      let env = (x_name, K_FVar (x, k)) :: env in
       pp_fun pp_print_string x_name pp_print_kind k f env
   | F_FunTerm (x, f) -> pp_fun pp_print_var x pp_print_string "term" f env
   | F_FunAtom (a, f) -> pp_fun pp_print_atom a pp_print_string "atom" f env
@@ -214,13 +214,13 @@ let rec pp_print_formula env fmt formula =
       pp_print_char fmt ':' ;
       pp_print_kind fmt k ;
       space () ;
-      let env = (fix_name, PI_FVar (fix, fix_k)) :: env in
+      let env = (fix_name, K_FVar (fix, fix_k)) :: env in
       pp_formula env f
 
 let pp_print_identifier_kind fmt = function
-  | PI_Atom        -> pp_print_string fmt "atom"
-  | PI_Var         -> pp_print_string fmt "var"
-  | PI_FVar (_, k) -> pp_print_kind fmt k
+  | K_Atom        -> pp_print_string fmt "atom"
+  | K_Var         -> pp_print_string fmt "var"
+  | K_FVar (_, k) -> pp_print_kind fmt k
 
 let pp_print_identifier_with_kind fmt (x, k) =
   pp_print_string fmt x ; pp_print_string fmt " : " ; pp_print_identifier_kind fmt k

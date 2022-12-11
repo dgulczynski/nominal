@@ -22,7 +22,7 @@ let env = function
 
 let judgement proof = (env proof, label proof)
 
-let by_assumption f = P_Ax (singleton f, f)
+let by_assumption identifiers f = P_Ax (ProofEnv.env identifiers [] [f], f)
 
 let imp_i f p =
   let f' = label p in

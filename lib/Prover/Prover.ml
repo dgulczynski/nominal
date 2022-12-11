@@ -27,7 +27,7 @@ let apply_thm proof state = apply_internal (proven proof) state
 let apply_assm h_name state =
   let env = goal_env state in
   let h = lookup env h_name in
-  apply_internal ~h_name (proof_axiom h) state
+  apply_internal ~h_name (proof_axiom env h) state
 
 let ex_falso state =
   let context = PC_ExFalso (to_judgement $ goal state, context state) in
@@ -35,8 +35,9 @@ let ex_falso state =
   unfinished goal context
 
 let truth state =
+  let env = goal_env state in
   match goal_formula state with
-  | F_Top -> find_goal_in_ctx (proof_axiom F_Top) (context state)
+  | F_Top -> find_goal_in_ctx (proof_axiom env F_Top) (context state)
   | f     -> raise $ formula_mismatch F_Top f
 
 let qed = finish

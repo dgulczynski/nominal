@@ -18,7 +18,7 @@ val env : proof -> proof_env
 
 val judgement : proof -> judgement
 
-val by_assumption : formula -> proof
+val by_assumption : identifier_env -> formula -> proof
 
 val imp_i : formula -> proof -> proof
 

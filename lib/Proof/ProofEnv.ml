@@ -26,14 +26,19 @@ let on_identifiers f {assumptions; identifiers; constraints} =
 let on_constraints f {assumptions; identifiers; constraints} =
   {assumptions; identifiers; constraints= f constraints}
 
+let rec merge xs ys =
+  match (xs, ys) with
+  | [], zs | zs, [] -> zs
+  | x :: xs, y :: ys when x = y -> x :: merge xs ys
+  | x :: xs, y :: ys when x < y -> x :: y :: merge xs ys
+  | x :: xs, y :: ys -> y :: x :: merge xs ys
+
 let union
     {assumptions= a1; identifiers= i1; constraints= c1}
     {assumptions= a2; identifiers= i2; constraints= c2} =
-  { assumptions= List.merge compare a1 a2
-  ; identifiers= List.merge compare i1 i2
-  ; constraints= List.merge compare c1 c2 }
+  {assumptions= merge a1 a2; identifiers= merge i1 i2; constraints= merge c1 c2}
 
-let add_fvar x_name x_rep x_kind = on_identifiers (List.cons (x_name, PI_FVar (x_rep, x_kind)))
+let add_fvar x_name x_rep x_kind = on_identifiers (List.cons (x_name, K_FVar (x_rep, x_kind)))
 
 let add_constr constr = on_constraints (List.cons constr)
 

@@ -110,8 +110,8 @@ let _ =
 
 let fvar_representation env x =
   let to_representation = function
-    | PI_FVar (i, _) -> i
-    | _              -> failwith $ x ^ " is not an l.var"
+    | K_FVar (i, _) -> i
+    | _             -> failwith $ x ^ " is not an l.var"
   in
   to_representation (List.assoc x env)
 

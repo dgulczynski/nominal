@@ -47,7 +47,7 @@ let proof_hole env f = PI_Hole (env, f)
 
 let proven proof = PI_Proven proof
 
-let proof_axiom = proven % by_assumption
+let proof_axiom env = proven % by_assumption (ProofEnv.identifiers env)
 
 let rec normalize incproof =
   match incproof with
