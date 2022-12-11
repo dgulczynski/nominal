@@ -51,6 +51,12 @@ let proof4 th4 =
   |> apply (parse_formula_in_env env4 "(p => ⊥) => p => ⊥")
   |> trivial |> assumption |> apply_assm "H1" |> assumption
 
+let th5 =
+  let env5 = atoms_env ["a"; "b"; "c"] in
+  (env env5 [] [], parse_formula_in_env env5 "[a = b] => [c =/= b] => [a # c]")
+
+let proof5 th5 = proof' th5 |> repeat intro_constr |> by_solver
+
 let _ = test_proof th1 proof1
 
 let _ = test_proof th2 proof2
@@ -58,5 +64,7 @@ let _ = test_proof th2 proof2
 let _ = test_proof th3 proof3
 
 let _ = test_proof th4 proof4
+
+let _ = test_proof th5 proof5
 
 let _ = print_newline ()

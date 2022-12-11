@@ -48,7 +48,11 @@ let map_assumptions f = on_assumptions (List.map f)
 
 let lookup_assumption test {assumptions; _} = List.find_opt test assumptions
 
-let remove_assumptions test = on_assumptions (List.filter (not % test))
+let unfilter test = List.filter (not % test)
+
+let remove_assumptions test = on_assumptions $ unfilter test
+
+let remove_constraints test = on_constraints $ unfilter test
 
 let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints} =
   let pp_sep fmt () = pp_print_string fmt "; " in

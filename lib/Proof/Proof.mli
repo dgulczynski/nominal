@@ -25,3 +25,5 @@ val imp_i : formula -> proof -> proof
 val imp_e : proof -> proof -> proof
 
 val bot_e : formula -> proof -> proof
+
+val constr_i : 'a env -> constr -> proof

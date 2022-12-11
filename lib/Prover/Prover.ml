@@ -13,10 +13,19 @@ let proof env f =
 let intro h state =
   match goal_formula state with
   | F_Impl (f1, f2) as f ->
-      let env = goal_env state |> add_assumption (h, f1) in
+      let env = goal_env state in
       let context = PC_Intro (to_judgement (env, f), context state) in
-      unfinished (env, f2) context
+      unfinished (env |> add_assumption (h, f1), f2) context
   | f                    -> raise $ not_an_implication f
+
+let intro_constr state =
+  match goal_formula state with
+  | (F_Impl (F_Constr constr, f2) | F_ConstrImpl (constr, f2)) as f ->
+      let env = goal_env state in
+      let context = PC_Intro (to_judgement (env, f), context state) in
+      unfinished (env |> add_constr constr, f2) context
+  | F_Impl (f1, _) -> raise $ not_a_constraint f1
+  | f -> raise $ not_an_implication f
 
 let apply h state =
   let env = goal_env state in
@@ -39,5 +48,10 @@ let truth state =
   match goal_formula state with
   | F_Top -> find_goal_in_ctx (proof_axiom env F_Top) (context state)
   | f     -> raise $ formula_mismatch F_Top f
+
+let by_solver state =
+  match goal_formula state with
+  | F_Constr c -> find_goal_in_ctx (proof_constr (goal_env state) c) (context state)
+  | f          -> raise $ not_a_constraint f
 
 let qed = finish

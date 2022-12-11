@@ -129,8 +129,8 @@ let pp_print_fvar env fmt x =
 
 let rec pp_print_formula env fmt formula =
   let is_atomic = function
-    | F_Bot | F_Top | F_Var _ -> true
-    | _                       -> false
+    | F_Bot | F_Top | F_Var _ | F_Constr _ -> true
+    | _ -> false
   in
   let pp_formula env = pp_print_formula env fmt in
   let pp_string = pp_print_string fmt in
@@ -157,14 +157,14 @@ let rec pp_print_formula env fmt formula =
   | F_Var (FV x) -> pp_print_fvar env fmt x
   | F_And fs -> pp_print_list ~pp_sep:(pp_sep " ∧ ") pp_print_atomic_formula fmt fs
   | F_Or fs -> pp_print_list ~pp_sep:(pp_sep " ∨ ") pp_print_atomic_formula fmt fs
-  | F_Constr c -> pp_print_constr fmt c
+  | F_Constr c -> pp_print_bracketed pp_print_constr fmt c
   | F_Impl (f1, f2) -> (
       pp_print_atomic_formula fmt f1 ;
       space () ;
       pp_string "=>" ;
       space () ;
       match f2 with
-      | F_Impl _ | F_Bot | F_Top | F_Var _ -> pp_formula env f2
+      | F_Impl _ | F_Bot | F_Top | F_Var _ | F_Constr _ -> pp_formula env f2
       | _ -> pp_print_parenthesized (pp_print_formula env) fmt f2 )
   | F_ForallTerm (x, f) ->
       pp_forall fmt (string_of_var_arg x) "term" ;

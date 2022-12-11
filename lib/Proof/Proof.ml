@@ -24,9 +24,16 @@ let judgement proof = (env proof, label proof)
 
 let by_assumption identifiers f = P_Ax (ProofEnv.env identifiers [] [f], f)
 
+let remove_assumption f =
+  remove_assumptions (equiv f)
+  %
+  match f with
+  | F_Constr c -> remove_constraints (( = ) c)
+  | _          -> id
+
 let imp_i f p =
   let f' = label p in
-  let env = env p |> remove_assumptions (equiv f) in
+  let env = env p |> remove_assumption f in
   P_Intro ((env, F_Impl (f, f')), p)
 
 let imp_e p1 p2 =
@@ -38,3 +45,10 @@ let bot_e f p =
   match label p with
   | F_Bot -> P_ExFalso ((env p, f), p)
   | f'    -> raise $ formula_mismatch F_Bot f'
+
+let constr_i env constr =
+  let constraints = constraints env in
+  if Solver.solve_with_assumptions constraints constr then
+    let env = ProofEnv.env [] constraints [] in
+    P_Ax (env, F_Constr constr)
+  else raise $ solver_failure constraints constr

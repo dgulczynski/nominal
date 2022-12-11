@@ -35,6 +35,11 @@ let assumption state =
 
 let contradiction = assumption % ex_falso
 
+let rec repeat tactic proof =
+  match proof |> try_opt tactic with
+  | Some proof -> repeat tactic proof
+  | None       -> proof
+
 let trivial =
   let on_fail _ = raise $ ProofException "This ain't trivial" in
   try_many on_fail [assumption % intro "_"; assumption]
