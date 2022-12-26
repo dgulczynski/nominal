@@ -62,7 +62,7 @@ let rec repeat tactic state =
 
 let trivial =
   let on_fail _ = raise $ ProofException "This ain't trivial" in
-  try_many on_fail [assumption % intro "_"; assumption]
+  try_many on_fail [intro "_" %> assumption; assumption; truth; intro_constr]
 
 let apply_parse f_string state =
   let env, _ = goal state in

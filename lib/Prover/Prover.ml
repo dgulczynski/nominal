@@ -6,22 +6,23 @@ open ProofEnv
 open ProverGoal
 open ProverInternals
 
-let proof env f =
-  let kind_infer =
-    let kind_env =
-      let add_identifier env = function
-        | x_name, K_FVar (x, k) -> KindCheckerEnv.map_fvar env x_name (FV x) k
-        | _                     -> env
-      in
-      List.fold_left add_identifier KindCheckerEnv.empty (identifiers env)
-    in
-    KindChecker.kind_infer kind_env
+let check_props env formulas =
+  let kind_infer = KindChecker.kind_infer $ kind_checker_env env in
+  let check_prop f =
+    match kind_infer f with
+    | Some K_Prop -> ()
+    | k           -> raise $ formula_kind_mismatch f k K_Prop
   in
-  match kind_infer f with
-  | Some K_Prop ->
-      let goal = (env, f) in
-      unfinished goal PC_Root
-  | k           -> raise $ formula_kind_mismatch f k K_Prop
+  List.iter check_prop formulas
+
+let check_input env goal =
+  let assumptions = List.map snd $ assumptions env in
+  check_props env $ goal :: assumptions
+
+let proof env f =
+  let _ = check_input env f in
+  let goal = (env, f) in
+  unfinished goal PC_Root
 
 let intro h state =
   match goal_formula state with
@@ -41,6 +42,7 @@ let intro_constr state =
 
 let apply h state =
   let env = goal_env state in
+  let _ = check_props env [h] in
   apply_internal (proof_hole env h) state
 
 let apply_thm proof state = apply_internal (proven proof) state

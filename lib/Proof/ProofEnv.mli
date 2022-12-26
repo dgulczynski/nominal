@@ -32,4 +32,6 @@ val remove_assumptions : ('a -> bool) -> 'a env -> 'a env
 
 val remove_constraints : (constr -> bool) -> 'a env -> 'a env
 
+val kind_checker_env : 'a env -> KindCheckerEnv.t
+
 val pp_print_env : 'a printer -> 'a env printer
