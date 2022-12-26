@@ -7,6 +7,9 @@ val ( % ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 
 val ( %% ) : ('c -> 'd) -> ('a -> 'b -> 'c) -> 'a -> 'b -> 'd
 
+val ( %> ) : ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c
+(** [f %> g] is reverse composition [(f %> g) x = g (f x)], useful for dividing proofs into parts *)
+
 val ( <$> ) : ('a -> 'b) -> 'a option -> 'b option
 
 val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option

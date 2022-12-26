@@ -48,7 +48,18 @@ let map_assumptions f = on_assumptions (List.map f)
 
 let lookup_assumption test {assumptions; _} = List.find_opt test assumptions
 
-let remove_assumptions test = on_assumptions (List.filter (not % test))
+let unfilter test = List.filter (not % test)
+
+let remove_assumptions test = on_assumptions $ unfilter test
+
+let remove_constraints test = on_constraints $ unfilter test
+
+let kind_checker_env {identifiers; _} =
+  let add_identifier env = function
+    | x_name, K_FVar (x, k) -> KindCheckerEnv.map_fvar env x_name (FV x) k
+    | _                     -> env
+  in
+  List.fold_left add_identifier KindCheckerEnv.empty identifiers
 
 let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints} =
   let pp_sep fmt () = pp_print_string fmt "; " in

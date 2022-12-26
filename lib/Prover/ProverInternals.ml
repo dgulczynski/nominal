@@ -1,4 +1,3 @@
-open Types
 open Common
 open IncProof
 open Proof
@@ -33,6 +32,7 @@ let rec find_goal_in_proof context incproof =
 and find_goal_in_ctx incproof = function
   | PC_Root -> proof_case finished (find_goal_in_proof PC_Root) incproof
   | PC_Intro (jgmt, ctx) -> find_goal_in_ctx (proof_intro jgmt incproof) ctx
+  | PC_ConstrIntro (jgmt, ctx) -> find_goal_in_ctx (proof_constr_intro jgmt incproof) ctx
   | PC_ApplyRight (jgmt, lproof, rctx) -> find_goal_in_ctx (proof_apply jgmt lproof incproof) rctx
   | PC_ApplyLeft (jgmt, lctx, rproof) -> find_goal_in_ctx (proof_apply jgmt incproof rproof) lctx
   | PC_ExFalso (jgmt, ctx) -> find_goal_in_ctx (proof_ex_falso jgmt incproof) ctx
@@ -40,15 +40,13 @@ and find_goal_in_ctx incproof = function
 (** [destruct_impl c f] is
     [Some [f1 => f2 => ... fn => c; f2 => ... fn => c; ...; fn => c]] if [f = f1 => f2 => ... => fn => c]
     and [[]] otherwise *)
-let destruct_impl conclusion f =
-  let rec aux = function
-    | F_Impl (_, f2) as f when f2 === conclusion -> Some [f]
-    | F_Impl (_, f2) as f -> List.cons f <$> aux f2
-    | _ -> None
+let destruct_impl c f =
+  let rec aux f =
+    match conclusion f with
+    | f2 when f2 === c -> [f]
+    | f2 -> f :: aux f2
   in
-  match aux f with
-  | None    -> []
-  | Some fs -> fs
+  try aux f with ProofException _ -> []
 
 let goal = function
   | S_Finished _           -> raise proof_finished

@@ -12,7 +12,7 @@ let f_top = string_ci "true" <|> string "⊤" >>| const PF_Top
 
 let f_var = identifier >>| fun x -> PF_Var x
 
-let f_constr = constr >>| fun c -> PF_Constr c
+let f_constr = brackets_op constr >>| fun c -> PF_Constr c
 
 let simple_formula = f_bot <|> f_top <|> f_constr <|> f_var
 
@@ -88,8 +88,8 @@ let f_app formula =
 
 let formula =
   let formula' formula =
-    f_and formula <|> f_or formula <|> f_impl formula <|> f_forall formula <|> f_exists formula
-    <|> f_constrand formula <|> f_constrimpl formula <|> f_fun formula <|> f_app formula
+    f_constrand formula <|> f_constrimpl formula <|> f_and formula <|> f_or formula
+    <|> f_impl formula <|> f_forall formula <|> f_exists formula <|> f_fun formula <|> f_app formula
     <|> simple_formula <|> parenthesized formula
   in
   fix formula'

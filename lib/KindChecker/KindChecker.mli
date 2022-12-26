@@ -3,6 +3,9 @@ open Types
 val kind_check : KindCheckerEnv.t -> kind -> formula -> bool
 (** [kind_check env k f] returns [[]; env |- f : k] *)
 
+val kind_infer : KindCheckerEnv.t -> formula -> kind option
+(** [kind_infer env f] returns [Some k] iff [[]; env |- f : k] *)
+
 val subkind : KindCheckerEnv.t -> kind -> kind -> bool
 (** [subkind env k1 k2] returns [[]; env |- k1 <= k2] *)
 

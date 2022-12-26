@@ -57,7 +57,6 @@ let rec kind_check env kind formula =
   | Some k -> subkind env k kind
   | None   -> false
 
-(** [kind_infer env f] returns [Some k] iff [[]; env |- f : k] *)
 and kind_infer env = function
   | F_Var x -> find_fvar env x
   | F_Bot | F_Top | F_Constr _ -> Some K_Prop
