@@ -33,12 +33,11 @@ let intro h state =
 
 let intro_constr state =
   match goal_formula state with
-  | (F_Impl (F_Constr constr, f2) | F_ConstrImpl (constr, f2)) as f ->
+  | F_ConstrImpl (constr, f2) as f ->
       let env = goal_env state in
-      let context = PC_Intro (to_judgement (env, f), context state) in
+      let context = PC_ConstrIntro (to_judgement (env, f), context state) in
       unfinished (env |> add_constr constr, f2) context
-  | F_Impl (f1, _) -> raise $ not_a_constraint f1
-  | f -> raise $ not_an_implication f
+  | f                              -> raise $ not_a_constr_implication f
 
 let apply h state =
   let env = goal_env state in
@@ -64,7 +63,9 @@ let truth state =
 
 let by_solver state =
   match goal_formula state with
-  | F_Constr c -> find_goal_in_ctx (proof_constr (goal_env state) c) (context state)
+  | F_Constr c ->
+      let proof_env = ProofEnv.map_assumptions snd $ goal_env state in
+      find_goal_in_ctx (proof_constr proof_env c) (context state)
   | f          -> raise $ not_a_constraint f
 
 let qed = finish
