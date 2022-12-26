@@ -107,7 +107,9 @@ let rec pformula_to_formula env = function
 
 let parse_term s = pterm_to_term [] $ parse term s
 
-let parse_constr s = pconstr_to_constr [] $ parse constr s
+let parse_constr_in_env env s = pconstr_to_constr env $ parse constr s
+
+let parse_constr = parse_constr_in_env []
 
 let parse_kind s = pkind_to_kind [] $ parse kind s
 

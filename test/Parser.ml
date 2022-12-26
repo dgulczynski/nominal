@@ -87,17 +87,17 @@ let _ = print_newline ()
 
 let _ = test_kind [] "*" K_Prop
 
-let _ = test_kind [] "prop => prop" $ K_Arrow (K_Prop, K_Prop)
+let _ = test_kind [] "prop -> prop" $ K_Arrow (K_Prop, K_Prop)
 
 let _ =
-  test_kind (atoms_env ["a"; "b"] @ vars_env ["x"]) "([a # x] prop) => [b # [a b] x] prop"
+  test_kind (atoms_env ["a"; "b"] @ vars_env ["x"]) "([a # x] prop) -> [b # [a b] x] prop"
   $ K_Arrow
       ( K_Constr (C_Fresh (A "a", var $ V "x"), K_Prop)
       , K_Constr (C_Fresh (A "b", T_Var {perm= [(pure (A "a"), pure (A "b"))]; symb= V "x"}), K_Prop)
       )
 
 let _ =
-  test_kind [] "forall a : atom. forall x : term. [a # x] (prop => prop)"
+  test_kind [] "forall a : atom. forall x : term. [a # x] (prop -> prop)"
   $ K_ForallAtom
       ( A "a"
       , K_ForallTerm (V "x", K_Constr (C_Fresh (A "a", var $ V "x"), K_Arrow (K_Prop, K_Prop))) )

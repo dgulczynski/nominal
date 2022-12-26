@@ -13,6 +13,8 @@ let ( >>= ) = Option.bind
 
 let flip f x y = f y x
 
+let ( %> ) f g = g % f
+
 let id x = x
 
 let curry f x y = f (x, y)

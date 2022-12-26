@@ -24,7 +24,7 @@ let kind =
     return $ List.fold_right (fun c k -> PK_Constr (c, k)) cs k
   and k_arrow kind =
     let* k1 = k_prop <|> parenthesized kind in
-    let* _ = whitespace *> double_arrow <* whitespace in
+    let* _ = whitespace *> arrow <* whitespace in
     let* k2 = kind in
     return $ PK_Arrow (k1, k2)
   in

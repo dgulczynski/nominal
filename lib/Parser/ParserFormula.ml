@@ -12,7 +12,7 @@ let f_top = string_ci "true" <|> string "⊤" >>| const PF_Top
 
 let f_var = identifier >>| fun x -> PF_Var x
 
-let f_constr = bracketed constr >>| fun c -> PF_Constr c
+let f_constr = brackets_op constr >>| fun c -> PF_Constr c
 
 let simple_formula = f_bot <|> f_top <|> f_constr <|> f_var
 

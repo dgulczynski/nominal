@@ -7,8 +7,21 @@ open ProverGoal
 open ProverInternals
 
 let proof env f =
-  let goal = (env, f) in
-  unfinished goal PC_Root
+  let kind_infer =
+    let kind_env =
+      let add_identifier env = function
+        | x_name, K_FVar (x, k) -> KindCheckerEnv.map_fvar env x_name (FV x) k
+        | _                     -> env
+      in
+      List.fold_left add_identifier KindCheckerEnv.empty (identifiers env)
+    in
+    KindChecker.kind_infer kind_env
+  in
+  match kind_infer f with
+  | Some K_Prop ->
+      let goal = (env, f) in
+      unfinished goal PC_Root
+  | k           -> raise $ formula_kind_mismatch f k K_Prop
 
 let intro h state =
   match goal_formula state with

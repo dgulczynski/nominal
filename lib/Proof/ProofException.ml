@@ -21,6 +21,8 @@ let not_what_expected expected instead =
 
 let not_an_implication = not_what_expected "an implication" % string_of_formula
 
+let not_a_constr_implication = not_what_expected "a constraint implication" % string_of_formula
+
 let not_a_constraint = not_what_expected "a constraint" % string_of_formula
 
 let premise_mismatch hypothesis premise =
@@ -30,6 +32,12 @@ let premise_mismatch hypothesis premise =
 
 let formula_mismatch expected actual =
   not_what_expected (string_of_formula expected) (string_of_formula actual)
+
+let formula_kind_mismatch f f_kind expected_kind =
+  let expcted_kind = Printf.sprintf "formula with kind %s" (string_of_kind expected_kind) in
+  let actual_kind = Option.fold ~none:"None" ~some:string_of_kind f_kind in
+  let actual = Printf.sprintf "%s of kind %s" (string_of_formula f) actual_kind in
+  not_what_expected expcted_kind actual
 
 let hole_in_proof = ProofException "Proof cannot have holes"
 

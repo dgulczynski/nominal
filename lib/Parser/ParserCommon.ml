@@ -53,6 +53,8 @@ let binop left op right =
 
 let bracketed p = parenthesized ~left:'[' ~right:']' p
 
+let brackets_op f = bracketed f <|> f
+
 let braced p = parenthesized ~left:'{' ~right:'}' p
 
 let arrow = string "->" <|> string "→"
