@@ -20,6 +20,8 @@ val union : 'a env -> 'a env -> 'a env
 
 val add_fvar : string -> int -> kind -> 'a env -> 'a env
 
+val add_atom : string -> 'a env -> 'a env
+
 val add_constr : constr -> 'a env -> 'a env
 
 val add_assumption : 'a -> 'a env -> 'a env
@@ -31,6 +33,8 @@ val lookup_assumption : ('a -> bool) -> 'a env -> 'a option
 val remove_assumptions : ('a -> bool) -> 'a env -> 'a env
 
 val remove_constraints : (constr -> bool) -> 'a env -> 'a env
+
+val remove_identifiers : (identifier -> bool) -> 'a env -> 'a env
 
 val kind_checker_env : 'a env -> KindCheckerEnv.t
 

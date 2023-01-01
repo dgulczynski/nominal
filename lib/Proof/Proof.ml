@@ -3,6 +3,7 @@ open Common
 open ProofCommon
 open ProofEnv
 open ProofException
+open Utils
 
 type proof_env = formula env
 
@@ -51,9 +52,10 @@ let imp_e p1 p2 =
   | f1, f2 -> raise $ premise_mismatch f1 f2
 
 let constr_i env constr =
+  let identifiers = identifiers env in
   let constraints = constraints env @ List.filter_map to_constr_op (assumptions env) in
   if Solver.solve_with_assumptions constraints constr then
-    let env = ProofEnv.env [] constraints [] in
+    let env = ProofEnv.env identifiers constraints [] in
     P_Ax (env, F_Constr constr)
   else raise $ solver_failure constraints constr
 
@@ -74,3 +76,13 @@ let bot_e f p =
   match label p with
   | F_Bot -> P_ExFalso ((env p, f), p)
   | f'    -> raise $ formula_mismatch F_Bot f'
+
+let is_bound name env =
+  let bound_in_assumption = List.exists (( = ) name) % free_names_of_formula in
+  let bound_in_constr = List.exists (( = ) name) % free_names_of_constr in
+  List.exists bound_in_assumption (assumptions env) || List.exists bound_in_constr (constraints env)
+
+let uni_atom_i (A a) p =
+  let env, f = judgement p in
+  if env |> is_bound a then raise $ cannot_generalize a
+  else P_Intro ((env |> remove_identifiers (( = ) a % fst), F_ForallAtom (A a, f)), p)

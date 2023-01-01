@@ -10,3 +10,7 @@ val fix_binder : string -> int -> var -> var -> kind -> fvar_binder
 val fix : string -> int -> var -> var -> kind -> formula -> formula
 (** [fix fix_name fix_rep x y k] returns [F_Fix(fix, x, k, k) = `fix x(fix_name) in f:k`]
     where [fix = fix_binder fix_name fix_rep x y k] *)
+
+val free_names_of_formula : formula -> string list
+
+val free_names_of_constr : constr -> string list

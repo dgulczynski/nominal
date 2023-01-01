@@ -33,3 +33,5 @@ val constr_i : proof_env -> constr -> proof
 val constr_imp_i : constr -> proof -> proof
 
 val constr_imp_e : proof -> proof -> proof
+
+val uni_atom_i : atom -> proof -> proof

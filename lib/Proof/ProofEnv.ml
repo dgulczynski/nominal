@@ -38,11 +38,13 @@ let union
     {assumptions= a2; identifiers= i2; constraints= c2} =
   {assumptions= merge a1 a2; identifiers= merge i1 i2; constraints= merge c1 c2}
 
-let add_fvar x_name x_rep x_kind = on_identifiers (List.cons (x_name, K_FVar (x_rep, x_kind)))
+let add_fvar x_name x_rep x_kind = on_identifiers $ merge [(x_name, K_FVar (x_rep, x_kind))]
+
+let add_atom a = on_identifiers $ merge [(a, K_Atom)]
 
 let add_constr constr = on_constraints (List.cons constr)
 
-let add_assumption item = union (singleton item)
+let add_assumption ass = on_assumptions $ merge [ass]
 
 let map_assumptions f = on_assumptions (List.map f)
 
@@ -53,6 +55,8 @@ let unfilter test = List.filter (not % test)
 let remove_assumptions test = on_assumptions $ unfilter test
 
 let remove_constraints test = on_constraints $ unfilter test
+
+let remove_identifiers test = on_identifiers $ unfilter test
 
 let kind_checker_env {identifiers; _} =
   let add_identifier env = function

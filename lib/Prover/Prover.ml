@@ -15,6 +15,15 @@ let check_props env formulas =
   in
   List.iter check_prop formulas
 
+let name_taken name =
+  let exn = Printf.sprintf "Name `%s` is already taken" name in
+  ProofException exn
+
+let check_fresh env name =
+  let identifiers = identifiers env in
+  let check (x_name, _) = if name != x_name then () else raise $ name_taken x_name in
+  List.iter check identifiers
+
 let check_input env goal =
   let assumptions = List.map snd $ assumptions env in
   check_props env $ goal :: assumptions
@@ -24,21 +33,26 @@ let proof env f =
   let goal = (env, f) in
   unfinished goal PC_Root
 
-let intro h state =
-  match goal_formula state with
-  | F_Impl (f1, f2) as f ->
-      let env = goal_env state in
+let intro_named name state =
+  let env, f = goal state in
+  let _ = check_fresh env name in
+  match f with
+  | F_Impl (f1, f2) ->
       let context = PC_Intro (to_judgement (env, f), context state) in
-      unfinished (env |> add_assumption (h, f1), f2) context
-  | f                    -> raise $ not_an_implication f
+      unfinished (env |> add_assumption (name, f1), f2) context
+  | _               -> raise $ not_an_implication f
 
-let intro_constr state =
-  match goal_formula state with
-  | F_ConstrImpl (constr, f2) as f ->
-      let env = goal_env state in
+let intro state =
+  let env = goal_env state in
+  let f = goal_formula state in
+  match f with
+  | F_ConstrImpl (constr, f2) ->
       let context = PC_ConstrIntro (to_judgement (env, f), context state) in
       unfinished (env |> add_constr constr, f2) context
-  | f                              -> raise $ not_a_constr_implication f
+  | F_ForallAtom (A a, f')    ->
+      let context = PC_Intro (to_judgement (env, f), context state) in
+      unfinished (env |> add_atom a, f') context
+  | _                         -> raise $ not_a_constr_implication f
 
 let apply h state =
   let env = goal_env state in

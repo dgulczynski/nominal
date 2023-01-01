@@ -5,9 +5,9 @@ open Types
 
 val proof : goal_env -> formula -> prover_state
 
-val intro : string -> tactic
+val intro : tactic
 
-val intro_constr : tactic
+val intro_named : string -> tactic
 
 val apply : formula -> tactic
 

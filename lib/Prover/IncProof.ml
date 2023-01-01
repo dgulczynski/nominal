@@ -62,7 +62,11 @@ let rec normalize incproof =
 
 and proof_intro jgmt conclusion_proof =
   match normalize conclusion_proof with
-  | PI_Proven proof -> proven (imp_i (premise $ snd jgmt) proof)
+  | PI_Proven proof -> (
+    match snd jgmt with
+    | F_Impl (premise, _) -> proven $ imp_i premise proof
+    | F_ForallAtom (a, _) -> proven $ uni_atom_i a proof
+    | f                   -> raise $ not_an_implication f )
   | incproof        -> PI_Intro (jgmt, incproof)
 
 and proof_constr_intro jgmt conclusion_proof =

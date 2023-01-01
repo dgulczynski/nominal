@@ -46,3 +46,7 @@ let solver_failure constraints constr =
   let constr' = string_of_constr constr in
   let exn = Printf.sprintf "Solver cannot solve %s |- %s" constrs' constr' in
   ProofException exn
+
+let cannot_generalize name =
+  let exn = Printf.sprintf "Cannot generalize %s as it is bound in environment" name in
+  ProofException exn

@@ -15,7 +15,7 @@ let try_tactic tactic state = state |> try_tactic' (const state) tactic
 
 let try_opt tactic = try_tactic' (const none) (some % tactic)
 
-let intros = flip (List.fold_left (flip intro))
+let intros = flip (List.fold_left (flip intro_named))
 
 let try_many on_fail tactics state =
   match List.find_map (flip try_opt state) tactics with
@@ -24,7 +24,7 @@ let try_many on_fail tactics state =
 
 let add_assumption h_name h state =
   let _, f = goal state in
-  state |> apply (F_Impl (h, f)) |> intro h_name
+  state |> apply (F_Impl (h, f)) |> intro_named h_name
 
 let add_assumption_parse h_name h_string state =
   let env, _ = goal state in
@@ -33,7 +33,7 @@ let add_assumption_parse h_name h_string state =
 
 let add_constr c state =
   let _, f = goal state in
-  state |> apply (F_ConstrImpl (c, f)) |> intro_constr
+  state |> apply (F_ConstrImpl (c, f)) |> intro
 
 let add_constr_parse c_string state =
   let env, _ = goal state in
@@ -62,7 +62,7 @@ let rec repeat tactic state =
 
 let trivial =
   let on_fail _ = raise $ ProofException "This ain't trivial" in
-  try_many on_fail [intro "_" %> assumption; assumption; truth; intro_constr]
+  try_many on_fail [intro_named "_" %> assumption; assumption; truth; intro]
 
 let apply_parse f_string state =
   let env, _ = goal state in
