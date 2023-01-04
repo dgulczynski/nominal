@@ -10,9 +10,10 @@ type proof =
   | P_Ax          of judgement
   | P_Intro       of judgement * proof
   | P_Apply       of judgement * proof * proof
-  | P_ExFalso     of judgement * proof
   | P_ConstrIntro of judgement * proof
   | P_ConstrApply of judgement * proof * proof
+  | P_SpecifyAtom of judgement * atom * proof
+  | P_ExFalso     of judgement * proof
 
 val label : proof -> formula
 
@@ -35,3 +36,5 @@ val constr_imp_i : constr -> proof -> proof
 val constr_imp_e : proof -> proof -> proof
 
 val uni_atom_i : atom -> proof -> proof
+
+val uni_atom_e : atom -> proof -> proof

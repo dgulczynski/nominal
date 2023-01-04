@@ -13,9 +13,10 @@ type proof =
   | P_Ax          of judgement
   | P_Intro       of judgement * proof
   | P_Apply       of judgement * proof * proof
-  | P_ExFalso     of judgement * proof
   | P_ConstrIntro of judgement * proof
   | P_ConstrApply of judgement * proof * proof
+  | P_SpecifyAtom of judgement * atom * proof
+  | P_ExFalso     of judgement * proof
 
 let label = function
   | P_Ax (_, f)
@@ -23,6 +24,7 @@ let label = function
   | P_Apply ((_, f), _, _)
   | P_ConstrIntro ((_, f), _)
   | P_ConstrApply ((_, f), _, _)
+  | P_SpecifyAtom ((_, f), _, _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -31,6 +33,7 @@ let env = function
   | P_Apply ((e, _), _, _)
   | P_ConstrIntro ((e, _), _)
   | P_ConstrApply ((e, _), _, _)
+  | P_SpecifyAtom ((e, _), _, _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
@@ -77,12 +80,24 @@ let bot_e f p =
   | F_Bot -> P_ExFalso ((env p, f), p)
   | f'    -> raise $ formula_mismatch F_Bot f'
 
-let is_bound name env =
+let find_bind name env =
   let bound_in_assumption = List.exists (( = ) name) % free_names_of_formula in
   let bound_in_constr = List.exists (( = ) name) % free_names_of_constr in
-  List.exists bound_in_assumption (assumptions env) || List.exists bound_in_constr (constraints env)
+  let to_formula c = F_Constr c in
+  match List.find_opt bound_in_assumption (assumptions env) with
+  | Some f -> Some f
+  | None   -> to_formula <$> List.find_opt bound_in_constr (constraints env)
 
 let uni_atom_i (A a) p =
   let env, f = judgement p in
-  if env |> is_bound a then raise $ cannot_generalize a
-  else P_Intro ((env |> remove_identifiers (( = ) a % fst), F_ForallAtom (A a, f)), p)
+  match env |> find_bind a with
+  | None   -> P_Intro ((env |> remove_atom a, F_ForallAtom (A a, f)), p)
+  | Some f -> raise $ cannot_generalize a f
+
+let uni_atom_e (A b) p =
+  match label p with
+  | F_ForallAtom (a, f) ->
+      let env = add_atom b $ env p in
+      let f = Substitution.subst_atom_in_formula a (A b) f in
+      P_SpecifyAtom ((env, f), a, p)
+  | f                   -> raise $ not_a_forall f

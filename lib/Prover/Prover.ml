@@ -85,3 +85,9 @@ let by_solver state =
   | f          -> raise $ not_a_constraint f
 
 let qed = finish
+
+let generalize a state =
+  let env, f = goal state in
+  let g = F_ForallAtom (A a, f) in
+  let context = PC_SpecifyAtom (to_judgement (env, f), A a, context state) in
+  unfinished (env |> remove_atom a, g) context

@@ -58,6 +58,12 @@ let remove_constraints test = on_constraints $ unfilter test
 
 let remove_identifiers test = on_identifiers $ unfilter test
 
+let remove_atom a =
+  remove_identifiers
+  $ function
+  | b, K_Atom -> a = b
+  | _         -> false
+
 let kind_checker_env {identifiers; _} =
   let add_identifier env = function
     | x_name, K_FVar (x, k) -> KindCheckerEnv.map_fvar env x_name (FV x) k

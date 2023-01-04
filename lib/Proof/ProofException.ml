@@ -25,6 +25,8 @@ let not_a_constr_implication = not_what_expected "a constraint implication" % st
 
 let not_a_constraint = not_what_expected "a constraint" % string_of_formula
 
+let not_a_forall = not_what_expected "an universal quantification" % string_of_formula
+
 let premise_mismatch hypothesis premise =
   not_what_expected
     ("implication with premise " ^ string_of_formula premise)
@@ -47,6 +49,7 @@ let solver_failure constraints constr =
   let exn = Printf.sprintf "Solver cannot solve %s |- %s" constrs' constr' in
   ProofException exn
 
-let cannot_generalize name =
-  let exn = Printf.sprintf "Cannot generalize %s as it is bound in environment" name in
+let cannot_generalize name f =
+  let f = string_of_formula f in
+  let exn = Printf.sprintf "Cannot generalize %s as it is bound in %s" name f in
   ProofException exn
