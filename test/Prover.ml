@@ -71,6 +71,14 @@ let th7 = (empty, parse_formula "forall a : atom. forall b : atom. [a =/= b] => 
 
 let proof7 th7 = proof' th7 |> repeat intro |> by_solver
 
+let th8 =
+  let env8 = atoms_env ["c"; "d"] in
+  ( env env8 [] []
+  , parse_formula_in_env env8
+      "(forall a : atom. forall b : atom. [a = b] => [a.a = a.b]) => [c = d] => [c.c = c.d]" )
+
+let proof8 th8 = proof' th8 |> intro_named "H" |> generalize "d" |> generalize "c" |> apply_assm "H"
+
 let _ = test_proof th1 proof1
 
 let _ = test_proof th2 proof2
@@ -84,5 +92,7 @@ let _ = test_proof th5 proof5
 let _ = test_proof th6 proof6
 
 let _ = test_proof th7 proof7
+
+let _ = test_proof th8 proof8
 
 let _ = print_newline ()

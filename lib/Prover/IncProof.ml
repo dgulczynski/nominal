@@ -8,22 +8,22 @@ open Types
 (** Possibly incomplete proof with the same structure as [proof], but with _holes_. 
     For ease of development it is exported here, but in future it will be abstract *)
 type incproof =
-  | PI_Proven      of proof
-  | PI_Hole        of goal
-  | PI_Intro       of judgement * incproof
-  | PI_Apply       of judgement * incproof * incproof
-  | PI_ConstrIntro of judgement * incproof
-  | PI_SpecifyAtom of judgement * atom * incproof
-  | PI_ExFalso     of judgement * incproof
+  | PI_Proven         of proof
+  | PI_Hole           of goal
+  | PI_Intro          of judgement * incproof
+  | PI_Apply          of judgement * incproof * incproof
+  | PI_ConstrIntro    of judgement * incproof
+  | PI_SpecializeAtom of judgement * atom * incproof
+  | PI_ExFalso        of judgement * incproof
 
 type proof_context =
   | PC_Root
-  | PC_Intro       of judgement * proof_context
-  | PC_ApplyLeft   of judgement * proof_context * incproof
-  | PC_ApplyRight  of judgement * incproof * proof_context
-  | PC_ConstrIntro of judgement * proof_context
-  | PC_SpecifyAtom of judgement * atom * proof_context
-  | PC_ExFalso     of judgement * proof_context
+  | PC_Intro          of judgement * proof_context
+  | PC_ApplyLeft      of judgement * proof_context * incproof
+  | PC_ApplyRight     of judgement * incproof * proof_context
+  | PC_ConstrIntro    of judgement * proof_context
+  | PC_SpecializeAtom of judgement * atom * proof_context
+  | PC_ExFalso        of judgement * proof_context
 
 let judgement' = function
   | PI_Proven proof -> judgement proof
@@ -31,7 +31,7 @@ let judgement' = function
   | PI_Intro (jgmt, _)
   | PI_ConstrIntro (jgmt, _)
   | PI_Apply (jgmt, _, _)
-  | PI_SpecifyAtom (jgmt, _, _)
+  | PI_SpecializeAtom (jgmt, _, _)
   | PI_ExFalso (jgmt, _) -> jgmt
 
 let env' = fst % judgement'
@@ -41,12 +41,12 @@ let label' = snd % judgement'
 let rec hasHoles = function
   | PI_Proven _ -> false
   | PI_Hole _ -> true
-  | PI_Intro (_, p) | PI_ConstrIntro (_, p) | PI_SpecifyAtom (_, _, p) | PI_ExFalso (_, p) ->
+  | PI_Intro (_, p) | PI_ConstrIntro (_, p) | PI_SpecializeAtom (_, _, p) | PI_ExFalso (_, p) ->
       hasHoles p
   | PI_Apply (_, l, r) -> hasHoles l || hasHoles r
 
 let rec ctxHasHoles = function
-  | PC_Intro (_, ctx) | PC_ConstrIntro (_, ctx) | PC_SpecifyAtom (_, _, ctx) | PC_ExFalso (_, ctx)
+  | PC_Intro (_, ctx) | PC_ConstrIntro (_, ctx) | PC_SpecializeAtom (_, _, ctx) | PC_ExFalso (_, ctx)
     -> ctxHasHoles ctx
   | PC_ApplyLeft (_, lctx, rproof) -> ctxHasHoles lctx || hasHoles rproof
   | PC_ApplyRight (_, lproof, rctx) -> ctxHasHoles rctx || hasHoles lproof
@@ -56,7 +56,7 @@ let proof_hole env f = PI_Hole (env, f)
 
 let proven proof = PI_Proven proof
 
-let proof_axiom env = proven % by_assumption (ProofEnv.identifiers env)
+let proof_axiom env = proven % axiom (ProofEnv.identifiers env)
 
 let proof_constr env = proven % constr_i env
 
@@ -67,14 +67,14 @@ let rec normalize incproof =
   | PI_ConstrIntro (jgmt, conclusion_proof) -> proof_constr_intro jgmt conclusion_proof
   | PI_ExFalso (jgmt, contradiction) -> proof_ex_falso jgmt contradiction
   | PI_Apply (jgmt, imp_proof, premise_proof) -> proof_apply jgmt imp_proof premise_proof
-  | PI_SpecifyAtom (jgmt, a, universal_proof) -> proof_specify jgmt a universal_proof
+  | PI_SpecializeAtom (jgmt, a, universal_proof) -> proof_specialize jgmt a universal_proof
 
 and proof_intro jgmt conclusion_proof =
   match normalize conclusion_proof with
   | PI_Proven proof -> (
     match snd jgmt with
     | F_Impl (premise, _) -> proven $ imp_i premise proof
-    | F_ForallAtom (a, _) -> proven $ uni_atom_i a proof
+    | F_ForallAtom (a, _) -> proven $ forall_atom_i a proof
     | f                   -> raise $ not_an_implication f )
   | incproof        -> PI_Intro (jgmt, incproof)
 
@@ -93,10 +93,10 @@ and proof_apply jgmt imp_proof premise_proof =
   | PI_Proven imp_proof, PI_Proven premise_proof -> proven (imp_e imp_proof premise_proof)
   | imp_proof, premise_proof -> PI_Apply (jgmt, imp_proof, premise_proof)
 
-and proof_specify jgmt a universal_proof =
+and proof_specialize jgmt a universal_proof =
   match normalize universal_proof with
-  | PI_Proven proof -> proven $ uni_atom_e a proof
-  | incproof        -> PI_SpecifyAtom (jgmt, a, incproof)
+  | PI_Proven proof -> proven $ forall_atom_e a proof
+  | incproof        -> PI_SpecializeAtom (jgmt, a, incproof)
 
 let proof_case map_proof map_incproof incproof =
   match normalize incproof with
@@ -111,8 +111,8 @@ let rec find_hole_in_proof context = function
   | PI_Intro (jgmt, incproof) -> find_hole_in_proof (PC_Intro (jgmt, context)) incproof
   | PI_ConstrIntro (jgmt, incproof) -> find_hole_in_proof (PC_ConstrIntro (jgmt, context)) incproof
   | PI_ExFalso (jgmt, incproof) -> find_hole_in_proof (PC_ExFalso (jgmt, context)) incproof
-  | PI_SpecifyAtom (jgmt, a, incproof) ->
-      find_hole_in_proof (PC_SpecifyAtom (jgmt, a, context)) incproof
+  | PI_SpecializeAtom (jgmt, a, incproof) ->
+      find_hole_in_proof (PC_SpecializeAtom (jgmt, a, context)) incproof
   | PI_Apply (jgmt, lproof, rproof) when hasHoles lproof ->
       find_hole_in_proof (PC_ApplyLeft (jgmt, context, rproof)) lproof
   | PI_Apply (jgmt, lproof, rproof) when hasHoles rproof ->

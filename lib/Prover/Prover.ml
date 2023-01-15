@@ -89,5 +89,5 @@ let qed = finish
 let generalize a state =
   let env, f = goal state in
   let g = F_ForallAtom (A a, f) in
-  let context = PC_SpecifyAtom (to_judgement (env, f), A a, context state) in
+  let context = PC_SpecializeAtom (to_judgement (env, f), A a, context state) in
   unfinished (env |> remove_atom a, g) context

@@ -17,6 +17,10 @@ val subst_var_in_kind : var -> term -> kind -> kind
 
 val subst_atom_in_formula : atom -> atom -> formula -> formula
 
+val ( |-> ) : atom -> atom -> formula -> formula
+
 val subst_var_in_formula : var -> term -> formula -> formula
+
+val ( |=> ) : var -> term -> formula -> formula
 
 val subst_var_in_shape : var -> shape -> shape -> shape

@@ -110,3 +110,7 @@ let rec subst_var_in_shape x s = function
   | S_Lam s' -> S_Lam (subst_var_in_shape x s s')
   | S_App (s1, s2) -> S_App (subst_var_in_shape x s s1, subst_var_in_shape x s s2)
   | (S_Var _ | S_Atom | S_Fun _) as s -> s
+
+let ( |-> ) a b = subst_atom_in_formula a b
+
+let ( |=> ) x t = subst_var_in_formula x t
