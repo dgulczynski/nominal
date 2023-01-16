@@ -105,7 +105,21 @@ let rec pformula_to_formula env = function
       let env'' = (fix_name, K_FVar (fix_i, fix_k)) :: env' in
       F_Fix (FV_Bind (fix_name, fix_i, fix_k), V x, k, pformula_to_formula env'' f)
 
-let parse_term s = pterm_to_term [] $ parse term s
+let parse_atom_in_env env s =
+  let raise_not_an_atom_but what =
+    let exn = Printf.sprintf "Expected %s to be an atom, not a %s" s what in
+    raise $ ParserException exn
+  in
+  let a = parse identifier s in
+  match List.assoc_opt a env with
+  | Some K_Atom     -> A a
+  | Some K_Var      -> raise_not_an_atom_but "variable"
+  | Some (K_FVar _) -> raise_not_an_atom_but "logical variable"
+  | None            -> raise $ unbound_variable a
+
+let parse_term_in_env env s = pterm_to_term env $ parse term s
+
+let parse_term = parse_term_in_env []
 
 let parse_constr_in_env env s = pconstr_to_constr env $ parse constr s
 

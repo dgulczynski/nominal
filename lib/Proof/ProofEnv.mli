@@ -20,6 +20,10 @@ val union : 'a env -> 'a env -> 'a env
 
 val add_fvar : string -> int -> kind -> 'a env -> 'a env
 
+val add_atom : string -> 'a env -> 'a env
+
+val remove_identifier : string -> 'a env -> 'a env
+
 val add_constr : constr -> 'a env -> 'a env
 
 val add_assumption : 'a -> 'a env -> 'a env
@@ -28,10 +32,16 @@ val map_assumptions : ('a -> 'b) -> 'a env -> 'b env
 
 val lookup_assumption : ('a -> bool) -> 'a env -> 'a option
 
+val lookup_identifier : string -> 'a env -> identifier option
+
 val remove_assumptions : ('a -> bool) -> 'a env -> 'a env
 
 val remove_constraints : (constr -> bool) -> 'a env -> 'a env
 
+val remove_identifiers : (identifier -> bool) -> 'a env -> 'a env
+
 val kind_checker_env : 'a env -> KindCheckerEnv.t
+
+val find_bind : ('a -> formula) -> string -> 'a env -> formula option
 
 val pp_print_env : 'a printer -> 'a env printer
