@@ -12,6 +12,7 @@ type proof = private
   | P_ConstrIntro    of judgement * proof
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
+  | P_SpecializeTerm of judgement * term * proof
   | P_ExFalso        of judgement * proof
 
 val label : proof -> formula
@@ -37,3 +38,7 @@ val constr_imp_e : proof -> proof -> proof
 val forall_atom_i : atom -> proof -> proof
 
 val forall_atom_e : atom -> proof -> proof
+
+val forall_term_i : var -> proof -> proof
+
+val forall_term_e : term -> proof -> proof

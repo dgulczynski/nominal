@@ -4,7 +4,6 @@ open ProofCommon
 open ProofEnv
 open ProofException
 open Substitution
-open Utils
 
 type proof_env = formula env
 
@@ -17,6 +16,7 @@ type proof =
   | P_ConstrIntro    of judgement * proof
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
+  | P_SpecializeTerm of judgement * term * proof
   | P_ExFalso        of judgement * proof
 
 let label = function
@@ -26,6 +26,7 @@ let label = function
   | P_ConstrIntro ((_, f), _)
   | P_ConstrApply ((_, f), _, _)
   | P_SpecializeAtom ((_, f), _, _)
+  | P_SpecializeTerm ((_, f), _, _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -35,6 +36,7 @@ let env = function
   | P_ConstrIntro ((e, _), _)
   | P_ConstrApply ((e, _), _, _)
   | P_SpecializeAtom ((e, _), _, _)
+  | P_SpecializeTerm ((e, _), _, _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
@@ -81,24 +83,29 @@ let bot_e f p =
   | F_Bot -> P_ExFalso ((env p, f), p)
   | f'    -> raise $ formula_mismatch F_Bot f'
 
-let find_bind name env =
-  let bound_in_assumption = List.exists (( = ) name) % free_names_of_formula in
-  let bound_in_constr = List.exists (( = ) name) % free_names_of_constr in
-  let to_formula c = F_Constr c in
-  match List.find_opt bound_in_assumption (assumptions env) with
-  | Some f -> Some f
-  | None   -> to_formula <$> List.find_opt bound_in_constr (constraints env)
-
-let forall_atom_i (A a) p =
+let forall_atom_i (A a_name as a) p =
   let env, f = judgement p in
-  match env |> find_bind a with
-  | None   -> P_Intro ((env |> remove_atom a, F_ForallAtom (A a, f)), p)
-  | Some f -> raise $ cannot_generalize a f
+  match env |> find_bind id a_name with
+  | None   -> P_Intro ((env |> remove_identifier a_name, F_ForallAtom (a, f)), p)
+  | Some f -> raise $ cannot_generalize a_name f
 
-let forall_atom_e (A b) p =
+let forall_atom_e (A b_name as b) p =
   match label p with
   | F_ForallAtom (a, f) ->
-      let env = add_atom b $ env p in
-      let f = (a |-> A b) f in
-      P_SpecializeAtom ((env, f), a, p)
+      let env = add_atom b_name $ env p in
+      let f = (a |-> b) f in
+      P_SpecializeAtom ((env, f), b, p)
+  | f                   -> raise $ not_a_forall f
+
+let forall_term_i (V x_name as x) p =
+  let env, f = judgement p in
+  match env |> find_bind id x_name with
+  | None   -> P_Intro ((env |> remove_identifier x_name, F_ForallTerm (x, f)), p)
+  | Some f -> raise $ cannot_generalize x_name f
+
+let forall_term_e t p =
+  match label p with
+  | F_ForallTerm (x, f) ->
+      let f = (x |=> t) f in
+      P_SpecializeTerm ((env p, f), t, p)
   | f                   -> raise $ not_a_forall f

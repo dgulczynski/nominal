@@ -72,12 +72,13 @@ let th7 = (empty, parse_formula "forall a : atom. forall b : atom. [a =/= b] => 
 let proof7 th7 = proof' th7 |> repeat intro |> by_solver
 
 let th8 =
-  let env8 = atoms_env ["c"; "d"] in
+  let env8 = atoms_env ["b"; "c"] @ vars_env ["y"] in
   ( env env8 [] []
   , parse_formula_in_env env8
-      "(forall a : atom. forall b : atom. [a = b] => [a.a = a.b]) => [c = d] => [c.c = c.d]" )
+  "(forall a : atom. forall x : term. [a = x] => [a.a = a.x]) => [c = b.[b c]y] => [c.c = c.b.[b c] y]" [@ocamlformat "disable"]
+  )
 
-let proof8 th8 = proof' th8 |> intro_named "H" |> generalize "d" |> generalize "c" |> apply_assm "H"
+let proof8 th8 = proof' th8 |> intros ["H"] |> apply_assm_specialized "H" ["c"; "b. [b c]y"]
 
 let _ = test_proof th1 proof1
 

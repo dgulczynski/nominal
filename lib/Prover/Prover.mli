@@ -15,6 +15,8 @@ val apply_thm : proof -> tactic
 
 val apply_assm : string -> tactic
 
+val apply_assm_specialized : string -> string list -> tactic
+
 val by_solver : tactic
 
 val ex_falso : tactic

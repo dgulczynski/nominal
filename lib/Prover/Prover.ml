@@ -1,10 +1,12 @@
 open Types
 open Common
 open IncProof
+open Parser
 open ProofException
 open ProofEnv
 open ProverGoal
 open ProverInternals
+open Substitution
 
 let check_props env formulas =
   let kind_infer = KindChecker.kind_infer $ kind_checker_env env in
@@ -61,10 +63,26 @@ let apply h state =
 
 let apply_thm proof state = apply_internal (proven proof) state
 
+let assm_proof h_name env = proof_axiom env (lookup env h_name)
+
 let apply_assm h_name state =
   let env = goal_env state in
-  let h = lookup env h_name in
-  apply_internal ~h_name (proof_axiom env h) state
+  apply_internal ~h_name (assm_proof h_name env) state
+
+let apply_assm_specialized h_name specs state =
+  let specialize_proof proof spec =
+    match judgement' proof with
+    | env, F_ForallAtom (b, f) ->
+        let a = parse_atom_in_env (identifiers env) spec in
+        proof_specialize_atom (env, (b |-> a) f) a proof
+    | env, F_ForallTerm (x, f) ->
+        let t = parse_term_in_env (identifiers env) spec in
+        proof_specialize_term (env, (x |=> t) f) t proof
+    | _, f                     -> raise $ not_a_forall f
+  in
+  let env = goal_env state in
+  let h_proof = List.fold_left specialize_proof (assm_proof h_name env) specs in
+  apply_internal ~h_name h_proof state
 
 let ex_falso state =
   let context = PC_ExFalso (to_judgement $ goal state, context state) in
@@ -86,8 +104,14 @@ let by_solver state =
 
 let qed = finish
 
-let generalize a state =
+let generalize name state =
   let env, f = goal state in
-  let g = F_ForallAtom (A a, f) in
-  let context = PC_SpecializeAtom (to_judgement (env, f), A a, context state) in
-  unfinished (env |> remove_atom a, g) context
+  match ProofEnv.lookup_identifier name env with
+  | Some (a, K_Atom)    ->
+      let context = PC_SpecializeAtom (to_judgement (env, f), A a, context state) in
+      unfinished (env |> remove_identifier a, F_ForallAtom (A a, f)) context
+  | Some (x, K_Var)     ->
+      let context = PC_SpecializeTerm (to_judgement (env, f), var (V x), context state) in
+      unfinished (env |> remove_identifier x, F_ForallTerm (V x, f)) context
+  | Some (_x, K_FVar _) -> raise $ ProofException "Logical variables cannot be generalized"
+  | None                -> raise $ unbound_variable name
