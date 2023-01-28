@@ -54,6 +54,9 @@ let intro state =
   | F_ForallAtom (A a, f')    ->
       let context = PC_Intro (to_judgement (env, f), context state) in
       unfinished (env |> add_atom a, f') context
+  | F_ForallTerm (V x, f')    ->
+      let context = PC_Intro (to_judgement (env, f), context state) in
+      unfinished (env |> add_var x, f') context
   | _                         -> raise $ not_a_constr_implication f
 
 let apply h state =

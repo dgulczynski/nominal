@@ -79,9 +79,9 @@ let constr_imp_e c_proof c_imp_proof =
   | f -> raise $ premise_mismatch (F_Constr c) f
 
 let bot_e f p =
-  match label p with
-  | F_Bot -> P_ExFalso ((env p, f), p)
-  | f'    -> raise $ formula_mismatch F_Bot f'
+  match judgement p with
+  | env, F_Bot -> P_ExFalso ((env, f), p)
+  | _, f'      -> raise $ formula_mismatch F_Bot f'
 
 let forall_atom_i (A a_name as a) p =
   let env, f = judgement p in
@@ -89,13 +89,10 @@ let forall_atom_i (A a_name as a) p =
   | None   -> P_Intro ((env |> remove_identifier a_name, F_ForallAtom (a, f)), p)
   | Some f -> raise $ cannot_generalize a_name f
 
-let forall_atom_e (A b_name as b) p =
-  match label p with
-  | F_ForallAtom (a, f) ->
-      let env = add_atom b_name $ env p in
-      let f = (a |-> b) f in
-      P_SpecializeAtom ((env, f), b, p)
-  | f                   -> raise $ not_a_forall f
+let forall_atom_e (A _b_name as b) p =
+  match judgement p with
+  | env, F_ForallAtom (a, f) -> P_SpecializeAtom ((env, (a |-> b) f), b, p)
+  | _, f                     -> raise $ not_a_forall f
 
 let forall_term_i (V x_name as x) p =
   let env, f = judgement p in
@@ -104,8 +101,6 @@ let forall_term_i (V x_name as x) p =
   | Some f -> raise $ cannot_generalize x_name f
 
 let forall_term_e t p =
-  match label p with
-  | F_ForallTerm (x, f) ->
-      let f = (x |=> t) f in
-      P_SpecializeTerm ((env p, f), t, p)
-  | f                   -> raise $ not_a_forall f
+  match judgement p with
+  | env, F_ForallTerm (x, f) -> P_SpecializeTerm ((env, (x |=> t) f), t, p)
+  | _, f                     -> raise $ not_a_forall f

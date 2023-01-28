@@ -43,6 +43,8 @@ let add_fvar x_name x_rep x_kind = on_identifiers $ merge [(x_name, K_FVar (x_re
 
 let add_atom a = on_identifiers $ merge [(a, K_Atom)]
 
+let add_var x = on_identifiers $ merge [(x, K_Var)]
+
 let add_constr constr = on_constraints (List.cons constr)
 
 let add_assumption ass = on_assumptions $ merge [ass]

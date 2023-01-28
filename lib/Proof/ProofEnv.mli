@@ -22,6 +22,8 @@ val add_fvar : string -> int -> kind -> 'a env -> 'a env
 
 val add_atom : string -> 'a env -> 'a env
 
+val add_var : string -> 'a env -> 'a env
+
 val remove_identifier : string -> 'a env -> 'a env
 
 val add_constr : constr -> 'a env -> 'a env
