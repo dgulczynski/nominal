@@ -41,7 +41,7 @@ let rec equiv f1 f2 =
   | F_ForallTerm (x1, f1), F_ForallTerm (x2, f2) | F_ExistsTerm (x1, f1), F_ExistsTerm (x2, f2) ->
       let x = var (fresh_var ()) in
       (x1 |=> x) f1 === (x2 |=> x) f2
-  | F_ForallAtom _, _ -> false
+  | F_ForallAtom _, _ | F_ForallTerm _, _ | F_ExistsAtom _, _ | F_ExistsTerm _, _ -> false
   | _ ->
       failwith
       $ Printf.sprintf "unimplemented: %s === %s" (Printing.string_of_formula f1)

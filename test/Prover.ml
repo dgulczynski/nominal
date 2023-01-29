@@ -86,6 +86,22 @@ let th9 =
 
 let proof9 th9 = proof' th9 |> intro |> exists "d" |> exists "c" |> by_solver
 
+let th10 =
+  (empty, parse_formula "forall a : atom. (exists b: atom. [a =/= b]) => exists t:term. a # t")
+
+let proof10 th10 =
+  proof' th10 |> intro |> intros ["H"] |> destruct_assm "H" |> exists "b" |> by_solver
+
+let th11 =
+  ( empty
+  , parse_formula
+      "(forall a : atom. exists b: atom. [a =/= b]) => (forall a:atom. exists t:term. a # t)" )
+
+let proof11 th11 =
+  proof' th11 |> intros ["H"] |> intro
+  |> add_assumption_parse "Hc" "exists c:atom. a =/= c"
+  |> destruct_assm "Hc" |> exists "c" |> by_solver |> apply_assm_specialized "H" ["a"]
+
 let _ = test_proof th1 proof1
 
 let _ = test_proof th2 proof2
@@ -103,5 +119,9 @@ let _ = test_proof th7 proof7
 let _ = test_proof th8 proof8
 
 let _ = test_proof th9 proof9
+
+let _ = test_proof th10 proof10
+
+let _ = test_proof th11 proof11
 
 let _ = print_newline ()

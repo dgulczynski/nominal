@@ -131,3 +131,20 @@ let exists witness state =
       let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
       unfinished (env, (x |=> t) f_x) context
   | f                          -> raise $ not_an_exists f
+
+let remove_assumption_by_name name = remove_assumptions (( = ) name % fst)
+
+let destruct_assm h_name state =
+  let env, f = goal state in
+  let h_proof = assm_proof h_name env in
+  let env = env |> remove_assumption_by_name h_name in
+  match label' h_proof with
+  | F_ExistsAtom (A a, h_a) ->
+      let context = PC_WitnessUsage (to_judgement (env, f), h_proof, context state) in
+      let env = env |> add_atom a |> add_assumption (h_name, h_a) in
+      unfinished (env, f) context
+  | F_ExistsTerm (V x, h_x) ->
+      let context = PC_WitnessUsage (to_judgement (env, f), h_proof, context state) in
+      let env = env |> add_atom x |> add_assumption (h_name, h_x) in
+      unfinished (env, f) context
+  | f                       -> raise $ not_an_exists f
