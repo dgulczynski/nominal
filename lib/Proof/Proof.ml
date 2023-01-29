@@ -124,14 +124,6 @@ let exists_atom_i (A a_name as a) b f_a p =
       ((env |> remove_identifier a_name |> remove_assumption f_a, F_ExistsAtom (a, f_a)), b, p)
   else raise $ formula_mismatch f f'
 
-let exists_atom_e p_exists p =
-  let env, f = judgement p in
-  match judgement p_exists with
-  | env_a, F_ExistsAtom (A a, f_a) ->
-      let env = union env env_a |> remove_identifier a |> remove_assumption f_a in
-      P_Witness ((env, f), p_exists, p)
-  | _, g                           -> raise $ not_an_exists g
-
 let exists_term_i (V x_name as x) t f_x p =
   let f = (x |=> t) f_x in
   let env, f' = judgement p in
@@ -140,10 +132,10 @@ let exists_term_i (V x_name as x) t f_x p =
       ((env |> remove_identifier x_name |> remove_assumption f_x, F_ExistsTerm (x, f_x)), t, p)
   else raise $ formula_mismatch f f'
 
-let exists_term_e p_exists p =
+let exist_e p_exists p =
   let env, f = judgement p in
   match judgement p_exists with
-  | env_x, F_ExistsTerm (V x, f_x) ->
+  | env_x, F_ExistsAtom (A x, f_x) | env_x, F_ExistsTerm (V x, f_x) ->
       let env = union env env_x |> remove_identifier x |> remove_assumption f_x in
       P_Witness ((env, f), p_exists, p)
-  | _, g                           -> raise $ not_an_exists g
+  | _, g -> raise $ not_an_exists g

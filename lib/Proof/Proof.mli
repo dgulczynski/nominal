@@ -49,9 +49,7 @@ val forall_term_e : term -> proof -> proof
 val exists_atom_i : atom -> atom -> formula -> proof -> proof
 (** [exists_atom_i a b f p] is a proof of [exists a : atom. f] where [b] is the witness and [p] is proof of [(a |-> b) f]*)
 
-val exists_atom_e : proof -> proof -> proof
-
 val exists_term_i : var -> term -> formula -> proof -> proof
 (** [exists_term_i x t f p] is a proof of [exists x : term. f] where [t] is the witness and [p] is proof of [(x |=> t) f]*)
 
-val exists_term_e : proof -> proof -> proof
+val exist_e : proof -> proof -> proof

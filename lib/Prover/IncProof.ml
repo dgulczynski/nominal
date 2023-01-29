@@ -144,7 +144,7 @@ and proof_exists_term jgmt witness witness_proof =
 
 and proof_witness jgmt exists_proof usage_proof =
   match (normalize exists_proof, normalize usage_proof) with
-  | PI_Proven exists_proof, PI_Proven usage_proof -> proven $ exists_atom_e exists_proof usage_proof
+  | PI_Proven exists_proof, PI_Proven usage_proof -> proven $ exist_e exists_proof usage_proof
   | exists_proof, usage_proof -> PI_Witness (jgmt, exists_proof, usage_proof)
 
 let proof_case map_proof map_incproof incproof =
