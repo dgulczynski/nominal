@@ -16,6 +16,7 @@ type incproof =
   | PI_SpecializeAtom of judgement * atom * incproof
   | PI_SpecializeTerm of judgement * term * incproof
   | PI_ExistsAtom     of judgement * atom * incproof
+  | PI_ExistsTerm     of judgement * term * incproof
   | PI_Witness        of judgement * incproof * incproof
   | PI_ExFalso        of judgement * incproof
 
@@ -30,6 +31,7 @@ type proof_context =
   | PC_WitnessExists  of judgement * proof_context * incproof
   | PC_WitnessUsage   of judgement * incproof * proof_context
   | PC_ExistsAtom     of judgement * atom * proof_context
+  | PC_ExistsTerm     of judgement * term * proof_context
   | PC_ExFalso        of judgement * proof_context
 
 let judgement' = function
@@ -41,6 +43,7 @@ let judgement' = function
   | PI_SpecializeAtom (jgmt, _, _)
   | PI_SpecializeTerm (jgmt, _, _)
   | PI_ExistsAtom (jgmt, _, _)
+  | PI_ExistsTerm (jgmt, _, _)
   | PI_Witness (jgmt, _, _)
   | PI_ExFalso (jgmt, _) -> jgmt
 
@@ -56,6 +59,7 @@ let rec hasHoles = function
   | PI_SpecializeAtom (_, _, p)
   | PI_SpecializeTerm (_, _, p)
   | PI_ExistsAtom (_, _, p)
+  | PI_ExistsTerm (_, _, p)
   | PI_ExFalso (_, p) -> hasHoles p
   | PI_Apply (_, l, r) | PI_Witness (_, l, r) -> hasHoles l || hasHoles r
 
@@ -65,6 +69,7 @@ let rec ctxHasHoles = function
   | PC_SpecializeAtom (_, _, ctx)
   | PC_SpecializeTerm (_, _, ctx)
   | PC_ExistsAtom (_, _, ctx)
+  | PC_ExistsTerm (_, _, ctx)
   | PC_ExFalso (_, ctx) -> ctxHasHoles ctx
   | PC_ApplyLeft (_, lctx, rproof) | PC_WitnessExists (_, lctx, rproof) ->
       ctxHasHoles lctx || hasHoles rproof
@@ -89,7 +94,8 @@ let rec normalize incproof =
   | PI_Apply (jgmt, imp_proof, premise_proof) -> proof_apply jgmt imp_proof premise_proof
   | PI_SpecializeAtom (jgmt, a, universal_proof) -> proof_specialize_atom jgmt a universal_proof
   | PI_SpecializeTerm (jgmt, t, universal_proof) -> proof_specialize_term jgmt t universal_proof
-  | PI_ExistsAtom (jgmt, witness, witness_proof) -> proof_exists jgmt witness witness_proof
+  | PI_ExistsAtom (jgmt, witness, witness_proof) -> proof_exists_atom jgmt witness witness_proof
+  | PI_ExistsTerm (jgmt, witness, witness_proof) -> proof_exists_term jgmt witness witness_proof
   | PI_Witness (jgmt, exists_proof, usage_proof) -> proof_witness jgmt exists_proof usage_proof
 
 and proof_intro jgmt conclusion_proof =
@@ -126,10 +132,15 @@ and proof_specialize_term jgmt t universal_proof =
   | PI_Proven proof -> proven $ forall_term_e t proof
   | incproof        -> PI_SpecializeTerm (jgmt, t, incproof)
 
-and proof_exists jgmt witness witness_proof =
+and proof_exists_atom jgmt witness witness_proof =
   match (snd jgmt, normalize witness_proof) with
   | F_ExistsAtom (a, f), PI_Proven witness_proof -> proven $ exists_atom_i a witness f witness_proof
   | _, incproof -> PI_ExistsAtom (jgmt, witness, incproof)
+
+and proof_exists_term jgmt witness witness_proof =
+  match (snd jgmt, normalize witness_proof) with
+  | F_ExistsTerm (x, f), PI_Proven witness_proof -> proven $ exists_term_i x witness f witness_proof
+  | _, incproof -> PI_ExistsTerm (jgmt, witness, incproof)
 
 and proof_witness jgmt exists_proof usage_proof =
   match (normalize exists_proof, normalize usage_proof) with
@@ -165,5 +176,7 @@ let rec find_hole_in_proof context = function
   | PI_Witness _ as incproof -> Either.Left (incproof_to_proof incproof, context)
   | PI_ExistsAtom (jgmt, witness, incproof) ->
       find_hole_in_proof (PC_ExistsAtom (jgmt, witness, context)) incproof
+  | PI_ExistsTerm (jgmt, witness, incproof) ->
+      find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
   | PI_Proven proof -> Either.Left (proof, context)
   | PI_Hole goal -> Either.Right (goal, context)

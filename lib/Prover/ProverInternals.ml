@@ -37,7 +37,10 @@ and find_goal_in_ctx incproof = function
   | PC_ApplyLeft (jgmt, lctx, rproof) -> find_goal_in_ctx (proof_apply jgmt incproof rproof) lctx
   | PC_SpecializeAtom (jgmt, a, ctx) -> find_goal_in_ctx (proof_specialize_atom jgmt a incproof) ctx
   | PC_SpecializeTerm (jgmt, t, ctx) -> find_goal_in_ctx (proof_specialize_term jgmt t incproof) ctx
-  | PC_ExistsAtom (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists jgmt witness incproof) ctx
+  | PC_ExistsAtom (jgmt, witness, ctx) ->
+      find_goal_in_ctx (proof_exists_atom jgmt witness incproof) ctx
+  | PC_ExistsTerm (jgmt, witness, ctx) ->
+      find_goal_in_ctx (proof_exists_term jgmt witness incproof) ctx
   | PC_WitnessExists (jgmt, ctx, usage_proof) ->
       find_goal_in_ctx (proof_witness jgmt incproof usage_proof) ctx
   | PC_WitnessUsage (jgmt, exists_proof, ctx) ->

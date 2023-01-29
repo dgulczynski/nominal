@@ -126,4 +126,8 @@ let exists witness state =
       let b = parse_atom_in_env (identifiers env) witness in
       let context = PC_ExistsAtom (to_judgement (env, f), b, context state) in
       unfinished (env, (a |-> b) f_a) context
+  | F_ExistsTerm (x, f_x) as f ->
+      let t = parse_term_in_env (identifiers env) witness in
+      let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
+      unfinished (env, (x |=> t) f_x) context
   | f                          -> raise $ not_an_exists f
