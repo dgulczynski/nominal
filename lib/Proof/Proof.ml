@@ -17,6 +17,8 @@ type proof =
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
+  | P_ExistsAtom     of judgement * atom * proof
+  | P_Witness        of judgement * proof * proof
   | P_ExFalso        of judgement * proof
 
 let label = function
@@ -27,6 +29,8 @@ let label = function
   | P_ConstrApply ((_, f), _, _)
   | P_SpecializeAtom ((_, f), _, _)
   | P_SpecializeTerm ((_, f), _, _)
+  | P_ExistsAtom ((_, f), _, _)
+  | P_Witness ((_, f), _, _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -37,6 +41,8 @@ let env = function
   | P_ConstrApply ((e, _), _, _)
   | P_SpecializeAtom ((e, _), _, _)
   | P_SpecializeTerm ((e, _), _, _)
+  | P_ExistsAtom ((e, _), _, _)
+  | P_Witness ((e, _), _, _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
@@ -104,3 +110,17 @@ let forall_term_e t p =
   match judgement p with
   | env, F_ForallTerm (x, f) -> P_SpecializeTerm ((env, (x |=> t) f), t, p)
   | _, f                     -> raise $ not_a_forall f
+
+let exists_atom_i (A a_name as a) b f p =
+  let env, g = judgement p in
+  if g === (a |-> b) f then
+    P_ExistsAtom ((env |> remove_identifier a_name, F_ExistsAtom (a, f)), b, p)
+  else raise % formula_mismatch g $ (a |-> b) f
+
+let exists_atom_e p_exists p =
+  let env, f = judgement p in
+  match judgement p_exists with
+  | env_a, F_ExistsAtom (A a, f_a) ->
+      let env = union env env_a |> remove_identifier a |> remove_assumption f_a in
+      P_Witness ((env, f), p_exists, p)
+  | _, g                           -> raise $ not_an_exists g
