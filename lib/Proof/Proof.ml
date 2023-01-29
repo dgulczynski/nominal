@@ -68,9 +68,11 @@ let imp_e p1 p2 =
 
 let constr_i env constr =
   let identifiers = identifiers env in
-  let constraints = constraints env @ List.filter_map to_constr_op (assumptions env) in
-  if Solver.solve_with_assumptions constraints constr then
-    let env = ProofEnv.env identifiers constraints [] in
+  let assumptions = List.filter (Option.is_some % to_constr_op) $ assumptions env in
+  let constraints = constraints env in
+  let solver_assumptions = List.filter_map to_constr_op assumptions @ constraints in
+  if Solver.solve_with_assumptions solver_assumptions constr then
+    let env = ProofEnv.env identifiers constraints assumptions in
     P_Ax (env, F_Constr constr)
   else raise $ solver_failure constraints constr
 
@@ -117,7 +119,9 @@ let forall_term_e t p =
 let exists_atom_i (A a_name as a) b f_a p =
   let f = (a |-> b) f_a in
   let env, f' = judgement p in
-  if f === f' then P_ExistsAtom ((env |> remove_identifier a_name, F_ExistsAtom (a, f_a)), b, p)
+  if f === f' then
+    P_ExistsAtom
+      ((env |> remove_identifier a_name |> remove_assumption f_a, F_ExistsAtom (a, f_a)), b, p)
   else raise $ formula_mismatch f f'
 
 let exists_atom_e p_exists p =
@@ -131,7 +135,9 @@ let exists_atom_e p_exists p =
 let exists_term_i (V x_name as x) t f_x p =
   let f = (x |=> t) f_x in
   let env, f' = judgement p in
-  if f === f' then P_ExistsTerm ((env |> remove_identifier x_name, F_ExistsTerm (x, f_x)), t, p)
+  if f === f' then
+    P_ExistsTerm
+      ((env |> remove_identifier x_name |> remove_assumption f_x, F_ExistsTerm (x, f_x)), t, p)
   else raise $ formula_mismatch f f'
 
 let exists_term_e p_exists p =
