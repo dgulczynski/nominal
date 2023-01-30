@@ -26,3 +26,7 @@ val truth : tactic
 val qed : prover_state -> proof
 
 val generalize : string -> tactic
+
+val exists : string -> tactic
+
+val destruct_assm : string -> tactic

@@ -27,6 +27,8 @@ let not_a_constraint = not_what_expected "a constraint" % string_of_formula
 
 let not_a_forall = not_what_expected "an universal quantification" % string_of_formula
 
+let not_an_exists = not_what_expected "an existential quantification" % string_of_formula
+
 let premise_mismatch hypothesis premise =
   not_what_expected
     ("implication with premise " ^ string_of_formula premise)

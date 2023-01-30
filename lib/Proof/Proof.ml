@@ -17,6 +17,7 @@ type proof =
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
+  | P_Witness        of judgement * proof * proof
   | P_ExFalso        of judgement * proof
 
 let label = function
@@ -27,6 +28,7 @@ let label = function
   | P_ConstrApply ((_, f), _, _)
   | P_SpecializeAtom ((_, f), _, _)
   | P_SpecializeTerm ((_, f), _, _)
+  | P_Witness ((_, f), _, _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -37,6 +39,7 @@ let env = function
   | P_ConstrApply ((e, _), _, _)
   | P_SpecializeAtom ((e, _), _, _)
   | P_SpecializeTerm ((e, _), _, _)
+  | P_Witness ((e, _), _, _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
@@ -59,9 +62,11 @@ let imp_e p1 p2 =
 
 let constr_i env constr =
   let identifiers = identifiers env in
-  let constraints = constraints env @ List.filter_map to_constr_op (assumptions env) in
-  if Solver.solve_with_assumptions constraints constr then
-    let env = ProofEnv.env identifiers constraints [] in
+  let assumptions = List.filter (Option.is_some % to_constr_op) $ assumptions env in
+  let constraints = constraints env in
+  let solver_assumptions = List.filter_map to_constr_op assumptions @ constraints in
+  if Solver.solve_with_assumptions solver_assumptions constr then
+    let env = ProofEnv.env identifiers constraints assumptions in
     P_Ax (env, F_Constr constr)
   else raise $ solver_failure constraints constr
 
@@ -104,3 +109,27 @@ let forall_term_e t p =
   match judgement p with
   | env, F_ForallTerm (x, f) -> P_SpecializeTerm ((env, (x |=> t) f), t, p)
   | _, f                     -> raise $ not_a_forall f
+
+let exists_atom_i (A a_name as a) b f_a p =
+  let f = (a |-> b) f_a in
+  let f' = label p in
+  if f === f' then
+    let env = env p |> remove_identifier a_name |> remove_assumption f_a in
+    P_Intro ((env, F_ExistsAtom (a, f_a)), p)
+  else raise $ formula_mismatch f f'
+
+let exists_term_i (V x_name as x) t f_x p =
+  let f = (x |=> t) f_x in
+  let f' = label p in
+  if f === f' then
+    let env = env p |> remove_identifier x_name |> remove_assumption f_x in
+    P_Intro ((env, F_ExistsTerm (x, f_x)), p)
+  else raise $ formula_mismatch f f'
+
+let exist_e p_exists p =
+  let env, f = judgement p in
+  match judgement p_exists with
+  | env_x, F_ExistsAtom (A x, f_x) | env_x, F_ExistsTerm (V x, f_x) ->
+      let env = env |> union env_x |> remove_identifier x |> remove_assumption f_x in
+      P_Witness ((env, f), p_exists, p)
+  | _, g -> raise $ not_an_exists g

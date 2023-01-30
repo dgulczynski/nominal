@@ -118,3 +118,30 @@ let generalize name state =
       unfinished (env |> remove_identifier x, F_ForallTerm (V x, f)) context
   | Some (_x, K_FVar _) -> raise $ ProofException "Logical variables cannot be generalized"
   | None                -> raise $ unbound_variable name
+
+let exists witness state =
+  let env = goal_env state in
+  match goal_formula state with
+  | F_ExistsAtom (a, f_a) as f ->
+      let b = parse_atom_in_env (identifiers env) witness in
+      let context = PC_ExistsAtom (to_judgement (env, f), b, context state) in
+      unfinished (env, (a |-> b) f_a) context
+  | F_ExistsTerm (x, f_x) as f ->
+      let t = parse_term_in_env (identifiers env) witness in
+      let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
+      unfinished (env, (x |=> t) f_x) context
+  | f                          -> raise $ not_an_exists f
+
+let remove_assm name = remove_assumptions (( = ) name % fst)
+
+let destruct_assm h_name state =
+  let env, f = goal state in
+  let h_proof = assm_proof h_name env in
+  let context = PC_WitnessUsage (to_judgement (env, f), h_proof, context state) in
+  let update =
+    match label' h_proof with
+    | F_ExistsAtom (A a, h_a) -> remove_assm h_name %> add_assumption (h_name, h_a) %> add_atom a
+    | F_ExistsTerm (V x, h_x) -> remove_assm h_name %> add_assumption (h_name, h_x) %> add_var x
+    | f                       -> raise $ not_an_exists f
+  in
+  unfinished (update env, f) context
