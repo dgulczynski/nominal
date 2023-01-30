@@ -32,7 +32,6 @@ let rec find_goal_in_proof context incproof =
 and find_goal_in_ctx incproof = function
   | PC_Root -> proof_case finished (find_goal_in_proof PC_Root) incproof
   | PC_Intro (jgmt, ctx) -> find_goal_in_ctx (proof_intro jgmt incproof) ctx
-  | PC_ConstrIntro (jgmt, ctx) -> find_goal_in_ctx (proof_constr_intro jgmt incproof) ctx
   | PC_ApplyRight (jgmt, lproof, rctx) -> find_goal_in_ctx (proof_apply jgmt lproof incproof) rctx
   | PC_ApplyLeft (jgmt, lctx, rproof) -> find_goal_in_ctx (proof_apply jgmt incproof rproof) lctx
   | PC_SpecializeAtom (jgmt, a, ctx) -> find_goal_in_ctx (proof_specialize_atom jgmt a incproof) ctx

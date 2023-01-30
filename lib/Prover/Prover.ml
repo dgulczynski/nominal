@@ -45,18 +45,12 @@ let intro_named name state =
   | _               -> raise $ not_an_implication f
 
 let intro state =
-  let env = goal_env state in
-  let f = goal_formula state in
+  let env, f = goal state in
+  let context = PC_Intro (to_judgement (env, f), context state) in
   match f with
-  | F_ConstrImpl (constr, f2) ->
-      let context = PC_ConstrIntro (to_judgement (env, f), context state) in
-      unfinished (env |> add_constr constr, f2) context
-  | F_ForallAtom (A a, f')    ->
-      let context = PC_Intro (to_judgement (env, f), context state) in
-      unfinished (env |> add_atom a, f') context
-  | F_ForallTerm (V x, f')    ->
-      let context = PC_Intro (to_judgement (env, f), context state) in
-      unfinished (env |> add_var x, f') context
+  | F_ConstrImpl (constr, f2) -> unfinished (env |> add_constr constr, f2) context
+  | F_ForallAtom (A a, f')    -> unfinished (env |> add_atom a, f') context
+  | F_ForallTerm (V x, f')    -> unfinished (env |> add_var x, f') context
   | _                         -> raise $ not_a_constr_implication f
 
 let apply h state =

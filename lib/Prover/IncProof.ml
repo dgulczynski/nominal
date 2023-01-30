@@ -2,7 +2,6 @@ open Common
 open Proof
 open ProofException
 open ProverGoal
-open ProofCommon
 open Types
 
 (** Possibly incomplete proof with the same structure as [proof], but with _holes_. 
@@ -12,7 +11,6 @@ type incproof =
   | PI_Hole           of goal
   | PI_Intro          of judgement * incproof
   | PI_Apply          of judgement * incproof * incproof
-  | PI_ConstrIntro    of judgement * incproof
   | PI_SpecializeAtom of judgement * atom * incproof
   | PI_SpecializeTerm of judgement * term * incproof
   | PI_ExistsAtom     of judgement * atom * incproof
@@ -25,7 +23,6 @@ type proof_context =
   | PC_Intro          of judgement * proof_context
   | PC_ApplyLeft      of judgement * proof_context * incproof
   | PC_ApplyRight     of judgement * incproof * proof_context
-  | PC_ConstrIntro    of judgement * proof_context
   | PC_SpecializeAtom of judgement * atom * proof_context
   | PC_SpecializeTerm of judgement * term * proof_context
   | PC_WitnessExists  of judgement * proof_context * incproof
@@ -38,7 +35,6 @@ let judgement' = function
   | PI_Proven proof -> judgement proof
   | PI_Hole goal -> to_judgement goal
   | PI_Intro (jgmt, _)
-  | PI_ConstrIntro (jgmt, _)
   | PI_Apply (jgmt, _, _)
   | PI_SpecializeAtom (jgmt, _, _)
   | PI_SpecializeTerm (jgmt, _, _)
@@ -55,7 +51,6 @@ let rec hasHoles = function
   | PI_Proven _ -> false
   | PI_Hole _ -> true
   | PI_Intro (_, p)
-  | PI_ConstrIntro (_, p)
   | PI_SpecializeAtom (_, _, p)
   | PI_SpecializeTerm (_, _, p)
   | PI_ExistsAtom (_, _, p)
@@ -65,7 +60,6 @@ let rec hasHoles = function
 
 let rec ctxHasHoles = function
   | PC_Intro (_, ctx)
-  | PC_ConstrIntro (_, ctx)
   | PC_SpecializeAtom (_, _, ctx)
   | PC_SpecializeTerm (_, _, ctx)
   | PC_ExistsAtom (_, _, ctx)
@@ -89,7 +83,6 @@ let rec normalize incproof =
   match incproof with
   | PI_Proven _ | PI_Hole _ -> incproof
   | PI_Intro (jgmt, conclusion_proof) -> proof_intro jgmt conclusion_proof
-  | PI_ConstrIntro (jgmt, conclusion_proof) -> proof_constr_intro jgmt conclusion_proof
   | PI_ExFalso (jgmt, contradiction) -> proof_ex_falso jgmt contradiction
   | PI_Apply (jgmt, imp_proof, premise_proof) -> proof_apply jgmt imp_proof premise_proof
   | PI_SpecializeAtom (jgmt, a, universal_proof) -> proof_specialize_atom jgmt a universal_proof
@@ -104,13 +97,9 @@ and proof_intro jgmt conclusion_proof =
     match snd jgmt with
     | F_Impl (premise, _) -> proven $ imp_i premise proof
     | F_ForallAtom (a, _) -> proven $ forall_atom_i a proof
+    | F_ConstrImpl (c, _) -> proven $ constr_imp_i c proof
     | f                   -> raise $ not_an_implication f )
   | incproof        -> PI_Intro (jgmt, incproof)
-
-and proof_constr_intro jgmt conclusion_proof =
-  match normalize conclusion_proof with
-  | PI_Proven proof -> proven $ constr_imp_i (to_constr % premise $ snd jgmt) proof
-  | incproof        -> PI_ConstrIntro (jgmt, incproof)
 
 and proof_ex_falso jgmt contradiction =
   match normalize contradiction with
@@ -158,7 +147,6 @@ let incproof_to_proof =
 
 let rec find_hole_in_proof context = function
   | PI_Intro (jgmt, incproof) -> find_hole_in_proof (PC_Intro (jgmt, context)) incproof
-  | PI_ConstrIntro (jgmt, incproof) -> find_hole_in_proof (PC_ConstrIntro (jgmt, context)) incproof
   | PI_ExFalso (jgmt, incproof) -> find_hole_in_proof (PC_ExFalso (jgmt, context)) incproof
   | PI_SpecializeAtom (jgmt, a, incproof) ->
       find_hole_in_proof (PC_SpecializeAtom (jgmt, a, context)) incproof

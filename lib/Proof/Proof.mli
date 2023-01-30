@@ -9,7 +9,6 @@ type proof = private
   | P_Ax             of judgement
   | P_Intro          of judgement * proof
   | P_Apply          of judgement * proof * proof
-  | P_ConstrIntro    of judgement * proof
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof

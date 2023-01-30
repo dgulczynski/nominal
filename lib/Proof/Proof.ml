@@ -13,7 +13,6 @@ type proof =
   | P_Ax             of judgement
   | P_Intro          of judgement * proof
   | P_Apply          of judgement * proof * proof
-  | P_ConstrIntro    of judgement * proof
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
@@ -24,7 +23,6 @@ let label = function
   | P_Ax (_, f)
   | P_Intro ((_, f), _)
   | P_Apply ((_, f), _, _)
-  | P_ConstrIntro ((_, f), _)
   | P_ConstrApply ((_, f), _, _)
   | P_SpecializeAtom ((_, f), _, _)
   | P_SpecializeTerm ((_, f), _, _)
@@ -35,7 +33,6 @@ let env = function
   | P_Ax (e, _)
   | P_Intro ((e, _), _)
   | P_Apply ((e, _), _, _)
-  | P_ConstrIntro ((e, _), _)
   | P_ConstrApply ((e, _), _, _)
   | P_SpecializeAtom ((e, _), _, _)
   | P_SpecializeTerm ((e, _), _, _)
@@ -73,7 +70,7 @@ let constr_i env constr =
 let constr_imp_i c p =
   let f = label p in
   let env = env p |> remove_constraints (( = ) c) in
-  P_ConstrIntro ((env, F_ConstrImpl (c, f)), p)
+  P_Intro ((env, F_ConstrImpl (c, f)), p)
 
 let constr_imp_e c_proof c_imp_proof =
   let c = to_constr $ label c_proof in
