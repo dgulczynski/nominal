@@ -13,8 +13,6 @@ type proof = private
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
-  | P_ExistsAtom     of judgement * atom * proof
-  | P_ExistsTerm     of judgement * term * proof
   | P_Witness        of judgement * proof * proof
   | P_ExFalso        of judgement * proof
 

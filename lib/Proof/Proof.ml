@@ -17,8 +17,6 @@ type proof =
   | P_ConstrApply    of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
-  | P_ExistsAtom     of judgement * atom * proof
-  | P_ExistsTerm     of judgement * term * proof
   | P_Witness        of judgement * proof * proof
   | P_ExFalso        of judgement * proof
 
@@ -30,8 +28,6 @@ let label = function
   | P_ConstrApply ((_, f), _, _)
   | P_SpecializeAtom ((_, f), _, _)
   | P_SpecializeTerm ((_, f), _, _)
-  | P_ExistsAtom ((_, f), _, _)
-  | P_ExistsTerm ((_, f), _, _)
   | P_Witness ((_, f), _, _)
   | P_ExFalso ((_, f), _) -> f
 
@@ -43,8 +39,6 @@ let env = function
   | P_ConstrApply ((e, _), _, _)
   | P_SpecializeAtom ((e, _), _, _)
   | P_SpecializeTerm ((e, _), _, _)
-  | P_ExistsAtom ((e, _), _, _)
-  | P_ExistsTerm ((e, _), _, _)
   | P_Witness ((e, _), _, _)
   | P_ExFalso ((e, _), _) -> e
 
@@ -118,24 +112,24 @@ let forall_term_e t p =
 
 let exists_atom_i (A a_name as a) b f_a p =
   let f = (a |-> b) f_a in
-  let env, f' = judgement p in
+  let f' = label p in
   if f === f' then
-    P_ExistsAtom
-      ((env |> remove_identifier a_name |> remove_assumption f_a, F_ExistsAtom (a, f_a)), b, p)
+    let env = env p |> remove_identifier a_name |> remove_assumption f_a in
+    P_Intro ((env, F_ExistsAtom (a, f_a)), p)
   else raise $ formula_mismatch f f'
 
 let exists_term_i (V x_name as x) t f_x p =
   let f = (x |=> t) f_x in
-  let env, f' = judgement p in
+  let f' = label p in
   if f === f' then
-    P_ExistsTerm
-      ((env |> remove_identifier x_name |> remove_assumption f_x, F_ExistsTerm (x, f_x)), t, p)
+    let env = env p |> remove_identifier x_name |> remove_assumption f_x in
+    P_Intro ((env, F_ExistsTerm (x, f_x)), p)
   else raise $ formula_mismatch f f'
 
 let exist_e p_exists p =
   let env, f = judgement p in
   match judgement p_exists with
   | env_x, F_ExistsAtom (A x, f_x) | env_x, F_ExistsTerm (V x, f_x) ->
-      let env = union env env_x |> remove_identifier x |> remove_assumption f_x in
+      let env = env |> union env_x |> remove_identifier x |> remove_assumption f_x in
       P_Witness ((env, f), p_exists, p)
   | _, g -> raise $ not_an_exists g
