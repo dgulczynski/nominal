@@ -20,6 +20,8 @@ val goal_formula : prover_state -> formula
 
 val lookup : goal_env -> string -> formula
 
+val intro_named : string -> tactic
+
 val apply_internal : ?h_name:string -> incproof -> tactic
 
 val unfinished : goal -> proof_context -> prover_state

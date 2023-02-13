@@ -16,8 +16,6 @@ val assumption : tactic
 
 val contradiction : tactic
 
-val intros : string list -> tactic
-
 val proof' : goal -> prover_state
 
 val repeat : tactic -> tactic

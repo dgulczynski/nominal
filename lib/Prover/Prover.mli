@@ -7,7 +7,7 @@ val proof : goal_env -> formula -> prover_state
 
 val intro : tactic
 
-val intro_named : string -> tactic
+val intros : string list -> tactic
 
 val apply : formula -> tactic
 

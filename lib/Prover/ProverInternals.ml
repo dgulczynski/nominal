@@ -79,6 +79,24 @@ let lookup env h_name =
   | None        -> raise $ unknown_hypothesis h_name
   | Some (_, h) -> h
 
+let name_taken name =
+  let exn = Printf.sprintf "Name `%s` is already taken" name in
+  ProofException exn
+
+let check_fresh env name =
+  let identifiers = identifiers env in
+  let check (x_name, _) = if name != x_name then () else raise $ name_taken x_name in
+  List.iter check identifiers
+
+let intro_named name state =
+  let env, f = goal state in
+  let _ = check_fresh env name in
+  match f with
+  | F_Impl (f1, f2) ->
+      let context = PC_Intro (to_judgement (env, f), context state) in
+      unfinished (env |> add_assumption (name, f1), f2) context
+  | _               -> raise $ not_an_implication f
+
 let apply_internal ?(h_name = "") h_proof =
   let apply_impl_list env =
     let apply_next imp_proof f =

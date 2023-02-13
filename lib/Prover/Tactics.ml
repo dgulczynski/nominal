@@ -15,8 +15,6 @@ let try_tactic tactic state = state |> try_tactic' (const state) tactic
 
 let try_opt tactic = try_tactic' (const none) (some % tactic)
 
-let intros = flip (List.fold_left (flip intro_named))
-
 let try_many on_fail tactics state =
   match List.find_map (flip try_opt state) tactics with
   | Some success -> success
