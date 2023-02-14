@@ -110,16 +110,56 @@ let exists witness state =
       unfinished (env, (x |=> t) f_x) context
   | f                          -> raise $ not_an_exists f
 
-let remove_assm name = remove_assumptions (( = ) name % fst)
+let remove_assm h_name = remove_assumptions (( = ) h_name % fst)
+
+let update_assm h_name h = remove_assm h_name %> add_assumption (h_name, h)
+
+let destruct_assm_witness env f h_name h_proof h ctx =
+  let ctx = PC_WitnessUsage (to_judgement (env, f), h_proof, ctx)
+  and env = update_assm h_name h env in
+  unfinished (env, f) ctx
+
+let destruct_assm_and env f h_name hs_proof hs ctx =
+  (* given goal [f] in contex [ctx] and [h] return goal [h => f] in proper contex *)
+  let add_conjunct h (f, ctx) =
+    let f = F_Impl (h, f) in
+    let h_proof = proof_and_elim (to_judgement (env, h)) hs_proof in
+    (f, PC_ApplyLeft (to_judgement (env, f), ctx, h_proof))
+  in
+  let f, ctx = List.fold_right add_conjunct hs (f, ctx) in
+  let h_names = List.mapi (fun i _ -> h_name ^ "_" ^ string_of_int i) hs in
+  unfinished (env, f) ctx |> intros h_names
+
+let destruct_assm_or env f h_name hs_proof hs ctx =
+  let h_env = remove_assm h_name env in
+  let hs_proofs = List.map (fun h -> proof_hole h_env $ F_Impl (h, f)) hs in
+  find_goal_in_ctx (proof_or_elim (to_judgement (env, f)) hs_proof hs_proofs) ctx
 
 let destruct_assm h_name state =
   let env, f = goal state in
   let h_proof = assm_proof h_name env in
-  let context = PC_WitnessUsage (to_judgement (env, f), h_proof, context state) in
-  let update =
-    match label' h_proof with
-    | F_ExistsAtom (A a, h_a) -> remove_assm h_name %> add_assumption (h_name, h_a) %> add_atom a
-    | F_ExistsTerm (V x, h_x) -> remove_assm h_name %> add_assumption (h_name, h_x) %> add_var x
-    | f                       -> raise $ not_an_exists f
-  in
-  unfinished (update env, f) context
+  let ctx = context state in
+  match label' h_proof with
+  | F_ExistsTerm (V x, h_x) -> destruct_assm_witness (add_var x env) f h_name h_proof h_x ctx
+  | F_ExistsAtom (A a, h_a) -> destruct_assm_witness (add_atom a env) f h_name h_proof h_a ctx
+  | F_And fs                -> destruct_assm_and env f h_name h_proof fs ctx
+  | F_Or fs                 -> destruct_assm_or env f h_name h_proof fs ctx
+  | f                       -> raise $ cannot_destruct f
+
+let destruct_goal state =
+  let env, f = goal state in
+  match f with
+  | F_And fs ->
+      let jgmt = to_judgement (env, f) in
+      let holes = List.map (proof_hole env) fs in
+      find_goal_in_ctx (proof_and jgmt holes) (context state)
+  | f        -> raise $ cannot_destruct f
+
+let destruct_goal' n state =
+  let env, f = goal state in
+  match f with
+  | F_Or fs ->
+      let g = List.nth fs n in
+      let context = PC_Or (to_judgement (env, f), context state) in
+      unfinished (env, g) context
+  | f       -> raise $ cannot_destruct f

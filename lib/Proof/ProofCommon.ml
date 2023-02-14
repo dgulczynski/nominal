@@ -21,6 +21,10 @@ let conclusion = function
   | F_Impl (_, c) | F_ConstrImpl (_, c) -> c
   | f -> raise $ not_an_implication f
 
+let disjuncts = function
+  | F_Or fs -> fs
+  | f       -> raise $ not_a_disjunction f
+
 let rec equiv f1 f2 =
   match (f1, f2) with
   | F_Top, F_Top | F_Bot, F_Bot -> true

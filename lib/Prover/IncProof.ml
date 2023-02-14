@@ -1,8 +1,10 @@
 open Common
 open Proof
+open ProofCommon
 open ProofException
 open ProverGoal
 open Types
+open Zipper
 
 (** Possibly incomplete proof with the same structure as [proof], but with _holes_. 
     For ease of development it is exported here, but in future it will be abstract *)
@@ -16,6 +18,10 @@ type incproof =
   | PI_ExistsAtom     of judgement * atom * incproof
   | PI_ExistsTerm     of judgement * term * incproof
   | PI_Witness        of judgement * incproof * incproof
+  | PI_And            of judgement * incproof list
+  | PI_AndElim        of judgement * incproof
+  | PI_Or             of judgement * incproof
+  | PI_OrElim         of judgement * incproof * incproof list
   | PI_ExFalso        of judgement * incproof
 
 type proof_context =
@@ -29,6 +35,11 @@ type proof_context =
   | PC_WitnessUsage   of judgement * incproof * proof_context
   | PC_ExistsAtom     of judgement * atom * proof_context
   | PC_ExistsTerm     of judgement * term * proof_context
+  | PC_And            of judgement * incproof zipper * proof_context
+  | PC_AndElim        of judgement * proof_context
+  | PC_Or             of judgement * proof_context
+  | PC_OrElim         of judgement * proof_context * incproof list
+  | PC_OrElimDiscjunt of judgement * incproof * incproof zipper * proof_context
   | PC_ExFalso        of judgement * proof_context
 
 let judgement' = function
@@ -41,6 +52,10 @@ let judgement' = function
   | PI_ExistsAtom (jgmt, _, _)
   | PI_ExistsTerm (jgmt, _, _)
   | PI_Witness (jgmt, _, _)
+  | PI_And (jgmt, _)
+  | PI_AndElim (jgmt, _)
+  | PI_Or (jgmt, _)
+  | PI_OrElim (jgmt, _, _)
   | PI_ExFalso (jgmt, _) -> jgmt
 
 let env' = fst % judgement'
@@ -55,8 +70,12 @@ let rec hasHoles = function
   | PI_SpecializeTerm (_, _, p)
   | PI_ExistsAtom (_, _, p)
   | PI_ExistsTerm (_, _, p)
+  | PI_AndElim (_, p)
+  | PI_Or (_, p)
   | PI_ExFalso (_, p) -> hasHoles p
   | PI_Apply (_, l, r) | PI_Witness (_, l, r) -> hasHoles l || hasHoles r
+  | PI_And (_, ps) -> List.exists hasHoles ps
+  | PI_OrElim (_, p, ps) -> List.exists hasHoles (p :: ps)
 
 let rec ctxHasHoles = function
   | PC_Intro (_, ctx)
@@ -64,11 +83,17 @@ let rec ctxHasHoles = function
   | PC_SpecializeTerm (_, _, ctx)
   | PC_ExistsAtom (_, _, ctx)
   | PC_ExistsTerm (_, _, ctx)
+  | PC_AndElim (_, ctx)
+  | PC_Or (_, ctx)
   | PC_ExFalso (_, ctx) -> ctxHasHoles ctx
   | PC_ApplyLeft (_, lctx, rproof) | PC_WitnessExists (_, lctx, rproof) ->
       ctxHasHoles lctx || hasHoles rproof
   | PC_ApplyRight (_, lproof, rctx) | PC_WitnessUsage (_, lproof, rctx) ->
       ctxHasHoles rctx || hasHoles lproof
+  | PC_And (_, proofs, ctx) -> ctxHasHoles ctx || Zipper.exists hasHoles proofs
+  | PC_OrElim (_, ctx, proofs) -> ctxHasHoles ctx || List.exists hasHoles proofs
+  | PC_OrElimDiscjunt (_, proof, proofs, ctx) ->
+      ctxHasHoles ctx || hasHoles proof || Zipper.exists hasHoles proofs
   | PC_Root -> false
 
 let proof_hole env f = PI_Hole (env, f)
@@ -90,6 +115,22 @@ let rec normalize incproof =
   | PI_ExistsAtom (jgmt, witness, witness_proof) -> proof_exists_atom jgmt witness witness_proof
   | PI_ExistsTerm (jgmt, witness, witness_proof) -> proof_exists_term jgmt witness witness_proof
   | PI_Witness (jgmt, exists_proof, usage_proof) -> proof_witness jgmt exists_proof usage_proof
+  | PI_And (jgmt, proofs) -> proof_and jgmt proofs
+  | PI_AndElim (jgmt, proof) -> proof_and_elim jgmt proof
+  | PI_Or (jgmt, proof) -> proof_or jgmt proof
+  | PI_OrElim (jgmt, or_proof, proofs) -> proof_or_elim jgmt or_proof proofs
+
+and normalize_many proofs =
+  let aux proof =
+    match normalize proof with
+    | PI_Proven proof ->
+        let left = List.cons $ proven proof and right = List.cons proof in
+        Either.map ~left ~right
+    | incproof        ->
+        let left = id and right = List.map proven in
+        Either.left % List.cons incproof % Either.fold ~left ~right
+  in
+  List.fold_right aux proofs (Either.Right [])
 
 and proof_intro jgmt conclusion_proof =
   match normalize conclusion_proof with
@@ -136,6 +177,29 @@ and proof_witness jgmt exists_proof usage_proof =
   | PI_Proven exists_proof, PI_Proven usage_proof -> proven $ exist_e exists_proof usage_proof
   | exists_proof, usage_proof -> PI_Witness (jgmt, exists_proof, usage_proof)
 
+and proof_and jgmt proofs =
+  match normalize_many proofs with
+  | Either.Right proofs   -> proven $ and_i proofs
+  | Either.Left incproofs -> PI_And (jgmt, incproofs)
+
+and proof_and_elim jgmt and_proof =
+  match normalize and_proof with
+  | PI_Proven proof -> proven $ and_e (snd jgmt) proof
+  | incproof        -> PI_AndElim (jgmt, incproof)
+
+and proof_or jgmt proof =
+  match normalize proof with
+  | PI_Proven proof -> proven $ or_i (disjuncts $ snd jgmt) proof
+  | incproof        -> PI_Or (jgmt, incproof)
+
+and proof_or_elim jgmt or_proof proofs =
+  match normalize or_proof with
+  | PI_Proven proof -> (
+    match normalize_many proofs with
+    | Either.Right proofs   -> proven $ or_e proof proofs
+    | Either.Left incproofs -> PI_And (jgmt, incproofs) )
+  | incproof        -> PI_OrElim (jgmt, incproof, proofs)
+
 let proof_case map_proof map_incproof incproof =
   match normalize incproof with
   | PI_Proven proof -> map_proof proof
@@ -144,6 +208,10 @@ let proof_case map_proof map_incproof incproof =
 let incproof_to_proof =
   let on_incomplete _ = raise hole_in_proof in
   proof_case id on_incomplete
+
+let is_proven = function
+  | PI_Proven _ -> true
+  | _           -> false
 
 let rec find_hole_in_proof context = function
   | PI_Intro (jgmt, incproof) -> find_hole_in_proof (PC_Intro (jgmt, context)) incproof
@@ -168,3 +236,23 @@ let rec find_hole_in_proof context = function
       find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
   | PI_Proven proof -> Either.Left (proof, context)
   | PI_Hole goal -> Either.Right (goal, context)
+  | PI_And (jgmt, proofs) -> find_hole_in_and context jgmt proofs
+  | PI_AndElim (jgmt, proof) -> find_hole_in_proof (PC_AndElim (jgmt, context)) proof
+  | PI_Or (jgmt, proof) -> find_hole_in_proof (PC_Or (jgmt, context)) proof
+  | PI_OrElim (jgmt, or_proof, proofs) -> find_hole_in_or_elim context jgmt or_proof proofs
+
+and find_hole_in_and context jgmt proofs =
+  let proofs = List.map normalize proofs in
+  match extract_first (not % is_proven) (Zipper.from_list proofs) with
+  | None                    -> Either.Left (incproof_to_proof $ proof_and jgmt proofs, context)
+  | Some (incproof, zipper) -> find_hole_in_proof (PC_And (jgmt, zipper, context)) incproof
+
+and find_hole_in_or_elim context jgmt or_proof proofs =
+  if hasHoles or_proof then find_hole_in_proof (PC_OrElim (jgmt, context, proofs)) or_proof
+  else
+    let proofs = List.map normalize proofs in
+    match extract_first (not % is_proven) (Zipper.from_list proofs) with
+    | None                    -> Either.Left
+                                   (incproof_to_proof $ proof_or_elim jgmt or_proof proofs, context)
+    | Some (incproof, zipper) ->
+        find_hole_in_proof (PC_OrElimDiscjunt (jgmt, or_proof, zipper, context)) incproof

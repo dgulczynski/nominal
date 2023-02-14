@@ -44,6 +44,15 @@ and find_goal_in_ctx incproof = function
       find_goal_in_ctx (proof_witness jgmt incproof usage_proof) ctx
   | PC_WitnessUsage (jgmt, exists_proof, ctx) ->
       find_goal_in_ctx (proof_witness jgmt exists_proof incproof) ctx
+  | PC_And (jgmt, proofs, ctx) ->
+      let proofs = Zipper.to_list $ Zipper.insert incproof proofs in
+      find_goal_in_ctx (proof_and jgmt proofs) ctx
+  | PC_AndElim (jgmt, ctx) -> find_goal_in_ctx (proof_and_elim jgmt incproof) ctx
+  | PC_Or (jgmt, ctx) -> find_goal_in_ctx (proof_or jgmt incproof) ctx
+  | PC_OrElim (jgmt, ctx, proofs) -> find_goal_in_ctx (proof_or_elim jgmt incproof proofs) ctx
+  | PC_OrElimDiscjunt (jgmt, or_proof, proofs, ctx) ->
+      let proofs = Zipper.to_list $ Zipper.insert incproof proofs in
+      find_goal_in_ctx (proof_or_elim jgmt or_proof proofs) ctx
   | PC_ExFalso (jgmt, ctx) -> find_goal_in_ctx (proof_ex_falso jgmt incproof) ctx
 
 (** [destruct_impl c f] is
