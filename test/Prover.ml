@@ -102,6 +102,27 @@ let proof11 th11 =
   |> add_assumption_parse "Hc" "exists c:atom. a =/= c"
   |> destruct_assm "Hc" |> exists "c" |> by_solver |> apply_assm_specialized "H" ["a"]
 
+let th12 =
+  let env12 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)] in
+  (env env12 [] [], parse_formula_in_env env12 "(p ∧ q ∧ r) => (q ∧ r ∧ p)")
+
+let proof12 = proof' %> intros ["H"] %> destruct_assm "H" %> destruct_goal %> repeat assumption
+
+let th13 =
+  let e13 = fvars_env [("p", K_Prop); ("q", K_Prop)] in
+  (env e13 [] [], parse_formula_in_env e13 "p => p ∨ q")
+
+let proof13 = proof' %> intros ["H"] %> destruct_goal' 0 %> apply_assm "H"
+
+let th14 =
+  let e14 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop); ("s", K_Prop)] in
+  (env e14 [] [], parse_formula_in_env e14 "(p => s) => (q => s) => (r => s) => (p ∨ q ∨ r) => s")
+
+let proof14 =
+  proof'
+  %> intros ["Hp"; "Hq"; "Hr"; "H"]
+  %> destruct_assm "H" %> apply_assm "Hp" %> apply_assm "Hq" %> apply_assm "Hr"
+
 let _ = test_proof th1 proof1
 
 let _ = test_proof th2 proof2
@@ -123,5 +144,11 @@ let _ = test_proof th9 proof9
 let _ = test_proof th10 proof10
 
 let _ = test_proof th11 proof11
+
+let _ = test_proof th12 proof12
+
+let _ = test_proof th13 proof13
+
+let _ = test_proof th14 proof14
 
 let _ = print_newline ()

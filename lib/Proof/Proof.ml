@@ -17,6 +17,9 @@ type proof =
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
   | P_Witness        of judgement * proof * proof
+  | P_AndIntro       of judgement * proof list
+  | P_AndElim        of judgement * proof
+  | P_OrElim         of judgement * proof list
   | P_ExFalso        of judgement * proof
 
 let label = function
@@ -27,6 +30,9 @@ let label = function
   | P_SpecializeAtom ((_, f), _, _)
   | P_SpecializeTerm ((_, f), _, _)
   | P_Witness ((_, f), _, _)
+  | P_AndIntro ((_, f), _)
+  | P_AndElim ((_, f), _)
+  | P_OrElim ((_, f), _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -37,6 +43,9 @@ let env = function
   | P_SpecializeAtom ((e, _), _, _)
   | P_SpecializeTerm ((e, _), _, _)
   | P_Witness ((e, _), _, _)
+  | P_AndIntro ((e, _), _)
+  | P_AndElim ((e, _), _)
+  | P_OrElim ((e, _), _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
@@ -130,3 +139,36 @@ let exist_e p_exists p =
       let env = env |> union env_x |> remove_identifier x |> remove_assumption f_x in
       P_Witness ((env, f), p_exists, p)
   | _, g -> raise $ not_an_exists g
+
+let merge_envs = List.fold_left (flip $ union % env) empty
+
+let and_i = function
+  | [] | [_] -> raise $ ProofException "Cannot introduce conjunction with less than two conjuncts"
+  | ps       ->
+      let f = F_And (List.map label ps) in
+      P_AndIntro ((merge_envs ps, f), ps)
+
+let and_e f p_fs =
+  match judgement p_fs with
+  | _, F_And [] | _, F_And [_] ->
+      raise $ ProofException "Cannot eliminate disjunction with less than two disjuncts"
+  | env, F_And fs when List.exists (equiv f) fs -> P_AndElim ((env, f), p_fs)
+  | _, g -> raise $ not_a_conjunction_with f g
+
+let or_i disjuncts p =
+  match disjuncts with
+  | [] | [_] -> raise $ ProofException "Cannot introduce disjunction with less than two disjuncts"
+  | fs       -> (
+    match judgement p with
+    | env, f when List.exists (equiv f) fs -> P_Intro ((env, F_Or fs), p)
+    | _, f -> raise % not_a_disjunction_with f $ F_Or fs )
+
+let or_e or_proof ps =
+  match ps with
+  | [] | [_] -> raise $ ProofException "Cannot eliminate disjunction with less than two disjuncts"
+  | p :: _   ->
+      let c = conclusion $ label p in
+      let fs = disjuncts $ label or_proof in
+      let test_proof f p = equiv f (premise $ label p) && equiv c (conclusion $ label p) in
+      if List.for_all2 test_proof fs ps then P_OrElim ((merge_envs ps, c), ps)
+      else raise % formula_mismatch (label or_proof) $ F_Or (List.map (premise % label) ps)

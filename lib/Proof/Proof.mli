@@ -13,6 +13,9 @@ type proof = private
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
   | P_Witness        of judgement * proof * proof
+  | P_AndIntro       of judgement * proof list
+  | P_AndElim        of judgement * proof
+  | P_OrElim         of judgement * proof list
   | P_ExFalso        of judgement * proof
 
 val label : proof -> formula
@@ -50,3 +53,11 @@ val exists_term_i : var -> term -> formula -> proof -> proof
 (** [exists_term_i x t f p] is a proof of [exists x : term. f] where [t] is the witness and [p] is proof of [(x |=> t) f]*)
 
 val exist_e : proof -> proof -> proof
+
+val and_i : proof list -> proof
+
+val and_e : formula -> proof -> proof
+
+val or_i : formula list -> proof -> proof
+
+val or_e : proof -> proof list -> proof

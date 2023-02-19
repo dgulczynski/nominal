@@ -29,9 +29,24 @@ let not_a_forall = not_what_expected "an universal quantification" % string_of_f
 
 let not_an_exists = not_what_expected "an existential quantification" % string_of_formula
 
+let not_a_disjunction = not_what_expected "a disjunction" % string_of_formula
+
+let not_what_with what with_what = not_what_expected (Printf.sprintf "a %s with %s" what with_what)
+
+let not_a_conjunction_with conjunct =
+  not_what_with "a conjunction" (string_of_formula conjunct) % string_of_formula
+
+let not_a_disjunction_with disjunct =
+  not_what_with "a disjunction" (string_of_formula disjunct) % string_of_formula
+
 let premise_mismatch hypothesis premise =
   not_what_expected
     ("implication with premise " ^ string_of_formula premise)
+    (string_of_formula hypothesis)
+
+let conclusion_mismatch hypothesis conclusion =
+  not_what_expected
+    ("implication with conclusion " ^ string_of_formula conclusion)
     (string_of_formula hypothesis)
 
 let formula_mismatch expected actual =
@@ -54,4 +69,8 @@ let solver_failure constraints constr =
 let cannot_generalize name f =
   let f = string_of_formula f in
   let exn = Printf.sprintf "Cannot generalize %s as it is bound in %s" name f in
+  ProofException exn
+
+let cannot_destruct f =
+  let exn = Printf.sprintf "Cannot destruct %s" (string_of_formula f) in
   ProofException exn
