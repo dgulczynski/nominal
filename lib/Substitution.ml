@@ -111,6 +111,31 @@ let rec subst_var_in_shape x s = function
   | S_App (s1, s2) -> S_App (subst_var_in_shape x s s1, subst_var_in_shape x s s2)
   | (S_Var _ | S_Atom | S_Fun _) as s -> s
 
-let ( |-> ) a b = subst_atom_in_formula a b
+let rec subst_fvar_in_formula y g f =
+  let sub = subst_fvar_in_formula y g in
+  match f with
+  | F_Bot | F_Top | F_Constr _ -> f
+  | F_Var _ -> subst f (fvar y) g
+  | F_And fs -> F_And (List.map sub fs)
+  | F_Or fs -> F_Or (List.map sub fs)
+  | F_Impl (f1, f2) -> F_Impl (sub f1, sub f2)
+  | F_ForallTerm (x, f) -> F_ForallTerm (x, sub f)
+  | F_ForallAtom (a, f) -> F_ForallAtom (a, sub f)
+  | F_ExistsTerm (x, f) -> F_ExistsTerm (x, sub f)
+  | F_ExistsAtom (a, f) -> F_ExistsAtom (a, sub f)
+  | F_ConstrAnd (c, f) -> F_ConstrAnd (c, sub f)
+  | F_ConstrImpl (c, f) -> F_ConstrImpl (c, sub f)
+  | F_Fun (FV_Bind (x_name, x, k), f) -> F_Fun (FV_Bind (x_name, x, k), if x = y then f else sub f)
+  | F_App (f1, f2) -> F_App (sub f1, sub f2)
+  | F_FunTerm (x, f) -> F_FunTerm (x, sub f)
+  | F_AppTerm (f, t) -> F_AppTerm (sub f, t)
+  | F_FunAtom (a, f) -> F_FunAtom (a, sub f)
+  | F_AppAtom (f, a) -> F_AppAtom (sub f, a)
+  | F_Fix (FV_Bind (fix_name, fix, fix_k), x, k, f) ->
+      F_Fix (FV_Bind (fix_name, fix, fix_k), x, k, if fix = y then f else sub f)
 
-let ( |=> ) x t = subst_var_in_formula x t
+let ( |-> ) a = subst_atom_in_formula a
+
+let ( |=> ) x = subst_var_in_formula x
+
+let ( |==> ) y = subst_fvar_in_formula y

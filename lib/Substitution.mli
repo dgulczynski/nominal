@@ -23,4 +23,8 @@ val subst_var_in_formula : var -> term -> formula -> formula
 
 val ( |=> ) : var -> term -> formula -> formula
 
+val subst_fvar_in_formula : fvar_internal -> formula -> formula -> formula
+
+val ( |==> ) : fvar_internal -> formula -> formula -> formula
+
 val subst_var_in_shape : var -> shape -> shape -> shape

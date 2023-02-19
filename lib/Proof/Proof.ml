@@ -21,6 +21,7 @@ type proof =
   | P_AndIntro       of judgement * proof list
   | P_AndElim        of judgement * proof
   | P_OrElim         of judgement * proof list
+  | P_Equivalent     of judgement * int * proof
   | P_ExFalso        of judgement * proof
 
 let label = function
@@ -35,6 +36,7 @@ let label = function
   | P_AndIntro ((_, f), _)
   | P_AndElim ((_, f), _)
   | P_OrElim ((_, f), _)
+  | P_Equivalent ((_, f), _, _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -49,6 +51,7 @@ let env = function
   | P_AndIntro ((e, _), _)
   | P_AndElim ((e, _), _)
   | P_OrElim ((e, _), _)
+  | P_Equivalent ((e, _), _, _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
@@ -200,3 +203,8 @@ let induction_e (V x_name as x) (V y_name as y) p =
   match List.filter_map (fun v -> find_bind id v env) [x_name; y_name] with
   | []     -> P_Intro ((env |> remove_identifier x_name, F_ForallTerm (x, f_x)), p)
   | f :: _ -> raise $ cannot_generalize (x_name ^ " or " ^ y_name) f
+
+let equivalent f n p =
+  let env, fe = judgement p in
+  let _, fn = compute n f in
+  if fe === fn then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe

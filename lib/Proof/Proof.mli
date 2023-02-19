@@ -17,6 +17,7 @@ type proof = private
   | P_AndIntro       of judgement * proof list
   | P_AndElim        of judgement * proof
   | P_OrElim         of judgement * proof list
+  | P_Equivalent     of judgement * int * proof
   | P_ExFalso        of judgement * proof
 
 val label : proof -> formula
@@ -68,3 +69,5 @@ val or_i : formula list -> proof -> proof
 val or_e : proof -> proof list -> proof
 
 val induction_e : var -> var -> proof -> proof
+
+val equivalent : formula -> int -> proof -> proof
