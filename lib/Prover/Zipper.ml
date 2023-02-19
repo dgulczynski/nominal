@@ -1,4 +1,4 @@
-type 'a zipper = {left: 'a list; right: 'a list} (* right can be empty only if left is empty *)
+type 'a zipper = {left: 'a list; right: 'a list} (* right can only be empty if left is empty *)
 
 let from_list xs = {left= []; right= xs}
 
@@ -11,9 +11,9 @@ let is_empty {right; _} =
 
 let insert x {left; right} = {left; right= x :: right}
 
-let move_back {left; right} =
+let move_back_if_not_empty {left; right} =
   match left with
-  | []      -> failwith "move_back on leftmost"
+  | []      -> {left; right}
   | x :: xs -> {left= xs; right= x :: right}
 
 let move_forward {left; right} =
@@ -24,12 +24,13 @@ let move_forward {left; right} =
 let extract_current {left; right} =
   match right with
   | []      -> failwith "extract_current on empty"
+  | [x]     -> (x, move_back_if_not_empty {left; right= []})
   | x :: xs -> (x, {left; right= xs})
 
-let rec extract_first test ({left; right} as z) =
+let rec extract_first test ({right; _} as z) =
   match right with
   | [] -> None
-  | x :: xs when test x -> Some (x, {left; right= xs})
+  | x :: _ when test x -> Some (extract_current z)
   | _ -> extract_first test (move_forward z)
 
 let exists test {left; right} = List.exists test left || List.exists test right
