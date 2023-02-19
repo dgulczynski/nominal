@@ -20,6 +20,10 @@ let is_underscore = function
   | '_' -> true
   | _   -> false
 
+let is_apostrophe = function
+  | '\'' -> true
+  | _    -> false
+
 let whitespace = take_while is_whitespace
 
 let whitespace1 = take_while1 is_whitespace
@@ -36,7 +40,7 @@ let any fs x = List.exists (fun f -> f x) fs
 let identifier =
   concat
     (take1 (any [is_letter; is_underscore]))
-    (take_while (any [is_digit; is_letter; is_underscore]))
+    (take_while (any [is_digit; is_letter; is_underscore; is_apostrophe]))
 
 let atom = identifier >>| fun a -> Types.A a
 

@@ -4,6 +4,7 @@ open Nominal.Permutation
 open Nominal.Types
 open Nominal.Common
 open Nominal.Printing
+open Nominal.Utils
 
 let test name parser convert string_of env source result =
   let actual =
@@ -15,11 +16,11 @@ let test name parser convert string_of env source result =
   let pass = actual = result in
   Printf.printf "%s Parsed %s \"%s\" into `%s` %s%s\n"
     (if pass then "✅" else "❌")
-    name source (string_of result)
+    name source (string_of actual)
     ( match env with
     | []  -> ""
     | env -> Printf.sprintf "with %s " $ string_of_identifier_env env )
-    (if pass then "" else Printf.sprintf "instead of `%s`" $ string_of actual) ;
+    (if pass then "" else Printf.sprintf "instead of `%s`" $ string_of result) ;
   assert pass
 
 let test_term = test "term" term pterm_to_term string_of_term
@@ -136,5 +137,19 @@ let _ =
                   , F_AppTerm
                       ( F_AppTerm (F_AppAtom (fvar f, A "a"), var (V "x"))
                       , T_Var {perm= [(pure (A "a"), pure (A "a"))]; symb= V "x"} ) ) ) ) )
+
+let _ = print_newline ()
+
+let _ =
+  let y = V "_v0" in
+  (* very hacky: y will be assigned next fresh var, which will should be current _v0 *)
+  let fix = fresh_fvar_arg () + 1 in
+  (* very hacky: X will be assigned next fresh number, which will be current fresh number + 1 *)
+  test_formula [] "fix Type(t) : Prop. exists t':term. t' < t"
+  $ F_Fix
+      ( FV_Bind ("Type", fix, fix_kind (V "t") y K_Prop)
+      , V "t"
+      , K_Prop
+      , F_ExistsTerm (V "t'", F_Constr (var (V "t'") <: var (V "t"))) )
 
 let _ = print_newline ()

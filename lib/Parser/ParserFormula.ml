@@ -86,10 +86,18 @@ let f_app formula =
   in
   return $ List.fold_left apply f args
 
+let f_fix formula =
+  let* _ = string "fix" <* whitespace1 in
+  let* fix = identifier <* whitespace in
+  let* x, k = typed (parenthesized identifier) kind in
+  let* _ = whitespace *> string "." <* whitespace in
+  let* f = formula in
+  return $ PF_Fix (fix, x, k, f)
+
 let formula =
   let formula' formula =
-    f_constrand formula <|> f_constrimpl formula <|> f_and formula <|> f_or formula
-    <|> f_impl formula <|> f_forall formula <|> f_exists formula <|> f_fun formula <|> f_app formula
-    <|> simple_formula <|> parenthesized formula
+    f_fix formula <|> f_constrand formula <|> f_constrimpl formula <|> f_and formula
+    <|> f_or formula <|> f_impl formula <|> f_forall formula <|> f_exists formula <|> f_fun formula
+    <|> f_app formula <|> simple_formula <|> parenthesized formula
   in
   fix formula'

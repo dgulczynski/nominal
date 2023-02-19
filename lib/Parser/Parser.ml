@@ -93,7 +93,9 @@ let rec pformula_to_formula env = function
     | Some K_Atom          -> F_AppAtom (pformula_to_formula env f, A x)
     | Some K_Var           -> F_AppTerm (pformula_to_formula env f, var (V x))
     | Some (K_FVar (i, _)) -> F_App (pformula_to_formula env f, fvar i)
-    | None                 -> raise $ unbound_variable x )
+    | None                 -> F_App
+                                ( pformula_to_formula env f
+                                , pformula_to_formula env $ parse formula x ) )
   | PF_App (f1, f2)            -> F_App (pformula_to_formula env f1, pformula_to_formula env f2)
   | PF_AppTerm (f, t)          -> F_AppTerm (pformula_to_formula env f, pterm_to_term env t)
   | PF_Fix (fix_name, x, k, f) ->

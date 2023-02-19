@@ -156,6 +156,11 @@ let rec pp_print_formula env fmt formula =
     | F_Impl _ | F_ConstrImpl _ | F_Bot | F_Top | F_Var _ -> pp_formula f
     | _ -> pp_print_parenthesized (pp_print_formula env) fmt f
   in
+  let pp_print_app_left f =
+    match f with
+    | F_App _ | F_AppTerm _ | F_AppAtom _ -> pp_formula f
+    | _ -> pp_print_atomic_formula fmt f
+  in
   match formula with
   | F_Bot -> pp_string "⊥"
   | F_Top -> pp_string "⊤"
@@ -200,11 +205,11 @@ let rec pp_print_formula env fmt formula =
       pp_fun pp_print_string x_name pp_print_kind k f env
   | F_FunTerm (x, f) -> pp_fun pp_print_var x pp_print_string "term" f env
   | F_FunAtom (a, f) -> pp_fun pp_print_atom a pp_print_string "atom" f env
-  | F_App (f1, f2) -> pp_print_atomic_formula fmt f1 ; space () ; pp_formula f2
+  | F_App (f1, f2) -> pp_print_app_left f1 ; space () ; pp_print_atomic_formula fmt f2
   | F_AppTerm (f, e) ->
-      pp_formula f ; space () ; pp_string "{" ; pp_print_term fmt e ; pp_string "}"
+      pp_print_app_left f ; space () ; pp_string "{" ; pp_print_term fmt e ; pp_string "}"
   | F_AppAtom (f, a) ->
-      pp_formula f ;
+      pp_print_app_left f ;
       space () ;
       pp_string (string_of_atom_arg a)
   | F_Fix (FV_Bind (fix_name, fix, fix_k), x, k, f) ->
@@ -214,6 +219,7 @@ let rec pp_print_formula env fmt formula =
       pp_print_parenthesized pp_print_var fmt x ;
       pp_print_char fmt ':' ;
       pp_print_kind fmt k ;
+      pp_print_char fmt '.' ;
       space () ;
       let env = (fix_name, K_FVar (fix, fix_k)) :: env in
       pp_print_formula env fmt f
