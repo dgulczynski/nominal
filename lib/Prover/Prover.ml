@@ -120,7 +120,7 @@ let destruct_assm_witness env f h_name h_proof h ctx =
   unfinished (env, f) ctx
 
 let destruct_assm_and env f h_name hs_proof hs ctx =
-  (* given goal [f] in contex [ctx] and [h] return goal [h => f] in proper contex *)
+  (* given [h] and current goal [f] (in context [ctx]) and return goal [h => f] in proper context *)
   let add_conjunct h (f, ctx) =
     let f = F_Impl (h, f) in
     let h_proof = proof_and_elim (to_judgement (env, h)) hs_proof in
@@ -133,7 +133,7 @@ let destruct_assm_and env f h_name hs_proof hs ctx =
 let destruct_assm_or env f h_name hs_proof hs ctx =
   let h_env = remove_assm h_name env in
   let hs_proofs = List.map (fun h -> proof_hole h_env $ F_Impl (h, f)) hs in
-  find_goal_in_ctx (proof_or_elim (to_judgement (env, f)) hs_proof hs_proofs) ctx
+  find_goal_in_proof ctx $ proof_or_elim (to_judgement (env, f)) hs_proof hs_proofs
 
 let destruct_assm h_name state =
   let env, f = goal state in
@@ -150,9 +150,10 @@ let destruct_goal state =
   let env, f = goal state in
   match f with
   | F_And fs ->
+      let ctx = context state in
       let jgmt = to_judgement (env, f) in
-      let holes = List.map (proof_hole env) fs in
-      find_goal_in_ctx (proof_and jgmt holes) (context state)
+      let goals = List.map (proof_hole env) fs in
+      find_goal_in_proof ctx $ proof_and jgmt goals
   | f        -> raise $ cannot_destruct f
 
 let destruct_goal' n state =

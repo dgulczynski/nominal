@@ -8,6 +8,8 @@ type prover_state = S_Unfinished of {goal: goal; context: proof_context} | S_Fin
 
 type tactic = prover_state -> prover_state
 
+val find_goal_in_proof : proof_context -> incproof -> prover_state
+
 val find_goal_in_ctx : incproof -> proof_context -> prover_state
 
 val goal : prover_state -> goal
