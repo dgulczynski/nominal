@@ -236,23 +236,21 @@ let rec find_hole_in_proof context = function
       find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
   | PI_Proven proof -> Either.Left (proof, context)
   | PI_Hole goal -> Either.Right (goal, context)
-  | PI_And (jgmt, proofs) -> find_hole_in_and context jgmt proofs
   | PI_AndElim (jgmt, proof) -> find_hole_in_proof (PC_AndElim (jgmt, context)) proof
   | PI_Or (jgmt, proof) -> find_hole_in_proof (PC_Or (jgmt, context)) proof
-  | PI_OrElim (jgmt, or_proof, proofs) -> find_hole_in_or_elim context jgmt or_proof proofs
+  | PI_And (jgmt, proofs) ->
+      let proof_from proofs = (incproof_to_proof $ proof_and jgmt proofs, context) in
+      let context_from zipper = PC_And (jgmt, zipper, context) in
+      find_hole_in_many proofs proof_from context_from
+  | PI_OrElim (jgmt, or_proof, proofs) ->
+      if hasHoles or_proof then find_hole_in_proof (PC_OrElim (jgmt, context, proofs)) or_proof
+      else
+        let proof_from proofs = (incproof_to_proof $ proof_or_elim jgmt or_proof proofs, context) in
+        let context_from zipper = PC_OrElimDiscjunt (jgmt, or_proof, zipper, context) in
+        find_hole_in_many proofs proof_from context_from
 
-and find_hole_in_and context jgmt proofs =
+and find_hole_in_many proofs proof_from context_from =
   let proofs = List.map normalize proofs in
-  match extract_first (not % is_proven) (Zipper.from_list proofs) with
-  | None                    -> Either.Left (incproof_to_proof $ proof_and jgmt proofs, context)
-  | Some (incproof, zipper) -> find_hole_in_proof (PC_And (jgmt, zipper, context)) incproof
-
-and find_hole_in_or_elim context jgmt or_proof proofs =
-  if hasHoles or_proof then find_hole_in_proof (PC_OrElim (jgmt, context, proofs)) or_proof
-  else
-    let proofs = List.map normalize proofs in
-    match extract_first (not % is_proven) (Zipper.from_list proofs) with
-    | None                    -> Either.Left
-                                   (incproof_to_proof $ proof_or_elim jgmt or_proof proofs, context)
-    | Some (incproof, zipper) ->
-        find_hole_in_proof (PC_OrElimDiscjunt (jgmt, or_proof, zipper, context)) incproof
+  match extract_next (not % is_proven) (Zipper.from_list proofs) with
+  | None                    -> Either.Left (proof_from proofs)
+  | Some (incproof, zipper) -> find_hole_in_proof (context_from zipper) incproof
