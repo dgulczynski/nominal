@@ -22,6 +22,7 @@ type incproof =
   | PI_AndElim        of judgement * incproof
   | PI_Or             of judgement * incproof
   | PI_OrElim         of judgement * incproof * incproof list
+  | PI_Induction      of judgement * var * var * incproof
   | PI_ExFalso        of judgement * incproof
 
 type proof_context =
@@ -40,6 +41,7 @@ type proof_context =
   | PC_Or             of judgement * proof_context
   | PC_OrElim         of judgement * proof_context * incproof list
   | PC_OrElimDiscjunt of judgement * incproof * incproof zipper * proof_context
+  | PC_Induction      of judgement * var * var * proof_context
   | PC_ExFalso        of judgement * proof_context
 
 let judgement' = function
@@ -56,6 +58,7 @@ let judgement' = function
   | PI_AndElim (jgmt, _)
   | PI_Or (jgmt, _)
   | PI_OrElim (jgmt, _, _)
+  | PI_Induction (jgmt, _, _, _)
   | PI_ExFalso (jgmt, _) -> jgmt
 
 let env' = fst % judgement'
@@ -72,6 +75,7 @@ let rec hasHoles = function
   | PI_ExistsTerm (_, _, p)
   | PI_AndElim (_, p)
   | PI_Or (_, p)
+  | PI_Induction (_, _, _, p)
   | PI_ExFalso (_, p) -> hasHoles p
   | PI_Apply (_, l, r) | PI_Witness (_, l, r) -> hasHoles l || hasHoles r
   | PI_And (_, ps) -> List.exists hasHoles ps
@@ -85,6 +89,7 @@ let rec ctxHasHoles = function
   | PC_ExistsTerm (_, _, ctx)
   | PC_AndElim (_, ctx)
   | PC_Or (_, ctx)
+  | PC_Induction (_, _, _, ctx)
   | PC_ExFalso (_, ctx) -> ctxHasHoles ctx
   | PC_ApplyLeft (_, lctx, rproof) | PC_WitnessExists (_, lctx, rproof) ->
       ctxHasHoles lctx || hasHoles rproof
@@ -119,6 +124,7 @@ let rec normalize incproof =
   | PI_AndElim (jgmt, proof) -> proof_and_elim jgmt proof
   | PI_Or (jgmt, proof) -> proof_or jgmt proof
   | PI_OrElim (jgmt, or_proof, proofs) -> proof_or_elim jgmt or_proof proofs
+  | PI_Induction (jgmt, x, y, proof) -> proof_induction jgmt x y proof
 
 and normalize_many proofs =
   let aux proof =
@@ -200,6 +206,11 @@ and proof_or_elim jgmt or_proof proofs =
     | Either.Left incproofs -> PI_And (jgmt, incproofs) )
   | incproof        -> PI_OrElim (jgmt, incproof, proofs)
 
+and proof_induction jgmt x y inductive_proof =
+  match normalize inductive_proof with
+  | PI_Proven proof -> proven $ induction_e x y proof
+  | incproof        -> PI_Induction (jgmt, x, y, incproof)
+
 let proof_case map_proof map_incproof incproof =
   match normalize incproof with
   | PI_Proven proof -> map_proof proof
@@ -248,6 +259,8 @@ let rec find_hole_in_proof context = function
         let proof_from proofs = (incproof_to_proof $ proof_or_elim jgmt or_proof proofs, context) in
         let context_from zipper = PC_OrElimDiscjunt (jgmt, or_proof, zipper, context) in
         find_hole_in_many proofs proof_from context_from
+  | PI_Induction (jgmt, x, y, incproof) ->
+      find_hole_in_proof (PC_Induction (jgmt, x, y, context)) incproof
 
 and find_hole_in_many proofs proof_from context_from =
   let proofs = List.map normalize proofs in

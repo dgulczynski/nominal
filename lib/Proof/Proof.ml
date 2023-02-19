@@ -172,3 +172,15 @@ let or_e or_proof ps =
       let test_proof f p = equiv f (premise $ label p) && equiv c (conclusion $ label p) in
       if List.for_all2 test_proof fs ps then P_OrElim ((merge_envs ps, c), ps)
       else raise % formula_mismatch (label or_proof) $ F_Or (List.map (premise % label) ps)
+
+(*   G, x, forall y:term. [y < x] => f(y) |- f(x)  *)
+(* ----------------------------------------------- *)
+(*          G |-  forall x : term. f(x)            *)
+let induction_e (V x_name as x) (V y_name as y) p =
+  let f_x = label p in
+  let f_y = (x |=> var y) f_x in
+  let ind_hyp = F_ForallTerm (y, F_ConstrImpl (var y <: var x, f_y)) in
+  let env = env p |> remove_assumption ind_hyp in
+  match List.filter_map (fun v -> find_bind id v env) [x_name; y_name] with
+  | []     -> P_Intro ((env |> remove_identifier x_name, F_ForallTerm (x, f_x)), p)
+  | f :: _ -> raise $ cannot_generalize (x_name ^ " or " ^ y_name) f

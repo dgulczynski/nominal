@@ -164,3 +164,13 @@ let destruct_goal' n state =
       let context = PC_Or (to_judgement (env, f), context state) in
       unfinished (env, g) context
   | f       -> raise $ cannot_destruct f
+
+let by_induction y_name ind_hyp_name state =
+  match goal state with
+  | env, F_ForallTerm ((V x_name as x), f_x) ->
+      let y = V y_name in
+      let f_y = (x |=> var (V y_name)) f_x in
+      let ctx = PC_Induction (to_judgement (env, f_x), x, y, context state) in
+      let ind_hyp = F_ForallTerm (y, F_ConstrImpl (var y <: var x, f_y)) in
+      unfinished (env |> add_var x_name |> add_assumption (ind_hyp_name, ind_hyp), f_x) ctx
+  | _, f -> raise $ not_a_forall f

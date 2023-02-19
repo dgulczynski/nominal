@@ -61,3 +61,5 @@ val and_e : formula -> proof -> proof
 val or_i : formula list -> proof -> proof
 
 val or_e : proof -> proof list -> proof
+
+val induction_e : var -> var -> proof -> proof

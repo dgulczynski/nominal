@@ -34,3 +34,5 @@ val destruct_assm : string -> tactic
 val destruct_goal : tactic
 
 val destruct_goal' : int -> tactic
+
+val by_induction : string -> string -> tactic

@@ -53,6 +53,7 @@ and find_goal_in_ctx incproof = function
   | PC_OrElimDiscjunt (jgmt, or_proof, proofs, ctx) ->
       let proofs = Zipper.to_list $ Zipper.insert incproof proofs in
       find_goal_in_ctx (proof_or_elim jgmt or_proof proofs) ctx
+  | PC_Induction (jgmt, x, y, ctx) -> find_goal_in_ctx (proof_induction jgmt x y incproof) ctx
   | PC_ExFalso (jgmt, ctx) -> find_goal_in_ctx (proof_ex_falso jgmt incproof) ctx
 
 (** [destruct_impl c f] is
