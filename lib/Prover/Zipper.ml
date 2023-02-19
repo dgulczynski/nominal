@@ -27,10 +27,10 @@ let extract_current {left; right} =
   | [x]     -> (x, move_back_if_not_empty {left; right= []})
   | x :: xs -> (x, {left; right= xs})
 
-let rec extract_first test ({right; _} as z) =
+let rec extract_next test ({right; _} as z) =
   match right with
   | [] -> None
   | x :: _ when test x -> Some (extract_current z)
-  | _ -> extract_first test (move_forward z)
+  | _ -> extract_next test (move_forward z)
 
 let exists test {left; right} = List.exists test left || List.exists test right
