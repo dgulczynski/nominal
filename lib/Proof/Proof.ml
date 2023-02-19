@@ -151,7 +151,7 @@ let and_i = function
 let and_e f p_fs =
   match judgement p_fs with
   | _, F_And [] | _, F_And [_] ->
-      raise $ ProofException "Cannot eliminate disjunction with less than two disjuncts"
+      raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
   | env, F_And fs when List.exists (equiv f) fs -> P_AndElim ((env, f), p_fs)
   | _, g -> raise $ not_a_conjunction_with f g
 
