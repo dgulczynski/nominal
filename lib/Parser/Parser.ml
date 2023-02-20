@@ -33,6 +33,7 @@ let rec pterm_to_term env = function
     match List.assoc_opt symb env with
     | Some K_Atom     -> T_Atom {perm= idperm_to_aperm perm; symb= A symb}
     | Some K_Var      -> T_Var {perm= idperm_to_aperm perm; symb= V symb}
+    | Some K_Func     -> permute_term (idperm_to_aperm perm) (T_Fun symb)
     | Some (K_FVar _) -> raise $ wrong_use "Logical variable" symb "in term context"
     | None            -> raise $ unbound_variable symb )
 
@@ -41,6 +42,7 @@ let pconstr_to_constr env =
     match List.assoc_opt a env with
     | Some K_Atom     -> A a
     | Some K_Var      -> raise $ wrong_use "Term variable" a "like an atom"
+    | Some K_Func     -> raise $ wrong_use "Functional symbol" a "like an atom"
     | Some (K_FVar _) -> raise $ wrong_use "Logical variable" a "like an atom"
     | None            -> raise $ unbound_variable a
   in
@@ -79,6 +81,7 @@ let rec pformula_to_formula env = function
     match List.assoc_opt x env with
     | Some K_Atom          -> raise $ wrong_use "Atom" x "as a logical variable"
     | Some K_Var           -> raise $ wrong_use "Term variable" x "as a logical variable"
+    | Some K_Func          -> raise $ wrong_use "Functional symbol" x "as a logical variable"
     | Some (K_FVar (i, _)) -> fvar i
     | None                 -> raise $ unbound_variable x )
   | PF_Fun (x, k, f)           ->
@@ -92,6 +95,7 @@ let rec pformula_to_formula env = function
     match List.assoc_opt x env with
     | Some K_Atom          -> F_AppAtom (pformula_to_formula env f, A x)
     | Some K_Var           -> F_AppTerm (pformula_to_formula env f, var (V x))
+    | Some K_Func          -> F_AppTerm (pformula_to_formula env f, T_Fun x)
     | Some (K_FVar (i, _)) -> F_App (pformula_to_formula env f, fvar i)
     | None                 -> F_App
                                 ( pformula_to_formula env f
@@ -116,6 +120,7 @@ let parse_atom_in_env env s =
   match List.assoc_opt a env with
   | Some K_Atom     -> A a
   | Some K_Var      -> raise_not_an_atom_but "variable"
+  | Some K_Func     -> raise_not_an_atom_but "functional symbol"
   | Some (K_FVar _) -> raise_not_an_atom_but "logical variable"
   | None            -> raise $ unbound_variable a
 
@@ -148,5 +153,7 @@ let run_judgement penv s =
 let atoms_env xs = List.map (fun a -> (a, K_Atom)) xs
 
 let vars_env xs = List.map (fun x -> (x, K_Var)) xs
+
+let funcs_env xs = List.map (fun x -> (x, K_Func)) xs
 
 let fvars_env xs = List.map (fun (x, k) -> (x, K_FVar (fresh_fvar_arg (), k))) xs

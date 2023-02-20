@@ -227,6 +227,7 @@ let rec pp_print_formula env fmt formula =
 let pp_print_identifier_kind fmt = function
   | K_Atom        -> pp_print_string fmt "atom"
   | K_Var         -> pp_print_string fmt "var"
+  | K_Func        -> pp_print_string fmt "func"
   | K_FVar (_, k) -> pp_print_kind fmt k
 
 let pp_print_identifier_with_kind fmt (x, k) =

@@ -95,6 +95,7 @@ let generalize name state =
       let context = PC_SpecializeTerm (to_judgement (env, f), var (V x), context state) in
       unfinished (env |> remove_identifier x, F_ForallTerm (V x, f)) context
   | Some (_x, K_FVar _) -> raise $ ProofException "Logical variables cannot be generalized"
+  | Some (_x, K_Func)   -> raise $ ProofException "Functional symbols cannot be generalized"
   | None                -> raise $ unbound_variable name
 
 let exists witness state =

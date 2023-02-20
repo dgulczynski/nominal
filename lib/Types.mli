@@ -85,7 +85,7 @@ type formula =
   | F_Fix        of fvar_binder * var * kind * formula
 
 (** [FVar]s are represented by [int]s and have [kind]s*)
-type identifier_kind = K_Atom | K_Var | K_FVar of int * kind
+type identifier_kind = K_Atom | K_Var | K_Func | K_FVar of int * kind
 
 type identifier = string * identifier_kind
 
