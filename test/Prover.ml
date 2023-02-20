@@ -123,6 +123,19 @@ let proof14 =
   %> intros ["Hp"; "Hq"; "Hr"; "H"]
   %> destruct_assm "H" %> apply_assm "Hp" %> apply_assm "Hq" %> apply_assm "Hr"
 
+let th15 =
+  let e15 = funcs_env ["base"; "arrow"] in
+  ( env e15 [] []
+  , parse_formula_in_env e15
+      "(fix Type(t):*.                                                                           \
+       (t = base ∨ (exists t1:term. exists t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))) )  \
+       {arrow base base}" )
+
+let proof15 =
+  proof' %> step 1 %> destruct_goal' 1 %> exists "base" %> exists "base" %> by_solver
+  %> destruct_goal
+  %> repeat (step 1 %> destruct_goal' 0 %> by_solver)
+
 let _ = test_proof th1 proof1
 
 let _ = test_proof th2 proof2
@@ -150,5 +163,7 @@ let _ = test_proof th12 proof12
 let _ = test_proof th13 proof13
 
 let _ = test_proof th14 proof14
+
+let _ = test_proof th15 proof15
 
 let _ = print_newline ()

@@ -58,7 +58,7 @@ let judgement proof = (env proof, label proof)
 
 let axiom identifiers f = P_Ax (ProofEnv.env identifiers [] [f], f)
 
-let remove_assumption f = remove_assumptions (equiv f)
+let remove_assumption f = remove_assumptions (( === ) f)
 
 let imp_i f p =
   let f' = label p in
@@ -171,7 +171,7 @@ let and_e f p_fs =
   match judgement p_fs with
   | _, F_And [] | _, F_And [_] ->
       raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
-  | env, F_And fs when List.exists (equiv f) fs -> P_AndElim ((env, f), p_fs)
+  | env, F_And fs when List.exists (( === ) f) fs -> P_AndElim ((env, f), p_fs)
   | _, g -> raise $ not_a_conjunction_with f g
 
 let or_i disjuncts p =
@@ -179,7 +179,7 @@ let or_i disjuncts p =
   | [] | [_] -> raise $ ProofException "Cannot introduce disjunction with less than two disjuncts"
   | fs       -> (
     match judgement p with
-    | env, f when List.exists (equiv f) fs -> P_Intro ((env, F_Or fs), p)
+    | env, f when List.exists (( === ) f) fs -> P_Intro ((env, F_Or fs), p)
     | _, f -> raise % not_a_disjunction_with f $ F_Or fs )
 
 let or_e or_proof ps =
@@ -188,7 +188,7 @@ let or_e or_proof ps =
   | p :: _   ->
       let c = conclusion $ label p in
       let fs = disjuncts $ label or_proof in
-      let test_proof f p = equiv f (premise $ label p) && equiv c (conclusion $ label p) in
+      let test_proof f p = f === (premise $ label p) && c === (conclusion $ label p) in
       if List.for_all2 test_proof fs ps then P_OrElim ((merge_envs ps, c), ps)
       else raise % formula_mismatch (label or_proof) $ F_Or (List.map (premise % label) ps)
 
@@ -206,5 +206,5 @@ let induction_e (V x_name as x) (V y_name as y) p =
 
 let equivalent f n p =
   let env, fe = judgement p in
-  let _, fn = compute n f in
+  let _, fn = computeWHNF n f in
   if fe === fn then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe

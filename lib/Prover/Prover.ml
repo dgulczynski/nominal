@@ -192,5 +192,5 @@ let by_induction y_name ind_hyp_name state =
 
 let step n state =
   let env, f = goal state in
-  let _, f' = compute n f in
+  let _, f' = computeWHNF n f in
   unfinished (env, f') $ PC_Equivalent (to_judgement (env, f), n, context state)
