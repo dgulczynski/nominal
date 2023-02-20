@@ -14,6 +14,7 @@ type proof =
   | P_Intro          of judgement * proof
   | P_Apply          of judgement * proof * proof
   | P_ConstrApply    of judgement * proof * proof
+  | P_ConstrAndElim  of judgement * proof * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
   | P_Witness        of judgement * proof * proof
@@ -27,6 +28,7 @@ let label = function
   | P_Intro ((_, f), _)
   | P_Apply ((_, f), _, _)
   | P_ConstrApply ((_, f), _, _)
+  | P_ConstrAndElim ((_, f), _, _)
   | P_SpecializeAtom ((_, f), _, _)
   | P_SpecializeTerm ((_, f), _, _)
   | P_Witness ((_, f), _, _)
@@ -40,6 +42,7 @@ let env = function
   | P_Intro ((e, _), _)
   | P_Apply ((e, _), _, _)
   | P_ConstrApply ((e, _), _, _)
+  | P_ConstrAndElim ((e, _), _, _)
   | P_SpecializeAtom ((e, _), _, _)
   | P_SpecializeTerm ((e, _), _, _)
   | P_Witness ((e, _), _, _)
@@ -87,6 +90,19 @@ let constr_imp_e c_proof c_imp_proof =
   | F_ConstrImpl (_c, f) when _c = c ->
       let env = union (env c_proof) (env c_imp_proof) in
       P_ConstrApply ((env, f), c_proof, c_imp_proof)
+  | f -> raise $ premise_mismatch (F_Constr c) f
+
+let constr_and_i c p =
+  let f = label p in
+  let env = env p |> remove_constraints (( = ) c) in
+  P_Intro ((env, F_ConstrAnd (c, f)), p)
+
+let constr_and_e c_proof c_and_proof =
+  let c = to_constr $ label c_proof in
+  match label c_and_proof with
+  | F_ConstrAnd (_c, f) when _c = c ->
+      let env = union (env c_proof) (env c_and_proof) in
+      P_ConstrAndElim ((env, f), c_proof, c_and_proof)
   | f -> raise $ premise_mismatch (F_Constr c) f
 
 let bot_e f p =

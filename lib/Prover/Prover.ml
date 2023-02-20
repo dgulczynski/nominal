@@ -77,11 +77,19 @@ let truth state =
   | f     -> raise $ formula_mismatch F_Top f
 
 let by_solver state =
-  match goal_formula state with
-  | F_Constr c ->
-      let proof_env = ProofEnv.map_assumptions snd $ goal_env state in
-      find_goal_in_ctx (proof_constr proof_env c) (context state)
-  | f          -> raise $ not_a_constraint f
+  let env, f = goal state in
+  let ctx = context state in
+  let proof_env = ProofEnv.map_assumptions snd env in
+  match f with
+  | F_Constr c          ->
+      let c_proof = proof_constr proof_env c in
+      find_goal_in_ctx c_proof ctx
+  | F_ConstrAnd (c, f') ->
+      let c_proof = proof_constr proof_env c in
+      let f_proof = proof_hole (env |> add_constr c) f' in
+      let jgmt = to_judgement (env, f) in
+      find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
+  | f                   -> raise $ not_a_constraint f
 
 let qed = finish
 
@@ -148,14 +156,19 @@ let destruct_assm h_name state =
   | f                       -> raise $ cannot_destruct f
 
 let destruct_goal state =
+  let ctx = context state in
   let env, f = goal state in
   match f with
-  | F_And fs ->
-      let ctx = context state in
+  | F_And fs            ->
       let jgmt = to_judgement (env, f) in
       let goals = List.map (proof_hole env) fs in
       find_goal_in_proof ctx $ proof_and jgmt goals
-  | f        -> raise $ cannot_destruct f
+  | F_ConstrAnd (c, f') ->
+      let c_proof = proof_hole env (F_Constr c) in
+      let f_proof = proof_hole (env |> add_constr c) f' in
+      let jgmt = to_judgement (env, f) in
+      find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
+  | f                   -> raise $ cannot_destruct f
 
 let destruct_goal' n state =
   let env, f = goal state in
