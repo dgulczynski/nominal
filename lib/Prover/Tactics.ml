@@ -66,3 +66,9 @@ let apply_parse f_string state =
   let env, _ = goal state in
   let f = parse_formula_in_env (ProofEnv.identifiers env) f_string in
   state |> apply f
+
+let left = destruct_goal' 0
+
+let right = destruct_goal' 1
+
+let compute = step 10
