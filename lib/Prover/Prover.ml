@@ -2,8 +2,9 @@ open Types
 open Common
 open IncProof
 open Parser
-open ProofException
+open ProofCommon
 open ProofEnv
+open ProofException
 open ProverGoal
 open ProverInternals
 open Substitution
@@ -188,3 +189,8 @@ let by_induction y_name ind_hyp_name state =
       let ind_hyp = F_ForallTerm (y, F_ConstrImpl (var y <: var x, f_y)) in
       unfinished (env |> add_var x_name |> add_assumption (ind_hyp_name, ind_hyp), f_x) ctx
   | _, f -> raise $ not_a_forall f
+
+let step n state =
+  let env, f = goal state in
+  let _, f' = computeWHNF n f in
+  unfinished (env, f') $ PC_Equivalent (to_judgement (env, f), n, context state)

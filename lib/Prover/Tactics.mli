@@ -23,3 +23,9 @@ val repeat : tactic -> tactic
 val trivial : tactic
 
 val try_tactic : tactic -> tactic
+
+val left : tactic
+
+val right : tactic
+
+val compute : tactic

@@ -44,9 +44,11 @@ type kind =
   | K_ForallAtom of atom * kind
   | K_Constr     of constr * kind
 
-type fvar = FV of int
+type fvar_internal = int
 
-type fvar_binder = FV_Bind of string * int * kind
+type fvar = FV of fvar_internal
+
+type fvar_binder = FV_Bind of string * fvar_internal * kind
 
 type formula =
   | F_Bot
@@ -70,7 +72,7 @@ type formula =
   | F_AppAtom    of formula * atom
   | F_Fix        of fvar_binder * var * kind * formula
 
-type identifier_kind = K_Atom | K_Var | K_Func | K_FVar of int * kind
+type identifier_kind = K_Atom | K_Var | K_Func | K_FVar of fvar_internal * kind
 
 type identifier = string * identifier_kind
 

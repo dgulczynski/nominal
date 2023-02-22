@@ -112,7 +112,7 @@ let th13 =
   let e13 = fvars_env [("p", K_Prop); ("q", K_Prop)] in
   (env e13 [] [], parse_formula_in_env e13 "p => p ∨ q")
 
-let proof13 = proof' %> intros ["H"] %> destruct_goal' 0 %> apply_assm "H"
+let proof13 = proof' %> intros ["H"] %> left %> apply_assm "H"
 
 let th14 =
   let e14 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop); ("s", K_Prop)] in
@@ -122,6 +122,36 @@ let proof14 =
   proof'
   %> intros ["Hp"; "Hq"; "Hr"; "H"]
   %> destruct_assm "H" %> apply_assm "Hp" %> apply_assm "Hq" %> apply_assm "Hr"
+
+let th15 =
+  let e15 = funcs_env ["base"; "arrow"] in
+  ( env e15 [] []
+  , parse_formula_in_env e15
+      "(fix Type(t):*.                                                                             \
+       (t = base ∨ (exists t1:term. exists t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))) )  \
+       {arrow base base}" )
+
+let proof15 =
+  proof' %> compute %> right
+  %> (exists "base" %> exists "base" %> by_solver)
+  %> destruct_goal
+  %> repeat (compute %> left %> by_solver)
+
+let th16 =
+  let e16 = funcs_env ["nil"; "cons"; "base"; "arrow"] @ atoms_env ["c"; "d"] in
+  ( env e16 [] []
+  , parse_formula_in_env e16
+      "(fix InEnv(env):forall a:atom. forall t:term. prop. fun a:atom -> fun t:term ->            \
+       (exists env' : term. env = cons a t env') ∨                                                \
+       (exists env' : term. exists b : atom. exists s : term.                                     \
+       ([env = cons b s env'] ∧ (InEnv env' a {t}))))                                             \
+       {cons c (arrow base base) (cons d base nil)} d {base}" )
+
+let proof16 =
+  proof' %> compute %> right
+  %> (exists "cons d base nil" %> exists "c" %> exists "arrow base base" %> by_solver)
+  %> compute %> left
+  %> (exists "nil" %> by_solver)
 
 let _ = test_proof th1 proof1
 
@@ -150,5 +180,9 @@ let _ = test_proof th12 proof12
 let _ = test_proof th13 proof13
 
 let _ = test_proof th14 proof14
+
+let _ = test_proof th15 proof15
+
+let _ = test_proof th16 proof16
 
 let _ = print_newline ()

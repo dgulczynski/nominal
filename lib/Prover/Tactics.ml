@@ -43,7 +43,7 @@ let assumption state =
   let f' = string_of_formula_in_env (ProofEnv.identifiers env) f in
   let exn = Printf.sprintf "No assumption matching goal `%s`" f' in
   let on_fail _ = raise $ ProofException exn in
-  match ProofEnv.lookup_assumption (equiv f % snd) env with
+  match ProofEnv.lookup_assumption (( === ) f % snd) env with
   | Some (h_name, _) -> apply_assm h_name state
   | None             ->
       let to_tactic = apply_assm % fst in
@@ -66,3 +66,9 @@ let apply_parse f_string state =
   let env, _ = goal state in
   let f = parse_formula_in_env (ProofEnv.identifiers env) f_string in
   state |> apply f
+
+let left = destruct_goal' 0
+
+let right = destruct_goal' 1
+
+let compute = step 10
