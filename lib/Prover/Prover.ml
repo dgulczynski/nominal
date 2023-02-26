@@ -10,9 +10,8 @@ open ProverInternals
 open Substitution
 
 let check_props env formulas =
-  let kind_infer = KindChecker.kind_infer $ kind_checker_env env in
   let check_prop f =
-    match kind_infer f with
+    match kind_infer env f with
     | Some K_Prop -> ()
     | k           -> raise $ formula_kind_mismatch f k K_Prop
   in
@@ -192,5 +191,6 @@ let by_induction y_name ind_hyp_name state =
 
 let step n state =
   let env, f = goal state in
-  let _, f' = computeWHNF n f in
+  let mapping, _, f' = computeWHNF (mapping env) n f in
+  let env = set_mapping mapping env in
   unfinished (env, f') $ PC_Equivalent (to_judgement (env, f), n, context state)

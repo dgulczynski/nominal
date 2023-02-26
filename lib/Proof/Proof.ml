@@ -56,9 +56,9 @@ let env = function
 
 let judgement proof = (env proof, label proof)
 
-let axiom identifiers f = P_Ax (ProofEnv.env identifiers [] [f], f)
+let axiom env f = P_Ax (ProofEnv.on_assumptions (const [f]) env, f)
 
-let remove_assumption f = remove_assumptions (( === ) f)
+let remove_assumption = remove_assumptions_equiv_to id
 
 let imp_i f p =
   let f' = label p in
@@ -66,19 +66,19 @@ let imp_i f p =
   P_Intro ((env, F_Impl (f, f')), p)
 
 let imp_e p1 p2 =
+  let env = union (env p1) (env p2) in
   match (label p1, label p2) with
-  | f1, f2 when f2 === premise f1 ->
-      let env = union (env p1) (env p2) in
-      P_Apply ((env, conclusion f1), p1, p2)
+  | f1, f2 when env |> (f2 === premise f1) -> P_Apply ((env, conclusion f1), p1, p2)
   | f1, f2 -> raise $ premise_mismatch f1 f2
 
 let constr_i env constr =
   let identifiers = identifiers env in
   let assumptions = List.filter (Option.is_some % to_constr_op) $ assumptions env in
   let constraints = constraints env in
+  let mapping = mapping env in
   let solver_assumptions = List.filter_map to_constr_op assumptions @ constraints in
   if Solver.solve_with_assumptions solver_assumptions constr then
-    let env = ProofEnv.env identifiers constraints assumptions in
+    let env = ProofEnv.env identifiers constraints assumptions mapping in
     P_Ax (env, F_Constr constr)
   else raise $ solver_failure constraints constr
 
@@ -137,17 +137,17 @@ let forall_term_e t p =
 
 let exists_atom_i (A a_name as a) b f_a p =
   let f = (a |-> b) f_a in
-  let f' = label p in
-  if f === f' then
-    let env = env p |> remove_identifier a_name |> remove_assumption f_a in
+  let env, f' = judgement p in
+  if f === f' <| env then
+    let env = env |> remove_identifier a_name |> remove_assumption f_a in
     P_Intro ((env, F_ExistsAtom (a, f_a)), p)
   else raise $ formula_mismatch f f'
 
 let exists_term_i (V x_name as x) t f_x p =
   let f = (x |=> t) f_x in
-  let f' = label p in
-  if f === f' then
-    let env = env p |> remove_identifier x_name |> remove_assumption f_x in
+  let env, f' = judgement p in
+  if f === f' <| env then
+    let env = env |> remove_identifier x_name |> remove_assumption f_x in
     P_Intro ((env, F_ExistsTerm (x, f_x)), p)
   else raise $ formula_mismatch f f'
 
@@ -171,7 +171,7 @@ let and_e f p_fs =
   match judgement p_fs with
   | _, F_And [] | _, F_And [_] ->
       raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
-  | env, F_And fs when List.exists (( === ) f) fs -> P_AndElim ((env, f), p_fs)
+  | env, F_And fs when List.exists (fun g -> f === g <| env) fs -> P_AndElim ((env, f), p_fs)
   | _, g -> raise $ not_a_conjunction_with f g
 
 let or_i disjuncts p =
@@ -179,7 +179,7 @@ let or_i disjuncts p =
   | [] | [_] -> raise $ ProofException "Cannot introduce disjunction with less than two disjuncts"
   | fs       -> (
     match judgement p with
-    | env, f when List.exists (( === ) f) fs -> P_Intro ((env, F_Or fs), p)
+    | env, f when List.exists (fun g -> f === g <| env) fs -> P_Intro ((env, F_Or fs), p)
     | _, f -> raise % not_a_disjunction_with f $ F_Or fs )
 
 let or_e or_proof ps =
@@ -188,7 +188,8 @@ let or_e or_proof ps =
   | p :: _   ->
       let c = conclusion $ label p in
       let fs = disjuncts $ label or_proof in
-      let test_proof f p = f === (premise $ label p) && c === (conclusion $ label p) in
+      let env = env p in
+      let test_proof f p = premise (label p) === f <| env && conclusion (label p) === c <| env in
       if List.for_all2 test_proof fs ps then P_OrElim ((merge_envs ps, c), ps)
       else raise % formula_mismatch (label or_proof) $ F_Or (List.map (premise % label) ps)
 
@@ -206,5 +207,6 @@ let induction_e (V x_name as x) (V y_name as y) p =
 
 let equivalent f n p =
   let env, fe = judgement p in
-  let _, fn = computeWHNF n f in
-  if fe === fn then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe
+  let mapping, _, fn = computeWHNF (mapping env) n f in
+  let env = set_mapping mapping env in
+  if fe === fn <| env then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe

@@ -74,3 +74,7 @@ let cannot_generalize name f =
 let cannot_destruct f =
   let exn = Printf.sprintf "Cannot destruct %s" (string_of_formula f) in
   ProofException exn
+
+let cannot_infer_kind f_source =
+  let exn = Printf.sprintf "Cannot infer kind of formula `%s`" f_source in
+  ProofException exn

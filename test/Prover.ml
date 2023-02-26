@@ -19,13 +19,13 @@ let test_proof theorem proof =
 
 let th1 =
   let env1 = fvars_env [("p", K_Prop); ("q", K_Prop)] in
-  (env env1 [] [], parse_formula_in_env env1 "(p => q) => p => q")
+  (env env1 [] [] [], parse_formula_in_env env1 "(p => q) => p => q")
 
 let proof1 th1 = proof' th1 |> intros ["HPQ"; "HP"] |> apply_assm "HPQ" |> apply_assm "HP"
 
 let th2 =
   let env2 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)] in
-  (env env2 [] [], parse_formula_in_env env2 "(p => q => r) => (p => q) => p => r")
+  (env env2 [] [] [], parse_formula_in_env env2 "(p => q => r) => (p => q) => p => r")
 
 let proof2 th2 =
   proof' th2
@@ -34,7 +34,7 @@ let proof2 th2 =
 
 let th3 =
   let env3 = fvars_env [("p", K_Prop)] in
-  (env env3 [] [], parse_formula_in_env env3 "(((p => ⊥) => p) => p) => ((p => ⊥) => ⊥) => p")
+  (env env3 [] [] [], parse_formula_in_env env3 "(((p => ⊥) => p) => p) => ((p => ⊥) => ⊥) => p")
 
 let proof3 th3 =
   proof' th3
@@ -43,7 +43,7 @@ let proof3 th3 =
 
 let th4 =
   let env4 = fvars_env [("p", K_Prop)] in
-  (env env4 [] [], parse_formula_in_env env4 "(((p => ⊥) => ⊥) => p) => ((p => ⊥) => p) => p")
+  (env env4 [] [] [], parse_formula_in_env env4 "(((p => ⊥) => ⊥) => p) => ((p => ⊥) => p) => p")
 
 let proof4 th4 =
   proof' th4
@@ -54,26 +54,26 @@ let proof4 th4 =
 
 let th5 =
   let env5 = atoms_env ["a"; "b"; "c"] in
-  (env env5 [] [], parse_formula_in_env env5 "[a = b] => [c =/= b] => [a # c]")
+  (env env5 [] [] [], parse_formula_in_env env5 "[a = b] => [c =/= b] => [a # c]")
 
 let proof5 th5 = proof' th5 |> repeat intro |> by_solver
 
 let th6 =
   let env6 = atoms_env ["a"; "b"; "c"] in
-  (env env6 [] [], parse_formula_in_env env6 "([a = b] => (a # c)) => [a = b] => (c =/= b)")
+  (env env6 [] [] [], parse_formula_in_env env6 "([a = b] => (a # c)) => [a = b] => (c =/= b)")
 
 let proof6 th6 =
   proof' th6 |> intros ["H"] |> intro
   |> add_constr_parse "a # c" %> by_solver
   |> apply_assm "H" %> by_solver
 
-let th7 = (empty, parse_formula "forall a : atom. forall b : atom. [a =/= b] => [a # b]")
+let th7 = (empty, parse_formula empty "forall a : atom. forall b : atom. [a =/= b] => [a # b]")
 
 let proof7 th7 = proof' th7 |> repeat intro |> by_solver
 
 let th8 =
   let env8 = atoms_env ["b"; "c"] @ vars_env ["y"] in
-  ( env env8 [] []
+  ( env env8 [] [] []
   , parse_formula_in_env env8
   "(forall a : atom. forall x : term. [a = x] => [a.a = a.x]) => [c = b.[b c]y] => [c.c = c.b.[b c] y]" [@ocamlformat "disable"]
   )
@@ -82,19 +82,19 @@ let proof8 th8 = proof' th8 |> intros ["H"] |> apply_assm_specialized "H" ["c"; 
 
 let th9 =
   let env9 = atoms_env ["c"; "d"] in
-  (env env9 [] [], parse_formula_in_env env9 "[c # d] => exists a:atom. exists b:atom. [a =/= b]")
+  (env env9 [] [] [], parse_formula_in_env env9 "[c # d] => exists a:atom. exists b:atom. [a =/= b]")
 
 let proof9 th9 = proof' th9 |> intro |> exists "d" |> exists "c" |> by_solver
 
 let th10 =
-  (empty, parse_formula "forall a : atom. (exists b: atom. [a =/= b]) => exists t:term. a # t")
+  (empty, parse_formula empty "forall a : atom. (exists b: atom. [a =/= b]) => exists t:term. a # t")
 
 let proof10 th10 =
   proof' th10 |> intro |> intros ["H"] |> destruct_assm "H" |> exists "b" |> by_solver
 
 let th11 =
   ( empty
-  , parse_formula
+  , parse_formula empty
       "(forall a : atom. exists b: atom. [a =/= b]) => (forall a:atom. exists t:term. a # t)" )
 
 let proof11 th11 =
@@ -104,19 +104,19 @@ let proof11 th11 =
 
 let th12 =
   let env12 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)] in
-  (env env12 [] [], parse_formula_in_env env12 "(p ∧ q ∧ r) => (q ∧ r ∧ p)")
+  (env env12 [] [] [], parse_formula_in_env env12 "(p ∧ q ∧ r) => (q ∧ r ∧ p)")
 
 let proof12 = proof' %> intros ["H"] %> destruct_assm "H" %> destruct_goal %> repeat assumption
 
 let th13 =
   let e13 = fvars_env [("p", K_Prop); ("q", K_Prop)] in
-  (env e13 [] [], parse_formula_in_env e13 "p => p ∨ q")
+  (env e13 [] [] [], parse_formula_in_env e13 "p => p ∨ q")
 
 let proof13 = proof' %> intros ["H"] %> left %> apply_assm "H"
 
 let th14 =
   let e14 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop); ("s", K_Prop)] in
-  (env e14 [] [], parse_formula_in_env e14 "(p => s) => (q => s) => (r => s) => (p ∨ q ∨ r) => s")
+  (env e14 [] [] [], parse_formula_in_env e14 "(p => s) => (q => s) => (r => s) => (p ∨ q ∨ r) => s")
 
 let proof14 =
   proof'
@@ -124,12 +124,14 @@ let proof14 =
   %> destruct_assm "H" %> apply_assm "Hp" %> apply_assm "Hq" %> apply_assm "Hr"
 
 let th15 =
-  let e15 = funcs_env ["base"; "arrow"] in
-  ( env e15 [] []
-  , parse_formula_in_env e15
-      "(fix Type(t):*.                                                                             \
-       (t = base ∨ (exists t1:term. exists t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))) )  \
-       {arrow base base}" )
+  let id15 = funcs_env ["base"; "arrow"] in
+  let e15 =
+    parse_mapping id15 [] []
+      [ ( "Type"
+        , "fix Type(t):*. t = base ∨                                                            \
+           (exists t1:term. exists t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))" ) ]
+  in
+  (e15, parse_formula e15 "Type {arrow base base}")
 
 let proof15 =
   proof' %> compute %> right
@@ -138,14 +140,16 @@ let proof15 =
   %> repeat (compute %> left %> by_solver)
 
 let th16 =
-  let e16 = funcs_env ["nil"; "cons"; "base"; "arrow"] @ atoms_env ["c"; "d"] in
-  ( env e16 [] []
-  , parse_formula_in_env e16
-      "(fix InEnv(env):forall a:atom. forall t:term. prop. fun a:atom -> fun t:term ->            \
-       (exists env' : term. env = cons a t env') ∨                                                \
-       (exists env' : term. exists b : atom. exists s : term.                                     \
-       ([env = cons b s env'] ∧ (InEnv env' a {t}))))                                             \
-       {cons c (arrow base base) (cons d base nil)} d {base}" )
+  let id16 = funcs_env ["nil"; "cons"; "base"; "arrow"] @ atoms_env ["c"; "d"] in
+  let e16 =
+    parse_mapping id16 [] []
+      [ ( "InEnv"
+        , "fix InEnv(env):forall a:atom. forall t:term. *. fun a:atom -> fun t:term ->         \
+           (exists env' : term. env = cons a t env') ∨                                         \
+           (exists env' : term. exists b : atom. exists s : term.                              \
+           [env = cons b s env'] ∧ (InEnv env' a {t}))" ) ]
+  in
+  (e16, parse_formula e16 "InEnv {cons c (arrow base base) (cons d base nil)} d {base}")
 
 let proof16 =
   proof' %> compute %> right

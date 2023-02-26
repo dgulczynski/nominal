@@ -64,10 +64,10 @@ and find_goal_in_ctx incproof = function
 (** [destruct_impl c f] is
     [Some [f1 => f2 => ... fn => c; f2 => ... fn => c; ...; fn => c]] if [f = f1 => f2 => ... => fn => c]
     and [[]] otherwise *)
-let destruct_impl c f =
+let destruct_impl env c f =
   let rec aux f =
     match conclusion f with
-    | f2 when f2 === c -> [f]
+    | f2 when f2 === c <| mapping env -> [f]
     | f2 -> f :: aux f2
   in
   try aux f with ProofException _ -> []
@@ -124,9 +124,10 @@ let apply_internal ?(h_name = "") h_proof =
   let h = label' h_proof in
   function
   | S_Finished _ -> raise proof_finished
-  | S_Unfinished {goal= _, f; context} when f === h -> find_goal_in_ctx h_proof context
+  | S_Unfinished {goal= env, f; context} when f === h <| mapping env ->
+      find_goal_in_ctx h_proof context
   | S_Unfinished {goal= env, f; context} -> (
-    match destruct_impl f h with
+    match destruct_impl env f h with
     | []    -> raise $ hypothesis_goal_mismatch h_name h f
     | assms -> find_goal_in_proof context $ apply_impl_list env h_proof assms )
 

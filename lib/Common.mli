@@ -3,6 +3,8 @@ open Permutation
 
 val ( $ ) : ('a -> 'b) -> 'a -> 'b
 
+val ( <| ) : ('a -> 'b) -> 'a -> 'b
+
 val ( % ) : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 
 val ( %% ) : ('c -> 'd) -> ('a -> 'b -> 'c) -> 'a -> 'b -> 'd

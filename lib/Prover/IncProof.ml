@@ -116,7 +116,7 @@ let proof_hole env f = PI_Hole (env, f)
 
 let proven proof = PI_Proven proof
 
-let proof_axiom env = proven % axiom (ProofEnv.identifiers env)
+let proof_axiom env = proven % axiom env
 
 let proof_constr env = proven % constr_i env
 
