@@ -13,11 +13,12 @@ let pvar_kind' kind =
 let kind =
   let k_prop = string_ci "Prop" <|> string "*" >>| const PK_Prop in
   let k_forall kind =
-    let* x, xk = forall (typed_op identifier $ pvar_kind' kind) in
+    let* xs, xk = forall (typed_op (list_of' identifier) $ pvar_kind' kind) in
     match xk with
-    | Some PQ_Atom            -> kind >>| fun k -> PK_ForallAtom (x, k)
-    | Some PQ_Term            -> kind >>| fun k -> PK_ForallTerm (x, k)
-    | Some (PQ_Kind _) | None -> raise $ quantifier_without_kind_annotation "Forall" x
+    | Some PQ_Atom            -> kind >>| List.fold_right (fun x k -> PK_ForallAtom (x, k)) xs
+    | Some PQ_Term            -> kind >>| List.fold_right (fun x k -> PK_ForallTerm (x, k)) xs
+    | Some (PQ_Kind _) | None ->
+        raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
   and k_constr kind =
     let* cs = many1 (bracketed constr <* whitespace) in
     let* k = kind in

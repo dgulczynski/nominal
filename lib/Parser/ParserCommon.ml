@@ -113,6 +113,8 @@ let quantifier_without_kind_annotation q x =
 let list_of ?(sep = ";") ?(left = "") ?(right = "") elem =
   string left *> sep_by (whitespace *> string sep <* whitespace) elem <* string right
 
+let list_of' elem = list_of ~sep:"" elem
+
 let parse p s =
   match parse_string ~consume:Consume.All p s with
   | Ok v    -> v

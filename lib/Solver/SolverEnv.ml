@@ -164,4 +164,4 @@ let get_subshapes gamma x =
         | _ -> None )
       gamma
 
-let string_of = Printing.string_of_list string_of_atom_assumption ~sep:", "
+let string_of = Printing.string_of_list' ~sep:", " string_of_atom_assumption

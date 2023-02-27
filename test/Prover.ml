@@ -129,7 +129,7 @@ let th15 =
     parse_mapping id15 [] []
       [ ( "Type"
         , "fix Type(t):*. t = base ∨                                                            \
-           (exists t1:term. exists t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))" ) ]
+           (exists t1 t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))" ) ]
   in
   (e15, parse_formula e15 "Type {arrow base base}")
 
@@ -144,16 +144,16 @@ let th16 =
   let e16 =
     parse_mapping id16 [] []
       [ ( "InEnv"
-        , "fix InEnv(env):forall a:atom. forall t:term. *. fun a:atom -> fun t:term ->         \
-           (exists env' : term. env = cons a t env') ∨                                         \
-           (exists env' : term. exists b : atom. exists s : term.                              \
+        , "fix InEnv(env):forall a:atom. forall t:term. *. fun a:atom -> fun t:term ->          \
+           (exists env' : term. env  = cons a t env') ∨                                         \
+           (exists b : atom. exists s env': term.                                               \
            [env = cons b s env'] ∧ (InEnv env' a {t}))" ) ]
   in
   (e16, parse_formula e16 "InEnv {cons c (arrow base base) (cons d base nil)} d {base}")
 
 let proof16 =
   proof' %> compute %> right
-  %> (exists "cons d base nil" %> exists "c" %> exists "arrow base base" %> by_solver)
+  %> (exists "c" %> exists "arrow base base" %> exists "cons d base nil" %> by_solver)
   %> compute %> left
   %> (exists "nil" %> by_solver)
 

@@ -31,18 +31,20 @@ let f_impl formula =
   return $ PF_Impl (f1, f2)
 
 let f_forall formula =
-  let* x, k = forall (typed_op identifier pvar_kind) in
+  let* xs, k = forall (typed_op (list_of' identifier) pvar_kind) in
   match k with
-  | Some PQ_Atom            -> formula >>| fun f -> PF_ForallAtom (x, f)
-  | Some PQ_Term            -> formula >>| fun f -> PF_ForallTerm (x, f)
-  | Some (PQ_Kind _) | None -> raise $ quantifier_without_kind_annotation "Forall" x
+  | Some PQ_Atom            -> formula >>| List.fold_right (fun x f -> PF_ForallAtom (x, f)) xs
+  | Some PQ_Term            -> formula >>| List.fold_right (fun x f -> PF_ForallTerm (x, f)) xs
+  | Some (PQ_Kind _) | None ->
+      raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
 
 let f_exists formula =
-  let* x, k = exists (typed_op identifier pvar_kind) in
+  let* xs, k = exists (typed_op (list_of' identifier) pvar_kind) in
   match k with
-  | Some PQ_Atom            -> formula >>| fun f -> PF_ExistsAtom (x, f)
-  | Some PQ_Term            -> formula >>| fun f -> PF_ExistsTerm (x, f)
-  | Some (PQ_Kind _) | None -> raise $ quantifier_without_kind_annotation "Exists" x
+  | Some PQ_Atom            -> formula >>| List.fold_right (fun x f -> PF_ExistsAtom (x, f)) xs
+  | Some PQ_Term            -> formula >>| List.fold_right (fun x f -> PF_ExistsTerm (x, f)) xs
+  | Some (PQ_Kind _) | None ->
+      raise % quantifier_without_kind_annotation "Exists" $ Printing.unwords xs
 
 let f_constrand formula =
   let* c = bracketed constr in

@@ -7,11 +7,20 @@ type 'a printer = formatter -> 'a -> unit
 
 let print_space fmt () = pp_print_string fmt " "
 
-let string_of_list string_of_item ?(sep = "; ") = function
-  | []      -> "[]"
-  | [x]     -> "[" ^ string_of_item x ^ "]"
+let string_of_list' ?(left = "[") ?(sep = "; ") ?(right = "]") string_of_item =
+  let brace = flip (Printf.sprintf "%s%s%s" left) right in
+  function
+  | []      -> brace ""
+  | [x]     -> brace (string_of_item x)
   | x :: xs ->
-      List.fold_left (fun acc x -> acc ^ sep ^ string_of_item x) ("[" ^ string_of_item x) xs ^ "]"
+      brace
+      $ List.fold_left
+          (fun acc x -> Printf.sprintf "%s%s%s" acc sep $ string_of_item x)
+          (string_of_item x) xs
+
+let string_of_list string_of_item = string_of_list' string_of_item
+
+let unwords = string_of_list' ~left:"" ~right:"" id
 
 let string_of_atom_arg (A a) = a
 
@@ -93,26 +102,40 @@ let pp_print_constr fmt c =
   | C_AtomEq (a, alpha)  -> print_binop (atom a) "==" $ T_Atom alpha
   | C_AtomNeq (a, alpha) -> print_binop (atom a) "=/=" $ T_Atom alpha
 
-let rec pp_print_kind fmt c =
+let rec pp_print_kind fmt k =
   let pp_kind = pp_print_kind fmt in
-  match c with
-  | K_Prop               -> pp_print_char fmt '*'
-  | K_Arrow (K_Prop, k2) -> pp_print_string fmt "* ->" ; print_space fmt () ; pp_kind k2
-  | K_Arrow (k1, k2)     ->
+  let rec print_foralls = function
+    | K_ForallAtom (a, (K_ForallAtom _ as k)) ->
+        pp_print_string fmt (string_of_atom_arg a) ;
+        print_space fmt () ;
+        print_foralls k
+    | K_ForallAtom (a, k) ->
+        pp_print_string fmt (string_of_atom_arg a) ;
+        print_space fmt () ;
+        pp_print_string fmt ": atom." ;
+        pp_kind k
+    | K_ForallTerm (x, (K_ForallTerm _ as k)) ->
+        pp_print_string fmt (string_of_var_arg x) ;
+        print_space fmt () ;
+        print_foralls k
+    | K_ForallTerm (x, k) ->
+        pp_print_string fmt (string_of_var_arg x) ;
+        print_space fmt () ;
+        pp_print_string fmt ": term." ;
+        pp_kind k
+    | k -> pp_kind k
+  in
+  match k with
+  | K_Prop                          -> pp_print_char fmt '*'
+  | K_Arrow (K_Prop, k2)            -> pp_print_string fmt "* ->" ; print_space fmt () ; pp_kind k2
+  | K_Arrow (k1, k2)                ->
       pp_print_parenthesized pp_print_kind fmt k1 ;
       print_space fmt () ;
       pp_print_string fmt "->" ;
       print_space fmt () ;
       pp_kind k2
-  | K_ForallAtom (a, k)  ->
-      pp_forall fmt (string_of_atom_arg a) "atom" ;
-      print_space fmt () ;
-      pp_kind k
-  | K_ForallTerm (x, k)  ->
-      pp_forall fmt (string_of_var_arg x) "term" ;
-      print_space fmt () ;
-      pp_kind k
-  | K_Constr (c, k)      ->
+  | K_ForallAtom _ | K_ForallTerm _ -> pp_print_string fmt "∀ " ; print_foralls k
+  | K_Constr (c, k)                 ->
       pp_print_bracketed pp_print_constr fmt c ;
       pp_kind k
 
@@ -161,6 +184,27 @@ let rec pp_print_formula env fmt formula =
     | F_App _ | F_AppTerm _ | F_AppAtom _ -> pp_formula f
     | _ -> pp_print_atomic_formula fmt f
   in
+  let rec pp_print_foralls = function
+    | F_ForallTerm (x, (F_ForallTerm _ as f)) | F_ExistsTerm (x, (F_ExistsTerm _ as f)) ->
+        pp_print_string fmt (string_of_var_arg x) ;
+        space () ;
+        pp_print_foralls f
+    | F_ForallTerm (x, f) | F_ExistsTerm (x, f) ->
+        pp_print_string fmt (string_of_var_arg x) ;
+        print_space fmt () ;
+        pp_print_string fmt ": term. " ;
+        pp_formula f
+    | F_ForallAtom (a, (F_ForallAtom _ as f)) | F_ExistsAtom (a, (F_ExistsAtom _ as f)) ->
+        pp_print_string fmt (string_of_atom_arg a) ;
+        space () ;
+        pp_print_foralls f
+    | F_ForallAtom (a, f) | F_ExistsAtom (a, f) ->
+        pp_print_string fmt (string_of_atom_arg a) ;
+        print_space fmt () ;
+        pp_print_string fmt ": atom. " ;
+        pp_formula f
+    | _ -> failwith ""
+  in
   match formula with
   | F_Bot -> pp_string "⊥"
   | F_Top -> pp_string "⊤"
@@ -170,22 +214,8 @@ let rec pp_print_formula env fmt formula =
   | F_Constr c -> pp_print_constr fmt c
   | F_Impl (f1, f2) ->
       pp_print_atomic_formula fmt f1 ; space () ; pp_string "=>" ; space () ; pp_print_conclusion f2
-  | F_ForallTerm (x, f) ->
-      pp_forall fmt (string_of_var_arg x) "term" ;
-      space () ;
-      pp_formula f
-  | F_ForallAtom (a, f) ->
-      pp_forall fmt (string_of_atom_arg a) "atom" ;
-      space () ;
-      pp_formula f
-  | F_ExistsTerm (x, f) ->
-      pp_exists fmt (string_of_var_arg x) "term" ;
-      space () ;
-      pp_formula f
-  | F_ExistsAtom (a, f) ->
-      pp_exists fmt (string_of_atom_arg a) "atom" ;
-      space () ;
-      pp_formula f
+  | F_ForallAtom _ | F_ForallTerm _ -> pp_print_string fmt "∀ " ; pp_print_foralls formula
+  | F_ExistsAtom _ | F_ExistsTerm _ -> pp_print_string fmt "∃ " ; pp_print_foralls formula
   | F_ConstrAnd (c, f) ->
       pp_print_bracketed pp_print_constr fmt c ;
       space () ;
