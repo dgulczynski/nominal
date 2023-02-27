@@ -90,7 +90,7 @@ let rec pformula_to_formula env = function
       let env = (x, K_FVar (i, k)) :: env in
       F_Fun (FV_Bind (x, i, k), pformula_to_formula env f)
   | PF_FunAtom (a, f)          -> F_FunAtom (A a, pformula_to_formula ((a, K_Atom) :: env) f)
-  | PF_FunTerm (x, f)          -> F_FunTerm (V x, pformula_to_formula ((x, K_Atom) :: env) f)
+  | PF_FunTerm (x, f)          -> F_FunTerm (V x, pformula_to_formula ((x, K_Var) :: env) f)
   | PF_AppIdentfier (f, x)     -> (
     match List.assoc_opt x env with
     | Some K_Atom          -> F_AppAtom (pformula_to_formula env f, A x)

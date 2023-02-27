@@ -24,7 +24,6 @@ let move_forward {left; right} =
 let extract_current {left; right} =
   match right with
   | []      -> failwith "extract_current on empty"
-  | [x]     -> (x, move_back_if_not_empty {left; right= []})
   | x :: xs -> (x, {left; right= xs})
 
 let rec extract_next test ({right; _} as z) =

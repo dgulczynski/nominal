@@ -157,6 +157,44 @@ let proof16 =
   %> compute %> left
   %> (exists "nil" %> by_solver)
 
+let th17 =
+  let id16 =
+    funcs_env ["nil"; "cons"; "base"; "arrow"; "lam"; "app"] @ atoms_env ["a"; "b"; "c"; "d"]
+  in
+  let e16 =
+    parse_mapping id16 [] []
+      [ ( "Type"
+        , "fix Type(t):*. t = base ∨                                                            \
+           (exists t1 t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))" )
+      ; ( "InEnv"
+        , "fix InEnv(env):forall a:atom. forall t:term. *. fun a:atom -> fun t:term ->            \
+           (exists env' :term. env = cons a t env') ∨                                             \
+           (exists b :atom. exists s env' :term.                                                  \
+           [env = cons b s env'] ∧ (InEnv env' a {t}))" )
+      ; ( "Typing"
+        , "fix Typing(e):forall env t :term. *. fun env:term -> fun t:term ->                     \
+           (exists a :atom. [e = a] ∧ InEnv {env} a {t})                                          \
+           ∨                                                                                      \
+           (exists a :atom. exists e' t1 t2 :term. [e = lam a e'] ∧ (t = arrow t1 t2)             \
+           ∧ (Type t1) ∧ (Typing {e'} {cons a t1 env} {t2}))                                      \
+           ∨                                                                                      \
+           (exists e1 e2 t2 :term. [e = app e1 e2]                                                \
+           ∧ (Typing {e1} {env} {arrow t2 t}) ∧ (Typing {e2} {env} {t2}))" ) ]
+  in
+  (e16, parse_formula e16 "Typing {app (lam c c) d} {cons d base nil} {base}")
+
+let proof17 th17 =
+  proof' th17 |> compute
+  |> destruct_goal' 2 %> exists "lam c c" %> exists "d" %> exists "base" %> compute
+  |> by_solver %> destruct_goal %> compute
+  |> right %> exists "c" %> exists "c" %> exists "base" %> exists "base" %> by_solver
+  |> destruct_goal |> by_solver %> compute
+  |> left %> by_solver %> compute
+  |> left %> exists "c" %> by_solver %> compute
+  |> left %> exists "cons d base nil" %> by_solver %> compute
+  |> left %> exists "d" %> by_solver %> compute
+  |> left %> exists "nil" %> by_solver
+
 let _ = test_proof th1 proof1
 
 let _ = test_proof th2 proof2
@@ -188,5 +226,7 @@ let _ = test_proof th14 proof14
 let _ = test_proof th15 proof15
 
 let _ = test_proof th16 proof16
+
+let _ = test_proof th17 proof17
 
 let _ = print_newline ()
