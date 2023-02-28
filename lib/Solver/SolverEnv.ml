@@ -115,7 +115,7 @@ let subst_var gamma x t =
     (* So the [t_i < t] is not needed? *)
     let assms = List.map (fun t_i -> t_i <: t) ts in
     let gamma, assms =
-      match List.filter (fun x' -> x' != x) xs with
+      match List.filter (fun x' -> x' <> x) xs with
       | [] -> (gamma, assms)
       | xs -> (A_Shape (ts, xs) :: gamma, List.map (fun x' -> var x' =~: t) xs @ assms)
     in

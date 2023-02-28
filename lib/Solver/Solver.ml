@@ -175,9 +175,9 @@ and solve_assm_eq env assms goal t1 t2 =
   | T_Lam (a1, t1), T_Lam (a2, t2) ->
       solve_ env (fresh a1 (T_Lam (a2, t2)) :: (t1 =: permute_term [(a1, a2)] t2) :: assms) goal
   | T_Lam _, _ -> true
-  | T_App (t1, t2), T_App (t1', t2') -> solve_ env ((t1 =: t2) :: (t1' =: t2') :: assms) goal
+  | T_App (t1, t2), T_App (t1', t2') -> solve_ env ((t1 =: t1') :: (t2 =: t2') :: assms) goal
   | T_App _, _ -> true
-  | T_Fun f, T_Fun f' -> f != f' || solve_ env assms goal
+  | T_Fun f, T_Fun f' -> f <> f' || solve_ env assms goal
   | T_Fun _, _ -> true
 
 and solve_swap_cases env a (alpha1, alpha2) assm_gen goal_gen =
@@ -210,7 +210,7 @@ and solve_assm_shape env assms goal t1 t2 =
   | T_Lam _, _ -> true
   | T_App (t1, t1'), T_App (t2, t2') -> solve_ env ((t1 =~: t2) :: (t1' =~: t2') :: assms) goal
   | T_App _, _ -> true
-  | T_Fun f1, T_Fun f2 -> f1 != f2 || solve_ env assms goal
+  | T_Fun f1, T_Fun f2 -> f1 <> f2 || solve_ env assms goal
   | T_Fun _, _ -> true
 
 and solve_assm_subshape env assms goal t1 = function
