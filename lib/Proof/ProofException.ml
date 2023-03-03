@@ -78,3 +78,7 @@ let cannot_destruct f =
 let cannot_infer_kind f_source =
   let exn = Printf.sprintf "Cannot infer kind of formula `%s`" f_source in
   ProofException exn
+
+let unknown_case case f =
+  let exn = Printf.sprintf "There is no case `%s` in `%s`" case (string_of_formula f) in
+  ProofException exn

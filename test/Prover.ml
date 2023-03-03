@@ -67,7 +67,7 @@ let proof6 th6 =
   |> add_constr_parse "a # c" %> by_solver
   |> apply_assm "H" %> by_solver
 
-let th7 = (empty, parse_formula empty "forall a : atom. forall b : atom. [a =/= b] => [a # b]")
+let th7 = (empty, parse_formula empty "forall a :atom. forall b :atom. [a =/= b] => [a # b]")
 
 let proof7 th7 = proof' th7 |> repeat intro |> by_solver
 
@@ -104,9 +104,11 @@ let proof11 th11 =
 
 let th12 =
   let env12 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)] in
-  (env env12 [] [] [], parse_formula_in_env env12 "(p ∧ q ∧ r) => (q ∧ r ∧ p)")
+  (env env12 [] [] [], parse_formula_in_env env12 "(p: p ∧ q: q ∧ r: r) => (q ∧ r ∧ p)")
 
-let proof12 = proof' %> intros ["H"] %> destruct_assm "H" %> destruct_goal %> repeat assumption
+let proof12 =
+  proof' %> intros ["H"] %> destruct_assm "H" %> destruct_goal
+  %> (apply_assm "H_q" %> apply_assm "H_r" %> apply_assm "H_p")
 
 let th13 =
   let e13 = fvars_env [("p", K_Prop); ("q", K_Prop)] in
@@ -123,77 +125,77 @@ let proof14 =
   %> intros ["Hp"; "Hq"; "Hr"; "H"]
   %> destruct_assm "H" %> apply_assm "Hp" %> apply_assm "Hq" %> apply_assm "Hr"
 
+let unwords = String.concat " "
+
+let type_formula =
+  unwords
+    [ "fix Type(t): *.                                                           "
+    ; "  base: t = base                                                          "
+    ; "  ∨                                                                       "
+    ; "  arrow: ( exists t1 t2 :term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2) )" ]
+
+let inenv_formula =
+  unwords
+    [ "fix InEnv(env): forall a :atom. forall t :term. *. fun a :atom -> fun t :term ->           "
+    ; "  current: ( exists env': term. [env = cons a t env'] )                                    "
+    ; "  ∨                                                                                        "
+    ; "  next: ( exists b :atom. exists s env': term. [env = cons b s env'] ∧ (InEnv env' a {t}) )"
+    ]
+
+let typing_formula =
+  unwords
+    [ "fix Typing(e): forall env t :term. *. fun env :term -> fun t :term ->                      "
+    ; "  var: ( exists a :atom.                                                                   "
+    ; "    [e = a] ∧ InEnv {env} a {t} )                                                          "
+    ; "  ∨                                                                                        "
+    ; "  lam: ( exists a :atom. exists e' t1 t2 :term.                                            "
+    ; "    [e = lam (a.e')] ∧ (t = arrow t1 t2) ∧ (Type t1) ∧ (Typing {e'} {cons a t1 env} {t2}) )"
+    ; "  ∨                                                                                        "
+    ; "  app: ( exists e1 e2 t2 :term.                                                            "
+    ; "    [e = app e1 e2] ∧ (Typing {e1} {env} {arrow t2 t}) ∧ (Typing {e2} {env} {t2})       )" ]
+
+let lambda_symbols = funcs_env ["lam"; "app"; "base"; "arrow"; "nil"; "cons"]
+
 let th15 =
-  let id15 = funcs_env ["base"; "arrow"] in
-  let e15 =
-    parse_mapping id15 [] []
-      [ ( "Type"
-        , "fix Type(t):*. t = base ∨                                                            \
-           (exists t1 t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))" ) ]
-  in
+  let e15 = parse_mapping lambda_symbols [] [] [("Type", type_formula)] in
   (e15, parse_formula e15 "Type {arrow base base}")
 
 let proof15 =
-  proof' %> compute %> right
+  proof' %> compute %> case "arrow"
   %> (exists "base" %> exists "base" %> by_solver)
   %> destruct_goal
-  %> repeat (compute %> left %> by_solver)
+  %> repeat (compute %> case "base" %> by_solver)
 
 let th16 =
-  let id16 = funcs_env ["nil"; "cons"; "base"; "arrow"] @ atoms_env ["c"; "d"] in
-  let e16 =
-    parse_mapping id16 [] []
-      [ ( "InEnv"
-        , "fix InEnv(env):forall a:atom. forall t:term. *. fun a:atom -> fun t:term ->          \
-           (exists env' : term. env  = cons a t env') ∨                                         \
-           (exists b : atom. exists s env': term.                                               \
-           [env = cons b s env'] ∧ (InEnv env' a {t}))" ) ]
-  in
+  let id16 = lambda_symbols @ atoms_env ["c"; "d"] in
+  let e16 = parse_mapping id16 [] [] [("InEnv", inenv_formula)] in
   (e16, parse_formula e16 "InEnv {cons c (arrow base base) (cons d base nil)} d {base}")
 
 let proof16 =
-  proof' %> compute %> right
+  proof' %> compute %> case "next"
   %> (exists "c" %> exists "arrow base base" %> exists "cons d base nil" %> by_solver)
-  %> compute %> left
+  %> compute %> case "current"
   %> (exists "nil" %> by_solver)
 
 let th17 =
-  let id16 =
-    funcs_env ["nil"; "cons"; "base"; "arrow"; "lam"; "app"] @ atoms_env ["a"; "b"; "c"; "d"]
-  in
+  let id16 = lambda_symbols @ atoms_env ["a"; "b"; "c"; "d"] in
   let e16 =
     parse_mapping id16 [] []
-      [ ( "Type"
-        , "fix Type(t):*. t = base ∨                                                            \
-           (exists t1 t2:term. [t = arrow t1 t2] ∧ (Type t1) ∧ (Type t2))" )
-      ; ( "InEnv"
-        , "fix InEnv(env):forall a:atom. forall t:term. *. fun a:atom -> fun t:term ->            \
-           (exists env' :term. env = cons a t env') ∨                                             \
-           (exists b :atom. exists s env' :term.                                                  \
-           [env = cons b s env'] ∧ (InEnv env' a {t}))" )
-      ; ( "Typing"
-        , "fix Typing(e):forall env t :term. *. fun env:term -> fun t:term ->                     \
-           (exists a :atom. [e = a] ∧ InEnv {env} a {t})                                          \
-           ∨                                                                                      \
-           (exists a :atom. exists e' t1 t2 :term. [e = lam a e'] ∧ (t = arrow t1 t2)             \
-           ∧ (Type t1) ∧ (Typing {e'} {cons a t1 env} {t2}))                                      \
-           ∨                                                                                      \
-           (exists e1 e2 t2 :term. [e = app e1 e2]                                                \
-           ∧ (Typing {e1} {env} {arrow t2 t}) ∧ (Typing {e2} {env} {t2}))" ) ]
+      [("Type", type_formula); ("InEnv", inenv_formula); ("Typing", typing_formula)]
   in
-  (e16, parse_formula e16 "Typing {app (lam c c) d} {cons d base nil} {base}")
+  (e16, parse_formula e16 "Typing {app (lam (c.c)) d} {cons d base nil} {base}")
 
 let proof17 th17 =
   proof' th17 |> compute
-  |> destruct_goal' 2 %> exists "lam c c" %> exists "d" %> exists "base" %> compute
+  |> case "app" %> exists "lam (c.c)" %> exists "d" %> exists "base" %> compute
   |> by_solver %> destruct_goal %> compute
-  |> right %> exists "c" %> exists "c" %> exists "base" %> exists "base" %> by_solver
+  |> case "lam" %> exists "c" %> exists "c" %> exists "base" %> exists "base" %> by_solver
   |> destruct_goal |> by_solver %> compute
-  |> left %> by_solver %> compute
-  |> left %> exists "c" %> by_solver %> compute
-  |> left %> exists "cons d base nil" %> by_solver %> compute
-  |> left %> exists "d" %> by_solver %> compute
-  |> left %> exists "nil" %> by_solver
+  |> case "base" %> by_solver %> compute
+  |> case "var" %> exists "c" %> by_solver %> compute
+  |> case "current" %> exists "cons d base nil" %> by_solver %> compute
+  |> case "var" %> exists "d" %> by_solver %> compute
+  |> case "current" %> exists "nil" %> by_solver
 
 let _ = test_proof th1 proof1
 

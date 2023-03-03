@@ -164,14 +164,14 @@ let merge_envs = List.fold_left (flip $ union % env) empty
 let and_i = function
   | [] | [_] -> raise $ ProofException "Cannot introduce conjunction with less than two conjuncts"
   | ps       ->
-      let f = F_And (List.map label ps) in
+      let f = F_And (List.map (pair "" % label) ps) in
       P_AndIntro ((merge_envs ps, f), ps)
 
 let and_e f p_fs =
   match judgement p_fs with
   | _, F_And [] | _, F_And [_] ->
       raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
-  | env, F_And fs when List.exists (fun g -> f === g <| env) fs -> P_AndElim ((env, f), p_fs)
+  | env, F_And fs when List.exists (fun (_, g) -> f === g <| env) fs -> P_AndElim ((env, f), p_fs)
   | _, g -> raise $ not_a_conjunction_with f g
 
 let or_i disjuncts p =
@@ -179,7 +179,7 @@ let or_i disjuncts p =
   | [] | [_] -> raise $ ProofException "Cannot introduce disjunction with less than two disjuncts"
   | fs       -> (
     match judgement p with
-    | env, f when List.exists (fun g -> f === g <| env) fs -> P_Intro ((env, F_Or fs), p)
+    | env, f when List.exists (fun (_, g) -> f === g <| env) fs -> P_Intro ((env, F_Or fs), p)
     | _, f -> raise % not_a_disjunction_with f $ F_Or fs )
 
 let or_e or_proof ps =
@@ -190,8 +190,10 @@ let or_e or_proof ps =
       let fs = disjuncts $ label or_proof in
       let env = env p in
       let test_proof f p = premise (label p) === f <| env && conclusion (label p) === c <| env in
-      if List.for_all2 test_proof fs ps then P_OrElim ((merge_envs ps, c), ps)
-      else raise % formula_mismatch (label or_proof) $ F_Or (List.map (premise % label) ps)
+      if List.for_all2 (test_proof % snd) fs ps then P_OrElim ((merge_envs ps, c), ps)
+      else
+        let f = F_Or (List.map (pair "" % premise % label) ps) in
+        raise $ formula_mismatch (label or_proof) f
 
 (*   G, x, forall y:term. [y < x] => f(y) |- f(x)  *)
 (* ----------------------------------------------- *)

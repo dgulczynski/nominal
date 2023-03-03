@@ -68,8 +68,8 @@ let rec pformula_to_formula env = function
   | PF_Top                     -> F_Top
   | PF_Bot                     -> F_Bot
   | PF_Constr c                -> F_Constr (pconstr_to_constr env c)
-  | PF_Or fs                   -> F_Or (List.map (pformula_to_formula env) fs)
-  | PF_And fs                  -> F_And (List.map (pformula_to_formula env) fs)
+  | PF_Or fs                   -> F_Or (List.map (on_snd $ pformula_to_formula env) fs)
+  | PF_And fs                  -> F_And (List.map (on_snd $ pformula_to_formula env) fs)
   | PF_Impl (f1, f2)           -> F_Impl (pformula_to_formula env f1, pformula_to_formula env f2)
   | PF_ForallTerm (v, f)       -> F_ForallTerm (V v, pformula_to_formula ((v, K_Var) :: env) f)
   | PF_ForallAtom (a, f)       -> F_ForallAtom (A a, pformula_to_formula ((a, K_Atom) :: env) f)

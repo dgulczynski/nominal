@@ -31,6 +31,12 @@ let const x _ = x
 
 let const2 x _ _ = x
 
+let pair x y = (x, y)
+
+let on_fst f (x, y) = (f x, y)
+
+let on_snd f (x, y) = (x, f y)
+
 let pair_eq (x1, x2) (y1, y2) = (x1 = y1 && x2 = y2) || (x1 = y2 && x2 = y1)
 
 let to_option a test = if test then Some a else None

@@ -205,12 +205,16 @@ let rec pp_print_formula env fmt formula =
         pp_formula f
     | _ -> failwith ""
   in
+  let pp_print_under_binop fmt = function
+    | "", f   -> pp_print_atomic_formula fmt f
+    | name, f -> pp_print_string fmt name ; pp_print_string fmt ": " ; pp_print_atomic_formula fmt f
+  in
   match formula with
   | F_Bot -> pp_string "⊥"
   | F_Top -> pp_string "⊤"
   | F_Var (FV x) -> pp_print_fvar env fmt x
-  | F_And fs -> pp_print_list ~pp_sep:(pp_sep " ∧ ") pp_print_atomic_formula fmt fs
-  | F_Or fs -> pp_print_list ~pp_sep:(pp_sep " ∨ ") pp_print_atomic_formula fmt fs
+  | F_And fs -> pp_print_list ~pp_sep:(pp_sep " ∧ ") pp_print_under_binop fmt fs
+  | F_Or fs -> pp_print_list ~pp_sep:(pp_sep " ∨ ") pp_print_under_binop fmt fs
   | F_Constr c -> pp_print_constr fmt c
   | F_Impl (f1, f2) ->
       pp_print_atomic_formula fmt f1 ; space () ; pp_string "=>" ; space () ; pp_print_conclusion f2

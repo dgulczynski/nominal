@@ -30,6 +30,12 @@ val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
 
 val hd_opt : 'a list -> 'a option
 
+val pair : 'a -> 'b -> 'a * 'b
+
+val on_fst : ('a1 -> 'a2) -> 'a1 * 'b -> 'a2 * 'b
+
+val on_snd : ('b1 -> 'b2) -> 'a * 'b1 -> 'a * 'b2
+
 val pair_eq : 'a * 'a -> 'a * 'a -> bool
 (** [pair_eq (x1, x2) (y1, y2) = (x1 = y1 && x2 = y2) || (x1 = y2 && x2 = y1)]*)
 

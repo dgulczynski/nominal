@@ -6,6 +6,14 @@ open ParserTerm
 open ParserKind
 open ParserConstr
 
+let maybe_named f =
+  let named =
+    let* x = identifier <* whitespace in
+    let* f = string ":" *> whitespace *> f in
+    return (x, f)
+  and unnamed = f >>| pair "" in
+  named <|> unnamed
+
 let f_bot = string_ci "false" <|> string "⊥" >>| const PF_Bot
 
 let f_top = string_ci "true" <|> string "⊤" >>| const PF_Top
@@ -16,13 +24,13 @@ let f_constr = brackets_op constr >>| fun c -> PF_Constr c
 
 let simple_formula = f_bot <|> f_top <|> f_constr <|> f_var
 
-let f_and formula =
-  sep_by2 (whitespace *> wedge <* whitespace) (simple_formula <|> parenthesized formula)
-  >>| fun fs -> PF_And fs
+let in_binop formula = maybe_named (simple_formula <|> parenthesized formula)
 
-let f_or formula =
-  sep_by2 (whitespace *> vee <* whitespace) (simple_formula <|> parenthesized formula)
-  >>| fun fs -> PF_Or fs
+let multi_binop op formula f = sep_by2 (whitespace *> op <* whitespace) $ in_binop formula >>| f
+
+let f_and formula = multi_binop wedge formula $ fun fs -> PF_And fs
+
+let f_or formula = multi_binop vee formula $ fun fs -> PF_Or fs
 
 let f_impl formula =
   let* f1 = simple_formula <|> parenthesized formula in

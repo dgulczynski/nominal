@@ -46,7 +46,8 @@ let rec free_names_of_formula = function
   | F_Bot | F_Top | F_Var _ -> []
   | F_App (f1, f2) | F_Impl (f1, f2) ->
       merge_names (free_names_of_formula f1) (free_names_of_formula f2)
-  | F_Or fs | F_And fs -> List.fold_left (fun acc -> merge_names acc % free_names_of_formula) [] fs
+  | F_Or fs | F_And fs ->
+      List.fold_left (fun acc -> merge_names acc % free_names_of_formula % snd) [] fs
   | F_Constr c -> free_names_of_constr c
   | F_ConstrAnd (c, f) | F_ConstrImpl (c, f) ->
       merge_names (free_names_of_constr c) (free_names_of_formula f)

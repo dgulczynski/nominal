@@ -25,8 +25,8 @@ type pformula =
   | PF_Bot
   | PF_Top
   | PF_Constr       of pconstr
-  | PF_And          of pformula list
-  | PF_Or           of pformula list
+  | PF_And          of (string * pformula) list
+  | PF_Or           of (string * pformula) list
   | PF_Impl         of pformula * pformula
   | PF_ForallTerm   of string * pformula
   | PF_ForallAtom   of string * pformula

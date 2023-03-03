@@ -54,8 +54,8 @@ type formula =
   | F_Bot
   | F_Top
   | F_Constr     of constr
-  | F_And        of formula list
-  | F_Or         of formula list
+  | F_And        of (string * formula) list
+  | F_Or         of (string * formula) list
   | F_Impl       of formula * formula
   | F_ForallTerm of var * formula
   | F_ForallAtom of atom * formula

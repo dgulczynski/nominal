@@ -64,7 +64,7 @@ val and_i : proof list -> proof
 
 val and_e : formula -> proof -> proof
 
-val or_i : formula list -> proof -> proof
+val or_i : (string * formula) list -> proof -> proof
 
 val or_e : proof -> proof list -> proof
 

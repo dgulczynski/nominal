@@ -62,8 +62,8 @@ let rec subst_atom_in_formula a1 a2 f =
   match f with
   | F_Bot | F_Top | F_Var _      -> f
   | F_Constr c                   -> F_Constr (sub_constr c)
-  | F_And fs                     -> F_And (List.map sub fs)
-  | F_Or fs                      -> F_Or (List.map sub fs)
+  | F_And fs                     -> F_And (List.map (on_snd sub) fs)
+  | F_Or fs                      -> F_Or (List.map (on_snd sub) fs)
   | F_Impl (f1, f2)              -> F_Impl (sub f1, sub f2)
   | F_ForallTerm (x, f)          -> F_ForallTerm (x, sub f)
   | F_ForallAtom (a, f)          -> F_ForallAtom (a, if a = a1 then f else sub f)
@@ -87,8 +87,8 @@ let rec subst_var_in_formula y t f =
   match f with
   | F_Bot | F_Top | F_Var _      -> f
   | F_Constr c                   -> F_Constr (sub_constr c)
-  | F_And fs                     -> F_And (List.map sub fs)
-  | F_Or fs                      -> F_Or (List.map sub fs)
+  | F_And fs                     -> F_And (List.map (on_snd sub) fs)
+  | F_Or fs                      -> F_Or (List.map (on_snd sub) fs)
   | F_Impl (f1, f2)              -> F_Impl (sub f1, sub f2)
   | F_ForallTerm (x, f)          -> F_ForallTerm (x, if x = y then f else sub f)
   | F_ForallAtom (a, f)          -> F_ForallAtom (a, sub f)
@@ -116,8 +116,8 @@ let rec subst_fvar_in_formula y g f =
   match f with
   | F_Bot | F_Top | F_Constr _ -> f
   | F_Var _ -> subst f (fvar y) g
-  | F_And fs -> F_And (List.map sub fs)
-  | F_Or fs -> F_Or (List.map sub fs)
+  | F_And fs -> F_And (List.map (on_snd sub) fs)
+  | F_Or fs -> F_Or (List.map (on_snd sub) fs)
   | F_Impl (f1, f2) -> F_Impl (sub f1, sub f2)
   | F_ForallTerm (x, f) -> F_ForallTerm (x, sub f)
   | F_ForallAtom (a, f) -> F_ForallAtom (a, sub f)

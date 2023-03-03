@@ -130,18 +130,21 @@ let destruct_assm_witness env f h_name h_proof h ctx =
 
 let destruct_assm_and env f h_name hs_proof hs ctx =
   (* given [h] and current goal [f] (in context [ctx]) and return goal [h => f] in proper context *)
-  let add_conjunct h (f, ctx) =
+  let add_conjunct (_, h) (f, ctx) =
     let f = F_Impl (h, f) in
     let h_proof = proof_and_elim (to_judgement (env, h)) hs_proof in
     (f, PC_ApplyLeft (to_judgement (env, f), ctx, h_proof))
   in
   let f, ctx = List.fold_right add_conjunct hs (f, ctx) in
-  let h_names = List.mapi (fun i _ -> h_name ^ "_" ^ string_of_int i) hs in
+  let h_names =
+    let h_name i (case, _) = h_name ^ "_" ^ if case <> "" then case else string_of_int i in
+    List.mapi h_name hs
+  in
   unfinished (env, f) ctx |> intros h_names
 
 let destruct_assm_or env f h_name hs_proof hs ctx =
   let h_env = remove_assm h_name env in
-  let hs_proofs = List.map (fun h -> proof_hole h_env $ F_Impl (h, f)) hs in
+  let hs_proofs = List.map (fun (_, h) -> proof_hole h_env $ F_Impl (h, f)) hs in
   find_goal_in_proof ctx $ proof_or_elim (to_judgement (env, f)) hs_proof hs_proofs
 
 let destruct_assm h_name state =
@@ -161,7 +164,7 @@ let destruct_goal state =
   match f with
   | F_And fs            ->
       let jgmt = to_judgement (env, f) in
-      let goals = List.map (proof_hole env) fs in
+      let goals = List.map (proof_hole env % snd) fs in
       find_goal_in_proof ctx $ proof_and jgmt goals
   | F_ConstrAnd (c, f') ->
       let c_proof = proof_hole env (F_Constr c) in
@@ -174,7 +177,7 @@ let destruct_goal' n state =
   let env, f = goal state in
   match f with
   | F_Or fs ->
-      let g = List.nth fs n in
+      let _, g = List.nth fs n in
       let context = PC_Or (to_judgement (env, f), context state) in
       unfinished (env, g) context
   | f       -> raise $ cannot_destruct f
@@ -194,3 +197,13 @@ let step n state =
   let mapping, _, f' = computeWHNF (mapping env) n f in
   let env = set_mapping mapping env in
   unfinished (env, f') $ PC_Equivalent (to_judgement (env, f), n, context state)
+
+let case name state =
+  let env, f = goal state in
+  let ctx = PC_Or (to_judgement (env, f), context state) in
+  match f with
+  | F_Or fs -> (
+    match List.find_opt (( = ) name % fst) fs with
+    | Some (_, f) -> unfinished (env, f) ctx
+    | None        -> raise $ unknown_case name f )
+  | f       -> raise $ not_a_disjunction f

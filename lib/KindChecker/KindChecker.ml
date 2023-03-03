@@ -60,7 +60,7 @@ let rec kind_check env kind formula =
 and kind_infer env = function
   | F_Var x -> find_fvar env x
   | F_Bot | F_Top | F_Constr _ -> Some K_Prop
-  | F_And fs | F_Or fs -> to_option K_Prop (List.for_all (is_prop env) fs)
+  | F_And fs | F_Or fs -> to_option K_Prop (List.for_all (is_prop env % snd) fs)
   | F_Impl (f1, f2) -> to_option K_Prop (is_prop env f1 && is_prop env f2)
   | F_ForallTerm (_, f) | F_ForallAtom (_, f) | F_ExistsTerm (_, f) | F_ExistsAtom (_, f) ->
       to_option K_Prop (is_prop env f)
