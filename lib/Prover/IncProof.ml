@@ -157,6 +157,7 @@ and proof_intro jgmt conclusion_proof =
     match snd jgmt with
     | F_Impl (premise, _) -> proven $ imp_i premise proof
     | F_ForallAtom (a, _) -> proven $ forall_atom_i a proof
+    | F_ForallTerm (x, _) -> proven $ forall_term_i x proof
     | F_ConstrImpl (c, _) -> proven $ constr_imp_i c proof
     | F_ConstrAnd (c, _)  -> proven $ constr_and_i c proof
     | f                   -> raise $ not_an_implication f )
