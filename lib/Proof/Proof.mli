@@ -18,6 +18,7 @@ type proof = private
   | P_AndElim        of judgement * proof
   | P_OrElim         of judgement * proof list
   | P_Equivalent     of judgement * int * proof
+  | P_Substitution   of judgement * proof
   | P_ExFalso        of judgement * proof
 
 val label : proof -> formula
@@ -35,6 +36,9 @@ val imp_e : proof -> proof -> proof
 val bot_e : formula -> proof -> proof
 
 val constr_i : proof_env -> constr -> proof
+
+val constr_e : proof_env -> proof
+(** [constr_e env] returns a proof of [false] if constraints of [env] are contradictory *)
 
 val constr_imp_i : constr -> proof -> proof
 
@@ -71,3 +75,6 @@ val or_e : proof -> proof list -> proof
 val induction_e : var -> var -> proof -> proof
 
 val equivalent : formula -> int -> proof -> proof
+
+val subst_var : var -> term -> judgement -> proof -> proof
+(** [subst_var x t (f, env) p] returns a proof of (env |- f) if [p] is a proof of [(x |=> t) (f, env)] and we *)

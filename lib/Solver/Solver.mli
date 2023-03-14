@@ -8,3 +8,6 @@ val solve_with_assumptions : constr list -> constr -> bool
 
 val ( |-: ) : constr list -> constr -> bool
 (** [ cs |-: c] is [solve_with_assumptions cs c], meaning [[]; cs |- c]*)
+
+val absurd : constr
+(** [absurd] is constraint that can be solved only with contradictory assumptions *)

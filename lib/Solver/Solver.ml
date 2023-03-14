@@ -240,3 +240,7 @@ let solve = solve_ SolverEnv.empty []
 let solve_with_assumptions = solve_ SolverEnv.empty
 
 let ( |-: ) = solve_with_assumptions
+
+let absurd =
+  let t = T_Fun "" in
+  t <: t

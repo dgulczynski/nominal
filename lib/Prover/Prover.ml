@@ -89,6 +89,7 @@ let by_solver state =
       let f_proof = proof_hole (env |> add_constr c) f' in
       let jgmt = to_judgement (env, f) in
       find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
+  | F_Bot               -> find_goal_in_proof ctx % proven $ Proof.constr_e (map_assumptions snd env)
   | f                   -> raise $ not_a_constraint f
 
 let qed = finish
@@ -207,3 +208,15 @@ let case name state =
     | Some (_, f) -> unfinished (env, f) ctx
     | None        -> raise $ unknown_case name f )
   | f       -> raise $ not_a_disjunction f
+
+let subst x_name t_source state =
+  let env, f = goal state in
+  match ProofEnv.lookup_identifier x_name env with
+  | Some (_, K_Atom)   -> failwith "atom"
+  | Some (_, K_Func)   -> failwith "func"
+  | Some (_, K_FVar _) -> failwith "fvar"
+  | None               -> failwith "none"
+  | Some (x, K_Var)    ->
+      let t = parse_term_in_env (all_identifiers env) t_source in
+      let ctx = PC_Substitution (to_judgement (env, f), V x, t, context state) in
+      unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx

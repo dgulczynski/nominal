@@ -60,10 +60,10 @@ let formula_kind_mismatch f f_kind expected_kind =
 
 let hole_in_proof = ProofException "Proof cannot have holes"
 
-let solver_failure constraints constr =
+let solver_failure constraints goal =
   let constrs' = string_of_list string_of_constr constraints in
-  let constr' = string_of_constr constr in
-  let exn = Printf.sprintf "Solver cannot solve %s |- %s" constrs' constr' in
+  let goal' = string_of_formula goal in
+  let exn = Printf.sprintf "Solver cannot solve %s |- %s" constrs' goal' in
   ProofException exn
 
 let cannot_generalize name f =

@@ -2,6 +2,7 @@ open Types
 open Common
 open ProofCommon
 open ProofEnv
+open ProofEquiv
 open ProofException
 open Substitution
 
@@ -22,6 +23,7 @@ type proof =
   | P_AndElim        of judgement * proof
   | P_OrElim         of judgement * proof list
   | P_Equivalent     of judgement * int * proof
+  | P_Substitution   of judgement * proof
   | P_ExFalso        of judgement * proof
 
 let label = function
@@ -37,6 +39,7 @@ let label = function
   | P_AndElim ((_, f), _)
   | P_OrElim ((_, f), _)
   | P_Equivalent ((_, f), _, _)
+  | P_Substitution ((_, f), _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -52,11 +55,15 @@ let env = function
   | P_AndElim ((e, _), _)
   | P_OrElim ((e, _), _)
   | P_Equivalent ((e, _), _, _)
+  | P_Substitution ((e, _), _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
 
 let axiom env f = P_Ax (ProofEnv.on_assumptions (const [f]) env, f)
+
+let remove_assumptions_equiv_to to_formula f env =
+  remove_assumptions (fun g -> f === to_formula g <| env) env
 
 let remove_assumption = remove_assumptions_equiv_to id
 
@@ -71,16 +78,22 @@ let imp_e p1 p2 =
   | f1, f2 when env |> (f2 === premise f1) -> P_Apply ((env, conclusion f1), p1, p2)
   | f1, f2 -> raise $ premise_mismatch f1 f2
 
+let solver_proof (env, f) solver_goal on_solved =
+  let constr_assumptions = List.filter_map to_constr_op $ assumptions env in
+  let assumptions = List.map (fun c -> F_Constr c) constr_assumptions in
+  let env = on_assumptions (const assumptions) env in
+  let solver_assumptions = constr_assumptions @ constraints env in
+  match Solver.solve_with_assumptions solver_assumptions solver_goal with
+  | true  -> on_solved (env, f)
+  | false -> raise $ solver_failure solver_assumptions f
+
 let constr_i env constr =
-  let identifiers = identifiers env in
-  let assumptions = List.filter (Option.is_some % to_constr_op) $ assumptions env in
-  let constraints = constraints env in
-  let mapping = mapping env in
-  let solver_assumptions = List.filter_map to_constr_op assumptions @ constraints in
-  if Solver.solve_with_assumptions solver_assumptions constr then
-    let env = ProofEnv.env identifiers constraints assumptions mapping in
-    P_Ax (env, F_Constr constr)
-  else raise $ solver_failure constraints constr
+  let judgement = (env, F_Constr constr) in
+  solver_proof judgement constr $ fun jgmt -> P_Ax jgmt
+
+let constr_e env =
+  let judgement = (env, F_Bot) in
+  solver_proof judgement Solver.absurd % const $ P_Ax judgement
 
 let constr_imp_i c p =
   let f = label p in
@@ -212,3 +225,13 @@ let equivalent f n p =
   let mapping, _, fn = computeWHNF (mapping env) n f in
   let env = set_mapping mapping env in
   if fe === fn <| env then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe
+
+let subst_var x t (env, f) p =
+  let solver_goal = var x =: t in
+  let subst_goal _ =
+    let env = map_assumptions (x |=> t) env in
+    let f = (x |=> t) f in
+    (* TODO: add checks if [env p] is the same as [env]? *)
+    P_Substitution ((env, f), p)
+  in
+  solver_proof (env, F_Constr solver_goal) solver_goal subst_goal

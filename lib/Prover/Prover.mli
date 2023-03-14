@@ -40,3 +40,5 @@ val case : string -> tactic
 val by_induction : string -> string -> tactic
 
 val step : int -> tactic
+
+val subst : string -> string -> tactic
