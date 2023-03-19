@@ -23,6 +23,8 @@ let not_an_implication = not_what_expected "an implication" % string_of_formula
 
 let not_a_constr_implication = not_what_expected "a constraint implication" % string_of_formula
 
+let not_a_constr_and = not_what_expected "a formula guarded by a constraint" % string_of_formula
+
 let not_a_constraint = not_what_expected "a constraint" % string_of_formula
 
 let not_a_forall = not_what_expected "an universal quantification" % string_of_formula

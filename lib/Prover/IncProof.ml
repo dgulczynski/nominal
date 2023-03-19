@@ -14,6 +14,8 @@ type incproof =
   | PI_Intro          of judgement * incproof
   | PI_Apply          of judgement * incproof * incproof
   | PI_ConstrAnd      of judgement * incproof * incproof
+  | PI_ConstrAndElimL of judgement * incproof
+  | PI_ConstrAndElimR of judgement * incproof
   | PI_SpecializeAtom of judgement * atom * incproof
   | PI_SpecializeTerm of judgement * term * incproof
   | PI_ExistsAtom     of judgement * atom * incproof
@@ -35,6 +37,8 @@ type proof_context =
   | PC_ApplyRight     of judgement * incproof * proof_context
   | PC_ConstrAndLeft  of judgement * proof_context * incproof
   | PC_ConstrAndRight of judgement * incproof * proof_context
+  | PC_ConstrAndElimL of judgement * proof_context
+  | PC_ConstrAndElimR of judgement * proof_context
   | PC_SpecializeAtom of judgement * atom * proof_context
   | PC_SpecializeTerm of judgement * term * proof_context
   | PC_WitnessExists  of judgement * proof_context * incproof
@@ -57,6 +61,8 @@ let judgement' = function
   | PI_Intro (jgmt, _)
   | PI_Apply (jgmt, _, _)
   | PI_ConstrAnd (jgmt, _, _)
+  | PI_ConstrAndElimL (jgmt, _)
+  | PI_ConstrAndElimR (jgmt, _)
   | PI_SpecializeAtom (jgmt, _, _)
   | PI_SpecializeTerm (jgmt, _, _)
   | PI_ExistsAtom (jgmt, _, _)
@@ -84,6 +90,8 @@ let rec hasHoles = function
   | PI_ExistsAtom (_, _, p)
   | PI_ExistsTerm (_, _, p)
   | PI_AndElim (_, p)
+  | PI_ConstrAndElimL (_, p)
+  | PI_ConstrAndElimR (_, p)
   | PI_Or (_, p)
   | PI_Induction (_, _, _, p)
   | PI_Equivalent (_, _, p)
@@ -100,6 +108,8 @@ let rec ctxHasHoles = function
   | PC_ExistsAtom (_, _, ctx)
   | PC_ExistsTerm (_, _, ctx)
   | PC_AndElim (_, ctx)
+  | PC_ConstrAndElimL (_, ctx)
+  | PC_ConstrAndElimR (_, ctx)
   | PC_Or (_, ctx)
   | PC_Induction (_, _, _, ctx)
   | PC_Equivalent (_, _, ctx)
@@ -132,6 +142,8 @@ let rec normalize incproof =
   | PI_ExFalso (jgmt, contradiction) -> proof_ex_falso jgmt contradiction
   | PI_Apply (jgmt, imp_proof, premise_proof) -> proof_apply jgmt imp_proof premise_proof
   | PI_ConstrAnd (jgmt, c_proof, f_proof) -> proof_constr_and jgmt c_proof f_proof
+  | PI_ConstrAndElimL (jgmt, c_and_f_proof) -> proof_constr_and_elim_left jgmt c_and_f_proof
+  | PI_ConstrAndElimR (jgmt, c_and_f_proof) -> proof_constr_and_elim_right jgmt c_and_f_proof
   | PI_SpecializeAtom (jgmt, a, universal_proof) -> proof_specialize_atom jgmt a universal_proof
   | PI_SpecializeTerm (jgmt, t, universal_proof) -> proof_specialize_term jgmt t universal_proof
   | PI_ExistsAtom (jgmt, witness, witness_proof) -> proof_exists_atom jgmt witness witness_proof
@@ -248,6 +260,16 @@ and proof_substitution jgmt x t proof =
   | PI_Proven proof -> proven $ subst_var x t jgmt proof
   | incproof        -> PI_Substitution (jgmt, x, t, incproof)
 
+and proof_constr_and_elim_left jgmt c_and_f_proof =
+  match normalize c_and_f_proof with
+  | PI_Proven proof -> proven $ constr_and_e_left proof
+  | incproof        -> PI_ConstrAndElimL (jgmt, incproof)
+
+and proof_constr_and_elim_right jgmt c_and_f_proof =
+  match normalize c_and_f_proof with
+  | PI_Proven proof -> proven $ constr_and_e_right proof
+  | incproof        -> PI_ConstrAndElimL (jgmt, incproof)
+
 let proof_case map_proof map_incproof incproof =
   match normalize incproof with
   | PI_Proven proof -> map_proof proof
@@ -278,6 +300,10 @@ let rec find_hole_in_proof context = function
   | PI_ConstrAnd (jgmt, lproof, rproof) when hasHoles rproof ->
       find_hole_in_proof (PC_ConstrAndRight (jgmt, lproof, context)) rproof
   | PI_ConstrAnd _ as incproof -> Either.Left (incproof_to_proof incproof, context)
+  | PI_ConstrAndElimL (jgmt, c_and_proof) ->
+      find_hole_in_proof (PC_ConstrAndElimL (jgmt, context)) c_and_proof
+  | PI_ConstrAndElimR (jgmt, c_and_proof) ->
+      find_hole_in_proof (PC_ConstrAndElimR (jgmt, context)) c_and_proof
   | PI_Witness (jgmt, exists_proof, usage_proof) when hasHoles exists_proof ->
       find_hole_in_proof (PC_WitnessExists (jgmt, context, usage_proof)) exists_proof
   | PI_Witness (jgmt, exists_proof, usage_proof) when hasHoles usage_proof ->

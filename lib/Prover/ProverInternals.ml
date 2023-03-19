@@ -34,20 +34,16 @@ and find_goal_in_ctx incproof = function
   | PC_Intro (jgmt, ctx) -> find_goal_in_ctx (proof_intro jgmt incproof) ctx
   | PC_ApplyRight (jgmt, lproof, rctx) -> find_goal_in_ctx (proof_apply jgmt lproof incproof) rctx
   | PC_ApplyLeft (jgmt, lctx, rproof) -> find_goal_in_ctx (proof_apply jgmt incproof rproof) lctx
-  | PC_ConstrAndRight (jgmt, lproof, rctx) ->
-      find_goal_in_ctx (proof_constr_and jgmt lproof incproof) rctx
-  | PC_ConstrAndLeft (jgmt, lctx, rproof) ->
-      find_goal_in_ctx (proof_constr_and jgmt incproof rproof) lctx
+  | PC_ConstrAndRight (jgmt, lproof, rctx) -> find_goal_in_ctx (proof_constr_and jgmt lproof incproof) rctx
+  | PC_ConstrAndLeft (jgmt, lctx, rproof) -> find_goal_in_ctx (proof_constr_and jgmt incproof rproof) lctx
+  | PC_ConstrAndElimR (jgmt, ctx) -> find_goal_in_ctx (proof_constr_and_elim_left jgmt incproof) ctx
+  | PC_ConstrAndElimL (jgmt, ctx) -> find_goal_in_ctx (proof_constr_and_elim_right jgmt incproof) ctx
   | PC_SpecializeAtom (jgmt, a, ctx) -> find_goal_in_ctx (proof_specialize_atom jgmt a incproof) ctx
   | PC_SpecializeTerm (jgmt, t, ctx) -> find_goal_in_ctx (proof_specialize_term jgmt t incproof) ctx
-  | PC_ExistsAtom (jgmt, witness, ctx) ->
-      find_goal_in_ctx (proof_exists_atom jgmt witness incproof) ctx
-  | PC_ExistsTerm (jgmt, witness, ctx) ->
-      find_goal_in_ctx (proof_exists_term jgmt witness incproof) ctx
-  | PC_WitnessExists (jgmt, ctx, usage_proof) ->
-      find_goal_in_ctx (proof_witness jgmt incproof usage_proof) ctx
-  | PC_WitnessUsage (jgmt, exists_proof, ctx) ->
-      find_goal_in_ctx (proof_witness jgmt exists_proof incproof) ctx
+  | PC_ExistsAtom (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_atom jgmt witness incproof) ctx
+  | PC_ExistsTerm (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_term jgmt witness incproof) ctx
+  | PC_WitnessExists (jgmt, ctx, usage_proof) -> find_goal_in_ctx (proof_witness jgmt incproof usage_proof) ctx
+  | PC_WitnessUsage (jgmt, exists_proof, ctx) -> find_goal_in_ctx (proof_witness jgmt exists_proof incproof) ctx
   | PC_And (jgmt, proofs, ctx) ->
       let proofs = Zipper.to_list $ Zipper.insert incproof proofs in
       find_goal_in_ctx (proof_and jgmt proofs) ctx

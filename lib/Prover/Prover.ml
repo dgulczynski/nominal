@@ -148,6 +148,14 @@ let destruct_assm_or env f h_name hs_proof hs ctx =
   let hs_proofs = List.map (fun (_, h) -> proof_hole h_env $ F_Impl (h, f)) hs in
   find_goal_in_proof ctx $ proof_or_elim (to_judgement (env, f)) hs_proof hs_proofs
 
+let destruct_assm_constr_and env f h_name c_and_h_proof c h ctx =
+  let c_proof = proof_constr_and_elim_left (to_judgement (env, F_Constr c)) c_and_h_proof in
+  let h_proof = proof_constr_and_elim_right (to_judgement (env, h)) c_and_h_proof in
+  let ctx = PC_ApplyLeft (to_judgement (env, f), ctx, c_proof) in
+  let ctx = PC_ApplyLeft (to_judgement (env, F_Impl (h, f)), ctx, h_proof) in
+  let jgmt = (env |> remove_assm h_name, F_ConstrImpl (c, F_Impl (h, f))) in
+  unfinished jgmt ctx |> intro |> intros [h_name]
+
 let destruct_assm h_name state =
   let env, f = goal state in
   let h_proof = assm_proof h_name env in
@@ -155,8 +163,9 @@ let destruct_assm h_name state =
   match label' h_proof with
   | F_ExistsTerm (V x, h_x) -> destruct_assm_witness (add_var x env) f h_name h_proof h_x ctx
   | F_ExistsAtom (A a, h_a) -> destruct_assm_witness (add_atom a env) f h_name h_proof h_a ctx
-  | F_And fs                -> destruct_assm_and env f h_name h_proof fs ctx
-  | F_Or fs                 -> destruct_assm_or env f h_name h_proof fs ctx
+  | F_And hs                -> destruct_assm_and env f h_name h_proof hs ctx
+  | F_Or hs                 -> destruct_assm_or env f h_name h_proof hs ctx
+  | F_ConstrAnd (c, h)      -> destruct_assm_constr_and env f h_name h_proof c h ctx
   | f                       -> raise $ cannot_destruct f
 
 let destruct_goal state =

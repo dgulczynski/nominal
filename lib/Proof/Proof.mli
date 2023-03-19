@@ -10,7 +10,7 @@ type proof = private
   | P_Intro          of judgement * proof
   | P_Apply          of judgement * proof * proof
   | P_ConstrApply    of judgement * proof * proof
-  | P_ConstrAndElim  of judgement * proof * proof
+  | P_ConstrAndElim  of judgement * proof
   | P_SpecializeAtom of judgement * atom * proof
   | P_SpecializeTerm of judgement * term * proof
   | P_Witness        of judgement * proof * proof
@@ -46,7 +46,9 @@ val constr_imp_e : proof -> proof -> proof
 
 val constr_and_i : constr -> proof -> proof
 
-val constr_and_e : proof -> proof -> proof
+val constr_and_e_left : proof -> proof
+
+val constr_and_e_right : proof -> proof
 
 val forall_atom_i : atom -> proof -> proof
 
