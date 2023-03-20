@@ -135,9 +135,12 @@ let forall_atom_i (A a_name as a) p =
   | Some f -> raise $ cannot_generalize a_name f
 
 let forall_atom_e (A _b_name as b) p =
-  match judgement p with
-  | env, F_ForallAtom (a, f) -> P_SpecializeAtom ((env, (a |-> b) f), b, p)
-  | _, f                     -> raise $ not_a_forall f
+  let env, f = judgement p in
+  let on_forall_atom a f = SpecializedAtom (b, (a |-> b) f) in
+  let on_forall_term _ = raise % not_a_forall_atom in
+  match specialize on_forall_atom on_forall_term f with
+  | SpecializedAtom (b, f) -> P_SpecializeAtom ((env, f), b, p)
+  | SpecializedTerm (_, f) -> raise $ not_a_forall_atom f
 
 let forall_term_i (V x_name as x) p =
   let env, f = judgement p in
@@ -146,9 +149,12 @@ let forall_term_i (V x_name as x) p =
   | Some f -> raise $ cannot_generalize x_name f
 
 let forall_term_e t p =
-  match judgement p with
-  | env, F_ForallTerm (x, f) -> P_SpecializeTerm ((env, (x |=> t) f), t, p)
-  | _, f                     -> raise $ not_a_forall f
+  let env, f = judgement p in
+  let on_forall_atom _ = raise % not_a_forall_term in
+  let on_forall_term x f = SpecializedTerm (t, (x |=> t) f) in
+  match specialize on_forall_atom on_forall_term f with
+  | SpecializedAtom (_, f) -> raise $ not_a_forall_term f
+  | SpecializedTerm (t, f) -> P_SpecializeTerm ((env, f), t, p)
 
 let exists_atom_i (A a_name as a) b f_a p =
   let f = (a |-> b) f_a in

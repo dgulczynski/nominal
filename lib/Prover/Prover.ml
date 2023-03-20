@@ -52,14 +52,18 @@ let apply_assm h_name state =
 
 let apply_assm_specialized h_name specs state =
   let specialize_proof proof spec =
-    match judgement' proof with
-    | env, F_ForallAtom (b, f) ->
-        let a = parse_atom_in_env (identifiers env) spec in
-        proof_specialize_atom (env, (b |-> a) f) a proof
-    | env, F_ForallTerm (x, f) ->
-        let t = parse_term_in_env (identifiers env) spec in
-        proof_specialize_term (env, (x |=> t) f) t proof
-    | _, f                     -> raise $ not_a_forall f
+    let env, h = judgement' proof in
+    let on_forall_atom a f =
+      let b = parse_atom_in_env (all_identifiers env) spec in
+      SpecializedAtom (b, (a |-> b) f)
+    in
+    let on_forall_term x f =
+      let t = parse_term_in_env (all_identifiers env) spec in
+      SpecializedTerm (t, (x |=> t) f)
+    in
+    match specialize on_forall_atom on_forall_term h with
+    | SpecializedAtom (a, f) -> proof_specialize_atom (env, f) a proof
+    | SpecializedTerm (t, f) -> proof_specialize_term (env, f) t proof
   in
   let env = goal_env state in
   let h_proof = List.fold_left specialize_proof (assm_proof h_name env) specs in

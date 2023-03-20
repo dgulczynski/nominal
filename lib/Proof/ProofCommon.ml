@@ -3,6 +3,8 @@ open ProofException
 open Substitution
 open Types
 
+type specialized = SpecializedAtom of atom * formula | SpecializedTerm of term * formula
+
 type formula_mapping = {bind: fvar_binder; body: formula}
 
 type mapping = formula_mapping list
@@ -118,3 +120,16 @@ and ( === ) f1 f2 mapping =
   equiv mapping mapping n n f1 f2
 
 let ( =/= ) f1 f2 = not % (f1 === f2)
+let specialize on_forall_atom on_forall_term =
+  let ( <$> ) g = function
+    | SpecializedAtom (a, f) -> SpecializedAtom (a, g f)
+    | SpecializedTerm (t, f) -> SpecializedTerm (t, g f)
+  in
+  let rec specialize' = function
+    | F_ForallAtom (a, f) -> on_forall_atom a f
+    | F_ForallTerm (x, f) -> on_forall_term x f
+    | F_Impl (premise, f) -> (fun f -> F_Impl (premise, f)) <$> specialize' f
+    | F_ConstrImpl (c, f) -> (fun f -> F_ConstrImpl (c, f)) <$> specialize' f
+    | f                   -> raise $ cannot_specialize f
+  in
+  specialize'

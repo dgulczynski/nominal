@@ -27,7 +27,11 @@ let not_a_constr_and = not_what_expected "a formula guarded by a constraint" % s
 
 let not_a_constraint = not_what_expected "a constraint" % string_of_formula
 
-let not_a_forall = not_what_expected "an universal quantification" % string_of_formula
+let not_a_forall_atom =
+  not_what_expected "an universal quantification over atoms" % string_of_formula
+
+let not_a_forall_term =
+  not_what_expected "an universal quantification over terms" % string_of_formula
 
 let not_an_exists = not_what_expected "an existential quantification" % string_of_formula
 
@@ -83,4 +87,11 @@ let cannot_infer_kind f_source =
 
 let unknown_case case f =
   let exn = Printf.sprintf "There is no case `%s` in `%s`" case (string_of_formula f) in
+  ProofException exn
+
+let cannot_specialize f =
+  let exn =
+    Printf.sprintf "Only implications and foralls can be specialized, not `%s`"
+      (string_of_formula f)
+  in
   ProofException exn
