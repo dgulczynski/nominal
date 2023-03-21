@@ -61,12 +61,11 @@ let env = function
 
 let judgement proof = (env proof, label proof)
 
-let assumption env f =
-  P_Ax (ProofEnv.env (identifiers env) (constraints env) [f] (mapping env) id, f)
+let assumption env f = P_Ax (ProofEnv.env (identifiers env) (constraints env) [f] (mapping env) id, f)
 
-let remove_assumption f env =
-  let equiv_to_f = (fun g -> f === g <| env) % to_formula env in
-  remove_assumptions equiv_to_f env
+let remove_assumptions_equiv_to to_formula f env = remove_assumptions (fun g -> f === to_formula g <| env) env
+
+let remove_assumption = remove_assumptions_equiv_to id
 
 let imp_i f p =
   let f' = label p in
@@ -173,13 +172,15 @@ let exists_term_i (V x_name as x) t f_x p =
     P_Intro ((env, F_ExistsTerm (x, f_x)), p)
   else raise $ formula_mismatch f f'
 
-let exist_e p_exists p =
+let exist_e p_exists witness p =
+  let remove_witness = function
+    | F_ExistsTerm (V x, f_x) -> remove_identifier witness %> remove_assumption ((V x |=> var (V witness)) f_x)
+    | F_ExistsAtom (A a, f_a) -> remove_identifier witness %> remove_assumption ((A a |-> A witness) f_a)
+    | g                       -> raise $ not_an_exists g
+  in
   let env, f = judgement p in
-  match judgement p_exists with
-  | env_x, F_ExistsAtom (A x, f_x) | env_x, F_ExistsTerm (V x, f_x) ->
-      let env = env |> union env_x |> remove_identifier x |> remove_assumption f_x in
-      P_Witness ((env, f), p_exists, p)
-  | _, g -> raise $ not_an_exists g
+  let env_x, f_x = judgement p_exists in
+  P_Witness ((env |> remove_witness f_x |> union env_x, f), p_exists, p)
 
 let merge_envs = List.fold_left (flip $ union % env) $ empty id
 
@@ -191,8 +192,7 @@ let and_i = function
 
 let and_e f p_fs =
   match judgement p_fs with
-  | _, F_And [] | _, F_And [_] ->
-      raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
+  | _, F_And [] | _, F_And [_] -> raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
   | env, F_And fs when List.exists (fun (_, g) -> f === g <| env) fs -> P_AndElim ((env, f), p_fs)
   | _, g -> raise $ not_a_conjunction_with f g
 
@@ -237,10 +237,24 @@ let equivalent f n p =
   let env, _, fn = computeWHNF env n f in
   if fe === fn <| env then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe
 
+let rename (V x_name as x) (V y_name as y) p =
+  let env, f = judgement p in
+  match env |> find_bind y_name with
+  | Some f ->
+      failwith
+      $ Printing.unwords
+          [ "cannot rename"
+          ; x_name
+          ; "to"
+          ; y_name
+          ; "its bound in"
+          ; Printing.string_of_formula_in_env (all_identifiers env) f ]
+  | None   -> P_Substitution ((subst_var ( |=> ) x (var y) env, (x |=> var y) f), p)
+
 let subst_var x t (env, f) p =
   let solver_goal = var x =: t in
   let subst_goal _ =
-    let env = map_assumptions (x |=> t) id env in
+    let env = subst_var ( |=> ) x t env in
     let f = (x |=> t) f in
     (* TODO: add checks if [env p] is the same as [env]? *)
     P_Substitution ((env, f), p)
@@ -254,8 +268,7 @@ module Axiom = struct
     let a = A "a" and b = A "b" in
     let constr_same = F_Constr (atom a =: atom b) in
     let constr_diff = F_Constr (a =/=: pure b) in
-    axiom
-    $ F_ForallAtom (a, F_ForallAtom (b, F_Or [("same", constr_same); ("different", constr_diff)]))
+    axiom $ F_ForallAtom (a, F_ForallAtom (b, F_Or [("same", constr_same); ("different", constr_diff)]))
 
   let exists_fresh =
     let a = A "a" and t = V "t" in

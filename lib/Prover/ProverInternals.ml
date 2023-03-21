@@ -43,8 +43,10 @@ and find_goal_in_ctx incproof = function
   | PC_SpecializeTerm (jgmt, t, ctx) -> find_goal_in_ctx (proof_specialize_term jgmt t incproof) ctx
   | PC_ExistsAtom (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_atom jgmt witness incproof) ctx
   | PC_ExistsTerm (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_term jgmt witness incproof) ctx
-  | PC_WitnessExists (jgmt, ctx, usage_proof) -> find_goal_in_ctx (proof_witness jgmt incproof usage_proof) ctx
-  | PC_WitnessUsage (jgmt, exists_proof, ctx) -> find_goal_in_ctx (proof_witness jgmt exists_proof incproof) ctx
+  | PC_WitnessExists (jgmt, ctx, witness, usage_proof) ->
+      find_goal_in_ctx (proof_witness jgmt incproof witness usage_proof) ctx
+  | PC_WitnessUsage (jgmt, exists_proof, witness, ctx) ->
+      find_goal_in_ctx (proof_witness jgmt exists_proof witness incproof) ctx
   | PC_And (jgmt, proofs, ctx) ->
       let proofs = Zipper.to_list $ Zipper.insert incproof proofs in
       find_goal_in_ctx (proof_and jgmt proofs) ctx
@@ -57,6 +59,7 @@ and find_goal_in_ctx incproof = function
   | PC_Induction (jgmt, x, y, ctx) -> find_goal_in_ctx (proof_induction jgmt x y incproof) ctx
   | PC_Equivalent (jgmt, n, ctx) -> find_goal_in_ctx (proof_equivalent jgmt n incproof) ctx
   | PC_Substitution (jgmt, x, t, ctx) -> find_goal_in_ctx (proof_substitution jgmt x t incproof) ctx
+  | PC_Rename (jgmt, x, y, ctx) -> find_goal_in_ctx (proof_rename jgmt x y incproof) ctx
   | PC_ExFalso (jgmt, ctx) -> find_goal_in_ctx (proof_ex_falso jgmt incproof) ctx
 
 (** [destruct_impl c f] is

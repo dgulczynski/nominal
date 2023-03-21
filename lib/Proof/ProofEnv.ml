@@ -55,11 +55,7 @@ let rec merge xs ys =
 let union
     {assumptions= a1; identifiers= i1; constraints= c1; mapping= v1; to_formula}
     {assumptions= a2; identifiers= i2; constraints= c2; mapping= v2; _} =
-  { assumptions= merge a1 a2
-  ; identifiers= merge i1 i2
-  ; constraints= merge c1 c2
-  ; mapping= merge v1 v2
-  ; to_formula }
+  {assumptions= merge a1 a2; identifiers= merge i1 i2; constraints= merge c1 c2; mapping= merge v1 v2; to_formula}
 
 let add_fvar x_name x_rep x_kind = on_identifiers $ merge [(x_name, K_FVar (x_rep, x_kind))]
 
@@ -135,26 +131,26 @@ let parse_mapping identifiers constraints assumptions to_formula source_mapping 
         let f_var =
           match f_body with
           | F_Fix (FV_Bind (_, x, _), _, _, _) -> x
-          | _ -> fresh_fvar_arg ()
+          | _                                  -> fresh_fvar_arg ()
         in
         {bind= FV_Bind (f_name, f_var, f_kind); body= f_body} :: mapping
     | None        -> raise $ cannot_infer_kind f_name
   in
   env identifiers constraints assumptions (List.fold_left aux [] source_mapping) to_formula
 
-let subst_var subst_assm (V x_name as x) t env =
-  { assumptions= List.map (subst_assm x t) $ assumptions env
-  ; identifiers= List.filter (( = ) x_name % fst) $ identifiers env
-  ; constraints= List.map (subst_var_in_constr x t) $ constraints env
-  ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> t) body}) $ mapping env
-  ; to_formula= to_formula env }
+let subst_var subst_assm (V x_name as x) t {assumptions; identifiers; constraints; mapping; to_formula} =
+  { assumptions= List.map (subst_assm x t) assumptions
+  ; identifiers= List.filter (not % ( = ) x_name % fst) identifiers
+  ; constraints= List.map (subst_var_in_constr x t) constraints
+  ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> t) body}) mapping
+  ; to_formula }
 
-let rename_var subst_assm (V x_name as x) (V y_name as y) env =
-  { assumptions= List.map (subst_assm x (var y)) $ assumptions env
-  ; identifiers= List.map (on_fst (fun z -> if z = x_name then y_name else z)) $ identifiers env
-  ; constraints= List.map (subst_var_in_constr x (var y)) $ constraints env
-  ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> var y) body}) $ mapping env
-  ; to_formula= to_formula env }
+let rename_var subst_assm (V x_name as x) (V y_name as y) {assumptions; identifiers; constraints; mapping; to_formula} =
+  { assumptions= List.map (subst_assm x (var y)) assumptions
+  ; identifiers= List.map (on_fst (fun z -> if z = x_name then y_name else z)) identifiers
+  ; constraints= List.map (subst_var_in_constr x (var y)) constraints
+  ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> var y) body}) mapping
+  ; to_formula }
 
 let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints; mapping; _} =
   let pp_sep fmt () = pp_print_string fmt "\n; " in

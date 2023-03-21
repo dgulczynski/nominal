@@ -13,6 +13,8 @@ val apply : formula -> tactic
 
 val apply_thm : proof -> tactic
 
+val apply_thm_specialized : proof -> string list -> tactic
+
 val apply_assm : string -> tactic
 
 val apply_assm_specialized : string -> string list -> tactic
@@ -29,6 +31,8 @@ val exists : string -> tactic
 
 val destruct_assm : string -> tactic
 
+val destruct_assm' : string -> string list -> tactic
+
 val destruct_goal : tactic
 
 val destruct_goal' : int -> tactic
@@ -40,6 +44,10 @@ val by_induction : string -> string -> tactic
 val step : int -> tactic
 
 val subst : string -> string -> tactic
+
+val rename : string -> string -> tactic
+
+val intros' : string list -> tactic
 
 val add_assumption_thm : string -> proof -> tactic
 

@@ -64,7 +64,7 @@ val exists_atom_i : atom -> atom -> formula -> proof -> proof
 val exists_term_i : var -> term -> formula -> proof -> proof
 (** [exists_term_i x t f p] is a proof of [exists x : term. f] where [t] is the witness and [p] is proof of [(x |=> t) f]*)
 
-val exist_e : proof -> proof -> proof
+val exist_e : proof -> string -> proof -> proof
 
 val and_i : proof list -> proof
 
@@ -77,6 +77,8 @@ val or_e : proof -> proof list -> proof
 val induction_e : var -> var -> proof -> proof
 
 val equivalent : formula -> int -> proof -> proof
+
+val rename : var -> var -> proof -> proof
 
 val subst_var : var -> term -> judgement -> proof -> proof
 (** [subst_var x t (f, env) p] returns a proof of (env |- f) if [p] is a proof of [(x |=> t) (f, env)] and we *)

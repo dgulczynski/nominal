@@ -3,7 +3,7 @@ break-cases = fit-or-vertical
 break-fun-decl = fit-or-vertical
 wrap-comments = true
 match-indent-nested = auto
-margin = 100
+margin = 110
 align-cases
 align-constructors-decl
 align-variants-decl

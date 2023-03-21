@@ -49,8 +49,7 @@ val remove_identifiers : (identifier -> bool) -> 'a env -> 'a env
 
 val parse_formula : 'a env -> string -> formula
 
-val parse_mapping :
-  identifier_env -> constr list -> 'a list -> ('a -> formula) -> (string * string) list -> 'a env
+val parse_mapping : identifier_env -> constr list -> 'a list -> ('a -> formula) -> (string * string) list -> 'a env
 
 val kind_checker_env : 'a env -> KindCheckerEnv.t
 

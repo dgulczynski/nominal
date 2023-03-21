@@ -20,7 +20,7 @@ let string_of_list' ?(left = "[") ?(sep = "; ") ?(right = "]") string_of_item =
 
 let string_of_list string_of_item = string_of_list' string_of_item
 
-let unwords = string_of_list' ~left:"" ~right:"" id
+let unwords = String.concat " "
 
 let string_of_atom_arg (A a) = a
 

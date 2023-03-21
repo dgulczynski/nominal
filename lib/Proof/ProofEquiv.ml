@@ -1,8 +1,8 @@
 open Common
 open ProofCommon
 open ProofEnv
-open Substitution
 open Solver
+open Substitution
 open Types
 
 let lookup_formula env (FV x) =
@@ -21,16 +21,12 @@ let constr_equiv env1 env2 c1 c2 =
   match (c1, c2) with
   | C_AtomEq (a1, b1), C_AtomEq (a2, b2) | C_AtomNeq (a1, b1), C_AtomNeq (a2, b2) ->
       (atom a1, T_Atom b1) =:= (atom a2, T_Atom b2)
-  | C_AtomEq (a, b), C_Eq (t1, t2) | C_Eq (t1, t2), C_AtomEq (a, b) ->
-      (atom a, T_Atom b) =:= (t1, t2)
-  | C_Shape (t1, t2), C_Shape (t1', t2')
-  | C_Subshape (t1, t2), C_Subshape (t1', t2')
-  | C_Eq (t1, t2), C_Eq (t1', t2') -> (t1, t2) =:= (t1', t2')
-  | C_AtomNeq (a1, b1), C_Fresh (a2, t2) | C_Fresh (a2, t2), C_AtomNeq (a1, b1) ->
-      (atom a1, T_Atom b1) =:= (atom a2, t2)
+  | C_AtomEq (a, b), C_Eq (t1, t2) | C_Eq (t1, t2), C_AtomEq (a, b) -> (atom a, T_Atom b) =:= (t1, t2)
+  | C_Shape (t1, t2), C_Shape (t1', t2') | C_Subshape (t1, t2), C_Subshape (t1', t2') | C_Eq (t1, t2), C_Eq (t1', t2')
+    -> (t1, t2) =:= (t1', t2')
+  | C_AtomNeq (a1, b1), C_Fresh (a2, t2) | C_Fresh (a2, t2), C_AtomNeq (a1, b1) -> (atom a1, T_Atom b1) =:= (atom a2, t2)
   | C_Fresh (a1, t1), C_Fresh (a2, t2) -> (atom a1, t1) =:= (atom a2, t2)
-  | C_AtomEq _, _ | C_Shape _, _ | C_Subshape _, _ | C_AtomNeq _, _ | C_Eq _, _ | C_Fresh _, _ ->
-      false
+  | C_AtomEq _, _ | C_Shape _, _ | C_Subshape _, _ | C_AtomNeq _, _ | C_Eq _, _ | C_Fresh _, _ -> false
 
 let rec computeWHNF env n f =
   if n <= 0 then (env, 0, f)
@@ -97,8 +93,7 @@ and equiv env1 env2 n1 n2 f1 f2 =
     match lookup_formula env2 x2 with
     | Some f2 -> f1 === f2
     | None    -> false (* f1 is not a fvar*) )
-  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s ->
-      List.for_all2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
+  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s -> List.for_all2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
   | F_And _, _ | F_Or _, _ -> false
   | F_Constr c1, F_Constr c2 -> constr_equiv env1 env2 c1 c2
   | F_Constr _, _ -> false
@@ -121,20 +116,15 @@ and equiv env1 env2 n1 n2 f1 f2 =
   | F_FunTerm (x1, f1), F_FunTerm (x2, f2) ->
       let x = var (fresh_var ()) in
       (x1 |=> x) f1 === (x2 |=> x) f2
-  | F_ForallAtom _, _
-  | F_ForallTerm _, _
-  | F_ExistsAtom _, _
-  | F_ExistsTerm _, _
-  | F_FunTerm _, _
-  | F_FunAtom _, _ -> false
+  | F_ForallAtom _, _ | F_ForallTerm _, _ | F_ExistsAtom _, _ | F_ExistsTerm _, _ | F_FunTerm _, _ | F_FunAtom _, _ ->
+      false
   | F_Fun (FV_Bind (_, x1, k1), f1), F_Fun (FV_Bind (_, x2, k2), f2) ->
       k1 = k2
       &&
       let x = fresh_fvar () in
       (x1 |==> F_Var x) f1 === (x2 |==> F_Var x) f2
   | F_Fun _, _ -> false
-  | F_Fix (FV_Bind (_, fix1, fix1_k), x1, x1_k, f1), F_Fix (FV_Bind (_, fix2, fix2_k), x2, x2_k, f2)
-    ->
+  | F_Fix (FV_Bind (_, fix1, fix1_k), x1, x1_k, f1), F_Fix (FV_Bind (_, fix2, fix2_k), x2, x2_k, f2) ->
       fix1_k = fix2_k && x1_k = x2_k
       &&
       let x = fresh_var () and fix = fresh_fvar () in
@@ -171,13 +161,11 @@ and equiv_syntactic env1 env2 n1 n2 f1 f2 =
     match lookup_formula env2 x2 with
     | Some f2 -> f1 === f2
     | None    -> false (* f1 is not a fvar*) )
-  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s ->
-      List.for_all2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
+  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s -> List.for_all2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
   | F_And _, _ | F_Or _, _ -> false
   | F_Constr c1, F_Constr c2 -> c1 = c2
   | F_Constr _, _ -> false
-  | F_ConstrImpl (c1, f1), F_ConstrImpl (c2, f2) | F_ConstrAnd (c1, f1), F_ConstrAnd (c2, f2) ->
-      c1 = c2 && f1 === f2
+  | F_ConstrImpl (c1, f1), F_ConstrImpl (c2, f2) | F_ConstrAnd (c1, f1), F_ConstrAnd (c2, f2) -> c1 = c2 && f1 === f2
   | F_ConstrImpl _, _ | F_ConstrAnd _, _ -> false
   | F_Impl (f1, f1'), F_Impl (f2, f2') -> f1 === f2 && f1' === f2'
   | F_Impl _, _ -> false
@@ -196,20 +184,15 @@ and equiv_syntactic env1 env2 n1 n2 f1 f2 =
       &&
       let x = fresh_fvar () in
       (x1 |==> F_Var x) f1 === (x2 |==> F_Var x) f2
-  | F_ForallAtom _, _
-  | F_ForallTerm _, _
-  | F_ExistsAtom _, _
-  | F_ExistsTerm _, _
-  | F_FunTerm _, _
-  | F_FunAtom _, _ -> false
+  | F_ForallAtom _, _ | F_ForallTerm _, _ | F_ExistsAtom _, _ | F_ExistsTerm _, _ | F_FunTerm _, _ | F_FunAtom _, _ ->
+      false
   | F_App (f1, f1'), F_App (f2, f2') -> f1 === f2 && f1' === f2'
   | F_App _, _ -> false
   | F_AppAtom (f1, a1), F_AppAtom (f2, a2) -> a1 = a2 && f1 === f2
   | F_AppTerm (f1, t1), F_AppTerm (f2, t2) -> t1 = t2 && f1 === f2
   | F_AppAtom _, _ | F_AppTerm _, _ -> false
   | F_Fun _, _ -> false
-  | F_Fix (FV_Bind (_, fix1, fix1_k), x1, x1_k, f1), F_Fix (FV_Bind (_, fix2, fix2_k), x2, x2_k, f2)
-    ->
+  | F_Fix (FV_Bind (_, fix1, fix1_k), x1, x1_k, f1), F_Fix (FV_Bind (_, fix2, fix2_k), x2, x2_k, f2) ->
       fix1_k = fix2_k && x1_k = x2_k
       &&
       let x = fresh_var () and fix = fresh_fvar () in

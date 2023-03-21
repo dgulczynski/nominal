@@ -154,4 +154,19 @@ let _ = test_proof th13 proof13
 
 let _ = test_proof th14 proof14
 
+let _ =
+  test_proof Examples.Arithmetic.plus_1_n_thm (proof' %> apply_thm Examples.Arithmetic.plus_1_n)
+
+let _ =
+  test_proof Examples.Arithmetic.plus_n_1_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_1)
+
+let _ =
+  test_proof Examples.Arithmetic.plus_n_Sm_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_Sm)
+
+let _ =
+  test_proof Examples.Arithmetic.plus_Sn_m_thm (proof' %> apply_thm Examples.Arithmetic.plus_Sn_m)
+
+let _ =
+  test_proof Examples.Arithmetic.plus_symm_thm (proof' %> apply_thm Examples.Arithmetic.plus_symm)
+
 let _ = print_newline ()
