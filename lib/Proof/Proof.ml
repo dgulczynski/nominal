@@ -208,7 +208,7 @@ let or_e or_proof ps =
   match ps with
   | [] | [_] -> raise $ ProofException "Cannot eliminate disjunction with less than two disjuncts"
   | p :: _   ->
-      let disjunction = label or_proof in
+      let _, _, disjunction = uncurry (flip computeWHNF 10) $ judgement or_proof in
       let c = conclusion $ label p in
       let fs = disjuncts disjunction in
       let test_proof f p =
