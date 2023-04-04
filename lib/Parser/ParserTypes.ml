@@ -4,8 +4,11 @@ type permuted_identifier = (string, string) permuted
 
 type pterm =
   | PT_Identifier of permuted_identifier
-  | PT_Lam        of string * pterm
+  | PT_Lam        of permuted_identifier * pterm
   | PT_App        of pterm * pterm
+  | PT_Permuted   of permuted_pterm
+
+and permuted_pterm = (string, pterm) permuted
 
 type pconstr =
   | PC_Fresh    of string * pterm

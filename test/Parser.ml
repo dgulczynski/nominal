@@ -145,7 +145,7 @@ let _ =
   (* very hacky: y will be assigned next fresh var, which will should be current _v0 *)
   let fix = fresh_fvar_arg () + 1 in
   (* very hacky: X will be assigned next fresh number, which will be current fresh number + 1 *)
-  test_formula [] "fix Type(t) : Prop. exists t':term. t' < t"
+  test_formula [] "fix Type(t) : Prop = exists t':term. t' < t"
   $ F_Fix
       ( FV_Bind ("Type", fix, fix_kind (V "t") y K_Prop)
       , V "t"

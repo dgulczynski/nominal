@@ -100,7 +100,7 @@ let f_fix formula =
   let* _ = string "fix" <* whitespace1 in
   let* fix = identifier <* whitespace in
   let* x, k = typed (parenthesized identifier) kind in
-  let* _ = whitespace *> string "." <* whitespace in
+  let* _ = whitespace *> string "=" <* whitespace in
   let* f = formula in
   return $ PF_Fix (fix, x, k, f)
 

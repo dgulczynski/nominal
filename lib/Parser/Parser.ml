@@ -27,15 +27,20 @@ let rec idperm_to_aperm p =
   List.map idswap_to_aswap p
 
 let rec pterm_to_term env = function
-  | PT_App (e1, e2)            -> T_App (pterm_to_term env e1, pterm_to_term env e2)
-  | PT_Lam (a, e)              -> T_Lam (pure (A a), pterm_to_term ((a, K_Atom) :: env) e)
-  | PT_Identifier {perm; symb} -> (
+  | PT_App (e1, e2)             -> T_App (pterm_to_term env e1, pterm_to_term env e2)
+  | PT_Lam ({perm; symb= a}, e) ->
+      T_Lam ({perm= idperm_to_aperm perm; symb= A a}, pterm_to_term ((a, K_Atom) :: env) e)
+  | PT_Identifier {perm; symb}  -> (
     match List.assoc_opt symb env with
     | Some K_Atom     -> T_Atom {perm= idperm_to_aperm perm; symb= A symb}
     | Some K_Var      -> T_Var {perm= idperm_to_aperm perm; symb= V symb}
     | Some K_Func     -> permute_term (idperm_to_aperm perm) (T_Fun symb)
     | Some (K_FVar _) -> raise $ wrong_use "Logical variable" symb "in term context"
     | None            -> raise $ unbound_variable symb )
+  | PT_Permuted {perm; symb= e} ->
+      let e = pterm_to_term env e in
+      let pi = idperm_to_aperm perm in
+      permute_term pi e
 
 let pconstr_to_constr env =
   let check_atom a =

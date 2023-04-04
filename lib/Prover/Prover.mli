@@ -41,10 +41,6 @@ val step : int -> tactic
 
 val subst : string -> string -> tactic
 
-val rename : string -> string -> tactic
-
-val intros' : string list -> tactic
-
 val add_assumption_thm : string -> proof -> tactic
 
 val specialize_assm : string -> string -> string list -> tactic
