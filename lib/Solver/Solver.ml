@@ -53,10 +53,12 @@ and solve_eq env assms e1 e2 =
     match outer_swap perm with
     | None            -> a = b
     | Some (swap, pi) ->
-        solve_swap_cases env a swap (const assms) (fun a -> T_Atom a =: T_Atom {perm= pi; symb= b})
-    )
+        let gen_goal a = T_Atom a =: T_Atom {perm= pi; symb= b} in
+        solve_swap_cases env a swap (const assms) gen_goal )
   | T_Atom {perm= pi; symb= a}, T_Atom b ->
-      solve_eq env assms $ T_Atom (pure a) $ T_Atom (permute (reverse pi) b)
+      let a' = T_Atom (pure a) in
+      let b' = T_Atom (permute (reverse pi) b) in
+      solve_eq env assms a' b'
   | T_Atom _, _ -> false
   | T_Var {perm= []; symb= x}, T_Var {perm= pi; symb= x'} when x = x' ->
       permutation_idempotent env assms pi x
@@ -167,7 +169,8 @@ and solve_assm_eq env assms goal t1 t2 =
   | T_Atom {perm= pi; symb= a}, T_Atom beta ->
       solve_assm_eq env assms goal $ T_Atom {perm= []; symb= a} $ T_Atom (permute pi beta)
   | T_Atom _, _ -> true
-  | T_Var {perm= []; symb= x}, T_Var {perm= []; symb= x'} when x = x' -> solve_ env assms goal
+  | T_Var {perm= []; symb= x}, T_Var {perm= pi; symb= x'}
+    when x = x' && permutation_idempotent env assms pi x -> solve_ env assms goal
   | T_Var {perm= []; symb= x}, t | t, T_Var {perm= []; symb= x} ->
       solve_assm_subst_var env assms goal x t
   | T_Var {perm= pi; symb= x}, t | t, T_Var {perm= pi; symb= x} ->
