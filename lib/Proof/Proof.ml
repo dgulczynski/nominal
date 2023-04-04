@@ -3,6 +3,7 @@ open Common
 open ProofCommon
 open ProofEnv
 open ProofEquiv
+open Permutation
 open ProofException
 open Substitution
 
@@ -60,7 +61,8 @@ let env = function
 
 let judgement proof = (env proof, label proof)
 
-let axiom env f = P_Ax (ProofEnv.env (identifiers env) (constraints env) [f] (mapping env) id, f)
+let assumption env f =
+  P_Ax (ProofEnv.env (identifiers env) (constraints env) [f] (mapping env) id, f)
 
 let remove_assumption f env =
   let equiv_to_f = (fun g -> f === g <| env) % to_formula env in
@@ -244,3 +246,19 @@ let subst_var x t (env, f) p =
     P_Substitution ((env, f), p)
   in
   solver_proof (env, F_Constr solver_goal) solver_goal subst_goal
+
+module Axiom = struct
+  let axiom f = P_Ax (empty id, f)
+
+  let compare_atoms =
+    let a = A "a" and b = A "b" in
+    let constr_same = F_Constr (atom a =: atom b) in
+    let constr_diff = F_Constr (a =/=: pure b) in
+    axiom
+    $ F_ForallAtom (a, F_ForallAtom (b, F_Or [("same", constr_same); ("different", constr_diff)]))
+
+  let exists_fresh =
+    let a = A "a" and t = V "t" in
+    let constr_fresh = F_Constr a #: (var t) in
+    axiom $ F_ForallTerm (t, F_ExistsAtom (a, constr_fresh))
+end

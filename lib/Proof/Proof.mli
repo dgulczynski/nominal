@@ -27,7 +27,7 @@ val env : proof -> proof_env
 
 val judgement : proof -> judgement
 
-val axiom : proof_env -> formula -> proof
+val assumption : 'a env -> formula -> proof
 
 val imp_i : formula -> proof -> proof
 
@@ -80,3 +80,9 @@ val equivalent : formula -> int -> proof -> proof
 
 val subst_var : var -> term -> judgement -> proof -> proof
 (** [subst_var x t (f, env) p] returns a proof of (env |- f) if [p] is a proof of [(x |=> t) (f, env)] and we *)
+
+module Axiom : sig
+  val compare_atoms : proof
+
+  val exists_fresh : proof
+end

@@ -2,6 +2,7 @@ open Types
 open Common
 open IncProof
 open Parser
+open Proof
 open ProofCommon
 open ProofEnv
 open ProofEquiv
@@ -45,27 +46,27 @@ let apply h state =
 
 let apply_thm proof state = apply_internal (proven proof) state
 
-let assm_proof h_name env = proof_axiom (ProofEnv.map_assumptions snd id env) (lookup env h_name)
+let assm_proof h_name env = proof_assumption env (lookup env h_name)
 
 let apply_assm h_name state =
   let env = goal_env state in
   apply_internal ~h_name (assm_proof h_name env) state
 
-let apply_assm_specialized h_name specs state =
-  let specialize_proof proof spec =
-    let env, h = judgement' proof in
-    let on_forall_atom a f =
-      let b = parse_atom_in_env (all_identifiers env) spec in
-      SpecializedAtom (b, (a |-> b) f)
-    in
-    let on_forall_term x f =
-      let t = parse_term_in_env (all_identifiers env) spec in
-      SpecializedTerm (t, (x |=> t) f)
-    in
-    match specialize on_forall_atom on_forall_term h with
-    | SpecializedAtom (a, f) -> proof_specialize_atom (env, f) a proof
-    | SpecializedTerm (t, f) -> proof_specialize_term (env, f) t proof
+let specialize_proof proof spec =
+  let env, h = judgement' proof in
+  let on_forall_atom a f =
+    let b = parse_atom_in_env (all_identifiers env) spec in
+    SpecializedAtom (b, (a |-> b) f)
   in
+  let on_forall_term x f =
+    let t = parse_term_in_env (all_identifiers env) spec in
+    SpecializedTerm (t, (x |=> t) f)
+  in
+  match specialize on_forall_atom on_forall_term h with
+  | SpecializedAtom (a, f) -> proof_specialize_atom (env, f) a proof
+  | SpecializedTerm (t, f) -> proof_specialize_term (env, f) t proof
+
+let apply_assm_specialized h_name specs state =
   let env = goal_env state in
   let h_proof = List.fold_left specialize_proof (assm_proof h_name env) specs in
   apply_internal ~h_name h_proof state
@@ -138,7 +139,7 @@ let destruct_assm_and env f h_name hs_proof hs ctx =
   in
   let f, ctx = List.fold_right add_conjunct hs (f, ctx) in
   let h_names =
-    let h_name i (case, _) = h_name ^ "_" ^ if case <> "" then case else string_of_int i in
+    let h_name i (case, _) = h_name ^ "_" ^ if case <> "" then case else string_of_int (succ i) in
     List.mapi h_name hs
   in
   unfinished (env, f) ctx |> intros h_names
@@ -229,3 +230,17 @@ let subst x_name t_source state =
       let t = parse_term_in_env (all_identifiers env) t_source in
       let ctx = PC_Substitution (to_judgement (env, f), V x, t, context state) in
       unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx
+
+let add_assumption_thm h_name h_proof state =
+  let env, f = goal state in
+  let _, h = judgement h_proof in
+  let h_impl_f_proof =
+    proof_apply (to_judgement (env, f)) (proof_hole env (F_Impl (h, f))) $ proven h_proof
+  in
+  find_goal_in_proof (context state) h_impl_f_proof |> intro_named h_name
+
+let specialize_assm h_name h_spec_name specs state =
+  let env = goal_env state in
+  let h_proof = assm_proof h_name env in
+  let h_spec_proof = List.fold_left specialize_proof h_proof specs in
+  state |> add_assumption_thm h_spec_name (incproof_to_proof h_spec_proof)
