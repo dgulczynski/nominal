@@ -2,6 +2,7 @@ open Common
 open IncProof
 open Proof
 open ProofEnv
+open ProofEquiv
 open ProofCommon
 open ProofException
 open ProverGoal
@@ -64,7 +65,7 @@ and find_goal_in_ctx incproof = function
 let destruct_impl env c f =
   let rec aux f =
     match conclusion f with
-    | f2 when f2 === c <| mapping env -> [f]
+    | f2 when f2 === c <| env -> [f]
     | f2 -> f :: aux f2
   in
   try aux f with ProofException _ -> []
@@ -97,7 +98,7 @@ let name_taken name =
 
 let check_fresh env name =
   let identifiers = identifiers env in
-  let check (x_name, _) = if name != x_name then () else raise $ name_taken x_name in
+  let check (x_name, _) = if name <> x_name then () else raise $ name_taken x_name in
   List.iter check identifiers
 
 let intro_named name state =
@@ -121,8 +122,7 @@ let apply_internal ?(h_name = "") h_proof =
   let h = label' h_proof in
   function
   | S_Finished _ -> raise proof_finished
-  | S_Unfinished {goal= env, f; context} when f === h <| mapping env ->
-      find_goal_in_ctx h_proof context
+  | S_Unfinished {goal= env, f; context} when f === h <| env -> find_goal_in_ctx h_proof context
   | S_Unfinished {goal= env, f; context} -> (
     match destruct_impl env f h with
     | []    -> raise $ hypothesis_goal_mismatch h_name h f
@@ -131,3 +131,7 @@ let apply_internal ?(h_name = "") h_proof =
 let finish = function
   | S_Unfinished {goal; _} -> raise $ unproven goal
   | S_Finished proof       -> proof
+
+let pp_print_state fmt = function
+  | S_Unfinished {goal; _} -> pp_print_goal fmt goal
+  | S_Finished _           -> Format.pp_print_string fmt "Finished"

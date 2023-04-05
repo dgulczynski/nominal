@@ -21,8 +21,6 @@ val by_solver : tactic
 
 val ex_falso : tactic
 
-val truth : tactic
-
 val qed : prover_state -> proof
 
 val generalize : string -> tactic

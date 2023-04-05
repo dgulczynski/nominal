@@ -1,6 +1,6 @@
 open Common
 open Parser
-open ProofEnv
+open ProofEquiv
 open ProofException
 open Prover
 open ProverInternals
@@ -26,7 +26,7 @@ let add_assumption h_name h state =
 
 let add_assumption_parse h_name h_string state =
   let env, _ = goal state in
-  let h = parse_formula_in_env (ProofEnv.identifiers env) h_string in
+  let h = parse_formula_in_env (ProofEnv.all_identifiers env) h_string in
   state |> add_assumption h_name h
 
 let add_constr c state =
@@ -35,7 +35,7 @@ let add_constr c state =
 
 let add_constr_parse c_string state =
   let env, _ = goal state in
-  let c = parse_constr_in_env (ProofEnv.identifiers env) c_string in
+  let c = parse_constr_in_env (ProofEnv.all_identifiers env) c_string in
   state |> add_constr c
 
 let assumption state =
@@ -43,7 +43,7 @@ let assumption state =
   let f' = string_of_formula_in_env (ProofEnv.identifiers env) f in
   let exn = Printf.sprintf "No assumption matching goal `%s`" f' in
   let on_fail _ = raise $ ProofException exn in
-  match ProofEnv.lookup_assumption (fun (_, g) -> f === g <| env) env with
+  match ProofEnv.lookup_assumption (fun (_, g) -> (f === g) env) env with
   | Some (h_name, _) -> apply_assm h_name state
   | None             ->
       let to_tactic = apply_assm % fst in
@@ -60,7 +60,7 @@ let rec repeat tactic state =
 
 let trivial =
   let on_fail _ = raise $ ProofException "This ain't trivial" in
-  try_many on_fail [intro_named "_" %> assumption; assumption; truth; intro]
+  try_many on_fail [intro_named "_" %> assumption; assumption; intro]
 
 let apply_parse f_string state =
   let env, _ = goal state in

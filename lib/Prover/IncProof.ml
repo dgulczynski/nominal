@@ -123,8 +123,7 @@ let rec ctxHasHoles = function
   | PC_ConstrAndRight (_, proof, ctx) -> ctxHasHoles ctx || hasHoles proof
   | PC_And (_, proofs, ctx) -> ctxHasHoles ctx || Zipper.exists hasHoles proofs
   | PC_OrElim (_, ctx, proofs) -> ctxHasHoles ctx || List.exists hasHoles proofs
-  | PC_OrElimDiscjunt (_, proof, proofs, ctx) ->
-      ctxHasHoles ctx || hasHoles proof || Zipper.exists hasHoles proofs
+  | PC_OrElimDiscjunt (_, proof, proofs, ctx) -> ctxHasHoles ctx || hasHoles proof || Zipper.exists hasHoles proofs
   | PC_Root -> false
 
 let proof_hole env f = PI_Hole (env, f)
@@ -193,9 +192,8 @@ and proof_apply jgmt imp_proof premise_proof =
 
 and proof_constr_and jgmt c_proof f_proof =
   match (normalize c_proof, normalize f_proof) with
-  | PI_Proven c_proof, PI_Proven f_proof ->
-      proven (constr_and_i (to_constr $ label c_proof) f_proof)
-  | c_proof, f_proof -> PI_ConstrAnd (jgmt, c_proof, f_proof)
+  | PI_Proven c_proof, PI_Proven f_proof -> proven (constr_and_i (to_constr $ label c_proof) f_proof)
+  | c_proof, f_proof                     -> PI_ConstrAnd (jgmt, c_proof, f_proof)
 
 and proof_specialize_atom jgmt a universal_proof =
   match normalize universal_proof with
@@ -286,10 +284,8 @@ let is_proven = function
 let rec find_hole_in_proof context = function
   | PI_Intro (jgmt, incproof) -> find_hole_in_proof (PC_Intro (jgmt, context)) incproof
   | PI_ExFalso (jgmt, incproof) -> find_hole_in_proof (PC_ExFalso (jgmt, context)) incproof
-  | PI_SpecializeAtom (jgmt, a, incproof) ->
-      find_hole_in_proof (PC_SpecializeAtom (jgmt, a, context)) incproof
-  | PI_SpecializeTerm (jgmt, t, incproof) ->
-      find_hole_in_proof (PC_SpecializeTerm (jgmt, t, context)) incproof
+  | PI_SpecializeAtom (jgmt, a, incproof) -> find_hole_in_proof (PC_SpecializeAtom (jgmt, a, context)) incproof
+  | PI_SpecializeTerm (jgmt, t, incproof) -> find_hole_in_proof (PC_SpecializeTerm (jgmt, t, context)) incproof
   | PI_Apply (jgmt, lproof, rproof) when hasHoles lproof ->
       find_hole_in_proof (PC_ApplyLeft (jgmt, context, rproof)) lproof
   | PI_Apply (jgmt, lproof, rproof) when hasHoles rproof ->
@@ -300,19 +296,15 @@ let rec find_hole_in_proof context = function
   | PI_ConstrAnd (jgmt, lproof, rproof) when hasHoles rproof ->
       find_hole_in_proof (PC_ConstrAndRight (jgmt, lproof, context)) rproof
   | PI_ConstrAnd _ as incproof -> Either.Left (incproof_to_proof incproof, context)
-  | PI_ConstrAndElimL (jgmt, c_and_proof) ->
-      find_hole_in_proof (PC_ConstrAndElimL (jgmt, context)) c_and_proof
-  | PI_ConstrAndElimR (jgmt, c_and_proof) ->
-      find_hole_in_proof (PC_ConstrAndElimR (jgmt, context)) c_and_proof
+  | PI_ConstrAndElimL (jgmt, c_and_proof) -> find_hole_in_proof (PC_ConstrAndElimL (jgmt, context)) c_and_proof
+  | PI_ConstrAndElimR (jgmt, c_and_proof) -> find_hole_in_proof (PC_ConstrAndElimR (jgmt, context)) c_and_proof
   | PI_Witness (jgmt, exists_proof, usage_proof) when hasHoles exists_proof ->
       find_hole_in_proof (PC_WitnessExists (jgmt, context, usage_proof)) exists_proof
   | PI_Witness (jgmt, exists_proof, usage_proof) when hasHoles usage_proof ->
       find_hole_in_proof (PC_WitnessUsage (jgmt, exists_proof, context)) usage_proof
   | PI_Witness _ as incproof -> Either.Left (incproof_to_proof incproof, context)
-  | PI_ExistsAtom (jgmt, witness, incproof) ->
-      find_hole_in_proof (PC_ExistsAtom (jgmt, witness, context)) incproof
-  | PI_ExistsTerm (jgmt, witness, incproof) ->
-      find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
+  | PI_ExistsAtom (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsAtom (jgmt, witness, context)) incproof
+  | PI_ExistsTerm (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
   | PI_Proven proof -> Either.Left (proof, context)
   | PI_Hole goal -> Either.Right (goal, context)
   | PI_AndElim (jgmt, proof) -> find_hole_in_proof (PC_AndElim (jgmt, context)) proof
@@ -327,12 +319,9 @@ let rec find_hole_in_proof context = function
         let proof_from proofs = (incproof_to_proof $ proof_or_elim jgmt or_proof proofs, context) in
         let context_from zipper = PC_OrElimDiscjunt (jgmt, or_proof, zipper, context) in
         find_hole_in_many proofs proof_from context_from
-  | PI_Induction (jgmt, x, y, incproof) ->
-      find_hole_in_proof (PC_Induction (jgmt, x, y, context)) incproof
-  | PI_Equivalent (jgmt, n, incproof) ->
-      find_hole_in_proof (PC_Equivalent (jgmt, n, context)) incproof
-  | PI_Substitution (jgmt, x, t, incproof) ->
-      find_hole_in_proof (PC_Substitution (jgmt, x, t, context)) incproof
+  | PI_Induction (jgmt, x, y, incproof) -> find_hole_in_proof (PC_Induction (jgmt, x, y, context)) incproof
+  | PI_Equivalent (jgmt, n, incproof) -> find_hole_in_proof (PC_Equivalent (jgmt, n, context)) incproof
+  | PI_Substitution (jgmt, x, t, incproof) -> find_hole_in_proof (PC_Substitution (jgmt, x, t, context)) incproof
 
 and find_hole_in_many proofs proof_from context_from =
   let proofs = List.map normalize proofs in

@@ -4,6 +4,7 @@ open IncProof
 open Parser
 open ProofCommon
 open ProofEnv
+open ProofEquiv
 open ProofException
 open ProverGoal
 open ProverInternals
@@ -44,7 +45,7 @@ let apply h state =
 
 let apply_thm proof state = apply_internal (proven proof) state
 
-let assm_proof h_name env = proof_axiom env (lookup env h_name)
+let assm_proof h_name env = proof_axiom (ProofEnv.map_assumptions snd id env) (lookup env h_name)
 
 let apply_assm h_name state =
   let env = goal_env state in
@@ -74,16 +75,10 @@ let ex_falso state =
   let goal = (goal_env state, F_Bot) in
   unfinished goal context
 
-let truth state =
-  let env = goal_env state in
-  match goal_formula state with
-  | F_Top -> find_goal_in_ctx (proof_axiom env F_Top) (context state)
-  | f     -> raise $ formula_mismatch F_Top f
-
 let by_solver state =
   let env, f = goal state in
   let ctx = context state in
-  let proof_env = ProofEnv.map_assumptions snd env in
+  let proof_env = ProofEnv.map_assumptions snd id env in
   match f with
   | F_Constr c          ->
       let c_proof = proof_constr proof_env c in
@@ -93,7 +88,8 @@ let by_solver state =
       let f_proof = proof_hole (env |> add_constr c) f' in
       let jgmt = to_judgement (env, f) in
       find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
-  | F_Bot               -> find_goal_in_proof ctx % proven $ Proof.constr_e (map_assumptions snd env)
+  | F_Bot               -> find_goal_in_proof ctx % proven
+                           $ Proof.constr_e (map_assumptions snd id env)
   | f                   -> raise $ not_a_constraint f
 
 let qed = finish
@@ -129,8 +125,8 @@ let remove_assm h_name = remove_assumptions (( = ) h_name % fst)
 let update_assm h_name h = remove_assm h_name %> add_assumption (h_name, h)
 
 let destruct_assm_witness env f h_name h_proof h ctx =
-  let ctx = PC_WitnessUsage (to_judgement (env, f), h_proof, ctx)
-  and env = update_assm h_name h env in
+  let ctx = PC_WitnessUsage (to_judgement (env, f), h_proof, ctx) in
+  let env = update_assm h_name h env in
   unfinished (env, f) ctx
 
 let destruct_assm_and env f h_name hs_proof hs ctx =
@@ -164,7 +160,8 @@ let destruct_assm h_name state =
   let env, f = goal state in
   let h_proof = assm_proof h_name env in
   let ctx = context state in
-  match label' h_proof with
+  let env, _, h = computeWHNF env 10 $ label' h_proof in
+  match h with
   | F_ExistsTerm (V x, h_x) -> destruct_assm_witness (add_var x env) f h_name h_proof h_x ctx
   | F_ExistsAtom (A a, h_a) -> destruct_assm_witness (add_atom a env) f h_name h_proof h_a ctx
   | F_And hs                -> destruct_assm_and env f h_name h_proof hs ctx
@@ -204,16 +201,15 @@ let by_induction y_name ind_hyp_name state =
       let ctx = PC_Induction (to_judgement (env, f_x), x, y, context state) in
       let ind_hyp = F_ForallTerm (y, F_ConstrImpl (var y <: var x, f_y)) in
       unfinished (env |> add_var x_name |> add_assumption (ind_hyp_name, ind_hyp), f_x) ctx
-  | _, f -> raise $ not_a_forall f
+  | _, f -> raise $ not_a_forall_term f
 
 let step n state =
   let env, f = goal state in
-  let mapping, _, f' = computeWHNF (mapping env) n f in
-  let env = set_mapping mapping env in
+  let env, _, f' = computeWHNF env n f in
   unfinished (env, f') $ PC_Equivalent (to_judgement (env, f), n, context state)
 
 let case name state =
-  let env, f = goal state in
+  let env, f = goal (step 10 state) in
   let ctx = PC_Or (to_judgement (env, f), context state) in
   match f with
   | F_Or fs -> (

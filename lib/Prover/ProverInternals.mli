@@ -29,3 +29,5 @@ val apply_internal : ?h_name:string -> incproof -> tactic
 val unfinished : goal -> proof_context -> prover_state
 
 val finish : prover_state -> proof
+
+val pp_print_state : prover_state Printing.printer

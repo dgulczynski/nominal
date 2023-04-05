@@ -141,7 +141,7 @@ let parse_formula = parse_formula_in_env []
 let judgement assm goal =
   let* env = list_of assm in
   let* _ = whitespace *> string "|-" <* whitespace in
-  let* goal in
+  let* goal = goal in
   return (env, goal)
 
 let run_judgement penv s =

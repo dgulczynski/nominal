@@ -60,12 +60,11 @@ let env = function
 
 let judgement proof = (env proof, label proof)
 
-let axiom env f = P_Ax (ProofEnv.on_assumptions (const [f]) env, f)
+let axiom env f = P_Ax (ProofEnv.env (identifiers env) (constraints env) [f] (mapping env) id, f)
 
-let remove_assumptions_equiv_to to_formula f env =
-  remove_assumptions (fun g -> f === to_formula g <| env) env
-
-let remove_assumption = remove_assumptions_equiv_to id
+let remove_assumption f env =
+  let equiv_to_f = (fun g -> f === g <| env) % to_formula env in
+  remove_assumptions equiv_to_f env
 
 let imp_i f p =
   let f' = label p in
@@ -75,13 +74,13 @@ let imp_i f p =
 let imp_e p1 p2 =
   let env = union (env p1) (env p2) in
   match (label p1, label p2) with
-  | f1, f2 when env |> (f2 === premise f1) -> P_Apply ((env, conclusion f1), p1, p2)
+  | f1, f2 when f2 === premise f1 <| env -> P_Apply ((env, conclusion f1), p1, p2)
   | f1, f2 -> raise $ premise_mismatch f1 f2
 
 let solver_proof (env, f) solver_goal on_solved =
   let constr_assumptions = List.filter_map to_constr_op $ assumptions env in
   let assumptions = List.map (fun c -> F_Constr c) constr_assumptions in
-  let env = on_assumptions (const assumptions) env in
+  let env = ProofEnv.env (identifiers env) (constraints env) assumptions (mapping env) id in
   let solver_assumptions = constr_assumptions @ constraints env in
   match Solver.solve_with_assumptions solver_assumptions solver_goal with
   | true  -> on_solved (env, f)
@@ -130,7 +129,7 @@ let bot_e f p =
 
 let forall_atom_i (A a_name as a) p =
   let env, f = judgement p in
-  match env |> find_bind id a_name with
+  match env |> find_bind a_name with
   | None   -> P_Intro ((env |> remove_identifier a_name, F_ForallAtom (a, f)), p)
   | Some f -> raise $ cannot_generalize a_name f
 
@@ -144,7 +143,7 @@ let forall_atom_e (A _b_name as b) p =
 
 let forall_term_i (V x_name as x) p =
   let env, f = judgement p in
-  match env |> find_bind id x_name with
+  match env |> find_bind x_name with
   | None   -> P_Intro ((env |> remove_identifier x_name, F_ForallTerm (x, f)), p)
   | Some f -> raise $ cannot_generalize x_name f
 
@@ -180,7 +179,7 @@ let exist_e p_exists p =
       P_Witness ((env, f), p_exists, p)
   | _, g -> raise $ not_an_exists g
 
-let merge_envs = List.fold_left (flip $ union % env) empty
+let merge_envs = List.fold_left (flip $ union % env) $ empty id
 
 let and_i = function
   | [] | [_] -> raise $ ProofException "Cannot introduce conjunction with less than two conjuncts"
@@ -207,11 +206,14 @@ let or_e or_proof ps =
   match ps with
   | [] | [_] -> raise $ ProofException "Cannot eliminate disjunction with less than two disjuncts"
   | p :: _   ->
+      let disjunction = label or_proof in
       let c = conclusion $ label p in
-      let fs = disjuncts $ label or_proof in
-      let env = env p in
-      let test_proof f p = premise (label p) === f <| env && conclusion (label p) === c <| env in
-      if List.for_all2 (test_proof % snd) fs ps then P_OrElim ((merge_envs ps, c), ps)
+      let fs = disjuncts disjunction in
+      let test_proof f p =
+        let env, f' = judgement p in
+        f' === F_Impl (f, c) <| env
+      in
+      if List.for_all2 (test_proof % snd) fs ps then P_OrElim ((merge_envs (or_proof :: ps), c), ps)
       else
         let f = F_Or (List.map (pair "" % premise % label) ps) in
         raise $ formula_mismatch (label or_proof) f
@@ -224,20 +226,19 @@ let induction_e (V x_name as x) (V y_name as y) p =
   let f_y = (x |=> var y) f_x in
   let ind_hyp = F_ForallTerm (y, F_ConstrImpl (var y <: var x, f_y)) in
   let env = env p |> remove_assumption ind_hyp in
-  match List.filter_map (fun v -> find_bind id v env) [x_name; y_name] with
+  match List.filter_map (fun v -> find_bind v env) [x_name; y_name] with
   | []     -> P_Intro ((env |> remove_identifier x_name, F_ForallTerm (x, f_x)), p)
   | f :: _ -> raise $ cannot_generalize (x_name ^ " or " ^ y_name) f
 
 let equivalent f n p =
   let env, fe = judgement p in
-  let mapping, _, fn = computeWHNF (mapping env) n f in
-  let env = set_mapping mapping env in
+  let env, _, fn = computeWHNF env n f in
   if fe === fn <| env then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe
 
 let subst_var x t (env, f) p =
   let solver_goal = var x =: t in
   let subst_goal _ =
-    let env = map_assumptions (x |=> t) env in
+    let env = map_assumptions (x |=> t) id env in
     let f = (x |=> t) f in
     (* TODO: add checks if [env p] is the same as [env]? *)
     P_Substitution ((env, f), p)

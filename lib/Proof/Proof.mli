@@ -27,7 +27,7 @@ val env : proof -> proof_env
 
 val judgement : proof -> judgement
 
-val axiom : 'a env -> formula -> proof
+val axiom : proof_env -> formula -> proof
 
 val imp_i : formula -> proof -> proof
 
