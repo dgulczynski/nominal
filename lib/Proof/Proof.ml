@@ -6,6 +6,7 @@ open ProofEquiv
 open Permutation
 open ProofException
 open Substitution
+open Utils
 
 type proof_env = formula env
 
@@ -17,7 +18,7 @@ type proof =
   | P_Apply          of judgement * proof * proof
   | P_ConstrApply    of judgement * proof * proof
   | P_ConstrAndElim  of judgement * proof
-  | P_SpecializeAtom of judgement * atom * proof
+  | P_SpecializeAtom of judgement * permuted_atom * proof
   | P_SpecializeTerm of judgement * term * proof
   | P_Witness        of judgement * proof * proof
   | P_AndIntro       of judgement * proof list
@@ -128,59 +129,65 @@ let bot_e f p =
   | env, F_Bot -> P_ExFalso ((env, f), p)
   | _, f'      -> raise $ formula_mismatch F_Bot f'
 
-let forall_atom_i (A a_name as a) p =
+let forall_atom_i (A_Bind (a_name, A a) as a_bind) p =
   let env, f = judgement p in
   match env |> find_bind a_name with
-  | None   -> P_Intro ((env |> remove_identifier a_name, F_ForallAtom (a, f)), p)
+  | None   -> P_Intro ((env |> remove_identifier a, F_ForallAtom (a_bind, f)), p)
   | Some f -> raise $ cannot_generalize a_name f
 
-let forall_atom_e (A _b_name as b) p =
+let forall_atom_e b p =
   let env, f = judgement p in
-  let on_forall_atom a f = SpecializedAtom (b, (a |-> b) f) in
+  let on_forall_atom (A_Bind (_, a)) f = SpecializedAtom (b, (a |-> b) f) in
   let on_forall_term _ = raise % not_a_forall_atom in
   match specialize on_forall_atom on_forall_term f with
   | SpecializedAtom (b, f) -> P_SpecializeAtom ((env, f), b, p)
   | SpecializedTerm (_, f) -> raise $ not_a_forall_atom f
 
-let forall_term_i (V x_name as x) p =
+let forall_term_i (V_Bind (x_name, V x) as x_bind) p =
   let env, f = judgement p in
   match env |> find_bind x_name with
-  | None   -> P_Intro ((env |> remove_identifier x_name, F_ForallTerm (x, f)), p)
+  | None   -> P_Intro ((env |> remove_identifier x, F_ForallTerm (x_bind, f)), p)
   | Some f -> raise $ cannot_generalize x_name f
 
 let forall_term_e t p =
   let env, f = judgement p in
   let on_forall_atom _ = raise % not_a_forall_term in
-  let on_forall_term x f = SpecializedTerm (t, (x |=> t) f) in
+  let on_forall_term (V_Bind (_, x)) f = SpecializedTerm (t, (x |=> t) f) in
   match specialize on_forall_atom on_forall_term f with
   | SpecializedAtom (_, f) -> raise $ not_a_forall_term f
   | SpecializedTerm (t, f) -> P_SpecializeTerm ((env, f), t, p)
 
-let exists_atom_i (A a_name as a) b f_a p =
-  let f = (a |-> b) f_a in
+let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
+  let f = (A a |-> b) f_a in
   let env, f' = judgement p in
   if f === f' <| env then
-    let env = env |> remove_identifier a_name |> remove_assumption f_a in
-    P_Intro ((env, F_ExistsAtom (a, f_a)), p)
+    let env = env |> remove_identifier a |> remove_assumption f_a in
+    P_Intro ((env, F_ExistsAtom (a_bind, f_a)), p)
   else raise $ formula_mismatch f f'
 
-let exists_term_i (V x_name as x) t f_x p =
-  let f = (x |=> t) f_x in
+let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
+  let f = (V x |=> t) f_x in
   let env, f' = judgement p in
   if f === f' <| env then
-    let env = env |> remove_identifier x_name |> remove_assumption f_x in
-    P_Intro ((env, F_ExistsTerm (x, f_x)), p)
+    let env = env |> remove_identifier x |> remove_assumption f_x in
+    P_Intro ((env, F_ExistsTerm (x_bind, f_x)), p)
   else raise $ formula_mismatch f f'
 
 let exist_e p_exists witness p =
-  let remove_witness = function
-    | F_ExistsTerm (V x, f_x) -> remove_identifier witness %> remove_assumption ((V x |=> var (V witness)) f_x)
-    | F_ExistsAtom (A a, f_a) -> remove_identifier witness %> remove_assumption ((A a |-> A witness) f_a)
-    | g                       -> raise $ not_an_exists g
-  in
   let env, f = judgement p in
+  let remove_witness = function
+    | F_ExistsTerm (V_Bind (_, x), f_x) -> (
+      match Utils.bind_by_name witness (identifiers env) with
+      | Some (Bind (_, K_Var w)) -> remove_identifier w %> remove_assumption ((x |=> var (V w)) f_x)
+      | _                        -> failwith ("not a var " ^ witness) )
+    | F_ExistsAtom (A_Bind (_, a), f_a) -> (
+      match Utils.bind_by_name witness (identifiers env) with
+      | Some (Bind (_, K_Atom w)) -> remove_identifier w %> remove_assumption ((a |-> pure (A w)) f_a)
+      | _                         -> failwith ("not an atom " ^ witness) )
+    | g                                 -> raise $ not_an_exists g
+  in
   let env_x, f_x = judgement p_exists in
-  P_Witness ((env |> remove_witness f_x |> union env_x, f), p_exists, p)
+  P_Witness ((env |> union env_x |> remove_witness f_x, f), p_exists, p)
 
 let merge_envs = List.fold_left (flip $ union % env) $ empty id
 
@@ -192,7 +199,8 @@ let and_i = function
 
 let and_e f p_fs =
   match judgement p_fs with
-  | _, F_And [] | _, F_And [_] -> raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
+  | _, F_And [] | _, F_And [_] ->
+      raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
   | env, F_And fs when List.exists (fun (_, g) -> f === g <| env) fs -> P_AndElim ((env, f), p_fs)
   | _, g -> raise $ not_a_conjunction_with f g
 
@@ -223,33 +231,19 @@ let or_e or_proof ps =
 (*   G, x, forall y:term. [y < x] => f(y) |- f(x)  *)
 (* ----------------------------------------------- *)
 (*          G |-  forall x : term. f(x)            *)
-let induction_e (V x_name as x) (V y_name as y) p =
+let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, y)) p =
   let f_x = label p in
-  let f_y = (x |=> var y) f_x in
-  let ind_hyp = F_ForallTerm (y, F_ConstrImpl (var y <: var x, f_y)) in
+  let f_y = (V x |=> var y) f_x in
+  let ind_hyp = F_ForallTerm (V_Bind (y_name, y), F_ConstrImpl (var y <: var (V x), f_y)) in
   let env = env p |> remove_assumption ind_hyp in
   match List.filter_map (fun v -> find_bind v env) [x_name; y_name] with
-  | []     -> P_Intro ((env |> remove_identifier x_name, F_ForallTerm (x, f_x)), p)
+  | []     -> P_Intro ((env |> remove_identifier x, F_ForallTerm (x_bind, f_x)), p)
   | f :: _ -> raise $ cannot_generalize (x_name ^ " or " ^ y_name) f
 
 let equivalent f n p =
   let env, fe = judgement p in
   let env, _, fn = computeWHNF env n f in
   if fe === fn <| env then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe
-
-let rename (V x_name as x) (V y_name as y) p =
-  let env, f = judgement p in
-  match env |> find_bind y_name with
-  | Some f ->
-      failwith
-      $ Printing.unwords
-          [ "cannot rename"
-          ; x_name
-          ; "to"
-          ; y_name
-          ; "its bound in"
-          ; Printing.string_of_formula_in_env (all_identifiers env) f ]
-  | None   -> P_Substitution ((subst_var ( |=> ) x (var y) env, (x |=> var y) f), p)
 
 let subst_var x t (env, f) p =
   let solver_goal = var x =: t in
@@ -265,13 +259,16 @@ module Axiom = struct
   let axiom f = P_Ax (empty id, f)
 
   let compare_atoms =
-    let a = A "a" and b = A "b" in
+    let a = fresh_atom () and b = fresh_atom () in
     let constr_same = F_Constr (atom a =: atom b) in
     let constr_diff = F_Constr (a =/=: pure b) in
-    axiom $ F_ForallAtom (a, F_ForallAtom (b, F_Or [("same", constr_same); ("different", constr_diff)]))
+    axiom
+    $ F_ForallAtom
+        ( A_Bind ("a", a)
+        , F_ForallAtom (A_Bind ("b", b), F_Or [("same", constr_same); ("different", constr_diff)]) )
 
   let exists_fresh =
-    let a = A "a" and t = V "t" in
+    let a = fresh_atom () and t = fresh_var () in
     let constr_fresh = F_Constr a #: (var t) in
-    axiom $ F_ForallTerm (t, F_ExistsAtom (a, constr_fresh))
+    axiom $ F_ForallTerm (V_Bind ("t", t), F_ExistsAtom (A_Bind ("a", a), constr_fresh))
 end

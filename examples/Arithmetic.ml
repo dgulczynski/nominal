@@ -52,7 +52,7 @@ let plus_n_Sm =
   proof' plus_n_Sm_thm
   |> by_induction "x'" "IH" %> intro %> intro
   |> intros ["H"] %> destruct_assm "H" (* case analysis on PlusEq {S x} y z *)
-  |> intros' ["contra"; "_"] %> ex_falso %> by_solver (* S x = 0 *)
+  |> intros' ["contra"; "_"] %> discriminate (* S x = 0 *)
   |> intros' ["H"; "x'"; "z'"; "_"; "_"] (* S x = S x', z = S z', PlusEq (S x') y (S z') *)
   |> destruct_assm "H" (* case analysis on PlusEq (S x') y (S z') *)
   |> intros' ["H0"; "_"] %> case "zero" %> by_solver %> by_solver (* x' = 0, y = z' *)
@@ -80,7 +80,6 @@ let plus_Sn_m =
 let plus_symm_thm = arith_thm "forall x y z :term. (IsNum x) => (IsNum y) => (PlusEq x y z) => (PlusEq y x z)"
 
 let plus_symm =
-  let intros20 = by_induction "x0" "Hx0" %> by_induction "y0" "Hy0" %> intro %> intros ["Hx"; "Hy"; "Heq"] in
   let case0 =
     intros' ["H0"; ""] (* x = 0 /\ y = z /\ PlusEq 0 y z => PlusEq y 0 z *)
     %> destruct_assm "Hy" (* case analysis on IsNum y *)
@@ -92,14 +91,15 @@ let plus_symm =
   in
   let caseS =
     intros' ["Heq"; "x'"; "z'"; "_"; "_"] (* x = S x' /\ z = S z' /\ PlusEq x' y z' => PlusEq y x' z' *)
-    %> destruct_assm "Hx" %> intros ["contra"] %> ex_falso %> by_solver (* x = 0 *)
+    %> destruct_assm "Hx" %> intros ["contra"] %> discriminate (* x = 0 *)
     %> intros' ["Hx"; "x0"; "_"]
     %> subst "x0" "x'" %> subst "x" "S x'" (* x = S x'*)
-    %> rename "y" "y'" (* rename y to y' to avoid capture *)
-    %> apply_thm_specialized plus_n_Sm ["y'"; "x'"; "z"] (* (PlusEq {S y'} x' z') => (PlusEq y' {S x'} z') *)
-    %> case "succ" %> exists "y'" %> exists "z'" %> by_solver %> by_solver
-    %> apply_assm_specialized "Hx0" ["x'"; "y'"; "z'"] (* (PlusEq x' y' z') => (PlusEq y' x' z') *)
+    %> apply_thm_specialized plus_n_Sm ["y"; "x'"; "z"] (* (PlusEq {S y} x' z') => (PlusEq y {S x'} z') *)
+    %> case "succ" %> exists "y" %> exists "z'" %> by_solver %> by_solver
+    %> apply_assm_specialized "Hx0" ["x'"; "y"; "z'"] (* (PlusEq x' y z') => (PlusEq y x' z') *)
     %> by_solver %> apply_assm "Hx" %> apply_assm "Hy" %> apply_assm "Heq"
   in
-  (* case analysis on PlusEq x y z*)
-  proof' plus_symm_thm |> intros20 |> destruct_assm "Heq" |> case0 |> caseS |> qed
+  proof' plus_symm_thm
+  |> by_induction "x0" "Hx0" %> by_induction "y0" "Hy0" %> intro %> intros ["Hx"; "Hy"; "Heq"]
+  |> destruct_assm "Heq" %> case0 %> caseS (* case analysis on PlusEq x y z*)
+  |> qed

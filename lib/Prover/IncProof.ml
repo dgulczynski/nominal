@@ -16,19 +16,18 @@ type incproof =
   | PI_ConstrAnd      of judgement * incproof * incproof
   | PI_ConstrAndElimL of judgement * incproof
   | PI_ConstrAndElimR of judgement * incproof
-  | PI_SpecializeAtom of judgement * atom * incproof
+  | PI_SpecializeAtom of judgement * permuted_atom * incproof
   | PI_SpecializeTerm of judgement * term * incproof
-  | PI_ExistsAtom     of judgement * atom * incproof
+  | PI_ExistsAtom     of judgement * permuted_atom * incproof
   | PI_ExistsTerm     of judgement * term * incproof
   | PI_Witness        of judgement * incproof * string * incproof (* TODO: proper type? *)
   | PI_And            of judgement * incproof list
   | PI_AndElim        of judgement * incproof
   | PI_Or             of judgement * incproof
   | PI_OrElim         of judgement * incproof * incproof list
-  | PI_Induction      of judgement * var * var * incproof
+  | PI_Induction      of judgement * var_binder * var_binder * incproof
   | PI_Equivalent     of judgement * int * incproof
   | PI_Substitution   of judgement * var * term * incproof
-  | PI_Rename         of judgement * var * var * incproof
   | PI_ExFalso        of judgement * incproof
 
 type proof_context =
@@ -40,21 +39,20 @@ type proof_context =
   | PC_ConstrAndRight of judgement * incproof * proof_context
   | PC_ConstrAndElimL of judgement * proof_context
   | PC_ConstrAndElimR of judgement * proof_context
-  | PC_SpecializeAtom of judgement * atom * proof_context
+  | PC_SpecializeAtom of judgement * permuted_atom * proof_context
   | PC_SpecializeTerm of judgement * term * proof_context
   | PC_WitnessExists  of judgement * proof_context * string * incproof (* TODO: proper type? *)
   | PC_WitnessUsage   of judgement * incproof * string * proof_context (* TODO: proper type? *)
-  | PC_ExistsAtom     of judgement * atom * proof_context
+  | PC_ExistsAtom     of judgement * permuted_atom * proof_context
   | PC_ExistsTerm     of judgement * term * proof_context
   | PC_And            of judgement * incproof zipper * proof_context
   | PC_AndElim        of judgement * proof_context
   | PC_Or             of judgement * proof_context
   | PC_OrElim         of judgement * proof_context * incproof list
   | PC_OrElimDiscjunt of judgement * incproof * incproof zipper * proof_context
-  | PC_Induction      of judgement * var * var * proof_context
+  | PC_Induction      of judgement * var_binder * var_binder * proof_context
   | PC_Equivalent     of judgement * int * proof_context
   | PC_Substitution   of judgement * var * term * proof_context
-  | PC_Rename         of judgement * var * var * proof_context
   | PC_ExFalso        of judgement * proof_context
 
 let judgement' = function
@@ -77,7 +75,6 @@ let judgement' = function
   | PI_Induction (jgmt, _, _, _)
   | PI_Equivalent (jgmt, _, _)
   | PI_Substitution (jgmt, _, _, _)
-  | PI_Rename (jgmt, _, _, _)
   | PI_ExFalso (jgmt, _) -> jgmt
 
 let env' = fst % judgement'
@@ -99,7 +96,6 @@ let rec hasHoles = function
   | PI_Induction (_, _, _, p)
   | PI_Equivalent (_, _, p)
   | PI_Substitution (_, _, _, p)
-  | PI_Rename (_, _, _, p)
   | PI_ExFalso (_, p) -> hasHoles p
   | PI_Apply (_, l, r) | PI_Witness (_, l, _, r) | PI_ConstrAnd (_, l, r) -> hasHoles l || hasHoles r
   | PI_And (_, ps) -> List.exists hasHoles ps
@@ -118,7 +114,6 @@ let rec ctxHasHoles = function
   | PC_Induction (_, _, _, ctx)
   | PC_Equivalent (_, _, ctx)
   | PC_Substitution (_, _, _, ctx)
-  | PC_Rename (_, _, _, ctx)
   | PC_ExFalso (_, ctx) -> ctxHasHoles ctx
   | PC_ApplyLeft (_, ctx, proof)
   | PC_WitnessExists (_, ctx, _, proof)
@@ -128,7 +123,8 @@ let rec ctxHasHoles = function
   | PC_ConstrAndRight (_, proof, ctx) -> ctxHasHoles ctx || hasHoles proof
   | PC_And (_, proofs, ctx) -> ctxHasHoles ctx || Zipper.exists hasHoles proofs
   | PC_OrElim (_, ctx, proofs) -> ctxHasHoles ctx || List.exists hasHoles proofs
-  | PC_OrElimDiscjunt (_, proof, proofs, ctx) -> ctxHasHoles ctx || hasHoles proof || Zipper.exists hasHoles proofs
+  | PC_OrElimDiscjunt (_, proof, proofs, ctx) ->
+      ctxHasHoles ctx || hasHoles proof || Zipper.exists hasHoles proofs
   | PC_Root -> false
 
 let proof_hole env f = PI_Hole (env, f)
@@ -152,7 +148,8 @@ let rec normalize incproof =
   | PI_SpecializeTerm (jgmt, t, universal_proof) -> proof_specialize_term jgmt t universal_proof
   | PI_ExistsAtom (jgmt, witness, witness_proof) -> proof_exists_atom jgmt witness witness_proof
   | PI_ExistsTerm (jgmt, witness, witness_proof) -> proof_exists_term jgmt witness witness_proof
-  | PI_Witness (jgmt, exists_proof, witness, usage_proof) -> proof_witness jgmt exists_proof witness usage_proof
+  | PI_Witness (jgmt, exists_proof, witness, usage_proof) ->
+      proof_witness jgmt exists_proof witness usage_proof
   | PI_And (jgmt, proofs) -> proof_and jgmt proofs
   | PI_AndElim (jgmt, proof) -> proof_and_elim jgmt proof
   | PI_Or (jgmt, proof) -> proof_or jgmt proof
@@ -160,7 +157,6 @@ let rec normalize incproof =
   | PI_Induction (jgmt, x, y, proof) -> proof_induction jgmt x y proof
   | PI_Equivalent (jgmt, n, proof) -> proof_equivalent jgmt n proof
   | PI_Substitution (jgmt, x, t, proof) -> proof_substitution jgmt x t proof
-  | PI_Rename (jgmt, x, y, proof) -> proof_rename jgmt x y proof
 
 and normalize_many proofs =
   let aux proof =
@@ -201,7 +197,7 @@ and proof_constr_and jgmt c_proof f_proof =
   | PI_Proven c_proof, PI_Proven f_proof -> proven (constr_and_i (to_constr $ label c_proof) f_proof)
   | c_proof, f_proof                     -> PI_ConstrAnd (jgmt, c_proof, f_proof)
 
-and proof_specialize_atom jgmt a universal_proof =
+and proof_specialize_atom jgmt (a : permuted_atom) universal_proof =
   match normalize universal_proof with
   | PI_Proven proof -> proven $ forall_atom_e a proof
   | incproof        -> PI_SpecializeAtom (jgmt, a, incproof)
@@ -264,11 +260,6 @@ and proof_substitution jgmt x t proof =
   | PI_Proven proof -> proven $ subst_var x t jgmt proof
   | incproof        -> PI_Substitution (jgmt, x, t, incproof)
 
-and proof_rename jgmt x y proof =
-  match normalize proof with
-  | PI_Proven proof -> proven $ rename y x proof
-  | incproof        -> PI_Rename (jgmt, x, y, incproof)
-
 and proof_constr_and_elim_left jgmt c_and_f_proof =
   match normalize c_and_f_proof with
   | PI_Proven proof -> proven $ constr_and_e_left proof
@@ -295,8 +286,10 @@ let is_proven = function
 let rec find_hole_in_proof context = function
   | PI_Intro (jgmt, incproof) -> find_hole_in_proof (PC_Intro (jgmt, context)) incproof
   | PI_ExFalso (jgmt, incproof) -> find_hole_in_proof (PC_ExFalso (jgmt, context)) incproof
-  | PI_SpecializeAtom (jgmt, a, incproof) -> find_hole_in_proof (PC_SpecializeAtom (jgmt, a, context)) incproof
-  | PI_SpecializeTerm (jgmt, t, incproof) -> find_hole_in_proof (PC_SpecializeTerm (jgmt, t, context)) incproof
+  | PI_SpecializeAtom (jgmt, a, incproof) ->
+      find_hole_in_proof (PC_SpecializeAtom (jgmt, a, context)) incproof
+  | PI_SpecializeTerm (jgmt, t, incproof) ->
+      find_hole_in_proof (PC_SpecializeTerm (jgmt, t, context)) incproof
   | PI_Apply (jgmt, lproof, rproof) when hasHoles lproof ->
       find_hole_in_proof (PC_ApplyLeft (jgmt, context, rproof)) lproof
   | PI_Apply (jgmt, lproof, rproof) when hasHoles rproof ->
@@ -307,15 +300,19 @@ let rec find_hole_in_proof context = function
   | PI_ConstrAnd (jgmt, lproof, rproof) when hasHoles rproof ->
       find_hole_in_proof (PC_ConstrAndRight (jgmt, lproof, context)) rproof
   | PI_ConstrAnd _ as incproof -> Either.Left (incproof_to_proof incproof, context)
-  | PI_ConstrAndElimL (jgmt, c_and_proof) -> find_hole_in_proof (PC_ConstrAndElimL (jgmt, context)) c_and_proof
-  | PI_ConstrAndElimR (jgmt, c_and_proof) -> find_hole_in_proof (PC_ConstrAndElimR (jgmt, context)) c_and_proof
+  | PI_ConstrAndElimL (jgmt, c_and_proof) ->
+      find_hole_in_proof (PC_ConstrAndElimL (jgmt, context)) c_and_proof
+  | PI_ConstrAndElimR (jgmt, c_and_proof) ->
+      find_hole_in_proof (PC_ConstrAndElimR (jgmt, context)) c_and_proof
   | PI_Witness (jgmt, exists_proof, witness, usage_proof) when hasHoles exists_proof ->
       find_hole_in_proof (PC_WitnessExists (jgmt, context, witness, usage_proof)) exists_proof
   | PI_Witness (jgmt, exists_proof, witness, usage_proof) when hasHoles usage_proof ->
       find_hole_in_proof (PC_WitnessUsage (jgmt, exists_proof, witness, context)) usage_proof
   | PI_Witness _ as incproof -> Either.Left (incproof_to_proof incproof, context)
-  | PI_ExistsAtom (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsAtom (jgmt, witness, context)) incproof
-  | PI_ExistsTerm (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
+  | PI_ExistsAtom (jgmt, witness, incproof) ->
+      find_hole_in_proof (PC_ExistsAtom (jgmt, witness, context)) incproof
+  | PI_ExistsTerm (jgmt, witness, incproof) ->
+      find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
   | PI_Proven proof -> Either.Left (proof, context)
   | PI_Hole goal -> Either.Right (goal, context)
   | PI_AndElim (jgmt, proof) -> find_hole_in_proof (PC_AndElim (jgmt, context)) proof
@@ -332,8 +329,8 @@ let rec find_hole_in_proof context = function
         find_hole_in_many proofs proof_from context_from
   | PI_Induction (jgmt, x, y, incproof) -> find_hole_in_proof (PC_Induction (jgmt, x, y, context)) incproof
   | PI_Equivalent (jgmt, n, incproof) -> find_hole_in_proof (PC_Equivalent (jgmt, n, context)) incproof
-  | PI_Substitution (jgmt, x, t, incproof) -> find_hole_in_proof (PC_Substitution (jgmt, x, t, context)) incproof
-  | PI_Rename (jgmt, x, y, incproof) -> find_hole_in_proof (PC_Rename (jgmt, x, y, context)) incproof
+  | PI_Substitution (jgmt, x, t, incproof) ->
+      find_hole_in_proof (PC_Substitution (jgmt, x, t, context)) incproof
 
 and find_hole_in_many proofs proof_from context_from =
   let proofs = List.map normalize proofs in

@@ -67,9 +67,7 @@ let th6 =
   test_thm env6 "([a = b] => (a # c)) => [a = b] => (c =/= b)"
 
 let proof6 th6 =
-  proof' th6 |> intros ["H"] |> intro
-  |> add_constr_parse "a # c" %> by_solver
-  |> apply_assm "H" %> by_solver
+  proof' th6 |> intros ["H"] |> intro |> add_constr_parse "a # c" %> by_solver |> apply_assm "H" %> by_solver
 
 let th7 = test_thm [] "forall a :atom. forall b :atom. [a =/= b] => [a # b]"
 
@@ -78,8 +76,7 @@ let proof7 th7 = proof' th7 |> repeat intro |> by_solver
 let th8 =
   let env8 = atoms_env ["b"; "c"] @ vars_env ["y"] in
   test_thm env8
-    "(forall a : atom. forall x : term. [a = x] => [a.a = a.x]) => [c = b.[b c]y] => [c.c = c.b.[b \
-     c] y]"
+    "(forall a : atom. forall x : term. [a = x] => [a.a = a.x]) => [c = b.[b c]y] => [c.c = c.b.[b c] y]"
 
 let proof8 th8 = proof' th8 |> intros ["H"] |> apply_assm_specialized "H" ["c"; "b. [b c]y"]
 
@@ -91,12 +88,9 @@ let proof9 th9 = proof' th9 |> intro |> exists "d" |> exists "c" |> by_solver
 
 let th10 = test_thm [] "forall a : atom. (exists b: atom. [a =/= b]) => exists t:term. a # t"
 
-let proof10 th10 =
-  proof' th10 |> intro |> intros ["H"] |> destruct_assm "H" |> exists "b" |> by_solver
+let proof10 th10 = proof' th10 |> intro |> intros ["H"] |> destruct_assm "H" |> exists "b" |> by_solver
 
-let th11 =
-  test_thm []
-    "(forall a : atom. exists b: atom. [a =/= b]) => (forall a:atom. exists t:term. a # t)"
+let th11 = test_thm [] "(forall a : atom. exists b: atom. [a =/= b]) => (forall a:atom. exists t:term. a # t)"
 
 let proof11 th11 =
   proof' th11 |> intros ["H"] |> intro
@@ -154,19 +148,14 @@ let _ = test_proof th13 proof13
 
 let _ = test_proof th14 proof14
 
-let _ =
-  test_proof Examples.Arithmetic.plus_1_n_thm (proof' %> apply_thm Examples.Arithmetic.plus_1_n)
+let _ = test_proof Examples.Arithmetic.plus_1_n_thm (proof' %> apply_thm Examples.Arithmetic.plus_1_n)
 
-let _ =
-  test_proof Examples.Arithmetic.plus_n_1_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_1)
+let _ = test_proof Examples.Arithmetic.plus_n_1_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_1)
 
-let _ =
-  test_proof Examples.Arithmetic.plus_n_Sm_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_Sm)
+let _ = test_proof Examples.Arithmetic.plus_n_Sm_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_Sm)
 
-let _ =
-  test_proof Examples.Arithmetic.plus_Sn_m_thm (proof' %> apply_thm Examples.Arithmetic.plus_Sn_m)
+let _ = test_proof Examples.Arithmetic.plus_Sn_m_thm (proof' %> apply_thm Examples.Arithmetic.plus_Sn_m)
 
-let _ =
-  test_proof Examples.Arithmetic.plus_symm_thm (proof' %> apply_thm Examples.Arithmetic.plus_symm)
+let _ = test_proof Examples.Arithmetic.plus_symm_thm (proof' %> apply_thm Examples.Arithmetic.plus_symm)
 
 let _ = print_newline ()

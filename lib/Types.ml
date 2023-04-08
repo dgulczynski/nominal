@@ -1,8 +1,11 @@
 open Permutation
+open Common
 
-type atom = A of string
+type name_internal = int
 
-type var = V of string
+type atom = A of name_internal
+
+type var = V of name_internal
 
 type permuted_atom = (atom, atom) permuted
 
@@ -14,6 +17,10 @@ type term =
   | T_Lam  of permuted_atom * term
   | T_App  of term * term
   | T_Fun  of string
+
+let atom a = T_Atom (pure a)
+
+let var x = T_Var (pure x)
 
 type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of string
 
@@ -37,18 +44,20 @@ let ( ==: ) a alpha = C_AtomEq (a, alpha)
 
 let ( =/=: ) a alpha = C_AtomNeq (a, alpha)
 
+type atom_binder = A_Bind of string * atom
+
+type var_binder = V_Bind of string * var
+
 type kind =
   | K_Prop
   | K_Arrow      of kind * kind
-  | K_ForallTerm of var * kind
-  | K_ForallAtom of atom * kind
+  | K_ForallTerm of var_binder * kind
+  | K_ForallAtom of atom_binder * kind
   | K_Constr     of constr * kind
 
-type fvar_internal = int
+type fvar = FV of name_internal
 
-type fvar = FV of fvar_internal
-
-type fvar_binder = FV_Bind of string * fvar_internal * kind
+type fvar_binder = FV_Bind of string * name_internal * kind
 
 type formula =
   | F_Bot
@@ -57,23 +66,41 @@ type formula =
   | F_And        of (string * formula) list
   | F_Or         of (string * formula) list
   | F_Impl       of formula * formula
-  | F_ForallTerm of var * formula
-  | F_ForallAtom of atom * formula
-  | F_ExistsTerm of var * formula
-  | F_ExistsAtom of atom * formula
+  | F_ForallTerm of var_binder * formula
+  | F_ForallAtom of atom_binder * formula
+  | F_ExistsTerm of var_binder * formula
+  | F_ExistsAtom of atom_binder * formula
   | F_ConstrAnd  of constr * formula
   | F_ConstrImpl of constr * formula
   | F_Var        of fvar
   | F_Fun        of fvar_binder * formula
   | F_App        of formula * formula
-  | F_FunTerm    of var * formula
+  | F_FunTerm    of var_binder * formula
   | F_AppTerm    of formula * term
-  | F_FunAtom    of atom * formula
-  | F_AppAtom    of formula * atom
-  | F_Fix        of fvar_binder * var * kind * formula
+  | F_FunAtom    of atom_binder * formula
+  | F_AppAtom    of formula * permuted_atom
+  | F_Fix        of fvar_binder * var_binder * kind * formula
 
-type identifier_kind = K_Atom | K_Var | K_Func | K_FVar of fvar_internal * kind
+let fvar x = F_Var (FV x)
 
-type identifier = string * identifier_kind
+type binder_kind =
+  | K_Atom of name_internal
+  | K_Var  of name_internal
+  | K_FVar of name_internal * kind
+  | K_Func
 
-type identifier_env = identifier list
+type binder = Bind of string * binder_kind
+
+type bound_env = binder list
+
+let binder_name = function
+  | Bind (name, _) -> name
+
+let binder_kind = function
+  | Bind (_, kind) -> kind
+
+let binder_rep = function
+  | Bind (_, K_Atom i) | Bind (_, K_Var i) | Bind (_, K_FVar (i, _)) -> Some i
+  | Bind (_, K_Func) -> None
+
+let get_bind_opt name env = binder_kind <$> List.find_opt (( = ) name % binder_name) env

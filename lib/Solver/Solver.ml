@@ -108,9 +108,9 @@ and permutation_idempotent env assms pi x =
   (* ∀ a ∈ π. Γ |- a = π a  ∨  a # x  *)
   (* -------------------------------- *)
   (*       Γ |- π idempotent on x     *)
-  let test ({perm= pi; symb= a} as alpha) =
+  let test ({perm; symb= a} as alpha) =
     solve_eq env assms (T_Atom alpha) (T_Atom (permute pi alpha))
-    || solve_fresh env assms a $ T_Var {perm= reverse pi; symb= x}
+    || solve_fresh env assms a $ T_Var {perm= reverse perm; symb= x}
   in
   List.for_all test (free_vars_of pi)
 

@@ -8,7 +8,7 @@ open ProofException
 open Substitution
 
 type 'a env =
-  { identifiers: identifier_env
+  { identifiers: bound_env
   ; constraints: constr list
   ; assumptions: 'a list
   ; mapping: mapping
@@ -55,13 +55,19 @@ let rec merge xs ys =
 let union
     {assumptions= a1; identifiers= i1; constraints= c1; mapping= v1; to_formula}
     {assumptions= a2; identifiers= i2; constraints= c2; mapping= v2; _} =
-  {assumptions= merge a1 a2; identifiers= merge i1 i2; constraints= merge c1 c2; mapping= merge v1 v2; to_formula}
+  { assumptions= merge a1 a2
+  ; identifiers= merge i1 i2
+  ; constraints= merge c1 c2
+  ; mapping= merge v1 v2
+  ; to_formula }
 
-let add_fvar x_name x_rep x_kind = on_identifiers $ merge [(x_name, K_FVar (x_rep, x_kind))]
+let add_identifier bind = on_identifiers $ merge [bind]
 
-let add_atom a = on_identifiers $ merge [(a, K_Atom)]
+let add_fvar x_bind = add_identifier $ fvar_binder_to_binder x_bind
 
-let add_var x = on_identifiers $ merge [(x, K_Var)]
+let add_atom a_bind = add_identifier $ atom_binder_to_binder a_bind
+
+let add_var x_bind = add_identifier $ var_binder_to_binder x_bind
 
 let add_constr constr = on_constraints $ merge [constr]
 
@@ -72,7 +78,14 @@ let map_assumptions f to_formula {assumptions; identifiers; constraints; mapping
 
 let lookup_assumption test {assumptions; _} = List.find_opt test assumptions
 
-let lookup_identifier name {identifiers; _} = List.find_opt (fun (x, _) -> x = name) identifiers
+let name_eq name = function
+  | Bind (x, _) -> x = name
+
+let rep_eq name = function
+  | Bind (_, K_Atom x) | Bind (_, K_Var x) | Bind (_, K_FVar (x, _)) -> x = name
+  | Bind (_, K_Func) -> false
+
+let lookup_identifier name {identifiers; _} = List.find_opt (name_eq name) identifiers
 
 let unfilter test = List.filter (not % test)
 
@@ -82,16 +95,16 @@ let remove_constraints test = on_constraints $ unfilter test
 
 let remove_identifiers test = on_identifiers $ unfilter test
 
-let remove_identifier x = remove_identifiers $ ( = ) x % fst
+let remove_identifier name = remove_identifiers $ rep_eq name
 
 let all_identifiers {mapping; identifiers; _} =
-  let add_mapping ids {bind= FV_Bind (x_name, x, k); _} = (x_name, K_FVar (x, k)) :: ids in
+  let add_mapping ids {bind= FV_Bind (x_name, x, k); _} = Bind (x_name, K_FVar (x, k)) :: ids in
   List.fold_left add_mapping identifiers mapping
 
 let kind_checker_env {identifiers; mapping; _} =
   let add_identifier env = function
-    | x_name, K_FVar (x, k) -> KindCheckerEnv.map_fvar env x_name (FV x) k
-    | _                     -> env
+    | Bind (x_name, K_FVar (x, k)) -> KindCheckerEnv.map_fvar env x_name (FV x) k
+    | _                            -> env
   and add_mapping env = function
     | {bind= FV_Bind (x_name, x, k); _} -> KindCheckerEnv.map_fvar env x_name (FV x) k
   in
@@ -104,21 +117,27 @@ let bound_in_assumption name = List.exists (( = ) name) % free_names_of_formula
 
 let bound_in_constr name = List.exists (( = ) name) % free_names_of_constr
 
-let find_bind name {assumptions; constraints; to_formula; _} =
+let find_bind name {assumptions; constraints; to_formula; identifiers; _} =
   let from_constr c = F_Constr c in
-  match List.find_opt (bound_in_assumption name % to_formula) assumptions with
-  | Some f -> Some (to_formula f)
-  | None   -> from_constr <$> List.find_opt (bound_in_constr name) constraints
+  let find x =
+    match List.find_opt (bound_in_assumption x % to_formula) assumptions with
+    | Some f -> Some (to_formula f)
+    | None   -> from_constr <$> List.find_opt (bound_in_constr x) constraints
+  in
+  bind_by_name name identifiers >>= binder_rep >>= find
 
-let remove_var name {assumptions; constraints; identifiers; mapping; to_formula} =
-  { assumptions= List.filter (not % bound_in_assumption name % to_formula) assumptions
-  ; constraints= List.filter (not % bound_in_constr name) constraints
-  ; identifiers= List.filter (( <> ) name % fst) identifiers
-  ; mapping
-  ; to_formula }
+let remove_var name ({assumptions; constraints; identifiers; mapping; to_formula} as env) =
+  match List.partition (name_eq name) identifiers with
+  | Bind (_, K_Var x) :: _, identifiers ->
+      { assumptions= List.filter (not % bound_in_assumption x % to_formula) assumptions
+      ; constraints= List.filter (not % bound_in_constr x) constraints
+      ; identifiers
+      ; mapping
+      ; to_formula }
+  | _                                   -> env
 
 let parse_formula {identifiers; mapping; _} =
-  let convert {bind= FV_Bind (x_name, x_var, x_kind); _} = (x_name, K_FVar (x_var, x_kind)) in
+  let convert {bind= FV_Bind (x_name, x_var, x_kind); _} = Bind (x_name, K_FVar (x_var, x_kind)) in
   let parse_env = List.fold_left (fun xs x -> convert x :: xs) identifiers mapping in
   Parser.parse_formula_in_env parse_env
 
@@ -131,25 +150,22 @@ let parse_mapping identifiers constraints assumptions to_formula source_mapping 
         let f_var =
           match f_body with
           | F_Fix (FV_Bind (_, x, _), _, _, _) -> x
-          | _                                  -> fresh_fvar_arg ()
+          | _                                  -> fresh ()
         in
         {bind= FV_Bind (f_name, f_var, f_kind); body= f_body} :: mapping
     | None        -> raise $ cannot_infer_kind f_name
   in
   env identifiers constraints assumptions (List.fold_left aux [] source_mapping) to_formula
 
-let subst_var subst_assm (V x_name as x) t {assumptions; identifiers; constraints; mapping; to_formula} =
+let subst_var subst_assm (V x_rep as x) t {assumptions; identifiers; constraints; mapping; to_formula} =
+  let filter_out_x = function
+    | Bind (_, K_Var y_rep) -> x_rep <> y_rep
+    | _                     -> true
+  in
   { assumptions= List.map (subst_assm x t) assumptions
-  ; identifiers= List.filter (not % ( = ) x_name % fst) identifiers
+  ; identifiers= List.filter filter_out_x identifiers
   ; constraints= List.map (subst_var_in_constr x t) constraints
   ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> t) body}) mapping
-  ; to_formula }
-
-let rename_var subst_assm (V x_name as x) (V y_name as y) {assumptions; identifiers; constraints; mapping; to_formula} =
-  { assumptions= List.map (subst_assm x (var y)) assumptions
-  ; identifiers= List.map (on_fst (fun z -> if z = x_name then y_name else z)) identifiers
-  ; constraints= List.map (subst_var_in_constr x (var y)) constraints
-  ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> var y) body}) mapping
   ; to_formula }
 
 let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints; mapping; _} =
@@ -166,10 +182,10 @@ let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints;
     pp_print_formula identifiers fmt body
   in
   pp_print_newline fmt () ;
-  pp_print_identifier_env fmt identifiers ;
+  pp_print_bound_env fmt identifiers ;
   pp_print_newline fmt () ;
   pp_print_bracketed_list fmt pp_var mapping ;
   pp_print_newline fmt () ;
-  pp_print_bracketed_list fmt pp_print_constr constraints ;
+  pp_print_bracketed_list fmt (pp_print_constr_in_env identifiers) constraints ;
   pp_print_newline fmt () ;
   pp_print_bracketed_list fmt pp_print_assupmtion assumptions

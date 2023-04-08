@@ -1,15 +1,13 @@
 open Types
 open Common
 open Substitution
+open Utils
 
 (** Here one would expect constructors like [A_Shape of var * var] ([x_1 =~ x_2]) and [A_Subshape of
     term * var], ([t < x]), but we decided it is best to keep those assumptions in groupings like
     [[t_1, ..., t_n] < [x_1 ~...~ x_m]], where each [t_i] subshapes every [x_j], keeping
     _abstraction classes_ together *)
-type atom_assumption =
-  | A_Fresh of atom * var
-  | A_Neq   of atom * atom
-  | A_Shape of term list * var list
+type atom_assumption = A_Fresh of atom * var | A_Neq of atom * atom | A_Shape of term list * var list
 
 type t = atom_assumption list
 
@@ -50,9 +48,9 @@ let rec occurs_check gamma x t =
   List.exists occurs_check_subshapes $ free_vars_of_term t
 
 let add_same_shape gamma x y =
-  (*       G; C |- c           x ∈ xs     y ∈ zs    G, [ts] < [zs]; C |- c  *)
-  (* --------------------     ---------------------------------------------- *)
-  (*  G; x ~ x, C |- c              G, [ts] < [zs]; x ~ y, C |- c         *)
+  (*       G; C |- c          x ∈ zs     y ∈ zs    G, [ts] < [zs]; C |- c  *)
+  (* ------------------      --------------------------------------------- *)
+  (*  G; x ~ x, C |- c               G, [ts] < [zs]; x ~ y, C |- c         *)
   if
     x = y
     || List.exists
@@ -91,8 +89,8 @@ let is_fresh gamma a x = List.mem (A_Fresh (a, x)) gamma
 
 let subst_atom gamma a b =
   let subst_atom_constr a b = function
-    | A_Neq (a1, a2) -> A_Neq (subst a b a1, subst a b a2)
-    | A_Fresh (c, v) -> A_Fresh (subst a b c, v)
+    | A_Neq (a1, a2) -> A_Neq (sub a b a1, sub a b a2)
+    | A_Fresh (c, v) -> A_Fresh (sub a b c, v)
     | A_Shape _ as c (* Atoms do not affect shape *) -> c
   in
   let add_constr constr gamma =

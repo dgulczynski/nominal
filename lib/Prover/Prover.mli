@@ -29,6 +29,8 @@ val generalize : string -> tactic
 
 val exists : string -> tactic
 
+val exists' : string list -> tactic
+
 val destruct_assm : string -> tactic
 
 val destruct_assm' : string -> string list -> tactic
@@ -44,8 +46,6 @@ val by_induction : string -> string -> tactic
 val step : int -> tactic
 
 val subst : string -> string -> tactic
-
-val rename : string -> string -> tactic
 
 val intros' : string list -> tactic
 

@@ -2,7 +2,7 @@ open Common
 open ProofException
 open Types
 
-type specialized = SpecializedAtom of atom * formula | SpecializedTerm of term * formula
+type specialized = SpecializedAtom of permuted_atom * formula | SpecializedTerm of term * formula
 
 type formula_mapping = {bind: fvar_binder; body: formula}
 

@@ -29,3 +29,5 @@ val left : tactic
 val right : tactic
 
 val compute : tactic
+
+val discriminate : tactic

@@ -42,10 +42,7 @@ let identifier =
     (take1 (any [is_digit; is_letter; is_underscore]))
     (take_while (any [is_digit; is_letter; is_underscore; is_apostrophe]))
 
-let atom = identifier >>| fun a -> Types.A a
-
-let parenthesized ?(left = '(') ?(right = ')') f =
-  char left *> whitespace *> f <* whitespace <* char right
+let parenthesized ?(left = '(') ?(right = ')') f = char left *> whitespace *> f <* whitespace <* char right
 
 let parens_op f = parenthesized f <|> f
 
@@ -107,8 +104,7 @@ let exists x = quantifier (string_ci "exists" <|> string "∃") x
 
 let quantifier_without_kind_annotation q x =
   ParserException
-    (Printf.sprintf "%s %s quantifier must be used with '%s : atom' or '%s : term' kind annotation"
-       q x x x )
+    (Printf.sprintf "%s %s quantifier must be used with '%s : atom' or '%s : term' kind annotation" q x x x)
 
 let list_of ?(sep = ";") ?(left = "") ?(right = "") elem =
   string left *> sep_by (whitespace *> string sep <* whitespace) elem <* string right

@@ -11,7 +11,7 @@ type proof = private
   | P_Apply          of judgement * proof * proof
   | P_ConstrApply    of judgement * proof * proof
   | P_ConstrAndElim  of judgement * proof
-  | P_SpecializeAtom of judgement * atom * proof
+  | P_SpecializeAtom of judgement * permuted_atom * proof
   | P_SpecializeTerm of judgement * term * proof
   | P_Witness        of judgement * proof * proof
   | P_AndIntro       of judgement * proof list
@@ -50,18 +50,18 @@ val constr_and_e_left : proof -> proof
 
 val constr_and_e_right : proof -> proof
 
-val forall_atom_i : atom -> proof -> proof
+val forall_atom_i : atom_binder -> proof -> proof
 
-val forall_atom_e : atom -> proof -> proof
+val forall_atom_e : permuted_atom -> proof -> proof
 
-val forall_term_i : var -> proof -> proof
+val forall_term_i : var_binder -> proof -> proof
 
 val forall_term_e : term -> proof -> proof
 
-val exists_atom_i : atom -> atom -> formula -> proof -> proof
+val exists_atom_i : atom_binder -> permuted_atom -> formula -> proof -> proof
 (** [exists_atom_i a b f p] is a proof of [exists a : atom. f] where [b] is the witness and [p] is proof of [(a |-> b) f]*)
 
-val exists_term_i : var -> term -> formula -> proof -> proof
+val exists_term_i : var_binder -> term -> formula -> proof -> proof
 (** [exists_term_i x t f p] is a proof of [exists x : term. f] where [t] is the witness and [p] is proof of [(x |=> t) f]*)
 
 val exist_e : proof -> string -> proof -> proof
@@ -74,11 +74,9 @@ val or_i : (string * formula) list -> proof -> proof
 
 val or_e : proof -> proof list -> proof
 
-val induction_e : var -> var -> proof -> proof
+val induction_e : var_binder -> var_binder -> proof -> proof
 
 val equivalent : formula -> int -> proof -> proof
-
-val rename : var -> var -> proof -> proof
 
 val subst_var : var -> term -> judgement -> proof -> proof
 (** [subst_var x t (f, env) p] returns a proof of (env |- f) if [p] is a proof of [(x |=> t) (f, env)] and we *)

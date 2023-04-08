@@ -40,14 +40,6 @@ let constraints_of =
     | Constr c -> Some c
     | _        -> None )
 
-let string_of_kind_assumption = function
-  | Constr c                 -> Printing.string_of_constr c
-  | BoundVar (x, y)          -> Printing.string_of_var_arg x ^ "↦" ^ Printing.string_of_var_arg y
-  | BoundAtom (a, b)         -> Printing.string_of_atom_arg a ^ "↦" ^ Printing.string_of_atom_arg b
-  | BoundFVar (x_name, _, k) -> x_name ^ "↦" ^ Printing.string_of_kind k
-
-let string_of = Printing.string_of_list' ~sep:", " string_of_kind_assumption
-
 let map_fvar gamma x_name x k = BoundFVar (x_name, x, k) :: gamma
 
 let find_fvar gamma x =

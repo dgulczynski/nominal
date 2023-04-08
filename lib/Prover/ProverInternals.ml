@@ -6,6 +6,7 @@ open ProofEquiv
 open ProofCommon
 open ProofException
 open ProverGoal
+open Types
 
 (** Type of in-progress proof of [Prover] *)
 type prover_state = S_Unfinished of {goal: goal; context: proof_context} | S_Finished of proof
@@ -59,7 +60,6 @@ and find_goal_in_ctx incproof = function
   | PC_Induction (jgmt, x, y, ctx) -> find_goal_in_ctx (proof_induction jgmt x y incproof) ctx
   | PC_Equivalent (jgmt, n, ctx) -> find_goal_in_ctx (proof_equivalent jgmt n incproof) ctx
   | PC_Substitution (jgmt, x, t, ctx) -> find_goal_in_ctx (proof_substitution jgmt x t incproof) ctx
-  | PC_Rename (jgmt, x, y, ctx) -> find_goal_in_ctx (proof_rename jgmt x y incproof) ctx
   | PC_ExFalso (jgmt, ctx) -> find_goal_in_ctx (proof_ex_falso jgmt incproof) ctx
 
 (** [destruct_impl c f] is
@@ -101,7 +101,7 @@ let name_taken name =
 
 let check_fresh env name =
   let identifiers = identifiers env in
-  let check (x_name, _) = if name <> x_name then () else raise $ name_taken x_name in
+  let check (Bind (x_name, _)) = if name <> x_name then () else raise $ name_taken x_name in
   List.iter check identifiers
 
 let intro_named name state =

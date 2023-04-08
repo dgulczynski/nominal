@@ -43,16 +43,14 @@ let f_forall formula =
   match k with
   | Some PQ_Atom            -> formula >>| List.fold_right (fun x f -> PF_ForallAtom (x, f)) xs
   | Some PQ_Term            -> formula >>| List.fold_right (fun x f -> PF_ForallTerm (x, f)) xs
-  | Some (PQ_Kind _) | None ->
-      raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
+  | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
 
 let f_exists formula =
   let* xs, k = exists (typed_op (list_of' identifier) pvar_kind) in
   match k with
   | Some PQ_Atom            -> formula >>| List.fold_right (fun x f -> PF_ExistsAtom (x, f)) xs
   | Some PQ_Term            -> formula >>| List.fold_right (fun x f -> PF_ExistsTerm (x, f)) xs
-  | Some (PQ_Kind _) | None ->
-      raise % quantifier_without_kind_annotation "Exists" $ Printing.unwords xs
+  | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Exists" $ Printing.unwords xs
 
 let f_constrand formula =
   let* c = bracketed constr in
@@ -78,8 +76,8 @@ let f_fun formula =
       raise
       $ ParserException
           (Printf.sprintf
-             "Functions must be used with type annotation, like 'fun x : k -> ...' where 'k' is \
-              'atom', 'term' or kind" )
+             "Functions must be used with type annotation, like 'fun x : k -> ...' where 'k' is 'atom', \
+              'term' or kind" )
 
 type pf_app_arg = PFA_Identfier of string | PFA_Term of pterm | PFA_Formula of pformula
 
@@ -106,8 +104,8 @@ let f_fix formula =
 
 let formula =
   let formula' formula =
-    f_fix formula <|> f_constrand formula <|> f_constrimpl formula <|> f_and formula
-    <|> f_or formula <|> f_impl formula <|> f_forall formula <|> f_exists formula <|> f_fun formula
-    <|> f_app formula <|> simple_formula <|> parenthesized formula
+    f_fix formula <|> f_constrand formula <|> f_constrimpl formula <|> f_and formula <|> f_or formula
+    <|> f_impl formula <|> f_forall formula <|> f_exists formula <|> f_fun formula <|> f_app formula
+    <|> simple_formula <|> parenthesized formula
   in
   fix formula'

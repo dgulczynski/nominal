@@ -72,3 +72,5 @@ let left = destruct_goal' 0
 let right = destruct_goal' 1
 
 let compute = step 10
+
+let discriminate = ex_falso %> by_solver
