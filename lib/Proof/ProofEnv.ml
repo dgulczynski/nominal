@@ -157,11 +157,16 @@ let parse_mapping identifiers constraints assumptions to_formula source_mapping 
   in
   env identifiers constraints assumptions (List.fold_left aux [] source_mapping) to_formula
 
+let subst_atom subst_assm (A a_rep as a) b {assumptions; identifiers; constraints; mapping; to_formula} =
+  let filter_out_a = not % rep_eq a_rep in
+  { assumptions= List.map (subst_assm a b) assumptions
+  ; identifiers= List.filter filter_out_a identifiers
+  ; constraints= List.map (subst_atom_in_constr a b) constraints
+  ; mapping= List.map (fun {bind; body} -> {bind; body= (a |-> b) body}) mapping
+  ; to_formula }
+
 let subst_var subst_assm (V x_rep as x) t {assumptions; identifiers; constraints; mapping; to_formula} =
-  let filter_out_x = function
-    | Bind (_, K_Var y_rep) -> x_rep <> y_rep
-    | _                     -> true
-  in
+  let filter_out_x = not % rep_eq x_rep in
   { assumptions= List.map (subst_assm x t) assumptions
   ; identifiers= List.filter filter_out_x identifiers
   ; constraints= List.map (subst_var_in_constr x t) constraints

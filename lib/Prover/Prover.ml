@@ -171,7 +171,7 @@ let destruct_assm h_name state =
   let env, f = goal state in
   let h_proof = assm_proof h_name env in
   let ctx = context state in
-  let env, _, h = computeWHNF env 10 $ label' h_proof in
+  let env, _, h = computeWHNF env 5 $ label' h_proof in
   match h with
   | F_ExistsTerm ((V_Bind (x_name, _) as x_bind), h_x) ->
       destruct_assm_witness env f h_name h_proof h_x x_name (var_binder_to_binder x_bind) ctx
@@ -189,7 +189,7 @@ let rec destruct_assm' h_name witnesses state =
       (let env, f = goal state in
        let h_proof = assm_proof h_name env in
        let ctx = context state in
-       let env, _, h = computeWHNF env 10 $ label' h_proof in
+       let env, _, h = computeWHNF env 5 $ label' h_proof in
        match h with
        | F_ExistsTerm (V_Bind (_, x), h_x) ->
            let w = fresh_var () in
@@ -254,7 +254,7 @@ let step n state =
   unfinished (env, f') $ PC_Equivalent (to_judgement (env, f), n, context state)
 
 let case name state =
-  let env, f = goal (step 10 state) in
+  let env, f = goal (step 5 state) in
   let ctx = PC_Or (to_judgement (env, f), context state) in
   match f with
   | F_Or fs -> (
@@ -263,16 +263,19 @@ let case name state =
     | None        -> raise $ unknown_case name f )
   | f       -> raise $ not_a_disjunction f
 
-let subst x_name t_source state =
+let subst x_name y_source state =
   let env, f = goal state in
   match ProofEnv.lookup_identifier x_name env with
-  | Some (Bind (_, K_Atom _)) -> failwith "atom"
-  | Some (Bind (_, K_Func))   -> failwith "func"
-  | Some (Bind (_, K_FVar _)) -> failwith "fvar"
-  | None                      -> failwith "none"
+  | Some (Bind (_, K_Func))   -> failwith "subst func"
+  | Some (Bind (_, K_FVar _)) -> failwith "subst fvar"
+  | None                      -> failwith "subst none"
+  | Some (Bind (_, K_Atom a)) ->
+      let b = parse_atom_in_env (all_identifiers env) y_source in
+      let ctx = PC_SubstAtom (to_judgement (env, f), A a, b, context state) in
+      unfinished (ProofEnv.subst_atom (fun a b -> on_snd (a |-> b)) (A a) b env, (A a |-> b) f) ctx
   | Some (Bind (_, K_Var x))  ->
-      let t = parse_term_in_env (all_identifiers env) t_source in
-      let ctx = PC_Substitution (to_judgement (env, f), V x, t, context state) in
+      let t = parse_term_in_env (all_identifiers env) y_source in
+      let ctx = PC_SubstVar (to_judgement (env, f), V x, t, context state) in
       unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx
 
 let add_assumption_thm' h_name h_proof state =
@@ -283,8 +286,24 @@ let add_assumption_thm' h_name h_proof state =
 
 let add_assumption_thm h_name = add_assumption_thm' h_name % proven
 
+let add_assumption_thm_specialized h_name h_proof specs state =
+  let env, _ = goal state in
+  let h_specialized_proof = specialize_proof (proven h_proof) specs env in
+  add_assumption_thm' h_name h_specialized_proof state
+
 let specialize_assm h_name h_spec_name specs state =
   let env = goal_env state in
   let h_proof = assm_proof h_name env in
   let h_spec_proof = specialize_proof h_proof specs env in
   state |> add_assumption_thm h_spec_name (incproof_to_proof h_spec_proof)
+
+let apply_in_assm h_name h_premise_name state =
+  let env, _ = goal state in
+  let h_proof = assm_proof h_name env in
+  let h_premise_proof = assm_proof h_premise_name env in
+  let h_env, h = judgement' h_proof in
+  match computeWHNF h_env 5 h with
+  | h_env, _, F_Impl (_, h_conclusion) ->
+      let h_conclusion_proof = proof_apply (h_env, h_conclusion) h_proof h_premise_proof in
+      add_assumption_thm' h_name h_conclusion_proof state
+  | _                                  -> raise % not_an_implication $ label' h_premise_proof

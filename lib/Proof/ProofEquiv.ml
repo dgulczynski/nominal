@@ -104,10 +104,6 @@ and equiv env1 env2 n1 n2 f1 f2 =
   | F_Constr _, _ -> false
   | F_ConstrImpl (c1, f1'), F_ConstrImpl (c2, f2') | F_ConstrAnd (c1, f1'), F_ConstrAnd (c2, f2') ->
       constr_equiv env1 env2 c1 c2 && equiv (add_constr c1 env1) (add_constr c1 env1) n1 n2 f1' f2'
-      (* analyse "dead" branches? *)
-      (* || not $ constr_equiv to_formula env1 env2 c1 c2 *)
-      (* && not $ Solver.solve_with_assumptions (constraints env1) c1 *)
-      (* && not $ Solver.solve_with_assumptions (constraints env2) c2 *)
   | F_ConstrImpl _, _ | F_ConstrAnd _, _ -> false
   | F_Impl (f1, f1'), F_Impl (f2, f2') -> f1 === f2 && f1' === f2'
   | F_Impl _, _ -> false
@@ -220,7 +216,7 @@ and equiv_syntactic env1 env2 n1 n2 f1 f2 =
   | F_Fix _, _ -> false
 
 and ( === ) f1 f2 env =
-  let n = 10 (* Arbitrary depth of WHNF computation for equiv *) in
+  let n = 5 (* Arbitrary depth of WHNF computation for equiv *) in
   equiv env env n n f1 f2
 
 and add_to_mapping env {bind= FV_Bind (_, x, _) as bind; body} =

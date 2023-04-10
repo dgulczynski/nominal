@@ -245,6 +245,15 @@ let equivalent f n p =
   let env, _, fn = computeWHNF env n f in
   if fe === fn <| env then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe
 
+let subst_atom a b (env, f) p =
+  let solver_goal = atom a =: T_Atom b in
+  let subst_goal _ =
+    let env = subst_atom ( |-> ) a b env in
+    let f = (a |-> b) f in
+    P_Substitution ((env, f), p)
+  in
+  solver_proof (env, F_Constr solver_goal) solver_goal subst_goal
+
 let subst_var x t (env, f) p =
   let solver_goal = var x =: t in
   let subst_goal _ =

@@ -78,8 +78,9 @@ val induction_e : var_binder -> var_binder -> proof -> proof
 
 val equivalent : formula -> int -> proof -> proof
 
+val subst_atom : atom -> permuted_atom -> judgement -> proof -> proof
+
 val subst_var : var -> term -> judgement -> proof -> proof
-(** [subst_var x t (f, env) p] returns a proof of (env |- f) if [p] is a proof of [(x |=> t) (f, env)] and we *)
 
 module Axiom : sig
   val compare_atoms : proof

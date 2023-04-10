@@ -51,4 +51,8 @@ val intros' : string list -> tactic
 
 val add_assumption_thm : string -> proof -> tactic
 
+val add_assumption_thm_specialized : string -> proof -> string list -> tactic
+
 val specialize_assm : string -> string -> string list -> tactic
+
+val apply_in_assm : string -> string -> tactic

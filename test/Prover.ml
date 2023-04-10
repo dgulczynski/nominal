@@ -158,4 +158,18 @@ let _ = test_proof Examples.Arithmetic.plus_Sn_m_thm (proof' %> apply_thm Exampl
 
 let _ = test_proof Examples.Arithmetic.plus_symm_thm (proof' %> apply_thm Examples.Arithmetic.plus_symm)
 
+let _ =
+  test_proof Examples.LambdaCalculus.arrow_base_base_is_a_type_thm
+    (proof' %> apply_thm Examples.LambdaCalculus.arrow_base_base_is_a_type)
+
+let _ =
+  test_proof Examples.LambdaCalculus.var_in_env_types_thm
+    (proof' %> apply_thm Examples.LambdaCalculus.var_in_env_types)
+
+let _ =
+  test_proof Examples.LambdaCalculus.app_lam_var_types_thm
+    (proof' %> apply_thm Examples.LambdaCalculus.app_lam_var_types)
+
+let _ = test_proof Examples.LambdaCalculus.progress_thm (proof' %> apply_thm Examples.LambdaCalculus.progress)
+
 let _ = print_newline ()

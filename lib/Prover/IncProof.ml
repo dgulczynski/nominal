@@ -27,7 +27,8 @@ type incproof =
   | PI_OrElim         of judgement * incproof * incproof list
   | PI_Induction      of judgement * var_binder * var_binder * incproof
   | PI_Equivalent     of judgement * int * incproof
-  | PI_Substitution   of judgement * var * term * incproof
+  | PI_SubstAtom      of judgement * atom * permuted_atom * incproof
+  | PI_SubstVar       of judgement * var * term * incproof
   | PI_ExFalso        of judgement * incproof
 
 type proof_context =
@@ -52,7 +53,8 @@ type proof_context =
   | PC_OrElimDiscjunt of judgement * incproof * incproof zipper * proof_context
   | PC_Induction      of judgement * var_binder * var_binder * proof_context
   | PC_Equivalent     of judgement * int * proof_context
-  | PC_Substitution   of judgement * var * term * proof_context
+  | PC_SubstAtom      of judgement * atom * permuted_atom * proof_context
+  | PC_SubstVar       of judgement * var * term * proof_context
   | PC_ExFalso        of judgement * proof_context
 
 let judgement' = function
@@ -74,7 +76,8 @@ let judgement' = function
   | PI_OrElim (jgmt, _, _)
   | PI_Induction (jgmt, _, _, _)
   | PI_Equivalent (jgmt, _, _)
-  | PI_Substitution (jgmt, _, _, _)
+  | PI_SubstAtom (jgmt, _, _, _)
+  | PI_SubstVar (jgmt, _, _, _)
   | PI_ExFalso (jgmt, _) -> jgmt
 
 let env' = fst % judgement'
@@ -95,7 +98,8 @@ let rec hasHoles = function
   | PI_Or (_, p)
   | PI_Induction (_, _, _, p)
   | PI_Equivalent (_, _, p)
-  | PI_Substitution (_, _, _, p)
+  | PI_SubstAtom (_, _, _, p)
+  | PI_SubstVar (_, _, _, p)
   | PI_ExFalso (_, p) -> hasHoles p
   | PI_Apply (_, l, r) | PI_Witness (_, l, _, r) | PI_ConstrAnd (_, l, r) -> hasHoles l || hasHoles r
   | PI_And (_, ps) -> List.exists hasHoles ps
@@ -113,7 +117,8 @@ let rec ctxHasHoles = function
   | PC_Or (_, ctx)
   | PC_Induction (_, _, _, ctx)
   | PC_Equivalent (_, _, ctx)
-  | PC_Substitution (_, _, _, ctx)
+  | PC_SubstAtom (_, _, _, ctx)
+  | PC_SubstVar (_, _, _, ctx)
   | PC_ExFalso (_, ctx) -> ctxHasHoles ctx
   | PC_ApplyLeft (_, ctx, proof)
   | PC_WitnessExists (_, ctx, _, proof)
@@ -156,7 +161,8 @@ let rec normalize incproof =
   | PI_OrElim (jgmt, or_proof, proofs) -> proof_or_elim jgmt or_proof proofs
   | PI_Induction (jgmt, x, y, proof) -> proof_induction jgmt x y proof
   | PI_Equivalent (jgmt, n, proof) -> proof_equivalent jgmt n proof
-  | PI_Substitution (jgmt, x, t, proof) -> proof_substitution jgmt x t proof
+  | PI_SubstAtom (jgmt, a, b, proof) -> proof_subst_atom jgmt a b proof
+  | PI_SubstVar (jgmt, x, t, proof) -> proof_subst_var jgmt x t proof
 
 and normalize_many proofs =
   let aux proof =
@@ -255,10 +261,15 @@ and proof_equivalent jgmt n proof =
   | PI_Proven proof -> proven $ equivalent (snd jgmt) n proof
   | incproof        -> PI_Equivalent (jgmt, n, incproof)
 
-and proof_substitution jgmt x t proof =
+and proof_subst_atom jgmt a b proof =
+  match normalize proof with
+  | PI_Proven proof -> proven $ subst_atom a b jgmt proof
+  | incproof        -> PI_SubstAtom (jgmt, a, b, incproof)
+
+and proof_subst_var jgmt x t proof =
   match normalize proof with
   | PI_Proven proof -> proven $ subst_var x t jgmt proof
-  | incproof        -> PI_Substitution (jgmt, x, t, incproof)
+  | incproof        -> PI_SubstVar (jgmt, x, t, incproof)
 
 and proof_constr_and_elim_left jgmt c_and_f_proof =
   match normalize c_and_f_proof with
@@ -329,8 +340,8 @@ let rec find_hole_in_proof context = function
         find_hole_in_many proofs proof_from context_from
   | PI_Induction (jgmt, x, y, incproof) -> find_hole_in_proof (PC_Induction (jgmt, x, y, context)) incproof
   | PI_Equivalent (jgmt, n, incproof) -> find_hole_in_proof (PC_Equivalent (jgmt, n, context)) incproof
-  | PI_Substitution (jgmt, x, t, incproof) ->
-      find_hole_in_proof (PC_Substitution (jgmt, x, t, context)) incproof
+  | PI_SubstAtom (jgmt, a, b, incproof) -> find_hole_in_proof (PC_SubstAtom (jgmt, a, b, context)) incproof
+  | PI_SubstVar (jgmt, x, t, incproof) -> find_hole_in_proof (PC_SubstVar (jgmt, x, t, context)) incproof
 
 and find_hole_in_many proofs proof_from context_from =
   let proofs = List.map normalize proofs in
