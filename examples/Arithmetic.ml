@@ -50,8 +50,9 @@ let plus_n_Sm_thm = arith_thm "forall x y z :term. (PlusEq {S x} y z) => (PlusEq
 
 let plus_n_Sm =
   proof' plus_n_Sm_thm
-  |> by_induction "x'" "IH" %> intro %> intro
-  |> intros ["H"] %> destruct_assm "H" (* case analysis on PlusEq {S x} y z *)
+  |> by_induction "x'" "IH"
+     %> intros ["y"; "z"; "H"]
+     %> destruct_assm "H" (* case analysis on PlusEq {S x} y z *)
   |> intros' ["contra"; "_"] %> discriminate (* S x = 0 *)
   |> intros' ["H"; "x'"; "z'"; "_"; "_"] (* S x = S x', z = S z', PlusEq (S x') y (S z') *)
   |> destruct_assm "H" (* case analysis on PlusEq (S x') y (S z') *)
@@ -66,8 +67,9 @@ let plus_Sn_m_thm = arith_thm "forall x y z :term. (PlusEq x {S y} z) => (PlusEq
 
 let plus_Sn_m =
   proof' plus_Sn_m_thm
-  |> by_induction "x'" "IH" %> intro %> intro
-  |> intros ["H"] %> destruct_assm "H" (* case analysis on PlusEq x {S y} z *)
+  |> by_induction "x'" "IH"
+     %> intros ["y"; "z"; "H"]
+     %> destruct_assm "H" (* case analysis on PlusEq x {S y} z *)
   |> intros' ["H0"; ""] (* x = 0 *)
      %> (case "succ" %> exists "0" %> exists "y" %> by_solver %> by_solver)
      %> (case "zero" %> by_solver %> by_solver)
@@ -100,6 +102,6 @@ let plus_symm =
     %> by_solver %> apply_assm "Hx" %> apply_assm "Hy" %> apply_assm "Heq"
   in
   proof' plus_symm_thm
-  |> by_induction "x0" "Hx0" %> by_induction "y0" "Hy0" %> intro %> intros ["Hx"; "Hy"; "Heq"]
+  |> by_induction "x0" "Hx0" %> by_induction "y0" "Hy0" %> intros ["z"; "Hx"; "Hy"; "Heq"]
   |> destruct_assm "Heq" %> case0 %> caseS (* case analysis on PlusEq x y z*)
   |> qed

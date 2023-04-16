@@ -21,6 +21,17 @@ let string_of_list string_of_item = string_of_list' string_of_item
 
 let unwords = String.concat " "
 
+let add_name (Bind (name, bind) as binder) env =
+  let rec gen_free_name i =
+    let name_i = Printf.sprintf "%s%d" name i in
+    match bind_by_name name_i env with
+    | Some _ -> gen_free_name (succ i)
+    | None   -> name_i
+  in
+  match bind_by_name name env with
+  | Some _ -> Bind (gen_free_name 1, bind) :: env
+  | None   -> binder :: env
+
 let pp_print_parenthesized ?(left = '(') ?(right = ')') pp_x fmt x =
   pp_print_char fmt left ; pp_x fmt x ; pp_print_char fmt right
 
@@ -113,14 +124,14 @@ let pp_print_constr = pp_print_constr_in_env []
 let rec pp_print_kind_in_env env fmt k =
   let rec print_foralls env = function
     | K_ForallAtom ((A_Bind (a_name, _) as a_bind), k) -> (
-        let env' = atom_binder_to_binder a_bind :: env in
+        let env' = add_name (atom_binder_to_binder a_bind) env in
         pp_print_string fmt a_name ;
         print_space fmt () ;
         match k with
         | K_ForallAtom _ -> print_foralls env' k
         | _              -> pp_print_string fmt ": atom." ; pp_print_kind_in_env env' fmt k )
     | K_ForallTerm ((V_Bind (x_name, _) as x_bind), k) -> (
-        let env' = var_binder_to_binder x_bind :: env in
+        let env' = add_name (var_binder_to_binder x_bind) env in
         pp_print_string fmt x_name ;
         print_space fmt () ;
         match k with
@@ -189,20 +200,20 @@ let rec pp_print_formula env fmt formula =
   let rec pp_print_foralls env = function
     | F_ForallTerm ((V_Bind (_, x) as x_bind), (F_ForallTerm _ as f))
     | F_ExistsTerm ((V_Bind (_, x) as x_bind), (F_ExistsTerm _ as f)) ->
-        let env = var_binder_to_binder x_bind :: env in
+        let env = add_name (var_binder_to_binder x_bind) env in
         pp_print_var env fmt x ; space () ; pp_print_foralls env f
     | F_ForallTerm ((V_Bind (_, x) as x_bind), f) | F_ExistsTerm ((V_Bind (_, x) as x_bind), f) ->
-        let env = var_binder_to_binder x_bind :: env in
+        let env = add_name (var_binder_to_binder x_bind) env in
         pp_print_var env fmt x ;
         print_space fmt () ;
         pp_print_string fmt ": term. " ;
         pp_print_formula env fmt f
     | F_ForallAtom ((A_Bind (_, a) as a_bind), (F_ForallAtom _ as f))
     | F_ExistsAtom ((A_Bind (_, a) as a_bind), (F_ExistsAtom _ as f)) ->
-        let env = atom_binder_to_binder a_bind :: env in
+        let env = add_name (atom_binder_to_binder a_bind) env in
         pp_print_atom env fmt a ; space () ; pp_print_foralls env f
     | F_ForallAtom ((A_Bind (_, a) as a_bind), f) | F_ExistsAtom ((A_Bind (_, a) as a_bind), f) ->
-        let env = atom_binder_to_binder a_bind :: env in
+        let env = add_name (atom_binder_to_binder a_bind) env in
         pp_print_atom env fmt a ;
         print_space fmt () ;
         pp_print_string fmt ": atom. " ;
@@ -239,18 +250,20 @@ let rec pp_print_formula env fmt formula =
       | F_ConstrImpl _ -> pp_formula f
       | _              -> pp_print_conclusion f )
   | F_Fun (FV_Bind (x_name, x, k), f) ->
-      let env = Bind (x_name, K_FVar (x, k)) :: env in
+      let env = add_name (Bind (x_name, K_FVar (x, k))) env in
       pp_fun pp_print_string x_name pp_print_kind k f env
   | F_FunTerm ((V_Bind (x_name, _) as x_bind), f) ->
-      pp_fun pp_print_string x_name pp_print_string "term" f (var_binder_to_binder x_bind :: env)
+      pp_fun pp_print_string x_name pp_print_string "term" f (add_name (var_binder_to_binder x_bind) env)
   | F_FunAtom ((A_Bind (a_name, _) as a_bind), f) ->
-      pp_fun pp_print_string a_name pp_print_string "atom" f (atom_binder_to_binder a_bind :: env)
+      pp_fun pp_print_string a_name pp_print_string "atom" f (add_name (atom_binder_to_binder a_bind) env)
   | F_App (f1, f2) -> pp_print_app_left f1 ; space () ; pp_print_atomic_formula fmt f2
   | F_AppTerm (f, e) ->
       pp_print_app_left f ; space () ; pp_string "{" ; pp_print_term_in_env env fmt e ; pp_string "}"
   | F_AppAtom (f, a) -> pp_print_app_left f ; space () ; pp_print_atom_permuted env fmt a
   | F_Fix (FV_Bind (fix_name, fix, fix_k), (V_Bind (_, x) as x_bind), k, f) ->
-      let env = var_binder_to_binder x_bind :: Bind (fix_name, K_FVar (fix, fix_k)) :: env in
+      let env =
+        env |> add_name (var_binder_to_binder x_bind) |> add_name (Bind (fix_name, K_FVar (fix, fix_k)))
+      in
       pp_print_string fmt "fix" ;
       space () ;
       pp_print_string fmt fix_name ;

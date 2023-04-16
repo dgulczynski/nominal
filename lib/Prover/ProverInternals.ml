@@ -108,11 +108,12 @@ let check_fresh env name =
 let intro_named name state =
   let env, f = goal state in
   let _ = check_fresh env name in
+  let context = PC_Intro (to_judgement (env, f), context state) in
   match f with
-  | F_Impl (f1, f2) ->
-      let context = PC_Intro (to_judgement (env, f), context state) in
-      unfinished (env |> add_assumption (name, f1), f2) context
-  | _               -> raise $ not_an_implication f
+  | F_Impl (f1, f2)                 -> unfinished (env |> add_assumption (name, f1), f2) context
+  | F_ForallAtom (A_Bind (_, a), f) -> unfinished (env |> add_atom (A_Bind (name, a)), f) context
+  | F_ForallTerm (V_Bind (_, x), f) -> unfinished (env |> add_var (V_Bind (name, x)), f) context
+  | _                               -> raise $ not_an_implication f
 
 let apply_internal ?(h_name = "") h_proof =
   let apply_impl_list env =

@@ -37,17 +37,22 @@ let not_a_disjunction = not_what_expected "a disjunction" % string_of_formula
 
 let not_what_with what with_what = not_what_expected (Printf.sprintf "a %s with %s" what with_what)
 
-let not_a_conjunction_with conjunct = not_what_with "a conjunction" (string_of_formula conjunct) % string_of_formula
+let not_a_conjunction_with conjunct =
+  not_what_with "a conjunction" (string_of_formula conjunct) % string_of_formula
 
-let not_a_disjunction_with disjunct = not_what_with "a disjunction" (string_of_formula disjunct) % string_of_formula
+let not_a_disjunction_with disjunct =
+  not_what_with "a disjunction" (string_of_formula disjunct) % string_of_formula
 
 let premise_mismatch hypothesis premise =
   not_what_expected ("implication with premise " ^ string_of_formula premise) (string_of_formula hypothesis)
 
 let conclusion_mismatch hypothesis conclusion =
-  not_what_expected ("implication with conclusion " ^ string_of_formula conclusion) (string_of_formula hypothesis)
+  not_what_expected
+    ("implication with conclusion " ^ string_of_formula conclusion)
+    (string_of_formula hypothesis)
 
-let formula_mismatch expected actual = not_what_expected (string_of_formula expected) (string_of_formula actual)
+let formula_mismatch expected actual =
+  not_what_expected (string_of_formula expected) (string_of_formula actual)
 
 let formula_kind_mismatch f f_kind expected_kind =
   let expcted_kind = Printf.sprintf "formula with kind %s" (string_of_kind expected_kind) in
@@ -81,5 +86,11 @@ let unknown_case case f =
   ProofException exn
 
 let cannot_specialize f =
-  let exn = Printf.sprintf "Only implications and foralls can be specialized, not `%s`" (string_of_formula f) in
+  let exn =
+    Printf.sprintf "Only implications and foralls can be specialized, not `%s`" (string_of_formula f)
+  in
+  ProofException exn
+
+let name_taken x =
+  let exn = Printf.sprintf "Name `%s` is alreadt taken" x in
   ProofException exn

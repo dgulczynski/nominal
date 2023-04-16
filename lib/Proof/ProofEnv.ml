@@ -61,7 +61,19 @@ let union
   ; mapping= merge v1 v2
   ; to_formula }
 
-let add_identifier bind = on_identifiers $ merge [bind]
+let name_eq name = function
+  | Bind (x, _) -> x = name
+
+let rep_eq name = function
+  | Bind (_, K_Atom x) | Bind (_, K_Var x) | Bind (_, K_FVar (x, _)) -> x = name
+  | Bind (_, K_Func) -> false
+
+let lookup_identifier name {identifiers; _} = List.find_opt (name_eq name) identifiers
+
+let add_identifier (Bind (x, _) as bind) env =
+  match lookup_identifier x env with
+  | Some _ -> raise $ name_taken x
+  | None   -> on_identifiers (merge [bind]) env
 
 let add_fvar x_bind = add_identifier $ fvar_binder_to_binder x_bind
 
@@ -77,15 +89,6 @@ let map_assumptions f to_formula {assumptions; identifiers; constraints; mapping
   {assumptions= List.map f assumptions; identifiers; constraints; mapping; to_formula}
 
 let lookup_assumption test {assumptions; _} = List.find_opt test assumptions
-
-let name_eq name = function
-  | Bind (x, _) -> x = name
-
-let rep_eq name = function
-  | Bind (_, K_Atom x) | Bind (_, K_Var x) | Bind (_, K_FVar (x, _)) -> x = name
-  | Bind (_, K_Func) -> false
-
-let lookup_identifier name {identifiers; _} = List.find_opt (name_eq name) identifiers
 
 let unfilter test = List.filter (not % test)
 
