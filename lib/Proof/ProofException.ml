@@ -92,5 +92,5 @@ let cannot_specialize f =
   ProofException exn
 
 let name_taken x =
-  let exn = Printf.sprintf "Name `%s` is alreadt taken" x in
+  let exn = Printf.sprintf "Name `%s` is already taken" x in
   ProofException exn

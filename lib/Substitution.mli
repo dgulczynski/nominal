@@ -1,10 +1,6 @@
 open Types
 open Permutation
 
-val sub : 'a -> 'a -> 'a -> 'a
-
-val subst : 'a -> ('b, 'a) permuted -> 'a -> ('b, 'a) permuted
-
 val permute_term : atom permutation -> term -> term
 
 val subst_atom_in_term : atom -> permuted_atom -> term -> term
@@ -32,3 +28,7 @@ val subst_fvar_in_formula : fvar -> formula -> formula -> formula
 val ( |==> ) : fvar -> formula -> formula -> formula
 
 val subst_var_in_shape : var -> shape -> shape -> shape
+
+val instantiate_atom : formula -> atom_binder * formula
+
+val instantiate_var : formula -> var_binder * formula

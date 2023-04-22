@@ -6,7 +6,6 @@ open ProofEquiv
 open Permutation
 open ProofException
 open Substitution
-open Utils
 
 type proof_env = formula env
 
@@ -231,14 +230,18 @@ let or_e or_proof ps =
 (*   G, x, forall y:term. [y < x] => f(y) |- f(x)  *)
 (* ----------------------------------------------- *)
 (*          G |-  forall x : term. f(x)            *)
-let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, y)) p =
+let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, V y)) p =
   let f_x = label p in
-  let f_y = (V x |=> var y) f_x in
-  let ind_hyp = F_ForallTerm (V_Bind (y_name, y), F_ConstrImpl (var y <: var (V x), f_y)) in
+  let f_y = (V x |=> var (V y)) f_x in
+  let ind_hyp = F_ForallTerm (V_Bind (y_name, V y), F_ConstrImpl (var (V y) <: var (V x), f_y)) in
   let env = env p |> remove_assumption ind_hyp in
   match List.filter_map (fun v -> find_bind v env) [x_name; y_name] with
   | []     -> P_Intro ((env |> remove_identifier x, F_ForallTerm (x_bind, f_x)), p)
-  | f :: _ -> raise $ cannot_generalize (x_name ^ " or " ^ y_name) f
+  | f :: _ ->
+      raise
+      $ cannot_generalize
+          (x_name ^ "(" ^ string_of_int x ^ ")" ^ " or " ^ y_name ^ "(" ^ string_of_int y ^ ")" ^ "\n")
+          f
 
 let equivalent f n p =
   let env, fe = judgement p in

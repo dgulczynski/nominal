@@ -32,7 +32,7 @@ type incproof =
   | PI_ExFalso        of judgement * incproof
 
 type proof_context =
-  | PC_Root
+  | PC_Root           of judgement
   | PC_Intro          of judgement * proof_context
   | PC_ApplyLeft      of judgement * proof_context * incproof
   | PC_ApplyRight     of judgement * incproof * proof_context
@@ -130,7 +130,33 @@ let rec ctxHasHoles = function
   | PC_OrElim (_, ctx, proofs) -> ctxHasHoles ctx || List.exists hasHoles proofs
   | PC_OrElimDiscjunt (_, proof, proofs, ctx) ->
       ctxHasHoles ctx || hasHoles proof || Zipper.exists hasHoles proofs
-  | PC_Root -> false
+  | PC_Root _ -> false
+
+let rec root_judgement = function
+  | PC_Root jgmt -> jgmt
+  | PC_Intro (_, ctx)
+  | PC_SpecializeAtom (_, _, ctx)
+  | PC_SpecializeTerm (_, _, ctx)
+  | PC_ExistsAtom (_, _, ctx)
+  | PC_ExistsTerm (_, _, ctx)
+  | PC_AndElim (_, ctx)
+  | PC_ConstrAndElimL (_, ctx)
+  | PC_ConstrAndElimR (_, ctx)
+  | PC_Or (_, ctx)
+  | PC_Induction (_, _, _, ctx)
+  | PC_Equivalent (_, _, ctx)
+  | PC_SubstAtom (_, _, _, ctx)
+  | PC_SubstVar (_, _, _, ctx)
+  | PC_ExFalso (_, ctx)
+  | PC_ApplyLeft (_, ctx, _)
+  | PC_WitnessExists (_, ctx, _, _)
+  | PC_ConstrAndLeft (_, ctx, _)
+  | PC_ApplyRight (_, _, ctx)
+  | PC_WitnessUsage (_, _, _, ctx)
+  | PC_ConstrAndRight (_, _, ctx)
+  | PC_And (_, _, ctx)
+  | PC_OrElim (_, ctx, _)
+  | PC_OrElimDiscjunt (_, _, _, ctx) -> root_judgement ctx
 
 let proof_hole env f = PI_Hole (env, f)
 

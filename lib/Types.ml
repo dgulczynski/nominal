@@ -104,3 +104,15 @@ let binder_rep = function
   | Bind (_, K_Func) -> None
 
 let get_bind_opt name env = binder_kind <$> List.find_opt (( = ) name % binder_name) env
+
+let fresh_generator ?(start = 0) =
+  let counter = ref (start - 1) in
+  fun () -> incr counter ; !counter
+
+let fresh = fresh_generator ~start:0
+
+let fresh_atom = (fun a -> A a) % fresh
+
+let fresh_var = (fun x -> V x) % fresh
+
+let fresh_fvar = (fun x -> FV x) % fresh

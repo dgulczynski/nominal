@@ -88,9 +88,11 @@ let is_neq gamma a1 a2 =
 let is_fresh gamma a x = List.mem (A_Fresh (a, x)) gamma
 
 let subst_atom gamma a b =
-  let subst_atom_constr a b = function
-    | A_Neq (a1, a2) -> A_Neq (sub a b a1, sub a b a2)
-    | A_Fresh (c, v) -> A_Fresh (sub a b c, v)
+  let subst_atom_constr a b =
+    let sub a' = if a = a' then b else a' in
+    function
+    | A_Neq (a1, a2) -> A_Neq (sub a1, sub a2)
+    | A_Fresh (c, v) -> A_Fresh (sub c, v)
     | A_Shape _ as c (* Atoms do not affect shape *) -> c
   in
   let add_constr constr gamma =

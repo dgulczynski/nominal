@@ -27,7 +27,7 @@ let check_input env goal =
 let proof env f =
   let _ = check_input env f in
   let goal = (env, f) in
-  unfinished goal PC_Root
+  unfinished goal $ PC_Root (to_judgement goal)
 
 let intro state =
   let env, f = goal state in
@@ -135,8 +135,8 @@ let remove_assm h_name = remove_assumptions (( = ) h_name % fst)
 
 let update_assm h_name h = remove_assm h_name %> add_assumption (h_name, h)
 
-let destruct_assm_witness env f h_name h_proof h witness witness_bind ctx =
-  let ctx = PC_WitnessUsage (to_judgement (env, f), h_proof, witness, ctx) in
+let destruct_assm_witness env f h_name h_proof h witness_bind ctx =
+  let ctx = PC_WitnessUsage (to_judgement (env, f), h_proof, binder_name witness_bind, ctx) in
   let env = env |> add_identifier witness_bind |> update_assm h_name h in
   unfinished (env, f) ctx
 
@@ -173,14 +173,16 @@ let destruct_assm h_name state =
   let ctx = context state in
   let env, _, h = computeWHNF env 5 $ label' h_proof in
   match h with
-  | F_ExistsTerm ((V_Bind (x_name, _) as x_bind), h_x) ->
-      destruct_assm_witness env f h_name h_proof h_x x_name (var_binder_to_binder x_bind) ctx
-  | F_ExistsAtom ((A_Bind (a_name, _) as a_bind), h_a) ->
-      destruct_assm_witness env f h_name h_proof h_a a_name (atom_binder_to_binder a_bind) ctx
-  | F_And hs -> destruct_assm_and env f h_name h_proof hs ctx
-  | F_Or hs -> destruct_assm_or env f h_name h_proof hs ctx
+  | F_ExistsTerm _     ->
+      let x_bind, h_x = instantiate_var h in
+      destruct_assm_witness env f h_name h_proof h_x (var_binder_to_binder x_bind) ctx
+  | F_ExistsAtom _     ->
+      let a_bind, h_a = instantiate_atom h in
+      destruct_assm_witness env f h_name h_proof h_a (atom_binder_to_binder a_bind) ctx
+  | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
+  | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
   | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
-  | f -> raise $ cannot_destruct f
+  | f                  -> raise $ cannot_destruct f
 
 let rec destruct_assm' h_name witnesses state =
   match witnesses with
@@ -191,22 +193,16 @@ let rec destruct_assm' h_name witnesses state =
        let ctx = context state in
        let env, _, h = computeWHNF env 5 $ label' h_proof in
        match h with
-       | F_ExistsTerm (V_Bind (_, x), h_x) ->
-           let w = fresh_var () in
-           let w_bind = V_Bind (w_name, w) in
-           destruct_assm_witness env f h_name h_proof
-             ((x |=> var w) h_x)
-             w_name (var_binder_to_binder w_bind) ctx
-       | F_ExistsAtom (A_Bind (_, a), h_a) ->
-           let w = fresh_atom () in
-           let w_bind = A_Bind (w_name, w) in
-           destruct_assm_witness env f h_name h_proof
-             ((a |-> pure w) h_a)
-             w_name (atom_binder_to_binder w_bind) ctx
-       | F_And hs                          -> destruct_assm_and env f h_name h_proof hs ctx
-       | F_Or hs                           -> destruct_assm_or env f h_name h_proof hs ctx
-       | F_ConstrAnd (c, h)                -> destruct_assm_constr_and env f h_name h_proof c h ctx
-       | f                                 -> raise $ cannot_destruct f )
+       | F_ExistsTerm _     ->
+           let V_Bind (_, V x), h_x = instantiate_var h in
+           destruct_assm_witness env f h_name h_proof h_x (Bind (w_name, K_Var x)) ctx
+       | F_ExistsAtom _     ->
+           let A_Bind (_, A a), h_a = instantiate_atom h in
+           destruct_assm_witness env f h_name h_proof h_a (Bind (w_name, K_Atom a)) ctx
+       | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
+       | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
+       | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
+       | f                  -> raise $ cannot_destruct f )
       |> destruct_assm' h_name ws
 
 let intros' = function

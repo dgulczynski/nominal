@@ -15,19 +15,6 @@ let rec free_vars_of_term = function
   | T_App (t1, t2)           -> free_vars_of_term t1 @ free_vars_of_term t2
   | T_Fun _ | T_Atom _       -> []
 
-let fresh_generator ?(start = 0) from_number =
-  let counter = ref (start - 1) in
-  fun () -> incr counter ; from_number !counter
-
-(* let string_from_number ?(prefix = "") number = prefix ^ string_of_int number *)
-
-let fresh, fresh_atom, fresh_var, fresh_fvar =
-  let generator = fresh_generator id in
-  let to_atom a = A a in
-  let to_var x = V x in
-  let to_fvar x = FV x in
-  (generator, to_atom % generator, to_var % generator, to_fvar % generator)
-
 let rec shape_of_term = function
   | T_Var {symb= x; _} -> S_Var x
   | T_Atom _           -> S_Atom

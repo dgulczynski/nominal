@@ -117,3 +117,11 @@ val binder_kind : binder -> binder_kind
 val binder_rep : binder -> name_internal option
 
 val get_bind_opt : string -> bound_env -> binder_kind option
+
+val fresh : unit -> name_internal
+
+val fresh_atom : unit -> atom
+
+val fresh_var : unit -> var
+
+val fresh_fvar : unit -> fvar

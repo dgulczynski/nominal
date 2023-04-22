@@ -6,7 +6,6 @@ open Permutation
 open Printing
 open Solver
 open Substitution
-open Utils
 
 let print_result env expr res =
   Printf.printf "%s Solver %s: %s ⊢ %s\n"

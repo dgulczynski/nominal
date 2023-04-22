@@ -4,14 +4,6 @@ val syntactic_occurs_check : var -> term -> bool
 
 val free_vars_of_term : term -> var list
 
-val fresh : unit -> int
-
-val fresh_var : unit -> var
-
-val fresh_atom : unit -> atom
-
-val fresh_fvar : unit -> fvar
-
 val shape_of_term : term -> shape
 
 val term_of_shape : shape -> term * (var * var) list

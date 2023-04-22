@@ -6,7 +6,6 @@ open Substitution
 open KindChecker
 open Permutation
 open Types
-open Utils
 
 let lookup_formula env (FV x) =
   match List.find_opt (fun {bind= FV_Bind (_, y, _); _} -> x = y) (mapping env) with

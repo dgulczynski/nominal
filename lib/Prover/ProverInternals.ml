@@ -1,11 +1,13 @@
 open Common
 open IncProof
 open Proof
+open ProofCommon
 open ProofEnv
 open ProofEquiv
-open ProofCommon
 open ProofException
 open ProverGoal
+open Printing
+open Substitution
 open Types
 
 (** Type of in-progress proof of [Prover] *)
@@ -19,8 +21,12 @@ let finished proof = S_Finished proof
 
 type tactic = prover_state -> prover_state
 
-let unproven goal =
-  let exn = Printf.sprintf "You haven't proven `%s` yet!" $ string_of_goal goal in
+let unproven goal (env, f) =
+  let exn =
+    Printf.sprintf "Proof of `%s`: You haven't proven `%s` yet!"
+      (string_of_formula_in_env (all_identifiers $ env) f)
+      (string_of_goal goal)
+  in
   ProofException exn
 
 (** Helper function that traverses [incproof] and returns [S_Unfinished {goal; context}] of a first found hole 
@@ -32,7 +38,7 @@ let rec find_goal_in_proof context incproof =
 
 (** Helper functions that given [incproof] and its [context] builds appropriate [state] *)
 and find_goal_in_ctx incproof = function
-  | PC_Root -> proof_case finished (find_goal_in_proof PC_Root) incproof
+  | PC_Root _ as ctx -> proof_case finished (find_goal_in_proof ctx) incproof
   | PC_Intro (jgmt, ctx) -> find_goal_in_ctx (proof_intro jgmt incproof) ctx
   | PC_ApplyRight (jgmt, lproof, rctx) -> find_goal_in_ctx (proof_apply jgmt lproof incproof) rctx
   | PC_ApplyLeft (jgmt, lctx, rproof) -> find_goal_in_ctx (proof_apply jgmt incproof rproof) lctx
@@ -108,12 +114,21 @@ let check_fresh env name =
 let intro_named name state =
   let env, f = goal state in
   let _ = check_fresh env name in
-  let context = PC_Intro (to_judgement (env, f), context state) in
   match f with
-  | F_Impl (f1, f2)                 -> unfinished (env |> add_assumption (name, f1), f2) context
-  | F_ForallAtom (A_Bind (_, a), f) -> unfinished (env |> add_atom (A_Bind (name, a)), f) context
-  | F_ForallTerm (V_Bind (_, x), f) -> unfinished (env |> add_var (V_Bind (name, x)), f) context
-  | _                               -> raise $ not_an_implication f
+  | F_Impl (f1, f2)     ->
+      let ctx = PC_Intro (to_judgement (env, f), context state) in
+      unfinished (env |> add_assumption (name, f1), f2) ctx
+  | F_ForallAtom _ as f ->
+      let A_Bind (_, a), f = instantiate_atom f in
+      let a_bind = A_Bind (name, a) in
+      let ctx = PC_Intro (to_judgement (env, F_ForallAtom (a_bind, f)), context state) in
+      unfinished (env |> add_atom a_bind, f) ctx
+  | F_ForallTerm _ as f ->
+      let V_Bind (_, x), f = instantiate_var f in
+      let x_bind = V_Bind (name, x) in
+      let ctx = PC_Intro (to_judgement (env, F_ForallTerm (x_bind, f)), context state) in
+      unfinished (env |> add_var x_bind, f) ctx
+  | _                   -> raise $ not_an_implication f
 
 let apply_internal ?(h_name = "") h_proof =
   let apply_impl_list env =
@@ -134,8 +149,8 @@ let apply_internal ?(h_name = "") h_proof =
     | assms -> find_goal_in_proof context $ apply_impl_list env h_proof assms )
 
 let finish = function
-  | S_Unfinished {goal; _} -> raise $ unproven goal
-  | S_Finished proof       -> proof
+  | S_Unfinished {goal; context} -> raise % unproven goal $ root_judgement context
+  | S_Finished proof             -> proof
 
 let pp_print_state fmt = function
   | S_Unfinished {goal; _} -> pp_print_goal fmt goal
