@@ -69,15 +69,18 @@ let rec pp_print_term_in_env env fmt = function
   | T_Atom a       -> pp_print_atom_permuted env fmt a
   | T_Var v        -> pp_print_var_permuted env fmt v
   | T_Lam (a, t)   -> pp_print_atom_permuted env fmt a ; pp_print_char fmt '.' ; pp_print_term_in_env env fmt t
-  | T_App (t1, t2) -> (
+  | T_App (t1, t2) ->
       ( match t1 with
-      | T_Atom _ | T_Var _ | T_App _ | T_Fun _ -> pp_print_term_in_env env fmt t1
-      | T_Lam _ -> pp_print_parenthesized (pp_print_term_in_env env) fmt t1 ) ;
+      | T_App _ -> pp_print_term_in_env env fmt t1
+      | _       -> pp_print_simple_term_in_env env fmt t1 ) ;
       print_space fmt () ;
-      match t2 with
-      | T_Atom _ | T_Var _ | T_Fun _ -> pp_print_term_in_env env fmt t2
-      | T_Lam _ | T_App _            -> pp_print_parenthesized (pp_print_term_in_env env) fmt t2 )
+      pp_print_simple_term_in_env env fmt t2
   | T_Fun f        -> pp_print_string fmt f
+
+and pp_print_simple_term_in_env env fmt t =
+  match t with
+  | T_Atom _ | T_Var _ | T_Fun _ -> pp_print_term_in_env env fmt t
+  | T_Lam _ | T_App _            -> pp_print_parenthesized (pp_print_term_in_env env) fmt t
 
 let pp_print_term = pp_print_term_in_env []
 
@@ -118,6 +121,9 @@ let pp_print_constr_in_env env fmt c =
   | C_Fresh (a, t)       -> print_binop (atom a) "#" t
   | C_AtomEq (a, alpha)  -> print_binop (atom a) "==" $ T_Atom alpha
   | C_AtomNeq (a, alpha) -> print_binop (atom a) "=/=" $ T_Atom alpha
+  | C_Symbol t           ->
+      pp_print_string fmt "symbol? " ;
+      pp_print_simple_term_in_env env fmt t
 
 let pp_print_constr = pp_print_constr_in_env []
 

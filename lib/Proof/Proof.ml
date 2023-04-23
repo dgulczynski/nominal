@@ -6,6 +6,7 @@ open ProofEquiv
 open Permutation
 open ProofException
 open Substitution
+open Printing
 
 type proof_env = formula env
 
@@ -268,19 +269,25 @@ let subst_var x t (env, f) p =
   solver_proof (env, F_Constr solver_goal) solver_goal subst_goal
 
 module Axiom = struct
-  let axiom f = P_Ax (empty id, f)
+  let axiom_env = empty id
 
-  let compare_atoms =
-    let a = fresh_atom () and b = fresh_atom () in
-    let constr_same = F_Constr (atom a =: atom b) in
-    let constr_diff = F_Constr (a =/=: pure b) in
-    axiom
-    $ F_ForallAtom
-        ( A_Bind ("a", a)
-        , F_ForallAtom (A_Bind ("b", b), F_Or [("same", constr_same); ("different", constr_diff)]) )
+  let axiom f = P_Ax (axiom_env, f)
 
-  let exists_fresh =
-    let a = fresh_atom () and t = fresh_var () in
-    let constr_fresh = F_Constr a #: (var t) in
-    axiom $ F_ForallTerm (V_Bind ("t", t), F_ExistsAtom (A_Bind ("a", a), constr_fresh))
+  let parse_axiom = axiom % parse_formula axiom_env
+
+  let compare_atoms = parse_axiom "forall a b : atom. same: (a = b) ∨ different: (a =/= b)"
+
+  let exists_fresh = parse_axiom "forall t : term. exists a : atom. a # t"
+
+  let term_inversion =
+    parse_axiom
+    $ unwords
+        [ "forall e : term."
+        ; "  atom: (exists a : atom. e = a)"
+        ; "  ∨"
+        ; "  lam: (exists a : atom. exists e' : term. e = a.e')"
+        ; "  ∨"
+        ; "  app: (exists e1 e2 : term. e = e1 e2)"
+        ; "  ∨"
+        ; "  symbol: (symbol? e)" ]
 end

@@ -72,6 +72,7 @@ let free_names_of_constr = function
   | C_AtomEq (A a1, a2) | C_AtomNeq (A a1, a2) -> merge_names [a1] (free_names_of_term (T_Atom a2))
   | C_Eq (t1, t2) | C_Shape (t1, t2) | C_Subshape (t1, t2) ->
       merge_names (free_names_of_term t1) (free_names_of_term t2)
+  | C_Symbol t -> free_names_of_term t
 
 let rec free_names_of_formula = function
   | F_Bot | F_Top -> []

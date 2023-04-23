@@ -39,6 +39,7 @@ and solve_by_case env assms = function
   | C_AtomNeq (a, alpha) -> solve_fresh env assms a (T_Atom alpha)
   | C_Shape (t1, t2)     -> solve_shape env assms t1 t2
   | C_Subshape (t1, t2)  -> solve_subshape env assms t1 t2
+  | C_Symbol t           -> solve_symbol env t
 
 and solve_assm_by_case env assms goal = function
   | C_Eq (t1, t2)       -> solve_assm_eq env assms goal t1 t2
@@ -47,6 +48,7 @@ and solve_assm_by_case env assms goal = function
   | C_AtomNeq (a, b)    -> solve_assm_fresh env assms goal a (T_Atom b)
   | C_Shape (t1, t2)    -> solve_assm_shape env assms goal t1 t2
   | C_Subshape (t1, t2) -> solve_assm_subshape env assms goal t1 t2
+  | C_Symbol t          -> solve_assm_symbol env assms goal t
 
 and solve_eq env assms e1 e2 =
   match (e1, e2) with
@@ -214,6 +216,21 @@ and solve_subshape env assms t1 = function
       false
 
 and solve_shape_or_subshape env assms t1 t2 = solve_shape env assms t1 t2 || solve_subshape env assms t1 t2
+
+and solve_symbol env t =
+  match t with
+  | T_Fun _                      ->
+      (* --------------- *)
+      (*  Γ |- symbol f  *)
+      true
+  | T_Var {symb= x; _}           ->
+      (*  (symbol? x) ∈ Γ  *)
+      (* ----------------- *)
+      (*   Γ |- symbol? x  *)
+      SolverEnv.is_symbol env x
+  | T_Atom _ | T_Lam _ | T_App _ ->
+      (* trivial *)
+      false
 
 and solve_assm_fresh env assms goal a = function
   | T_Atom {perm= pi; symb= b} ->
@@ -391,6 +408,21 @@ and solve_assm_subshape env assms goal t1 = function
 
 and solve_assm_shape_and_subshape env assms goal t1 t2 =
   solve_assm_shape env assms goal t1 t2 && solve_assm_subshape env assms goal t1 t2
+
+and solve_assm_symbol env assms goal t =
+  match t with
+  | T_Fun _                      ->
+      (*          Γ |- c         *)
+      (* ----------------------- *)
+      (*  (symbol? f) :: Γ |- c  *)
+      solve_ env assms goal
+  | T_Var {symb= x; _}           -> (
+    match SolverEnv.add_symbol env x with
+    | Some env -> solve_ env assms goal
+    | None     -> true )
+  | T_Atom _ | T_Lam _ | T_App _ ->
+      (* absurd *)
+      true
 
 and solve_assm_subst_var env assms goal x t =
   match SolverEnv.subst_var env x t with

@@ -20,5 +20,9 @@ let constr =
   and c_atomneq =
     let* alpha1, alpha2 = binop (permuted identifier) "=/=" (permuted identifier) in
     return $ PC_AtomNeq (alpha1, alpha2)
+  and c_symbol =
+    let* _ = string "symbol?" *> whitespace in
+    let* t = term in
+    return $ PC_Symbol t
   in
-  parens_op $ c_fresh <|> c_eq <|> c_shape <|> c_subshape <|> c_atomneq
+  parens_op $ c_fresh <|> c_eq <|> c_shape <|> c_subshape <|> c_atomneq <|> c_symbol

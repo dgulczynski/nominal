@@ -88,6 +88,7 @@ let subst_in_constr sub = function
   | C_AtomNeq (a, alpha) -> (
     match sub_atom sub a with
     | {perm= pi; symb= a} -> C_AtomNeq (a, permute (reverse pi) $ sub_perm_atom sub alpha) )
+  | C_Symbol t           -> C_Symbol (subst_in_term sub t)
 
 let rec subst_in_kind sub k =
   match k with

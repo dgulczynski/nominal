@@ -31,6 +31,7 @@ type constr =
   | C_Subshape of term * term
   | C_AtomEq   of atom * permuted_atom
   | C_AtomNeq  of atom * permuted_atom
+  | C_Symbol   of term
 
 let ( #: ) a t = C_Fresh (a, t)
 
@@ -43,6 +44,8 @@ let ( <: ) t1 t2 = C_Subshape (t1, t2)
 let ( ==: ) a alpha = C_AtomEq (a, alpha)
 
 let ( =/=: ) a alpha = C_AtomNeq (a, alpha)
+
+let symbol t = C_Symbol t
 
 type atom_binder = A_Bind of string * atom
 

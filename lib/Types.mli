@@ -39,6 +39,7 @@ type constr =
   | C_Subshape of term * term
   | C_AtomEq   of atom * permuted_atom
   | C_AtomNeq  of atom * permuted_atom
+  | C_Symbol   of term
 
 val ( #: ) : atom -> term -> constr
 (** [ a #: t] is a [constr] that [a] is fresh in [t] *)
@@ -57,6 +58,9 @@ val ( ==: ) : atom -> permuted_atom -> constr
 
 val ( =/=: ) : atom -> permuted_atom -> constr
 (** [ a =/=: α] is a [constr] that [a] is not equal to [α] (same as [ a #: T_Atom α])*)
+
+val symbol : term -> constr
+(** [symbol t] is a [constr] that [t] is some functional symbol *)
 
 type atom_binder = A_Bind of string * atom
 

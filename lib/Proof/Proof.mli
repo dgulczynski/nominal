@@ -86,4 +86,6 @@ module Axiom : sig
   val compare_atoms : proof
 
   val exists_fresh : proof
+
+  val term_inversion : proof
 end

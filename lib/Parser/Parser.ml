@@ -75,6 +75,7 @@ let pconstr_to_constr env =
       C_AtomNeq
         ( check_atom a1
         , permute $ reverse (idperm_to_aperm env p1) $ {perm= idperm_to_aperm env p2; symb= check_atom a2} )
+  | PC_Symbol e -> C_Symbol (pterm_to_term env e)
 
 let rec pkind_to_kind env = function
   | PK_Prop                   -> K_Prop

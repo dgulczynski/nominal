@@ -3,11 +3,17 @@ open Common
 open Substitution
 open Utils
 
-(** Here one would expect constructors like [A_Shape of var * var] ([x_1 =~ x_2]) and [A_Subshape of
-    term * var], ([t < x]), but we decided it is best to keep those assumptions in groupings like
-    [[t_1, ..., t_n] < [x_1 ~...~ x_m]], where each [t_i] subshapes every [x_j], keeping
-    _abstraction classes_ together *)
-type atom_assumption = A_Fresh of atom * var | A_Neq of atom * atom | A_Shape of term list * var list
+type atom_assumption =
+  | A_Fresh  of atom * var
+  | A_Neq    of atom * atom
+      (** Here one would expect constructors like [A_Shape of var * var] ([x_1 =~ x_2])
+          and [A_Subshape of term * var], ([t < x]),
+          but we decided it is best to keep those assumptions
+          in groupings like [[t_1, ..., t_n] < [x_1 ~...~ x_m]],
+          where each [t_i] subshapes every [x_j],
+          keeping _abstraction classes_ together *)
+  | A_Shape  of term list * var list
+  | A_Symbol of var
 
 type t = atom_assumption list
 
@@ -94,12 +100,14 @@ let subst_atom gamma a b =
     | A_Neq (a1, a2) -> A_Neq (sub a1, sub a2)
     | A_Fresh (c, v) -> A_Fresh (sub c, v)
     | A_Shape _ as c (* Atoms do not affect shape *) -> c
+    | A_Symbol _ as c (* Atoms do not affect symbols *) -> c
   in
   let add_constr constr gamma =
     match subst_atom_constr a b constr with
     | A_Neq (a1, a2) -> add_neq gamma a1 a2
     | A_Fresh (a, v) -> Some (add_fresh gamma a v)
     | A_Shape _ as a (* Atoms do not affect shape *) -> Some (a :: gamma)
+    | A_Symbol _ as a (* Atoms do not affect symbols *) -> Some (a :: gamma)
   in
   List.fold_left (fun env constr -> env >>= add_constr constr) (Some empty) gamma
 
@@ -125,7 +133,8 @@ let subst_var gamma x t =
           | A_Fresh (a, x') when x = x' -> (env, (a #: t) :: assms)
           (* as we occurs_checked x with t is is safe to just subst *)
           | A_Shape (ts, xs) -> (A_Shape (List.map (subst_var_in_term x t) ts, xs) :: env, assms)
-          | (A_Fresh _ | A_Neq _) as ac -> (ac :: env, assms) )
+          | A_Symbol x' when List.mem x' xs -> (env, symbol t :: assms)
+          | (A_Fresh _ | A_Neq _ | A_Symbol _) as a -> (a :: env, assms) )
         (empty, assms) gamma
 
 let string_of_atom_assumption = function
@@ -135,6 +144,7 @@ let string_of_atom_assumption = function
       Printing.string_of_list Printing.string_of_term ts
       ^ " < "
       ^ Printing.string_of_list (Printing.string_of_term % var) xs
+  | A_Symbol x       -> Printing.string_of_constr $ C_Symbol (var x)
 
 let are_same_shape gamma x1 x2 =
   x1 = x2
@@ -163,5 +173,18 @@ let get_subshapes gamma x =
         | A_Shape (ts, xs) when List.mem x xs -> Some ts
         | _ -> None )
       gamma
+
+let add_symbol gamma x =
+  match get_subshapes gamma x with
+  | [] -> Some (A_Symbol x :: gamma)
+  | _  -> (* no term subshapes a symbol*) None
+
+let is_symbol gamma x =
+  let xs = get_shapes gamma x in
+  let find_symbol = function
+    | A_Symbol y -> List.mem y xs
+    | _          -> false
+  in
+  List.exists find_symbol gamma
 
 let string_of = Printing.string_of_list' ~sep:", " string_of_atom_assumption

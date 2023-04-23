@@ -16,6 +16,7 @@ type pconstr =
   | PC_Shape    of pterm * pterm
   | PC_Subshape of pterm * pterm
   | PC_AtomNeq  of permuted_identifier * permuted_identifier
+  | PC_Symbol   of pterm
 
 type pkind =
   | PK_Prop

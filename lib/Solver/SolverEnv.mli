@@ -11,14 +11,19 @@ val add_fresh : t -> atom -> var -> t
 (** [add_fresh env a x] adds assumption [a #: var x] to [env] *)
 
 val add_neq : t -> atom -> atom -> t option
-(** [add_neq env a1 a2] adds assumption [atom a1 =/=: atom a2] to [env], returns [None] if [a1 =
-    a2] *)
+(** [add_neq env a1 a2] adds assumption [atom a1 =/=: atom a2] to [env], returns [None] if [a1 = a2] *)
+
+val add_symbol : t -> var -> t option
+(** [add_symbol x] adds assumption [symbol? x] to [env], returns [None] if exists [t] s.t. [t < x] *)
 
 val is_fresh : t -> atom -> var -> bool
 (** [is_neq env a1 a2] returns [true] iff there is assumption [a #: var x] in [env] *)
 
 val is_neq : t -> atom -> atom -> bool
 (** [is_neq env a1 a2] returns [true] iff there is assumption [atom a1 =/=: atom a2] in [env] *)
+
+val is_symbol : t -> var -> bool
+(** [is_symbol x] returns [true] iff there is assumption [symbol? x] in [env] *)
 
 val subst_atom : t -> atom -> atom -> t option
 (** [subst_atom env a1 a2] performs substitution [{a2/a1}] over all assumptions in [env], returns

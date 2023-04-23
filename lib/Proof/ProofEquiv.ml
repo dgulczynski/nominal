@@ -30,7 +30,9 @@ let constr_equiv env1 env2 c1 c2 =
   | C_AtomNeq (a1, b1), C_Fresh (a2, t2) | C_Fresh (a2, t2), C_AtomNeq (a1, b1) ->
       (atom a1, T_Atom b1) =:= (atom a2, t2)
   | C_Fresh (a1, t1), C_Fresh (a2, t2) -> (atom a1, t1) =:= (atom a2, t2)
-  | C_AtomEq _, _ | C_Shape _, _ | C_Subshape _, _ | C_AtomNeq _, _ | C_Eq _, _ | C_Fresh _, _ -> false
+  | C_Symbol t1, C_Symbol t2 -> t1 === t2
+  | C_AtomEq _, _ | C_Shape _, _ | C_Subshape _, _ | C_AtomNeq _, _ | C_Eq _, _ | C_Fresh _, _ | C_Symbol _, _
+    -> false
 
 let rec computeWHNF env n f =
   if n <= 0 then (env, 0, f)
