@@ -2,9 +2,11 @@ open Common
 open Parser
 open ProofEquiv
 open ProofException
+open ProofEnv
 open Prover
 open ProverInternals
 open Printing
+open Types
 open Option
 
 let proof' = uncurry proof
@@ -74,3 +76,29 @@ let right = destruct_goal' 1
 let compute = step 10
 
 let discriminate = ex_falso %> by_solver
+
+let fresh_assm_name () = Printf.sprintf "H!%d" $ fresh ()
+
+let destr_intro state =
+  let h_name = fresh_assm_name () in
+  state |> intros [h_name] |> destruct_assm h_name
+
+let compare_atoms a b =
+  let h_name = fresh_assm_name () in
+  add_assumption_thm_specialized h_name Proof.Axiom.compare_atoms [a; b] %> destruct_assm h_name
+
+let get_fresh_atom a fresh_in =
+  let h_name = fresh_assm_name () in
+  add_assumption_thm_specialized h_name Proof.Axiom.exists_fresh [fresh_in] %> destruct_assm' h_name [a; ""]
+
+let inverse_term e =
+  let h_name = fresh_assm_name () in
+  add_assumption_thm_specialized h_name Proof.Axiom.term_inversion [e] %> destruct_assm h_name
+
+let admit state =
+  let env, f = goal state in
+  let _ =
+    Printf.eprintf "!!! ADMITTED PROOF OF `%s` !!!\n"
+    $ Printing.string_of_formula_in_env (all_identifiers env) f
+  in
+  ex_falso state |> apply_thm Proof.Axiom.admit

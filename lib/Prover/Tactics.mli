@@ -31,3 +31,13 @@ val right : tactic
 val compute : tactic
 
 val discriminate : tactic
+
+val destr_intro : tactic
+
+val compare_atoms : string -> string -> tactic
+
+val get_fresh_atom : string -> string -> tactic
+
+val inverse_term : string -> tactic
+
+val admit : tactic

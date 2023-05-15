@@ -69,7 +69,7 @@ let specialize_proof proof specs env =
     | SpecializedAtom (a, f) -> proof_specialize_atom (env, f) a proof
     | SpecializedTerm (t, f) -> proof_specialize_term (env, f) t proof
   in
-  List.fold_left specialize proof specs
+  List.fold_left specialize (proof_step 5 proof) specs
 
 let apply_assm_specialized h_name specs state =
   let env = goal_env state in
@@ -167,6 +167,11 @@ let destruct_assm_constr_and env f h_name c_and_h_proof c h ctx =
   let jgmt = (env |> remove_assm h_name, F_ConstrImpl (c, F_Impl (h, f))) in
   unfinished jgmt ctx |> intro |> intros [h_name]
 
+let destruct_assm_constr env f h_name h_proof c ctx =
+  let ctx = PC_ApplyLeft (to_judgement (env, f), ctx, h_proof) in
+  let jgmt = (env |> remove_assm h_name, F_ConstrImpl (c, f)) in
+  unfinished jgmt ctx |> intro
+
 let destruct_assm h_name state =
   let env, f = goal state in
   let h_proof = assm_proof h_name env in
@@ -182,6 +187,7 @@ let destruct_assm h_name state =
   | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
   | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
   | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
+  | F_Constr c         -> destruct_assm_constr env f h_name h_proof c ctx
   | f                  -> raise $ cannot_destruct f
 
 let rec destruct_assm' h_name witnesses state =
@@ -202,6 +208,7 @@ let rec destruct_assm' h_name witnesses state =
        | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
        | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
        | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
+       | F_Constr c         -> destruct_assm_constr env f h_name h_proof c ctx
        | f                  -> raise $ cannot_destruct f )
       |> destruct_assm' h_name ws
 
@@ -260,6 +267,9 @@ let case name state =
   | f       -> raise $ not_a_disjunction f
 
 let subst x_name y_source state =
+  (* TODO: `subst x y` should: *)
+  (* 1. Check equality `env |- x = y` *)
+  (* 2. Use `equivalent` proof constructor to "move" from current goal to the one with substitution applied *)
   let env, f = goal state in
   match ProofEnv.lookup_identifier x_name env with
   | Some (Bind (_, K_Func))   -> failwith "subst func"

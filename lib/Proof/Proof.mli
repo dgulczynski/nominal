@@ -76,7 +76,7 @@ val or_e : proof -> proof list -> proof
 
 val induction_e : var_binder -> var_binder -> proof -> proof
 
-val equivalent : formula -> int -> proof -> proof
+val equivalent : judgement -> int -> proof -> proof
 
 val subst_atom : atom -> permuted_atom -> judgement -> proof -> proof
 
@@ -88,4 +88,6 @@ module Axiom : sig
   val exists_fresh : proof
 
   val term_inversion : proof
+
+  val admit : proof
 end

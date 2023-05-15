@@ -284,7 +284,7 @@ and proof_induction jgmt x y inductive_proof =
 
 and proof_equivalent jgmt n proof =
   match normalize proof with
-  | PI_Proven proof -> proven $ equivalent (snd jgmt) n proof
+  | PI_Proven proof -> proven $ equivalent jgmt n proof
   | incproof        -> PI_Equivalent (jgmt, n, incproof)
 
 and proof_subst_atom jgmt a b proof =
@@ -306,6 +306,11 @@ and proof_constr_and_elim_right jgmt c_and_f_proof =
   match normalize c_and_f_proof with
   | PI_Proven proof -> proven $ constr_and_e_right proof
   | incproof        -> PI_ConstrAndElimL (jgmt, incproof)
+
+let proof_step n p =
+  let env, f = judgement' p in
+  let env', _, f' = ProofEquiv.computeWHNF env n f in
+  PI_Equivalent ((env', f'), n, p)
 
 let proof_case map_proof map_incproof incproof =
   match normalize incproof with

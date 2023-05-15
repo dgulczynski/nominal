@@ -51,7 +51,8 @@ let conclusion_mismatch hypothesis conclusion =
     ("implication with conclusion " ^ string_of_formula conclusion)
     (string_of_formula hypothesis)
 
-let formula_mismatch expected actual =
+let formula_mismatch env expected actual =
+  let string_of_formula = string_of_formula_in_env env in
   not_what_expected (string_of_formula expected) (string_of_formula actual)
 
 let formula_kind_mismatch f f_kind expected_kind =
@@ -68,8 +69,8 @@ let solver_failure constraints goal =
   let exn = Printf.sprintf "Solver cannot solve %s |- %s" constrs' goal' in
   ProofException exn
 
-let cannot_generalize name f =
-  let f = string_of_formula f in
+let cannot_generalize name env f =
+  let f = string_of_formula_in_env env f in
   let exn = Printf.sprintf "Cannot generalize %s as it is bound in %s" name f in
   ProofException exn
 

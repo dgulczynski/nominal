@@ -135,6 +135,7 @@ let rec pformula_to_formula env = function
     | Some (K_FVar (i, _)) -> F_App (pformula_to_formula env f, fvar i)
     | None                 -> F_App (pformula_to_formula env f, pformula_to_formula env $ parse formula x) )
   | PF_App (f1, f2)                 -> F_App (pformula_to_formula env f1, pformula_to_formula env f2)
+  | PF_AppAtom (f, a)               -> F_AppAtom (pformula_to_formula env f, permuted_identifier_to_atom env a)
   | PF_AppTerm (f, t)               -> F_AppTerm (pformula_to_formula env f, pterm_to_term env t)
   | PF_Fix (fix_name, x_name, k, f) ->
       let x = fresh () in
@@ -146,19 +147,22 @@ let rec pformula_to_formula env = function
       let env'' = Bind (fix_name, K_FVar (fix_i, fix_k)) :: env' in
       F_Fix (FV_Bind (fix_name, fix_i, fix_k), V_Bind (x_name, V x), k, pformula_to_formula env'' f)
 
-let parse_term_in_env env s = pterm_to_term env $ parse term s
+let run_converter converter parser env source =
+  run_with_catch (on_parsing_error source) (converter env % parse parser) source
+
+let parse_term_in_env = run_converter pterm_to_term term
 
 let parse_term = parse_term_in_env []
 
-let parse_atom_in_env env s = permuted_identifier_to_atom env $ parse (permuted identifier) s
+let parse_atom_in_env = run_converter permuted_identifier_to_atom (permuted identifier)
 
-let parse_constr_in_env env s = pconstr_to_constr env $ parse constr s
+let parse_constr_in_env = run_converter pconstr_to_constr constr
 
 let parse_constr = parse_constr_in_env []
 
 let parse_kind s = pkind_to_kind [] $ parse kind s
 
-let parse_formula_in_env env s = pformula_to_formula env $ parse formula s
+let parse_formula_in_env = run_converter pformula_to_formula formula
 
 let parse_formula = parse_formula_in_env []
 

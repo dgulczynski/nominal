@@ -176,23 +176,12 @@ let subst_var subst_assm (V x_rep as x) t {assumptions; identifiers; constraints
   ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> t) body}) mapping
   ; to_formula }
 
-let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints; mapping; _} =
+let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints; _} =
   let pp_sep fmt () = pp_print_string fmt "\n; " in
   let pp_print_bracketed_list fmt p = function
     | [] -> pp_print_string fmt "[ ]"
     | xs -> pp_print_string fmt "[ " ; pp_print_list ~pp_sep p fmt xs ; pp_print_string fmt "\n]"
   in
-  let pp_var fmt {bind= FV_Bind (x_name, _, x_kind); body} =
-    pp_print_string fmt x_name ;
-    pp_print_string fmt " :: " ;
-    pp_print_kind fmt x_kind ;
-    pp_print_string fmt " := " ;
-    pp_print_formula identifiers fmt body
-  in
-  pp_print_newline fmt () ;
-  pp_print_bound_env fmt identifiers ;
-  pp_print_newline fmt () ;
-  pp_print_bracketed_list fmt pp_var mapping ;
   pp_print_newline fmt () ;
   pp_print_bracketed_list fmt (pp_print_constr_in_env identifiers) constraints ;
   pp_print_newline fmt () ;

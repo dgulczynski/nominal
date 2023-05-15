@@ -265,7 +265,10 @@ let rec pp_print_formula env fmt formula =
   | F_App (f1, f2) -> pp_print_app_left f1 ; space () ; pp_print_atomic_formula fmt f2
   | F_AppTerm (f, e) ->
       pp_print_app_left f ; space () ; pp_string "{" ; pp_print_term_in_env env fmt e ; pp_string "}"
-  | F_AppAtom (f, a) -> pp_print_app_left f ; space () ; pp_print_atom_permuted env fmt a
+  | F_AppAtom (f, a) ->
+      pp_print_app_left f ;
+      space () ;
+      pp_print_parenthesized (pp_print_atom_permuted env) fmt a
   | F_Fix (FV_Bind (fix_name, fix, fix_k), (V_Bind (_, x) as x_bind), k, f) ->
       let env =
         env |> add_name (var_binder_to_binder x_bind) |> add_name (Bind (fix_name, K_FVar (fix, fix_k)))
