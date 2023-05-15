@@ -43,6 +43,8 @@ val lookup_assumption : ('a -> bool) -> 'a env -> 'a option
 
 val lookup_identifier : string -> 'a env -> binder option
 
+val map_constraints : (constr -> constr) -> 'a env -> 'a env
+
 val remove_assumptions : ('a -> bool) -> 'a env -> 'a env
 
 val remove_constraints : (constr -> bool) -> 'a env -> 'a env
@@ -68,5 +70,7 @@ val set_mapping : mapping -> 'a env -> 'a env
 val subst_var : (var -> term -> 'a -> 'a) -> var -> term -> 'a env -> 'a env
 
 val subst_atom : (atom -> permuted_atom -> 'a -> 'a) -> atom -> permuted_atom -> 'a env -> 'a env
+
+val solver_env : 'a env -> constr list
 
 val pp_print_env : 'a printer -> 'a env printer

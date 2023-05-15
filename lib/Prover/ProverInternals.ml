@@ -17,7 +17,10 @@ type prover_state = S_Unfinished of {goal: goal; context: proof_context} | S_Fin
     Notice that there is no constructor of [S_Finished] state available for the user, as only the [ProverInternals] can finish a proof. *)
 let unfinished goal context = S_Unfinished {goal; context}
 
-let finished proof = S_Finished proof
+let finished jgmt proof =
+  if snd jgmt = label proof then S_Finished proof
+  else (* make sure we've proven what we've wanted to *)
+    S_Finished (equivalent jgmt 0 proof)
 
 type tactic = prover_state -> prover_state
 
@@ -38,7 +41,7 @@ let rec find_goal_in_proof context incproof =
 
 (** Helper functions that given [incproof] and its [context] builds appropriate [state] *)
 and find_goal_in_ctx incproof = function
-  | PC_Root _ as ctx -> proof_case finished (find_goal_in_proof ctx) incproof
+  | PC_Root jgmt as ctx -> proof_case (finished jgmt) (find_goal_in_proof ctx) incproof
   | PC_Intro (jgmt, ctx) -> find_goal_in_ctx (proof_intro jgmt incproof) ctx
   | PC_ApplyRight (jgmt, lproof, rctx) -> find_goal_in_ctx (proof_apply jgmt lproof incproof) rctx
   | PC_ApplyLeft (jgmt, lctx, rproof) -> find_goal_in_ctx (proof_apply jgmt incproof rproof) lctx
@@ -75,10 +78,10 @@ and find_goal_in_ctx incproof = function
 let destruct_impl env c f =
   let rec aux f =
     match conclusion f with
-    | f2 when f2 === c <| env -> [f]
-    | f2 -> f :: aux f2
+    | f2 when f2 === c <| env -> Some ([f], f2)
+    | f2 -> on_fst (List.cons f) <$> aux f2
   in
-  try aux f with ProofException _ -> []
+  try aux f with ProofException _ -> None
 
 let goal = function
   | S_Finished _           -> raise proof_finished
@@ -140,13 +143,18 @@ let apply_internal ?(h_name = "") h_proof =
     List.fold_left apply_next
   in
   let h = label' h_proof in
+  let mk_context ((_, f) as goal) target ctx =
+    if target = f then ctx else PC_Equivalent (to_judgement goal, 0, ctx)
+  in
   function
   | S_Finished _ -> raise proof_finished
-  | S_Unfinished {goal= env, f; context} when f === h <| env -> find_goal_in_ctx h_proof context
+  | S_Unfinished {goal= env, f; context} when f === h <| env ->
+      find_goal_in_ctx h_proof $ mk_context (env, f) h context
   | S_Unfinished {goal= env, f; context} -> (
     match destruct_impl env f h with
-    | []    -> raise $ hypothesis_goal_mismatch h_name h f
-    | assms -> find_goal_in_proof context $ apply_impl_list env h_proof assms )
+    | None            -> raise $ hypothesis_goal_mismatch h_name h f
+    | Some (assms, h) ->
+        find_goal_in_proof (mk_context (env, f) h context) $ apply_impl_list env h_proof assms )
 
 let finish = function
   | S_Unfinished {goal; context} -> raise % unproven goal $ root_judgement context

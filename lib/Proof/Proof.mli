@@ -18,7 +18,6 @@ type proof = private
   | P_AndElim        of judgement * proof
   | P_OrElim         of judgement * proof list
   | P_Equivalent     of judgement * int * proof
-  | P_Substitution   of judgement * proof
   | P_ExFalso        of judgement * proof
 
 val label : proof -> formula
@@ -76,7 +75,7 @@ val or_e : proof -> proof list -> proof
 
 val induction_e : var_binder -> var_binder -> proof -> proof
 
-val equivalent : formula -> int -> proof -> proof
+val equivalent : judgement -> int -> proof -> proof
 
 val subst_atom : atom -> permuted_atom -> judgement -> proof -> proof
 

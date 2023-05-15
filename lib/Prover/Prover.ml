@@ -69,7 +69,7 @@ let specialize_proof proof specs env =
     | SpecializedAtom (a, f) -> proof_specialize_atom (env, f) a proof
     | SpecializedTerm (t, f) -> proof_specialize_term (env, f) t proof
   in
-  List.fold_left specialize proof specs
+  List.fold_left specialize (proof_step 5 proof) specs
 
 let apply_assm_specialized h_name specs state =
   let env = goal_env state in
@@ -167,6 +167,11 @@ let destruct_assm_constr_and env f h_name c_and_h_proof c h ctx =
   let jgmt = (env |> remove_assm h_name, F_ConstrImpl (c, F_Impl (h, f))) in
   unfinished jgmt ctx |> intro |> intros [h_name]
 
+let destruct_assm_constr env f h_name h_proof c ctx =
+  let ctx = PC_ApplyLeft (to_judgement (env, f), ctx, h_proof) in
+  let jgmt = (env |> remove_assm h_name, F_ConstrImpl (c, f)) in
+  unfinished jgmt ctx |> intro
+
 let destruct_assm h_name state =
   let env, f = goal state in
   let h_proof = assm_proof h_name env in
@@ -182,6 +187,7 @@ let destruct_assm h_name state =
   | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
   | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
   | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
+  | F_Constr c         -> destruct_assm_constr env f h_name h_proof c ctx
   | f                  -> raise $ cannot_destruct f
 
 let rec destruct_assm' h_name witnesses state =
@@ -202,6 +208,7 @@ let rec destruct_assm' h_name witnesses state =
        | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
        | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
        | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
+       | F_Constr c         -> destruct_assm_constr env f h_name h_proof c ctx
        | f                  -> raise $ cannot_destruct f )
       |> destruct_assm' h_name ws
 
@@ -259,18 +266,26 @@ let case name state =
     | None        -> raise $ unknown_case name f )
   | f       -> raise $ not_a_disjunction f
 
+let assert_constr env constr =
+  let void = const () in
+  let proof_env = ProofEnv.map_assumptions snd id env in
+  void $ IncProof.proof_constr proof_env constr
+
 let subst x_name y_source state =
+  let cannot_subst = raise % proof_exception % Printf.sprintf "Cannot substitute %s" in
   let env, f = goal state in
   match ProofEnv.lookup_identifier x_name env with
-  | Some (Bind (_, K_Func))   -> failwith "subst func"
-  | Some (Bind (_, K_FVar _)) -> failwith "subst fvar"
-  | None                      -> failwith "subst none"
+  | Some (Bind (_, K_Func))   -> cannot_subst "a functional symbol"
+  | Some (Bind (_, K_FVar _)) -> cannot_subst "a logical variable"
+  | None                      -> cannot_subst "unknown name"
   | Some (Bind (_, K_Atom a)) ->
       let b = parse_atom_in_env (all_identifiers env) y_source in
+      let _ = assert_constr env (A a ==: b) in
       let ctx = PC_SubstAtom (to_judgement (env, f), A a, b, context state) in
       unfinished (ProofEnv.subst_atom (fun a b -> on_snd (a |-> b)) (A a) b env, (A a |-> b) f) ctx
   | Some (Bind (_, K_Var x))  ->
       let t = parse_term_in_env (all_identifiers env) y_source in
+      let _ = assert_constr env (var (V x) =: t) in
       let ctx = PC_SubstVar (to_judgement (env, f), V x, t, context state) in
       unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx
 

@@ -30,7 +30,10 @@ let rec solve_ env assms goal =
   match reduce env assms with
   | None, _                 -> true
   | Some env, []            -> solve_by_case env [] goal
-  | Some env, assm :: assms -> solve_assm_by_case env assms goal assm
+  | Some env, assm :: assms ->
+      solve_by_case env [] goal
+      (* TODO: remove this hack and fix solver so that it doesn't loop infinitely *)
+      || solve_assm_by_case env assms goal assm
 
 and solve_by_case env assms = function
   | C_Eq (t1, t2)        -> solve_eq env assms t1 t2

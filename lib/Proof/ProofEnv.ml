@@ -88,6 +88,8 @@ let add_assumption ass = on_assumptions $ merge [ass]
 let map_assumptions f to_formula {assumptions; identifiers; constraints; mapping; _} =
   {assumptions= List.map f assumptions; identifiers; constraints; mapping; to_formula}
 
+let map_constraints f = on_constraints (List.map f)
+
 let lookup_assumption test {assumptions; _} = List.find_opt test assumptions
 
 let unfilter test = List.filter (not % test)
@@ -175,6 +177,10 @@ let subst_var subst_assm (V x_rep as x) t {assumptions; identifiers; constraints
   ; constraints= List.map (subst_var_in_constr x t) constraints
   ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> t) body}) mapping
   ; to_formula }
+
+let solver_env env =
+  let constr_assumptions = List.filter_map (to_constr_op % to_formula env) $ assumptions env in
+  constr_assumptions @ constraints env
 
 let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints; _} =
   let pp_sep fmt () = pp_print_string fmt "\n; " in

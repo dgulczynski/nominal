@@ -3,6 +3,8 @@ open Printing
 
 exception ProofException of string
 
+let proof_exception exn = ProofException exn
+
 let proof_finished = ProofException "Proof finished"
 
 let unknown_hypothesis h_name =

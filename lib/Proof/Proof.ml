@@ -6,6 +6,7 @@ open ProofEquiv
 open Permutation
 open ProofException
 open Substitution
+open Solver
 open Printing
 
 type proof_env = formula env
@@ -25,7 +26,6 @@ type proof =
   | P_AndElim        of judgement * proof
   | P_OrElim         of judgement * proof list
   | P_Equivalent     of judgement * int * proof
-  | P_Substitution   of judgement * proof
   | P_ExFalso        of judgement * proof
 
 let label = function
@@ -41,7 +41,6 @@ let label = function
   | P_AndElim ((_, f), _)
   | P_OrElim ((_, f), _)
   | P_Equivalent ((_, f), _, _)
-  | P_Substitution ((_, f), _)
   | P_ExFalso ((_, f), _) -> f
 
 let env = function
@@ -57,7 +56,6 @@ let env = function
   | P_AndElim ((e, _), _)
   | P_OrElim ((e, _), _)
   | P_Equivalent ((e, _), _, _)
-  | P_Substitution ((e, _), _)
   | P_ExFalso ((e, _), _) -> e
 
 let judgement proof = (env proof, label proof)
@@ -98,14 +96,14 @@ let constr_e env =
 
 let constr_imp_i c p =
   let f = label p in
-  let env = env p |> remove_constraints (( = ) c) in
+  let env = env p |> remove_constraints (( = ) c) |> remove_assumption (F_Constr c) in
   P_Intro ((env, F_ConstrImpl (c, f)), p)
 
 let constr_imp_e c_proof c_imp_proof =
   let c = to_constr $ label c_proof in
   match label c_imp_proof with
   | F_ConstrImpl (_c, f) when _c = c ->
-      let env = union (env c_proof) (env c_imp_proof) in
+      let env = union (env c_proof) (env c_imp_proof) |> remove_constraints (( = ) c) in
       P_ConstrApply ((env, f), c_proof, c_imp_proof)
   | f -> raise $ premise_mismatch (F_Constr c) f
 
@@ -245,30 +243,42 @@ let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, V y)) p =
           (x_name ^ "(" ^ string_of_int x ^ ")" ^ " or " ^ y_name ^ "(" ^ string_of_int y ^ ")" ^ "\n")
           (all_identifiers env) f
 
-let equivalent f n p =
-  let env, fe = judgement p in
-  let env, _, fn = computeWHNF env n f in
-  if fe === fn <| env then P_Equivalent ((env, f), n, p)
+let env_inclusion env sub_env super_env =
+  List.for_all
+    (fun h -> List.exists (fun h' -> h ==== h' <| env) (assumptions super_env))
+    (assumptions sub_env)
+  &&
+  let super_solver_env = solver_env super_env in
+  List.for_all (fun c -> super_solver_env |-: c) (constraints sub_env)
+
+let equivalent jgmt n p =
+  let env, f = jgmt in
+  let ( <= ) = env_inclusion env in
+  let _, _, fn = computeWHNF env n f in
+  let enve, fe = judgement p in
+  if fn === fe <| env && enve <= env then P_Equivalent ((env, f), n, p)
   else raise $ formula_mismatch (all_identifiers env) f fe
 
-let subst_atom a b (env, f) p =
-  let solver_goal = atom a =: T_Atom b in
-  let subst_goal _ =
-    let env = subst_atom ( |-> ) a b env in
-    let f = (a |-> b) f in
-    P_Substitution ((env, f), p)
-  in
-  solver_proof (env, F_Constr solver_goal) solver_goal subst_goal
+let sub_constr sub constr =
+  match sub $ F_Constr constr with
+  | F_Constr constr' -> constr'
+  | f                -> raise $ not_a_constraint f
 
-let subst_var x t (env, f) p =
-  let solver_goal = var x =: t in
-  let subst_goal _ =
-    let env = subst_var ( |=> ) x t env in
-    let f = (x |=> t) f in
-    (* TODO: add checks if [env p] is the same as [env]? *)
-    P_Substitution ((env, f), p)
+let sub_env sub = map_assumptions sub id % map_constraints (sub_constr sub)
+
+let subst env f sub constr p =
+  let ( <= ) = env_inclusion env in
+  let on_solved jgmt =
+    let sub_env, sub_f = (sub_env sub env, sub f) in
+    let p_env, p_f = judgement p in
+    if sub_f ==== p_f <| env && p_env <= sub_env then P_Equivalent (jgmt, equiv_depth, p)
+    else raise $ formula_mismatch (all_identifiers env) f p_f
   in
-  solver_proof (env, F_Constr solver_goal) solver_goal subst_goal
+  solver_proof (env, f) constr on_solved
+
+let subst_atom a b (env, f) = subst env f (a |-> b) (a ==: b)
+
+let subst_var x t (env, f) = subst env f (x |=> t) (var x =: t)
 
 module Axiom = struct
   let axiom_env = empty id
