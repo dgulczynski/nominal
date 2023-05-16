@@ -148,28 +148,20 @@ let _ = test_proof th13 proof13
 
 let _ = test_proof th14 proof14
 
-let _ = test_proof Examples.Arithmetic.plus_1_n_thm (proof' %> apply_thm Examples.Arithmetic.plus_1_n)
+let test_theorem thm proof = test_proof thm (proof' %> apply_thm proof)
 
-let _ = test_proof Examples.Arithmetic.plus_n_1_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_1)
+let _ = test_theorem Examples.Arithmetic.plus_1_n_thm Examples.Arithmetic.plus_1_n
 
-let _ = test_proof Examples.Arithmetic.plus_n_Sm_thm (proof' %> apply_thm Examples.Arithmetic.plus_n_Sm)
+let _ = test_theorem Examples.Arithmetic.plus_n_1_thm Examples.Arithmetic.plus_n_1
 
-let _ = test_proof Examples.Arithmetic.plus_Sn_m_thm (proof' %> apply_thm Examples.Arithmetic.plus_Sn_m)
+let _ = test_theorem Examples.Arithmetic.plus_n_Sm_thm Examples.Arithmetic.plus_n_Sm
 
-let _ = test_proof Examples.Arithmetic.plus_symm_thm (proof' %> apply_thm Examples.Arithmetic.plus_symm)
+let _ = test_theorem Examples.Arithmetic.plus_Sn_m_thm Examples.Arithmetic.plus_Sn_m
 
-let _ =
-  test_proof Examples.LambdaCalculus.arrow_base_base_is_a_type_thm
-    (proof' %> apply_thm Examples.LambdaCalculus.arrow_base_base_is_a_type)
+let _ = test_theorem Examples.Arithmetic.plus_symm_thm Examples.Arithmetic.plus_symm
 
-let _ =
-  test_proof Examples.LambdaCalculus.var_in_env_types_thm
-    (proof' %> apply_thm Examples.LambdaCalculus.var_in_env_types)
+let _ = test_theorem Examples.LambdaCalculus.progress_thm Examples.LambdaCalculus.progress
 
-let _ =
-  test_proof Examples.LambdaCalculus.app_lam_var_types_thm
-    (proof' %> apply_thm Examples.LambdaCalculus.app_lam_var_types)
-
-let _ = test_proof Examples.LambdaCalculus.progress_thm (proof' %> apply_thm Examples.LambdaCalculus.progress)
+let _ = test_theorem Examples.LambdaCalculus.preservation_thm Examples.LambdaCalculus.preservation
 
 let _ = print_newline ()
