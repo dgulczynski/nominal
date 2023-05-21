@@ -111,7 +111,12 @@ let list_of ?(sep = ";") ?(left = "") ?(right = "") elem =
 
 let list_of' elem = list_of ~sep:"" elem
 
+let on_parsing_error source error =
+  let exn = Printf.sprintf "Failed to parse '%s' with error %s" source error in
+  raise $ ParserException exn
+
+let run_with_catch on_error f x = try f x with ParserException e -> on_error e
+
 let parse p s =
-  match parse_string ~consume:Consume.All p s with
-  | Ok v    -> v
-  | Error e -> raise $ ParserException (Printf.sprintf "Syntax error %s" e)
+  let ok = id and error e = raise $ ParserException e in
+  Result.fold ~ok ~error $ parse_string ~consume:Consume.All p s

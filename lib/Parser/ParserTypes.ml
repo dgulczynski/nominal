@@ -44,6 +44,7 @@ type pformula =
   | PF_FunTerm      of string * pformula
   | PF_AppIdentfier of pformula * string
   | PF_App          of pformula * pformula
+  | PF_AppAtom      of pformula * permuted_identifier
   | PF_AppTerm      of pformula * pterm
   | PF_Fix          of string * string * pkind * pformula
 

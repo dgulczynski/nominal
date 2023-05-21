@@ -79,16 +79,22 @@ let f_fun formula =
              "Functions must be used with type annotation, like 'fun x : k -> ...' where 'k' is 'atom', \
               'term' or kind" )
 
-type pf_app_arg = PFA_Identfier of string | PFA_Term of pterm | PFA_Formula of pformula
+type pf_app_arg =
+  | PFA_Identfier of string
+  | PFA_Term      of pterm
+  | PFA_Atom      of permuted_identifier
+  | PFA_Formula   of pformula
 
 let f_app formula =
   let app_identifier = identifier >>| fun x -> PFA_Identfier x
+  and app_atom = parenthesized (permuted identifier) >>| fun a -> PFA_Atom a
   and app_term = braced term >>| fun t -> PFA_Term t
   and app_formula = simple_formula <|> parenthesized formula >>| fun f -> PFA_Formula f in
   let* f = simple_formula <|> parenthesized formula in
-  let* args = many1 (whitespace1 *> (app_identifier <|> app_term <|> app_formula)) in
+  let* args = many1 (whitespace1 *> (app_identifier <|> app_atom <|> app_term <|> app_formula)) in
   let apply f = function
     | PFA_Identfier x -> PF_AppIdentfier (f, x)
+    | PFA_Atom a      -> PF_AppAtom (f, a)
     | PFA_Term t      -> PF_AppTerm (f, t)
     | PFA_Formula f'  -> PF_App (f, f')
   in

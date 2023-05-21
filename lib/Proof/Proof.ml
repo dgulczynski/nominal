@@ -127,13 +127,13 @@ let constr_and_e_right c_and_proof =
 let bot_e f p =
   match judgement p with
   | env, F_Bot -> P_ExFalso ((env, f), p)
-  | _, f'      -> raise $ formula_mismatch F_Bot f'
+  | env, f'    -> raise $ formula_mismatch (all_identifiers env) F_Bot f'
 
 let forall_atom_i (A_Bind (a_name, A a) as a_bind) p =
   let env, f = judgement p in
   match env |> find_bind a_name with
   | None   -> P_Intro ((env |> remove_identifier a, F_ForallAtom (a_bind, f)), p)
-  | Some f -> raise $ cannot_generalize a_name f
+  | Some f -> raise $ cannot_generalize a_name (all_identifiers env) f
 
 let forall_atom_e b p =
   let env, f = judgement p in
@@ -147,7 +147,7 @@ let forall_term_i (V_Bind (x_name, V x) as x_bind) p =
   let env, f = judgement p in
   match env |> find_bind x_name with
   | None   -> P_Intro ((env |> remove_identifier x, F_ForallTerm (x_bind, f)), p)
-  | Some f -> raise $ cannot_generalize x_name f
+  | Some f -> raise $ cannot_generalize x_name (all_identifiers env) f
 
 let forall_term_e t p =
   let env, f = judgement p in
@@ -163,7 +163,7 @@ let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
   if f === f' <| env then
     let env = env |> remove_identifier a |> remove_assumption f_a in
     P_Intro ((env, F_ExistsAtom (a_bind, f_a)), p)
-  else raise $ formula_mismatch f f'
+  else raise $ formula_mismatch (all_identifiers env) f f'
 
 let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   let f = (V x |=> t) f_x in
@@ -171,7 +171,7 @@ let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   if f === f' <| env then
     let env = env |> remove_identifier x |> remove_assumption f_x in
     P_Intro ((env, F_ExistsTerm (x_bind, f_x)), p)
-  else raise $ formula_mismatch f f'
+  else raise $ formula_mismatch (all_identifiers env) f f'
 
 let exist_e p_exists witness p =
   let env, f = judgement p in
@@ -226,7 +226,8 @@ let or_e or_proof ps =
       if List.for_all2 (test_proof % snd) fs ps then P_OrElim ((merge_envs (or_proof :: ps), c), ps)
       else
         let f = F_Or (List.map (pair "" % premise % label) ps) in
-        raise $ formula_mismatch (label or_proof) f
+        let env, disjunction = judgement or_proof in
+        raise $ formula_mismatch (all_identifiers env) disjunction f
 
 (*   G, x, forall y:term. [y < x] => f(y) |- f(x)  *)
 (* ----------------------------------------------- *)
@@ -242,12 +243,13 @@ let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, V y)) p =
       raise
       $ cannot_generalize
           (x_name ^ "(" ^ string_of_int x ^ ")" ^ " or " ^ y_name ^ "(" ^ string_of_int y ^ ")" ^ "\n")
-          f
+          (all_identifiers env) f
 
 let equivalent f n p =
   let env, fe = judgement p in
   let env, _, fn = computeWHNF env n f in
-  if fe === fn <| env then P_Equivalent ((env, f), n, p) else raise $ formula_mismatch f fe
+  if fe === fn <| env then P_Equivalent ((env, f), n, p)
+  else raise $ formula_mismatch (all_identifiers env) f fe
 
 let subst_atom a b (env, f) p =
   let solver_goal = atom a =: T_Atom b in
