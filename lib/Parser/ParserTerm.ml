@@ -23,7 +23,5 @@ let term : pterm t =
     let* pt = permuted (parenthesized term) in
     return $ PT_Permuted pt
   in
-  let pterm' pterm =
-    t_lam pterm <|> t_app pterm <|> parenthesized pterm <|> t_identifier <|> t_permuted pterm
-  in
+  let pterm' pterm = t_lam pterm <|> t_app pterm <|> parenthesized pterm <|> t_identifier <|> t_permuted pterm in
   fix pterm'

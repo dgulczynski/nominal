@@ -1,10 +1,9 @@
 profile = ocamlformat
 break-cases = fit-or-vertical
 break-fun-decl = fit-or-vertical
+break-infix=fit-or-vertical
 wrap-comments = true
 match-indent-nested = auto
-margin = 110
-align-cases
-align-constructors-decl
-align-variants-decl
+margin = 120
+max-indent=2
 indicate-nested-or-patterns = unsafe-no

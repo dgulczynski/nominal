@@ -19,7 +19,7 @@ let test name parser convert string_of ( === ) env source expected =
     (if pass then "✅" else "❌")
     name source (string_of actual)
     ( match env with
-    | []  -> ""
+    | [] -> ""
     | env -> Printf.sprintf "with %s " $ string_of_bound_env env )
     (if pass then "" else Printf.sprintf "instead of `%s`" $ string_of expected) ;
   assert pass
@@ -43,8 +43,7 @@ let _ =
 let _ =
   let a_ = 0 in
   let a = A a_ in
-  test_term [Bind ("a", K_Atom a_)] "[a a] [a a] a"
-  $ T_Atom {perm= [(pure a, pure a); (pure a, pure a)]; symb= a}
+  test_term [Bind ("a", K_Atom a_)] "[a a] [a a] a" $ T_Atom {perm= [(pure a, pure a); (pure a, pure a)]; symb= a}
 
 let _ =
   let a_ = 0 in
@@ -88,8 +87,7 @@ let _ =
   let x = V x_ in
   test_constr [Bind ("a", K_Atom a_); Bind ("x", K_Var x_)] "(a.a) (a.a) ~ a x (a.a)"
   $ C_Shape
-      ( T_App (T_Lam (pure a, atom a), T_Lam (pure a, atom a))
-      , T_App (T_App (atom a, var x), T_Lam (pure a, atom a)) )
+      (T_App (T_Lam (pure a, atom a), T_Lam (pure a, atom a)), T_App (T_App (atom a, var x), T_Lam (pure a, atom a)))
 
 let _ =
   let a_ = 0 in
@@ -115,19 +113,15 @@ let _ =
   let a_ = 0 and b_ = 1 and x_ = 2 in
   let a = A a_ and b = A b_ in
   let x = V x_ in
-  test_kind
-    [Bind ("a", K_Atom a_); Bind ("b", K_Atom b_); Bind ("x", K_Var x_)]
-    "([a # x] prop) -> [b # [a b] x] prop"
+  test_kind [Bind ("a", K_Atom a_); Bind ("b", K_Atom b_); Bind ("x", K_Var x_)] "([a # x] prop) -> [b # [a b] x] prop"
   $ K_Arrow
-      ( K_Constr (C_Fresh (a, var x), K_Prop)
-      , K_Constr (C_Fresh (b, T_Var {perm= [(pure a, pure b)]; symb= x}), K_Prop) )
+      (K_Constr (C_Fresh (a, var x), K_Prop), K_Constr (C_Fresh (b, T_Var {perm= [(pure a, pure b)]; symb= x}), K_Prop))
 
 let _ =
   let a = A (fresh () + 2) and x = V (fresh () + 2) in
   test_kind [] "forall a : atom. forall x : term. [a # x] (prop -> prop)"
   $ K_ForallAtom
-      ( A_Bind ("a", a)
-      , K_ForallTerm (V_Bind ("x", x), K_Constr (C_Fresh (a, var x), K_Arrow (K_Prop, K_Prop))) )
+      (A_Bind ("a", a), K_ForallTerm (V_Bind ("x", x), K_Constr (C_Fresh (a, var x), K_Arrow (K_Prop, K_Prop))))
 
 let _ = print_newline ()
 
@@ -156,9 +150,8 @@ let _ =
               ( V_Bind ("x", x)
               , F_ConstrImpl
                   ( C_Fresh (a, var $ x)
-                  , F_AppTerm
-                      (F_AppTerm (F_AppAtom (f, pure a), var x), T_Var {perm= [(pure a, pure a)]; symb= x}) )
-              ) ) )
+                  , F_AppTerm (F_AppTerm (F_AppAtom (f, pure a), var x), T_Var {perm= [(pure a, pure a)]; symb= x}) ) )
+          ) )
 
 let _ = print_newline ()
 

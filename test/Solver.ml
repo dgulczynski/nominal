@@ -20,9 +20,7 @@ let print_subkind_solver (k1, k2) =
   print_result "[]" $ string_of_kind k1 ^ " ≤ " ^ string_of_kind k2 $ (k1 <=: k2) KindCheckerEnv.empty
 
 let print_kind_solver (formula, kind) =
-  print_result $ "[]"
-  $ string_of_formula formula ^ " : " ^ string_of_kind kind
-  $ (formula -: kind) KindCheckerEnv.empty
+  print_result $ "[]" $ string_of_formula formula ^ " : " ^ string_of_kind kind $ (formula -: kind) KindCheckerEnv.empty
 
 let examples =
   let a_ = A 0 and b_ = A 1 and c_ = A 2 in

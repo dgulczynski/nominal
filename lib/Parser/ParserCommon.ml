@@ -6,23 +6,23 @@ exception ParserException of string
 
 let is_whitespace = function
   | '\x20' | '\x0a' | '\x0d' | '\x09' -> true
-  | _                                 -> false
+  | _ -> false
 
 let is_digit = function
   | '0' .. '9' -> true
-  | _          -> false
+  | _ -> false
 
 let is_letter = function
   | 'a' .. 'z' | 'A' .. 'Z' -> true
-  | _                       -> false
+  | _ -> false
 
 let is_underscore = function
   | '_' -> true
-  | _   -> false
+  | _ -> false
 
 let is_apostrophe = function
   | '\'' -> true
-  | _    -> false
+  | _ -> false
 
 let whitespace = take_while is_whitespace
 

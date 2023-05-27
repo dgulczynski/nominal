@@ -2,8 +2,8 @@ open Types
 open Common
 
 type kind_assumption =
-  | Constr    of constr
-  | BoundVar  of var * var
+  | Constr of constr
+  | BoundVar of var * var
   | BoundAtom of atom * atom
   | BoundFVar of string * fvar * kind
 
@@ -38,7 +38,7 @@ let mem_constr gamma c = List.mem (Constr c) gamma
 let constraints_of =
   List.filter_map (function
     | Constr c -> Some c
-    | _        -> None )
+    | _ -> None )
 
 let map_fvar gamma x_name x k = BoundFVar (x_name, x, k) :: gamma
 

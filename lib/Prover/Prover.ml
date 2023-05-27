@@ -16,7 +16,7 @@ let check_props env formulas =
   let check_prop f =
     match kind_infer env f with
     | Some K_Prop -> ()
-    | k           -> raise $ formula_kind_mismatch f k K_Prop
+    | k -> raise $ formula_kind_mismatch f k K_Prop
   in
   List.iter check_prop formulas
 
@@ -36,7 +36,7 @@ let intro state =
   | F_ConstrImpl (constr, f2) -> unfinished (env |> add_constr constr, f2) context
   | F_ForallAtom (a_bind, f') -> unfinished (env |> add_atom a_bind, f') context
   | F_ForallTerm (x_bind, f') -> unfinished (env |> add_var x_bind, f') context
-  | _                         -> raise $ not_a_constr_implication f
+  | _ -> raise $ not_a_constr_implication f
 
 let intros = flip (List.fold_left (flip intro_named))
 
@@ -90,16 +90,16 @@ let by_solver state =
   let ctx = context state in
   let proof_env = ProofEnv.map_assumptions snd id env in
   match f with
-  | F_Constr c          ->
-      let c_proof = proof_constr proof_env c in
-      find_goal_in_ctx c_proof ctx
+  | F_Constr c ->
+    let c_proof = proof_constr proof_env c in
+    find_goal_in_ctx c_proof ctx
   | F_ConstrAnd (c, f') ->
-      let c_proof = proof_constr proof_env c in
-      let f_proof = proof_hole (env |> add_constr c) f' in
-      let jgmt = to_judgement (env, f) in
-      find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
-  | F_Bot               -> find_goal_in_proof ctx % proven $ Proof.constr_e (map_assumptions snd id env)
-  | f                   -> raise $ not_a_constraint f
+    let c_proof = proof_constr proof_env c in
+    let f_proof = proof_hole (env |> add_constr c) f' in
+    let jgmt = to_judgement (env, f) in
+    find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
+  | F_Bot -> find_goal_in_proof ctx % proven $ Proof.constr_e (map_assumptions snd id env)
+  | f -> raise $ not_a_constraint f
 
 let qed = finish
 
@@ -107,26 +107,26 @@ let generalize name state =
   let env, f = goal state in
   match ProofEnv.lookup_identifier name env with
   | Some (Bind (a_name, K_Atom a)) ->
-      let ctx = PC_SpecializeAtom (to_judgement (env |> remove_identifier a, f), pure (A a), context state) in
-      unfinished (env |> remove_identifier a, F_ForallAtom (A_Bind (a_name, A a), f)) ctx
-  | Some (Bind (x_name, K_Var x))  ->
-      let ctx = PC_SpecializeTerm (to_judgement (env |> remove_identifier x, f), var (V x), context state) in
-      unfinished (env |> remove_identifier x, F_ForallTerm (V_Bind (x_name, V x), f)) ctx
-  | Some (Bind (_x, K_FVar _))     -> raise $ ProofException "Logical variables cannot be generalized"
-  | Some (Bind (_x, K_Func))       -> raise $ ProofException "Functional symbols cannot be generalized"
-  | None                           -> raise $ unbound_variable name
+    let ctx = PC_SpecializeAtom (to_judgement (env |> remove_identifier a, f), pure (A a), context state) in
+    unfinished (env |> remove_identifier a, F_ForallAtom (A_Bind (a_name, A a), f)) ctx
+  | Some (Bind (x_name, K_Var x)) ->
+    let ctx = PC_SpecializeTerm (to_judgement (env |> remove_identifier x, f), var (V x), context state) in
+    unfinished (env |> remove_identifier x, F_ForallTerm (V_Bind (x_name, V x), f)) ctx
+  | Some (Bind (_x, K_FVar _)) -> raise $ ProofException "Logical variables cannot be generalized"
+  | Some (Bind (_x, K_Func)) -> raise $ ProofException "Functional symbols cannot be generalized"
+  | None -> raise $ unbound_variable name
 
 let exists witness state =
   let env = goal_env state in
   match goal_formula state with
   | F_ExistsAtom (A_Bind (_, a), f_a) as f ->
-      let b = parse_atom_in_env (identifiers env) witness in
-      let context = PC_ExistsAtom (to_judgement (env, f), b, context state) in
-      unfinished (env, (a |-> b) f_a) context
+    let b = parse_atom_in_env (identifiers env) witness in
+    let context = PC_ExistsAtom (to_judgement (env, f), b, context state) in
+    unfinished (env, (a |-> b) f_a) context
   | F_ExistsTerm (V_Bind (_, x), f_x) as f ->
-      let t = parse_term_in_env (identifiers env) witness in
-      let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
-      unfinished (env, (x |=> t) f_x) context
+    let t = parse_term_in_env (identifiers env) witness in
+    let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
+    unfinished (env, (x |=> t) f_x) context
   | f -> raise $ not_an_exists f
 
 let exists' witnesses state = List.fold_left (flip exists) state witnesses
@@ -178,77 +178,77 @@ let destruct_assm h_name state =
   let ctx = context state in
   let env, _, h = computeWHNF env 5 $ label' h_proof in
   match h with
-  | F_ExistsTerm _     ->
-      let x_bind, h_x = instantiate_var h in
-      destruct_assm_witness env f h_name h_proof h_x (var_binder_to_binder x_bind) ctx
-  | F_ExistsAtom _     ->
-      let a_bind, h_a = instantiate_atom h in
-      destruct_assm_witness env f h_name h_proof h_a (atom_binder_to_binder a_bind) ctx
-  | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
-  | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
+  | F_ExistsTerm _ ->
+    let x_bind, h_x = instantiate_var h in
+    destruct_assm_witness env f h_name h_proof h_x (var_binder_to_binder x_bind) ctx
+  | F_ExistsAtom _ ->
+    let a_bind, h_a = instantiate_atom h in
+    destruct_assm_witness env f h_name h_proof h_a (atom_binder_to_binder a_bind) ctx
+  | F_And hs -> destruct_assm_and env f h_name h_proof hs ctx
+  | F_Or hs -> destruct_assm_or env f h_name h_proof hs ctx
   | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
-  | F_Constr c         -> destruct_assm_constr env f h_name h_proof c ctx
-  | f                  -> raise $ cannot_destruct f
+  | F_Constr c -> destruct_assm_constr env f h_name h_proof c ctx
+  | f -> raise $ cannot_destruct f
 
 let rec destruct_assm' h_name witnesses state =
   match witnesses with
-  | []           -> state
+  | [] -> state
   | w_name :: ws ->
-      (let env, f = goal state in
-       let h_proof = assm_proof h_name env in
-       let ctx = context state in
-       let env, _, h = computeWHNF env 5 $ label' h_proof in
-       match h with
-       | F_ExistsTerm _     ->
-           let V_Bind (_, V x), h_x = instantiate_var h in
-           destruct_assm_witness env f h_name h_proof h_x (Bind (w_name, K_Var x)) ctx
-       | F_ExistsAtom _     ->
-           let A_Bind (_, A a), h_a = instantiate_atom h in
-           destruct_assm_witness env f h_name h_proof h_a (Bind (w_name, K_Atom a)) ctx
-       | F_And hs           -> destruct_assm_and env f h_name h_proof hs ctx
-       | F_Or hs            -> destruct_assm_or env f h_name h_proof hs ctx
-       | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
-       | F_Constr c         -> destruct_assm_constr env f h_name h_proof c ctx
-       | f                  -> raise $ cannot_destruct f )
-      |> destruct_assm' h_name ws
+    (let env, f = goal state in
+     let h_proof = assm_proof h_name env in
+     let ctx = context state in
+     let env, _, h = computeWHNF env 5 $ label' h_proof in
+     match h with
+     | F_ExistsTerm _ ->
+       let V_Bind (_, V x), h_x = instantiate_var h in
+       destruct_assm_witness env f h_name h_proof h_x (Bind (w_name, K_Var x)) ctx
+     | F_ExistsAtom _ ->
+       let A_Bind (_, A a), h_a = instantiate_atom h in
+       destruct_assm_witness env f h_name h_proof h_a (Bind (w_name, K_Atom a)) ctx
+     | F_And hs -> destruct_assm_and env f h_name h_proof hs ctx
+     | F_Or hs -> destruct_assm_or env f h_name h_proof hs ctx
+     | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
+     | F_Constr c -> destruct_assm_constr env f h_name h_proof c ctx
+     | f -> raise $ cannot_destruct f )
+    |> destruct_assm' h_name ws
 
 let intros' = function
-  | []      -> id
+  | [] -> id
   | h :: ws -> intro_named h %> destruct_assm' h ws
 
 let destruct_goal state =
   let ctx = context state in
   let env, f = goal state in
   match f with
-  | F_And fs            ->
-      let jgmt = to_judgement (env, f) in
-      let goals = List.map (proof_hole env % snd) fs in
-      find_goal_in_proof ctx $ proof_and jgmt goals
+  | F_And fs ->
+    let jgmt = to_judgement (env, f) in
+    let goals = List.map (proof_hole env % snd) fs in
+    find_goal_in_proof ctx $ proof_and jgmt goals
   | F_ConstrAnd (c, f') ->
-      let c_proof = proof_hole env (F_Constr c) in
-      let f_proof = proof_hole (env |> add_constr c) f' in
-      let jgmt = to_judgement (env, f) in
-      find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
-  | f                   -> raise $ cannot_destruct f
+    let c_proof = proof_hole env (F_Constr c) in
+    let f_proof = proof_hole (env |> add_constr c) f' in
+    let jgmt = to_judgement (env, f) in
+    find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
+  | f -> raise $ cannot_destruct f
 
 let destruct_goal' n state =
   let env, f = goal state in
   match f with
   | F_Or fs ->
-      let _, g = List.nth fs n in
-      let context = PC_Or (to_judgement (env, f), context state) in
-      unfinished (env, g) context
-  | f       -> raise $ cannot_destruct f
+    let _, g = List.nth fs n in
+    let context = PC_Or (to_judgement (env, f), context state) in
+    unfinished (env, g) context
+  | f -> raise $ cannot_destruct f
 
 let by_induction y_name ind_hyp_name state =
   match goal state with
   | env, F_ForallTerm ((V_Bind (_, x) as x_bind), f_x) ->
-      let y = fresh_var () in
-      let y_bind = V_Bind (y_name, y) in
-      let f_y = (x |=> var y) f_x in
-      let ctx = PC_Induction (to_judgement (env, f_x), x_bind, y_bind, context state) in
-      let ind_hyp = F_ForallTerm (y_bind, F_ConstrImpl (var y <: var x, f_y)) in
-      unfinished (env |> add_var x_bind |> add_assumption (ind_hyp_name, ind_hyp), f_x) ctx
+    let y = fresh_var () in
+    let y_bind = V_Bind (y_name, y) in
+    let f_y = (x |=> var y) f_x in
+    let ctx = PC_Induction (to_judgement (env, f_x), x_bind, y_bind, context state) in
+    let ind_hyp = F_ForallTerm (y_bind, F_ConstrImpl (var y <: var x, f_y)) in
+    unfinished (env |> add_var x_bind |> add_assumption (ind_hyp_name, ind_hyp), f_x) ctx
   | _, f -> raise $ not_a_forall_term f
 
 let step n state =
@@ -263,8 +263,8 @@ let case name state =
   | F_Or fs -> (
     match List.find_opt (( = ) name % fst) fs with
     | Some (_, f) -> unfinished (env, f) ctx
-    | None        -> raise $ unknown_case name f )
-  | f       -> raise $ not_a_disjunction f
+    | None -> raise $ unknown_case name f )
+  | f -> raise $ not_a_disjunction f
 
 let assert_constr env constr =
   let void = const () in
@@ -275,19 +275,19 @@ let subst x_name y_source state =
   let cannot_subst = raise % proof_exception % Printf.sprintf "Cannot substitute %s" in
   let env, f = goal state in
   match ProofEnv.lookup_identifier x_name env with
-  | Some (Bind (_, K_Func))   -> cannot_subst "a functional symbol"
+  | Some (Bind (_, K_Func)) -> cannot_subst "a functional symbol"
   | Some (Bind (_, K_FVar _)) -> cannot_subst "a logical variable"
-  | None                      -> cannot_subst "unknown name"
+  | None -> cannot_subst "unknown name"
   | Some (Bind (_, K_Atom a)) ->
-      let b = parse_atom_in_env (all_identifiers env) y_source in
-      let _ = assert_constr env (A a ==: b) in
-      let ctx = PC_SubstAtom (to_judgement (env, f), A a, b, context state) in
-      unfinished (ProofEnv.subst_atom (fun a b -> on_snd (a |-> b)) (A a) b env, (A a |-> b) f) ctx
-  | Some (Bind (_, K_Var x))  ->
-      let t = parse_term_in_env (all_identifiers env) y_source in
-      let _ = assert_constr env (var (V x) =: t) in
-      let ctx = PC_SubstVar (to_judgement (env, f), V x, t, context state) in
-      unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx
+    let b = parse_atom_in_env (all_identifiers env) y_source in
+    let _ = assert_constr env (A a ==: b) in
+    let ctx = PC_SubstAtom (to_judgement (env, f), A a, b, context state) in
+    unfinished (ProofEnv.subst_atom (fun a b -> on_snd (a |-> b)) (A a) b env, (A a |-> b) f) ctx
+  | Some (Bind (_, K_Var x)) ->
+    let t = parse_term_in_env (all_identifiers env) y_source in
+    let _ = assert_constr env (var (V x) =: t) in
+    let ctx = PC_SubstVar (to_judgement (env, f), V x, t, context state) in
+    unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx
 
 let add_assumption_thm' h_name h_proof state =
   let env, f = goal state in
@@ -315,6 +315,6 @@ let apply_in_assm h_name h_premise_name state =
   let h_env, h = judgement' h_proof in
   match computeWHNF h_env 5 h with
   | h_env, _, F_Impl (_, h_conclusion) ->
-      let h_conclusion_proof = proof_apply (h_env, h_conclusion) h_proof h_premise_proof in
-      add_assumption_thm' h_name h_conclusion_proof state
-  | _                                  -> raise % not_an_implication $ label' h_premise_proof
+    let h_conclusion_proof = proof_apply (h_env, h_conclusion) h_proof h_premise_proof in
+    add_assumption_thm' h_name h_conclusion_proof state
+  | _ -> raise % not_an_implication $ label' h_premise_proof

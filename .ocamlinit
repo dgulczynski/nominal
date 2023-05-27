@@ -1,29 +1,38 @@
-open Nominal;;
-open Nominal.Common;;
-open Nominal.IncProof;;
-open Nominal.Parser ;;
-open Nominal.Printing ;;
-open Nominal.Proof;;
-open Nominal.ProofEnv;;
-open Nominal.ProofException;;
-open Nominal.ProofPrinting;;
-open Nominal.Prover;;
-open Nominal.ProverInternals;;
-open Nominal.ProverGoal;;
-open Nominal.Tactics;;
-open Nominal.Types;;
-open Nominal.Permutation;;
-open Nominal.Solver;;
+open Nominal
+open Nominal.Common
+open Nominal.IncProof
+open Nominal.Parser
+open Nominal.Printing
+open Nominal.Proof
+open Nominal.ProofEnv
+open Nominal.ProofException
+open Nominal.ProofPrinting
+open Nominal.Prover
+open Nominal.ProverInternals
+open Nominal.ProverGoal
+open Nominal.Tactics
+open Nominal.Types
+open Nominal.Permutation
+open Nominal.Solver
 
-let pp_print_assm' = pp_print_assm [];;
-let pp_print_formula' = pp_print_formula [];;
+let pp_print_assm' = pp_print_assm []
 
-#install_printer pp_print_assm';;
-#install_printer pp_print_constr;;
-#install_printer pp_print_formula';;
-#install_printer pp_print_goal;;
-#install_printer pp_print_judgement;;
-#install_printer pp_print_kind;;
-#install_printer pp_print_term;;
-#install_printer pp_print_env;;
-#install_printer pp_print_state;;
+let pp_print_formula' = pp_print_formula [] ;;
+
+#install_printer pp_print_assm'
+
+#install_printer pp_print_constr
+
+#install_printer pp_print_formula'
+
+#install_printer pp_print_goal
+
+#install_printer pp_print_judgement
+
+#install_printer pp_print_kind
+
+#install_printer pp_print_term
+
+#install_printer pp_print_env
+
+#install_printer pp_print_state

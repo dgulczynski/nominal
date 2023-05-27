@@ -20,11 +20,7 @@ let merge xs ys =
   merge (sort xs) (sort ys)
 
 type 'a env =
-  { identifiers: bound_env
-  ; constraints: constr list
-  ; assumptions: 'a list
-  ; mapping: mapping
-  ; to_formula: 'a -> formula }
+  {identifiers: bound_env; constraints: constr list; assumptions: 'a list; mapping: mapping; to_formula: 'a -> formula}
 
 let assumptions {assumptions; _} = assumptions
 
@@ -62,13 +58,9 @@ let on_mapping f {assumptions; identifiers; constraints; mapping; to_formula} =
 let set_mapping mapping = on_mapping $ const mapping
 
 let union
-    {assumptions= a1; identifiers= i1; constraints= c1; mapping= v1; to_formula}
-    {assumptions= a2; identifiers= i2; constraints= c2; mapping= v2; _} =
-  { assumptions= merge a1 a2
-  ; identifiers= merge i1 i2
-  ; constraints= merge c1 c2
-  ; mapping= merge v1 v2
-  ; to_formula }
+  {assumptions= a1; identifiers= i1; constraints= c1; mapping= v1; to_formula}
+  {assumptions= a2; identifiers= i2; constraints= c2; mapping= v2; _} =
+  {assumptions= merge a1 a2; identifiers= merge i1 i2; constraints= merge c1 c2; mapping= merge v1 v2; to_formula}
 
 let name_eq name = function
   | Bind (x, _) -> x = name
@@ -82,7 +74,7 @@ let lookup_identifier name {identifiers; _} = List.find_opt (name_eq name) ident
 let add_identifier (Bind (x, _) as bind) env =
   match lookup_identifier x env with
   | Some _ -> raise $ name_taken x
-  | None   -> on_identifiers (merge [bind]) env
+  | None -> on_identifiers (merge [bind]) env
 
 let add_fvar x_bind = add_identifier $ fvar_binder_to_binder x_bind
 
@@ -118,7 +110,7 @@ let all_identifiers {mapping; identifiers; _} =
 let kind_checker_env {identifiers; mapping; _} =
   let add_identifier env = function
     | Bind (x_name, K_FVar (x, k)) -> KindCheckerEnv.map_fvar env x_name (FV x) k
-    | _                            -> env
+    | _ -> env
   and add_mapping env = function
     | {bind= FV_Bind (x_name, x, k); _} -> KindCheckerEnv.map_fvar env x_name (FV x) k
   in
@@ -136,19 +128,19 @@ let find_bind name {assumptions; constraints; to_formula; identifiers; _} =
   let find x =
     match List.find_opt (bound_in_assumption x % to_formula) assumptions with
     | Some f -> Some (to_formula f)
-    | None   -> from_constr <$> List.find_opt (bound_in_constr x) constraints
+    | None -> from_constr <$> List.find_opt (bound_in_constr x) constraints
   in
   bind_by_name name identifiers >>= binder_rep >>= find
 
 let remove_var name ({assumptions; constraints; identifiers; mapping; to_formula} as env) =
   match List.partition (name_eq name) identifiers with
   | Bind (_, K_Var x) :: _, identifiers ->
-      { assumptions= List.filter (not % bound_in_assumption x % to_formula) assumptions
-      ; constraints= List.filter (not % bound_in_constr x) constraints
-      ; identifiers
-      ; mapping
-      ; to_formula }
-  | _                                   -> env
+    { assumptions= List.filter (not % bound_in_assumption x % to_formula) assumptions
+    ; constraints= List.filter (not % bound_in_constr x) constraints
+    ; identifiers
+    ; mapping
+    ; to_formula }
+  | _ -> env
 
 let parse_formula {identifiers; mapping; _} =
   let convert {bind= FV_Bind (x_name, x_var, x_kind); _} = Bind (x_name, K_FVar (x_var, x_kind)) in
@@ -161,13 +153,13 @@ let parse_mapping identifiers constraints assumptions to_formula source_mapping 
     let f_body = parse_formula env f_source in
     match kind_infer env f_body with
     | Some f_kind ->
-        let f_var =
-          match f_body with
-          | F_Fix (FV_Bind (_, x, _), _, _, _) -> x
-          | _                                  -> fresh ()
-        in
-        {bind= FV_Bind (f_name, f_var, f_kind); body= f_body} :: mapping
-    | None        -> raise $ cannot_infer_kind f_name
+      let f_var =
+        match f_body with
+        | F_Fix (FV_Bind (_, x, _), _, _, _) -> x
+        | _ -> fresh ()
+      in
+      {bind= FV_Bind (f_name, f_var, f_kind); body= f_body} :: mapping
+    | None -> raise $ cannot_infer_kind f_name
   in
   env identifiers constraints assumptions (List.fold_left aux [] source_mapping) to_formula
 

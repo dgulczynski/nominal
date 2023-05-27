@@ -17,8 +17,7 @@ let inenv_formula =
     [ "fix InEnv(env): forall a :atom. forall t :term. * = fun a :atom -> fun t :term -> "
     ; " current: ( exists env': term. [env = cons a t env'] ) "
     ; " ∨   "
-    ; " next: ( exists b :atom. exists s env': term. [env = cons b s env'] ∧ [a =/= b] ∧ (InEnv env' a {t}))"
-    ]
+    ; " next: ( exists b :atom. exists s env': term. [env = cons b s env'] ∧ [a =/= b] ∧ (InEnv env' a {t}))" ]
 
 let typing_formula =
   unwords

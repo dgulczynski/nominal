@@ -5,35 +5,35 @@ open Permutation
 
 let rec syntactic_occurs_check x = function
   | T_Var {perm= _; symb= x'} -> x' = x
-  | T_Lam (_, t)              -> syntactic_occurs_check x t
-  | T_App (t1, t2)            -> syntactic_occurs_check x t1 || syntactic_occurs_check x t2
-  | T_Atom _ | T_Fun _        -> false
+  | T_Lam (_, t) -> syntactic_occurs_check x t
+  | T_App (t1, t2) -> syntactic_occurs_check x t1 || syntactic_occurs_check x t2
+  | T_Atom _ | T_Fun _ -> false
 
 let rec free_vars_of_term = function
   | T_Var {perm= _; symb= x} -> [x]
-  | T_Lam (_, t)             -> free_vars_of_term t
-  | T_App (t1, t2)           -> free_vars_of_term t1 @ free_vars_of_term t2
-  | T_Fun _ | T_Atom _       -> []
+  | T_Lam (_, t) -> free_vars_of_term t
+  | T_App (t1, t2) -> free_vars_of_term t1 @ free_vars_of_term t2
+  | T_Fun _ | T_Atom _ -> []
 
 let rec shape_of_term = function
   | T_Var {symb= x; _} -> S_Var x
-  | T_Atom _           -> S_Atom
-  | T_Lam (_, t)       -> S_Lam (shape_of_term t)
-  | T_App (t1, t2)     -> S_App (shape_of_term t1, shape_of_term t2)
-  | T_Fun f            -> S_Fun f
+  | T_Atom _ -> S_Atom
+  | T_Lam (_, t) -> S_Lam (shape_of_term t)
+  | T_App (t1, t2) -> S_App (shape_of_term t1, shape_of_term t2)
+  | T_Fun f -> S_Fun f
 
 let rec term_of_shape = function
-  | S_Var x        ->
-      let y = fresh_var () in
-      (var y, [(x, y)])
-  | S_Atom         -> (atom $ fresh_atom (), [])
-  | S_Lam s        ->
-      let t, vs = term_of_shape s in
-      (T_Lam (pure $ fresh_atom (), t), vs)
+  | S_Var x ->
+    let y = fresh_var () in
+    (var y, [(x, y)])
+  | S_Atom -> (atom $ fresh_atom (), [])
+  | S_Lam s ->
+    let t, vs = term_of_shape s in
+    (T_Lam (pure $ fresh_atom (), t), vs)
   | S_App (s1, s2) ->
-      let t1, vs1 = term_of_shape s1 and t2, vs2 = term_of_shape s2 in
-      (T_App (t1, t2), vs1 @ vs2)
-  | S_Fun f        -> (T_Fun f, [])
+    let t1, vs1 = term_of_shape s1 and t2, vs2 = term_of_shape s2 in
+    (T_App (t1, t2), vs1 @ vs2)
+  | S_Fun f -> (T_Fun f, [])
 
 let fix_kind x y y_name k =
   (*  G, X : (forall y, [y < x] => K{y/x}) |- F : K  *)
@@ -51,27 +51,25 @@ let fix fix_name fix_rep x x_name y y_name k f =
 
 let merge_names xs ys = List.merge compare xs ys
 
-let rec free_names_of_permutation perm =
-  List.fold_left (fun acc -> merge_names acc % free_names_of_swap) [] perm
+let rec free_names_of_permutation perm = List.fold_left (fun acc -> merge_names acc % free_names_of_swap) [] perm
 
 and free_names_of_permuted_atom {perm; symb= A a} = merge_names [a] (free_names_of_permutation perm)
 
-and free_names_of_swap (a1, a2) =
-  merge_names (free_names_of_permuted_atom a1) (free_names_of_permuted_atom a2)
+and free_names_of_swap (a1, a2) = merge_names (free_names_of_permuted_atom a1) (free_names_of_permuted_atom a2)
 
 let rec free_names_of_term = function
-  | T_App (t1, t2)               -> merge_names (free_names_of_term t1) (free_names_of_term t2)
+  | T_App (t1, t2) -> merge_names (free_names_of_term t1) (free_names_of_term t2)
   | T_Lam ({perm; symb= A a}, t) ->
-      List.filter (( <> ) a) $ merge_names (free_names_of_permutation perm) (free_names_of_term t)
-  | T_Var {perm; symb= V x}      -> merge_names [x] (free_names_of_permutation perm)
-  | T_Atom {perm; symb= A a}     -> merge_names [a] (free_names_of_permutation perm)
-  | T_Fun _                      -> []
+    List.filter (( <> ) a) $ merge_names (free_names_of_permutation perm) (free_names_of_term t)
+  | T_Var {perm; symb= V x} -> merge_names [x] (free_names_of_permutation perm)
+  | T_Atom {perm; symb= A a} -> merge_names [a] (free_names_of_permutation perm)
+  | T_Fun _ -> []
 
 let free_names_of_constr = function
   | C_Fresh (A a, t) -> merge_names [a] (free_names_of_term t)
   | C_AtomEq (A a1, a2) | C_AtomNeq (A a1, a2) -> merge_names [a1] (free_names_of_term (T_Atom a2))
   | C_Eq (t1, t2) | C_Shape (t1, t2) | C_Subshape (t1, t2) ->
-      merge_names (free_names_of_term t1) (free_names_of_term t2)
+    merge_names (free_names_of_term t1) (free_names_of_term t2)
   | C_Symbol t -> free_names_of_term t
 
 let rec free_names_of_formula = function
@@ -90,7 +88,7 @@ let rec free_names_of_formula = function
   | F_ExistsAtom (A_Bind (_, A name), f)
   | F_ExistsTerm (V_Bind (_, V name), f) -> List.filter (( <> ) name) (free_names_of_formula f)
   | F_Fix (FV_Bind (_, fix_name, _), V_Bind (_, V x_name), _, f) ->
-      List.filter (not % flip List.mem [fix_name; x_name]) (free_names_of_formula f)
+    List.filter (not % flip List.mem [fix_name; x_name]) (free_names_of_formula f)
   | F_Fun (_, f) -> free_names_of_formula f
 
 let bind_by_name name = List.find_opt (function Bind (name', _) -> name = name')

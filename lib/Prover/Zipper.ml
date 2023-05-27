@@ -6,24 +6,24 @@ let to_list {left; right} = List.rev_append left right
 
 let is_empty {right; _} =
   match right with
-  | []     -> true
+  | [] -> true
   | _ :: _ -> false
 
 let insert x {left; right} = {left; right= x :: right}
 
 let move_back_if_not_empty {left; right} =
   match left with
-  | []      -> {left; right}
+  | [] -> {left; right}
   | x :: xs -> {left= xs; right= x :: right}
 
 let move_forward {left; right} =
   match right with
-  | []      -> failwith "move_forward on rightmost"
+  | [] -> failwith "move_forward on rightmost"
   | x :: xs -> {left= x :: left; right= xs}
 
 let extract_current {left; right} =
   match right with
-  | []      -> failwith "extract_current on empty"
+  | [] -> failwith "extract_current on empty"
   | x :: xs -> (x, {left; right= xs})
 
 let rec extract_next test ({right; _} as z) =

@@ -19,7 +19,7 @@ let try_opt tactic = try_tactic' (const none) (some % tactic)
 let try_many on_fail tactics state =
   match List.find_map (flip try_opt state) tactics with
   | Some success -> success
-  | None         -> on_fail ()
+  | None -> on_fail ()
 
 let add_assumption h_name h state =
   let _, f = goal state in
@@ -46,18 +46,18 @@ let assumption state =
   let on_fail _ = raise $ ProofException exn in
   match ProofEnv.lookup_assumption (fun (_, g) -> (f === g) env) env with
   | Some (h_name, _) -> apply_assm h_name state
-  | None             ->
-      let to_tactic = apply_assm % fst in
-      let assumptions = ProofEnv.assumptions env in
-      let tactics = List.map to_tactic assumptions in
-      state |> try_many on_fail tactics
+  | None ->
+    let to_tactic = apply_assm % fst in
+    let assumptions = ProofEnv.assumptions env in
+    let tactics = List.map to_tactic assumptions in
+    state |> try_many on_fail tactics
 
 let contradiction = assumption % ex_falso
 
 let rec repeat tactic state =
   match state |> try_opt tactic with
   | Some state -> repeat tactic state
-  | None       -> state
+  | None -> state
 
 let trivial =
   let on_fail _ = raise $ ProofException "This ain't trivial" in

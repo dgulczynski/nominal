@@ -8,15 +8,25 @@ open LambdaCalculusEnv
 let typing_terms_thm = lambda_thm "forall e env t : term. (Typing e env t) => (Term e)"
 
 let typing_terms =
-  proof' typing_terms_thm |> by_induction "e0" "IH" |> intro %> intro
+  proof' typing_terms_thm
+  |> by_induction "e0" "IH"
+  |> intro %> intro
   |> intros' ["He"; ""]
   |> intros' ["Ha"; "a"; ""] %> case "var" %> exists "a" %> by_solver
   |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""; ""; ""]
-     %> case "lam" %> exists "a" %> exists "e_a" %> by_solver
+     %> case "lam"
+     %> exists "a"
+     %> exists "e_a"
+     %> by_solver
      %> apply_assm_specialized "IH" ["e_a"; "cons a t1 env"; "t2"]
-     %> by_solver %> assumption
+     %> by_solver
+     %> assumption
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
-     %> case "app" %> exists "e1" %> exists "e2" %> by_solver %> destruct_goal
+     %> case "app"
+     %> exists "e1"
+     %> exists "e2"
+     %> by_solver
+     %> destruct_goal
   |> apply_assm_specialized "IH" ["e1"; "env"; "arrow t2 t"] %> by_solver %> apply_assm "Happ_1"
   |> apply_assm_specialized "IH" ["e2"; "env"; "t2"] %> by_solver %> apply_assm "Happ_2"
   |> qed
@@ -32,7 +42,8 @@ let canonical_form_thm =
       ; " (exists t1 t2 :term. [t = arrow t1 t2])" ]
 
 let canonical_form =
-  proof' canonical_form_thm |> intro %> intro
+  proof' canonical_form_thm
+  |> intro %> intro
   |> intros ["Hv"; "Ht"] %> destruct_assm "Ht"
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
@@ -40,9 +51,14 @@ let canonical_form =
      %> apply_assm "contra"
   |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""]
   |> destruct_goal
-  |> exists "a" %> exists "e" %> by_solver
+  |> exists "a"
+     %> exists "e"
+     %> by_solver
      %> apply_thm_specialized typing_terms ["e"; "cons a t1 nil"; "t2"]
-     %> assumption %> exists "t1" %> exists "t2" %> by_solver
+     %> assumption
+     %> exists "t1"
+     %> exists "t2"
+     %> by_solver
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""] %> ex_falso %> destruct_assm "Hv"
   |> intros' ["Ha"; "a"] %> by_solver
   |> intros' ["Hlam"; "a"; "e"; ""] %> by_solver
@@ -65,6 +81,7 @@ let canonical_form' =
           [ "(exists a :atom. exists e :term. [v = lam (a.e)] ∧ (Term e))"
           ; "∧"
           ; "(exists t1' t2' :term. [arrow t1 t2 = arrow t1' t2'])" ] )
-  |> destruct_assm' "H" [""] |> assumption
+  |> destruct_assm' "H" [""]
+  |> assumption
   |> apply_thm_specialized canonical_form ["v"; "arrow t1 t2"] %> apply_assm "Hv" %> apply_assm "Ht"
   |> qed

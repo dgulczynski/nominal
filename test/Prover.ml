@@ -32,9 +32,7 @@ let th2 =
   test_thm env2 "(p => q => r) => (p => q) => p => r"
 
 let proof2 th2 =
-  proof' th2
-  |> intros ["HPQR"; "HPQ"; "HP"]
-  |> apply_assm "HPQR" |> assumption |> apply_assm "HPQ" |> apply_assm "HP"
+  proof' th2 |> intros ["HPQR"; "HPQ"; "HP"] |> apply_assm "HPQR" |> assumption |> apply_assm "HPQ" |> apply_assm "HP"
 
 let th3 =
   let env3 = fvars_env [("p", K_Prop)] in
@@ -43,7 +41,11 @@ let th3 =
 let proof3 th3 =
   proof' th3
   |> intros ["H1"; "H2"]
-  |> apply_assm "H1" |> intros ["H3"] |> ex_falso |> apply_assm "H2" |> apply_assm "H3"
+  |> apply_assm "H1"
+  |> intros ["H3"]
+  |> ex_falso
+  |> apply_assm "H2"
+  |> apply_assm "H3"
 
 let th4 =
   let env4 = fvars_env [("p", K_Prop)] in
@@ -52,9 +54,12 @@ let th4 =
 let proof4 th4 =
   proof' th4
   |> intros ["H1"; "H2"]
-  |> apply_assm "H1" |> intros ["H3"]
+  |> apply_assm "H1"
+  |> intros ["H3"]
   |> apply_parse "(p => ⊥) => p => ⊥" %> trivial
-  |> assumption |> apply_assm "H2" |> assumption
+  |> assumption
+  |> apply_assm "H2"
+  |> assumption
 
 let th5 =
   let env5 = atoms_env ["a"; "b"; "c"] in
@@ -75,8 +80,7 @@ let proof7 th7 = proof' th7 |> repeat intro |> by_solver
 
 let th8 =
   let env8 = atoms_env ["b"; "c"] @ vars_env ["y"] in
-  test_thm env8
-    "(forall a : atom. forall x : term. [a = x] => [a.a = a.x]) => [c = b.[b c]y] => [c.c = c.b.[b c] y]"
+  test_thm env8 "(forall a : atom. forall x : term. [a = x] => [a.a = a.x]) => [c = b.[b c]y] => [c.c = c.b.[b c] y]"
 
 let proof8 th8 = proof' th8 |> intros ["H"] |> apply_assm_specialized "H" ["c"; "b. [b c]y"]
 
@@ -93,16 +97,24 @@ let proof10 th10 = proof' th10 |> intro |> intros ["H"] |> destruct_assm "H" |> 
 let th11 = test_thm [] "(forall a : atom. exists b: atom. [a =/= b]) => (forall a:atom. exists t:term. a # t)"
 
 let proof11 th11 =
-  proof' th11 |> intros ["H"] |> intro
+  proof' th11
+  |> intros ["H"]
+  |> intro
   |> add_assumption_parse "Hc" "exists c:atom. a =/= c"
-  |> destruct_assm "Hc" |> exists "c" |> by_solver |> apply_assm_specialized "H" ["a"]
+  |> destruct_assm "Hc"
+  |> exists "c"
+  |> by_solver
+  |> apply_assm_specialized "H" ["a"]
 
 let th12 =
   let env12 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)] in
   test_thm env12 "(p: p ∧ q: q ∧ r: r) => (q ∧ r ∧ p)"
 
 let proof12 =
-  proof' %> intros ["H"] %> destruct_assm "H" %> destruct_goal
+  proof'
+  %> intros ["H"]
+  %> destruct_assm "H"
+  %> destruct_goal
   %> (apply_assm "H_q" %> apply_assm "H_r" %> apply_assm "H_p")
 
 let th13 =
@@ -116,9 +128,7 @@ let th14 =
   test_thm e14 "(p => s) => (q => s) => (r => s) => (p ∨ q ∨ r) => s"
 
 let proof14 =
-  proof'
-  %> intros ["Hp"; "Hq"; "Hr"; "H"]
-  %> destruct_assm "H" %> apply_assm "Hp" %> apply_assm "Hq" %> apply_assm "Hr"
+  proof' %> intros ["Hp"; "Hq"; "Hr"; "H"] %> destruct_assm "H" %> apply_assm "Hp" %> apply_assm "Hq" %> apply_assm "Hr"
 
 let _ = test_proof th1 proof1
 

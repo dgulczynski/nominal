@@ -41,15 +41,15 @@ let f_impl formula =
 let f_forall formula =
   let* xs, k = forall (typed_op (list_of' identifier) pvar_kind) in
   match k with
-  | Some PQ_Atom            -> formula >>| List.fold_right (fun x f -> PF_ForallAtom (x, f)) xs
-  | Some PQ_Term            -> formula >>| List.fold_right (fun x f -> PF_ForallTerm (x, f)) xs
+  | Some PQ_Atom -> formula >>| List.fold_right (fun x f -> PF_ForallAtom (x, f)) xs
+  | Some PQ_Term -> formula >>| List.fold_right (fun x f -> PF_ForallTerm (x, f)) xs
   | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
 
 let f_exists formula =
   let* xs, k = exists (typed_op (list_of' identifier) pvar_kind) in
   match k with
-  | Some PQ_Atom            -> formula >>| List.fold_right (fun x f -> PF_ExistsAtom (x, f)) xs
-  | Some PQ_Term            -> formula >>| List.fold_right (fun x f -> PF_ExistsTerm (x, f)) xs
+  | Some PQ_Atom -> formula >>| List.fold_right (fun x f -> PF_ExistsAtom (x, f)) xs
+  | Some PQ_Term -> formula >>| List.fold_right (fun x f -> PF_ExistsTerm (x, f)) xs
   | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Exists" $ Printing.unwords xs
 
 let f_constrand formula =
@@ -69,21 +69,20 @@ let f_fun formula =
   let* x, k = typed_op identifier pvar_kind in
   let* _ = whitespace *> arrow <* whitespace in
   match k with
-  | Some PQ_Atom     -> formula >>| fun f -> PF_FunAtom (x, f)
-  | Some PQ_Term     -> formula >>| fun f -> PF_FunTerm (x, f)
+  | Some PQ_Atom -> formula >>| fun f -> PF_FunAtom (x, f)
+  | Some PQ_Term -> formula >>| fun f -> PF_FunTerm (x, f)
   | Some (PQ_Kind k) -> formula >>| fun f -> PF_Fun (x, k, f)
-  | None             ->
-      raise
-      $ ParserException
-          (Printf.sprintf
-             "Functions must be used with type annotation, like 'fun x : k -> ...' where 'k' is 'atom', \
-              'term' or kind" )
+  | None ->
+    raise
+    $ ParserException
+        (Printf.sprintf
+           "Functions must be used with type annotation, like 'fun x : k -> ...' where 'k' is 'atom', 'term' or kind" )
 
 type pf_app_arg =
   | PFA_Identfier of string
-  | PFA_Term      of pterm
-  | PFA_Atom      of permuted_identifier
-  | PFA_Formula   of pformula
+  | PFA_Term of pterm
+  | PFA_Atom of permuted_identifier
+  | PFA_Formula of pformula
 
 let f_app formula =
   let app_identifier = identifier >>| fun x -> PFA_Identfier x
@@ -94,9 +93,9 @@ let f_app formula =
   let* args = many1 (whitespace1 *> (app_identifier <|> app_atom <|> app_term <|> app_formula)) in
   let apply f = function
     | PFA_Identfier x -> PF_AppIdentfier (f, x)
-    | PFA_Atom a      -> PF_AppAtom (f, a)
-    | PFA_Term t      -> PF_AppTerm (f, t)
-    | PFA_Formula f'  -> PF_App (f, f')
+    | PFA_Atom a -> PF_AppAtom (f, a)
+    | PFA_Term t -> PF_AppTerm (f, t)
+    | PFA_Formula f' -> PF_App (f, f')
   in
   return $ List.fold_left apply f args
 
@@ -110,8 +109,17 @@ let f_fix formula =
 
 let formula =
   let formula' formula =
-    f_fix formula <|> f_constrand formula <|> f_constrimpl formula <|> f_and formula <|> f_or formula
-    <|> f_impl formula <|> f_forall formula <|> f_exists formula <|> f_fun formula <|> f_app formula
-    <|> simple_formula <|> parenthesized formula
+    f_fix formula
+    <|> f_constrand formula
+    <|> f_constrimpl formula
+    <|> f_and formula
+    <|> f_or formula
+    <|> f_impl formula
+    <|> f_forall formula
+    <|> f_exists formula
+    <|> f_fun formula
+    <|> f_app formula
+    <|> simple_formula
+    <|> parenthesized formula
   in
   fix formula'

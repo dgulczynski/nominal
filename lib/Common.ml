@@ -21,7 +21,7 @@ let curry f x y = f (x, y)
 let uncurry f (x, y) = f x y
 
 let hd_opt = function
-  | []     -> None
+  | [] -> None
   | x :: _ -> Some x
 
 let const x _ = x
@@ -42,5 +42,5 @@ let rec find_first test = function
   | [] -> (None, [])
   | x :: xs when test x -> (Some x, xs)
   | x :: xs ->
-      let found, rest = find_first test xs in
-      (found, x :: rest)
+    let found, rest = find_first test xs in
+    (found, x :: rest)

@@ -15,10 +15,9 @@ let kind =
   let k_forall kind =
     let* xs, xk = forall (typed_op (list_of' identifier) $ pvar_kind' kind) in
     match xk with
-    | Some PQ_Atom            -> kind >>| List.fold_right (fun x k -> PK_ForallAtom (x, k)) xs
-    | Some PQ_Term            -> kind >>| List.fold_right (fun x k -> PK_ForallTerm (x, k)) xs
-    | Some (PQ_Kind _) | None ->
-        raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
+    | Some PQ_Atom -> kind >>| List.fold_right (fun x k -> PK_ForallAtom (x, k)) xs
+    | Some PQ_Term -> kind >>| List.fold_right (fun x k -> PK_ForallTerm (x, k)) xs
+    | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
   and k_constr kind =
     let* cs = many1 (bracketed constr <* whitespace) in
     let* k = kind in
@@ -29,9 +28,7 @@ let kind =
     let* k2 = kind in
     return $ PK_Arrow (k1, k2)
   in
-  let kind' kind =
-    k_arrow kind <|> k_prop <|> k_forall kind <|> k_constr kind <|> parenthesized kind
-  in
+  let kind' kind = k_arrow kind <|> k_prop <|> k_forall kind <|> k_constr kind <|> parenthesized kind in
   fix kind'
 
 let pvar_kind = pvar_kind' kind

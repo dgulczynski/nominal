@@ -6,19 +6,19 @@ type proof_env = formula env
 type judgement = proof_env * formula
 
 type proof = private
-  | P_Ax             of judgement
-  | P_Intro          of judgement * proof
-  | P_Apply          of judgement * proof * proof
-  | P_ConstrApply    of judgement * proof * proof
-  | P_ConstrAndElim  of judgement * proof
+  | P_Ax of judgement
+  | P_Intro of judgement * proof
+  | P_Apply of judgement * proof * proof
+  | P_ConstrApply of judgement * proof * proof
+  | P_ConstrAndElim of judgement * proof
   | P_SpecializeAtom of judgement * permuted_atom * proof
   | P_SpecializeTerm of judgement * term * proof
-  | P_Witness        of judgement * proof * proof
-  | P_AndIntro       of judgement * proof list
-  | P_AndElim        of judgement * proof
-  | P_OrElim         of judgement * proof list
-  | P_Equivalent     of judgement * int * proof
-  | P_ExFalso        of judgement * proof
+  | P_Witness of judgement * proof * proof
+  | P_AndIntro of judgement * proof list
+  | P_AndElim of judgement * proof
+  | P_OrElim of judgement * proof list
+  | P_Equivalent of judgement * int * proof
+  | P_ExFalso of judgement * proof
 
 val label : proof -> formula
 
