@@ -33,8 +33,8 @@ val on_fst : ('a1 -> 'a2) -> 'a1 * 'b -> 'a2 * 'b
 
 val on_snd : ('b1 -> 'b2) -> 'a * 'b1 -> 'a * 'b2
 
-val pair_eq : 'a * 'a -> 'a * 'a -> bool
-(** [pair_eq (x1, x2) (y1, y2) = (x1 = y1 && x2 = y2) || (x1 = y2 && x2 = y1)]*)
+val pair_eq : ('a -> 'a -> bool) -> 'a * 'a -> 'a * 'a -> bool
+(** [pair_eq (=) (x1, x2) (y1, y2) = (x1 = y1 && x2 = y2) || (x1 = y2 && x2 = y1)]*)
 
 val to_option : 'a -> bool -> 'a option
 (** cast ['a] to ['a option]: [to_option x true = Some x], [to_option _ false = None]*)

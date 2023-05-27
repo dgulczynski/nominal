@@ -7,6 +7,18 @@ open ProofCommon
 open ProofException
 open Substitution
 
+let sort xs = List.sort_uniq compare xs
+
+let merge xs ys =
+  let rec merge xs ys =
+    match (xs, ys) with
+    | [], zs | zs, [] -> zs
+    | x :: xs, y :: ys when x = y -> x :: merge xs ys
+    | x :: xs, y :: ys when x < y -> x :: y :: merge xs ys
+    | x :: xs, y :: ys -> y :: x :: merge xs ys
+  in
+  merge (sort xs) (sort ys)
+
 type 'a env =
   { identifiers: bound_env
   ; constraints: constr list
@@ -25,7 +37,11 @@ let mapping {mapping; _} = mapping
 let to_formula {to_formula; _} = to_formula
 
 let env identifiers constraints assumptions mapping to_formula =
-  {assumptions; constraints; identifiers; mapping; to_formula}
+  { assumptions= sort assumptions
+  ; constraints= sort constraints
+  ; identifiers= sort identifiers
+  ; mapping= sort mapping
+  ; to_formula }
 
 let empty to_formula = env [] [] [] [] to_formula
 
@@ -44,13 +60,6 @@ let on_mapping f {assumptions; identifiers; constraints; mapping; to_formula} =
   {assumptions; identifiers; constraints; mapping= f mapping; to_formula}
 
 let set_mapping mapping = on_mapping $ const mapping
-
-let rec merge xs ys =
-  match (xs, ys) with
-  | [], zs | zs, [] -> zs
-  | x :: xs, y :: ys when x = y -> x :: merge xs ys
-  | x :: xs, y :: ys when x < y -> x :: y :: merge xs ys
-  | x :: xs, y :: ys -> y :: x :: merge xs ys
 
 let union
     {assumptions= a1; identifiers= i1; constraints= c1; mapping= v1; to_formula}
@@ -86,7 +95,7 @@ let add_constr constr = on_constraints $ merge [constr]
 let add_assumption ass = on_assumptions $ merge [ass]
 
 let map_assumptions f to_formula {assumptions; identifiers; constraints; mapping; _} =
-  {assumptions= List.map f assumptions; identifiers; constraints; mapping; to_formula}
+  {assumptions= sort $ List.map f assumptions; identifiers; constraints; mapping; to_formula}
 
 let map_constraints f = on_constraints (List.map f)
 
@@ -182,7 +191,7 @@ let solver_env env =
   let constr_assumptions = List.filter_map (to_constr_op % to_formula env) $ assumptions env in
   constr_assumptions @ constraints env
 
-let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints; _} =
+let pp_print_env pp_print_assumption fmt {assumptions; identifiers; constraints; _} =
   let pp_sep fmt () = pp_print_string fmt "\n; " in
   let pp_print_bracketed_list fmt p = function
     | [] -> pp_print_string fmt "[ ]"
@@ -191,4 +200,4 @@ let pp_print_env pp_print_assupmtion fmt {assumptions; identifiers; constraints;
   pp_print_newline fmt () ;
   pp_print_bracketed_list fmt (pp_print_constr_in_env identifiers) constraints ;
   pp_print_newline fmt () ;
-  pp_print_bracketed_list fmt pp_print_assupmtion assumptions
+  pp_print_bracketed_list fmt pp_print_assumption assumptions

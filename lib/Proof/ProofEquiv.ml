@@ -14,9 +14,11 @@ let lookup_formula env (FV x) =
   | Some {body= f; _} -> Some f
   | None              -> None
 
-let ( =:=:= ) c1 c2 env =
-  let ( =: ) t1 t2 = env |-: (t1 =: t2) in
-  let ( =:= ) (t1, t1') (t2, t2') = (t1 =: t2 && t1' =: t2') || (t1 =: t2' && t1' =: t2) in
+let terms_eq_in_env env t1 t2 = t1 = t2 || env |-: (t1 =: t2)
+
+let constrs_eq_in_env env c1 c2 =
+  let ( =: ) = terms_eq_in_env env in
+  let ( =:= ) = pair_eq ( =: ) in
   match (c1, c2) with
   | C_AtomEq (a1, b1), C_AtomEq (a2, b2) | C_AtomNeq (a1, b1), C_AtomNeq (a2, b2) ->
       (atom a1, T_Atom b1) =:= (atom a2, T_Atom b2)
@@ -30,8 +32,6 @@ let ( =:=:= ) c1 c2 env =
   | C_Symbol t1, C_Symbol t2 -> t1 =: t2
   | C_AtomEq _, _ | C_Shape _, _ | C_Subshape _, _ | C_AtomNeq _, _ | C_Eq _, _ | C_Fresh _, _ | C_Symbol _, _
     -> false
-
-let ( =:= ) t1 t2 env = env |-: (t1 =: t2)
 
 let rec computeWHNF env n f =
   if n <= 0 then (env, 0, f)
@@ -81,7 +81,9 @@ and equiv solver_env env1 env2 n1 n2 f1 f2 =
   ||
   let env1, n1, f1 = computeWHNF env1 n1 f1 in
   let env2, n2, f2 = computeWHNF env2 n2 f2 in
-  let ( === ) : formula -> formula -> bool = equiv solver_env env1 env2 n1 n2 in
+  let ( === ) = equiv solver_env env1 env2 n1 n2 in
+  let ( =:= ) = constrs_eq_in_env solver_env in
+  let ( =: ) = terms_eq_in_env solver_env in
   match (f1, f2) with
   | F_Top, _ | F_Bot, _ -> f1 = f2
   | F_Var x1, F_Var x2 -> (
@@ -100,10 +102,10 @@ and equiv solver_env env1 env2 n1 n2 f1 f2 =
     | None    -> false (* f1 is not a fvar*) )
   | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s -> List.for_all2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
   | F_And _, _ | F_Or _, _ -> false
-  | F_Constr c1, F_Constr c2 -> (c1 =:=:= c2) solver_env
+  | F_Constr c1, F_Constr c2 -> c1 =:= c2
   | F_Constr _, _ -> false
   | F_ConstrImpl (c1, f1'), F_ConstrImpl (c2, f2') | F_ConstrAnd (c1, f1'), F_ConstrAnd (c2, f2') ->
-      (c1 =:=:= c2) solver_env && equiv solver_env (add_constr c1 env1) (add_constr c1 env1) n1 n2 f1' f2'
+      c1 =:= c2 && equiv solver_env (add_constr c1 env1) (add_constr c1 env1) n1 n2 f1' f2'
   | F_ConstrImpl _, _ | F_ConstrAnd _, _ -> false
   | F_Impl (f1, f1'), F_Impl (f2, f2') -> f1 === f2 && f1' === f2'
   | F_Impl _, _ -> false
@@ -140,14 +142,14 @@ and equiv solver_env env1 env2 n1 n2 f1 f2 =
       sub1 f1 === sub2 f2
   | F_Fix _, _ -> false
   | F_App (f1, f1'), F_App (f2, f2') ->
-      (* we are after computeWNHF so we don't do any substitutions *)
+      (* we are after computeWHNF so we don't do any substitutions *)
       f1 === f2 && f1' === f2'
   | F_AppAtom (f1, a1), F_AppAtom (f2, a2) ->
-      (* we are after computeWNHF so we don't do any substitutions *)
-      (T_Atom a1 =:= T_Atom a2) solver_env && f1 === f2
+      (* we are after computeWHNF so we don't do any substitutions *)
+      T_Atom a1 =: T_Atom a2 && f1 === f2
   | F_AppTerm (f1, t1), F_AppTerm (f2, t2) ->
-      (* we are after computeWNHF so we don't do any substitutions *)
-      (t1 =:= t2) solver_env && f1 === f2
+      (* we are after computeWHNF so we don't do any substitutions *)
+      t1 =: t2 && f1 === f2
   | F_App _, _ | F_AppAtom _, _ | F_AppTerm _, _ -> false
 
 and equiv_syntactic env1 env2 n1 n2 f1 f2 =

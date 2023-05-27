@@ -87,7 +87,7 @@ let add_subshape gamma t x =
 let is_neq gamma a1 a2 =
   List.exists
     (function
-      | A_Neq (b1, b2) -> pair_eq (a1, a2) (b1, b2)
+      | A_Neq (b1, b2) -> pair_eq ( = ) (a1, a2) (b1, b2)
       | _              -> false )
     gamma
 
