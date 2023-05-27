@@ -26,7 +26,7 @@ let canonical_form_thm =
   $ unwords
       [ "forall v t :term."
       ; " (Value v) =>"
-      ; " (Typing v nil t)  =>"
+      ; " (Typing v nil t) =>"
       ; " (exists a :atom. exists e :term. [v = lam (a.e)] ∧ (Term e))"
       ; " ∧"
       ; " (exists t1 t2 :term. [t = arrow t1 t2])" ]
@@ -67,11 +67,4 @@ let canonical_form' =
           ; "(exists t1' t2' :term. [arrow t1 t2 = arrow t1' t2'])" ] )
   |> destruct_assm' "H" [""] |> assumption
   |> apply_thm_specialized canonical_form ["v"; "arrow t1 t2"] %> apply_assm "Hv" %> apply_assm "Ht"
-  |> qed
-
-let example_that_kinda_doesnt_work =
-  lambda_thm
-    "forall e1 e2 e3 : term. [e1 = e2] => [e2 = e3]=> (Typing\n   e1 nil base) => (Typing e2 nil base)"
-  |> proof'
-  |> repeat intro %> intros ["H"] %> apply_assm "H"
   |> qed

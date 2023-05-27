@@ -143,9 +143,9 @@ let cons_fresh_typing_thm =
   $ unwords
       [ "forall e env t : term.          "
       ; "forall a :atom. forall ta :term."
-      ; "  [a # e] =>                    "
-      ; "  (Typing e env t) =>           "
-      ; "  (Typing e {cons a ta env} t)" ]
+      ; " [a # e] =>                     "
+      ; " (Typing e             env t) =>"
+      ; " (Typing e {cons a ta env} t)" ]
 
 let cons_fresh_typing =
   proof' cons_fresh_typing_thm
@@ -183,10 +183,10 @@ let cons_fresh_typing =
 let swap_inenv_lemma_thm =
   lambda_thm
   $ unwords
-      [ "forall a b c : atom.                "
-      ; "forall env t : term.                "
-      ; "[a # env] =>                        "
-      ; "(InEnv env c t) =>                  "
+      [ "forall a b c : atom. "
+      ; "forall env t : term. "
+      ; "[a # env] => "
+      ; "(InEnv env c t) => "
       ; "(InEnv {[a b]env} ([a b]c) {[a b]t})" ]
 
 let swap_inenv_lemma =
@@ -201,39 +201,15 @@ let swap_inenv_lemma =
      %> by_solver %> by_solver %> assumption
   |> qed
 
-let swap_typing_lemma_thm =
-  lambda_thm
-  $ unwords
-      [ "forall a b : atom.                     "
-      ; "forall e env t: term.                  "
-      ; "  [a # e] =>                           "
-      ; "  [a # env] =>                         "
-      ; "  (Typing e env t) =>                  "
-      ; "  (Typing {[a b]e} {[a b]env} {[a b]t})" ]
+let atom_fresh_in_type_thm = lambda_thm "forall a : atom. forall t: term. (Type t) => (a # t)"
 
-let swap_typing_lemma =
-  proof' swap_typing_lemma_thm
-  |> intros ["a"; "b"; "e"]
-     %> generalize "b" %> generalize "a" %> generalize "e" %> by_induction "e0" "IH" %> repeat intro
-     %> destr_intro
-  |> intros' ["Hc"; "c"; ""]
-     %> case "var" %> exists "[a b]c" %> by_solver
-     %> apply_thm_specialized swap_inenv_lemma ["a"; "b"; "c"; "env"; "t"]
+let atom_fresh_in_type =
+  proof' atom_fresh_in_type_thm
+  |> intros ["a"] %> by_induction "t0" "IH" %> destr_intro %> intros ["Hbase"] %> by_solver
+     %> intros' ["Harrow"; "t1"; "t2"; ""; ""]
+     %> add_assumption_parse "Ht1" "a # t1" %> add_assumption_parse "Ht2" "a # t2" %> by_solver
+     %> apply_assm_specialized "IH" ["t2"] %> by_solver %> assumption %> apply_assm_specialized "IH" ["t1"]
      %> by_solver %> assumption
-  |> intros' ["Hlam"; "c"; "e_c"; "t1"; "t2"; ""; ""; ""]
-     %> case "lam"
-     %> exists' ["[a b]c"; "[a b]e_c"; "[a b]t1"; "[a b]t2"]
-     %> by_solver %> by_solver %> destruct_goal %> assumption
-  |> apply_assm_specialized "IH" ["e_c"; "a"; "b"; "cons c t1 env"; "t2"]
-     %> by_solver %> by_solver %> by_solver %> apply_assm "Hlam_2"
-  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
-     %> case "app"
-     %> exists' ["[a b]e1"; "[a b]e2"; "[a b]t2"]
-     %> by_solver %> destruct_goal
-  |> apply_assm_specialized "IH" ["e1"; "a"; "b"; "env"; "arrow t2 t"]
-     %> by_solver %> by_solver %> by_solver %> apply_assm "Happ_1"
-  |> apply_assm_specialized "IH" ["e2"; "a"; "b"; "env"; "t2"]
-     %> by_solver %> by_solver %> by_solver %> apply_assm "Happ_2"
   |> qed
 
 let env_inclusion_refl_thm = lambda_thm "forall env : term. EnvInclusion env env"
@@ -243,14 +219,14 @@ let env_inclusion_refl = proof' env_inclusion_refl_thm |> intro %> compute %> re
 let env_inclusion_double_skip_thm =
   lambda_thm
   $ unwords
-      [ "forall a :atom. forall ta :term.                         "
-      ; "forall b :atom. forall tb :term.                         "
-      ; "forall c :atom. forall tc :term.                         "
-      ; "forall env1 env2 : term.                                 "
-      ; "  [c # a b] =>                                           "
-      ; "  (EnvInclusion env1 env2) =>                            "
-      ; "  (EnvInclusion {cons c tc (cons a ta (cons b tb env1))} "
-      ; "                {cons a ta (cons b tb (cons c tc env2))})" ]
+      [ "forall a :atom. forall ta :term.                        "
+      ; "forall b :atom. forall tb :term.                        "
+      ; "forall c :atom. forall tc :term.                        "
+      ; "forall env1 env2 : term.                                "
+      ; " [c # a b] =>                                           "
+      ; " (EnvInclusion env1 env2) =>                            "
+      ; " (EnvInclusion {cons c tc (cons a ta (cons b tb env1))} "
+      ; "               {cons a ta (cons b tb (cons c tc env2))})" ]
 
 let env_inclusion_double_skip =
   proof' env_inclusion_double_skip_thm |> repeat intro
@@ -283,14 +259,14 @@ let env_inclusion_double_skip =
 let env_inclusion_double_skip_thm' =
   lambda_thm
   $ unwords
-      [ "forall a :atom. forall ta :term.                         "
-      ; "forall b :atom. forall tb :term.                         "
-      ; "forall c :atom. forall tc :term.                         "
-      ; "forall env1 env2 : term.                                 "
-      ; "  [c # a b] =>                                           "
-      ; "  (EnvInclusion env1 env2) =>                            "
-      ; "  (EnvInclusion {cons a ta (cons b tb (cons c tc env1))} "
-      ; "                {cons c tc (cons a ta (cons b tb env2))})" ]
+      [ "forall a :atom. forall ta :term.                        "
+      ; "forall b :atom. forall tb :term.                        "
+      ; "forall c :atom. forall tc :term.                        "
+      ; "forall env1 env2 : term.                                "
+      ; " [c # a b] =>                                           "
+      ; " (EnvInclusion env1 env2) =>                            "
+      ; " (EnvInclusion {cons a ta (cons b tb (cons c tc env1))} "
+      ; "               {cons c tc (cons a ta (cons b tb env2))})" ]
 
 let env_inclusion_double_skip' =
   proof' env_inclusion_double_skip_thm'
@@ -321,17 +297,17 @@ let env_inclusion_double_skip' =
      %> apply_assm "Hd"
   |> qed
 
-let swap_lambda_typing_thm =
+let swap_lambda_typing_lemma_thm =
   lambda_thm
   $ unwords
-      [ "forall e env t :term.                             "
-      ; "forall a :atom. forall ta :term.                  "
-      ; "forall b :atom. forall tb :term.                  "
+      [ "forall e env t :term.                              "
+      ; "forall a :atom. forall ta :term.                   "
+      ; "forall b :atom. forall tb :term.                   "
       ; "(Typing {e}       {cons a ta (cons b tb env)} t) =>"
       ; "(Typing {[a b] e} {cons b ta (cons a tb env)} t)" ]
 
-let swap_lambda_typing =
-  proof' swap_lambda_typing_thm
+let swap_lambda_typing_lemma =
+  proof' swap_lambda_typing_lemma_thm
   |> by_induction "e0" "IH" %> repeat intro %> destr_intro
   |> intros' ["Hc"; "c"; ""; ""]
      %> intros' ["Hcurr"; "env'"]
@@ -419,11 +395,11 @@ let swap_lambda_typing =
 let swap_lambda_typing_thm =
   lambda_thm
   $ unwords
-      [ "forall e env t :term.                "
-      ; "forall a b :atom. forall t' :term.   "
-      ; "  [b # a e] =>                       "
-      ; "  (Typing {e} {cons a t' env} t) =>  "
-      ; "  (Typing {[a b]e} {cons b t' env} t)" ]
+      [ "forall e env t :term. "
+      ; "forall a b :atom. forall t' :term. "
+      ; " [b # a e] => "
+      ; " (Typing {e} {cons a t' env} t) => "
+      ; " (Typing {[a b]e} {cons b t' env} t)" ]
 
 let swap_lambda_typing =
   proof' swap_lambda_typing_thm
@@ -448,7 +424,7 @@ let swap_lambda_typing =
      %> apply_thm_specialized shadow' ["b"; "t1"; "t'"; "env"]
   |> destr_intro %> compare_atoms "b" "c" %> destr_intro
   |> case "lam" %> exists' ["a"; "[a b]e_c"; "t1"; "t2"] %> repeat by_solver %> destruct_goal %> assumption
-  |> apply_thm_specialized swap_lambda_typing ["e_c"; "env"; "t2"; "c"; "t1"; "a"; "t'"] %> assumption
+  |> apply_thm_specialized swap_lambda_typing_lemma ["e_c"; "env"; "t2"; "c"; "t1"; "a"; "t'"] %> assumption
   |> destr_intro %> case "lam"
      %> exists' ["c"; "[a b]e_c"; "t1"; "t2"]
      %> repeat by_solver %> destruct_goal %> assumption
@@ -475,9 +451,9 @@ let typing_cons_fresh_thm =
   $ unwords
       [ "forall e t env : term."
       ; "forall a : atom. forall ta : term."
-      ; "  [a # e] =>                  "
-      ; "  (Typing e env t) =>         "
-      ; "  (Typing e {cons a ta env} t)" ]
+      ; " [a # e] => "
+      ; " (Typing e env t) => "
+      ; " (Typing e {cons a ta env} t)" ]
 
 let typing_cons_fresh =
   proof' typing_cons_fresh_thm |> by_induction "e0" "IH"
@@ -516,6 +492,6 @@ let empty_contradiction_thm = lambda_thm "forall a :atom. forall t :term. (InEnv
 let empty_contradiction =
   proof' empty_contradiction_thm
   |> intro %> intro %> intros ["H"] %> destruct_assm "H"
-  |> intros' ["contra"; "env'"] %> by_solver (* nil = cons a t env' *)
-  |> intros' ["contra"; "b"; "s"; "env'"; ""] %> by_solver (* nil = cons env' b s *)
+  |> intros' ["contra"; "env'"] %> by_solver
+  |> intros' ["contra"; "b"; "s"; "env'"; ""] %> by_solver
   |> qed
