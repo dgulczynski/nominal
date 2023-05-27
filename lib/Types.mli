@@ -23,10 +23,18 @@ type term =
   | T_Fun  of string
 
 val atom : atom -> term
-(** [atom a = T_Atom (pure a)] *)
+
+val atom' : permuted_atom -> term
 
 val var : var -> term
-(** [var x = T_Var (pure x)] *)
+
+val var' : permuted_var -> term
+
+val lam : permuted_atom -> term -> term
+
+val app : term -> term -> term
+
+val symb : string -> term
 
 type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of string
 
@@ -42,22 +50,22 @@ type constr =
   | C_Symbol   of term
 
 val ( #: ) : atom -> term -> constr
-(** [ a #: t] is a [constr] that [a] is fresh in [t] *)
+(** [a #: t] is a [constr] that [a] is fresh in [t] *)
 
 val ( =: ) : term -> term -> constr
-(** [ t1 =: t2] is a [constr] that [t1] is equal to [t2] *)
+(** [t1 =: t2] is a [constr] that [t1] is equal to [t2] *)
 
 val ( =~: ) : term -> term -> constr
-(** [ t1 =~: t2] is a [constr] that [t1] have same shape [t2] *)
+(** [t1 =~: t2] is a [constr] that [t1] have same shape [t2] *)
 
 val ( <: ) : term -> term -> constr
-(** [ t1 <: t2] is a [constr] that shape of [t1] is a sub-shape of [t2]'s shape *)
+(** [t1 <: t2] is a [constr] that shape of [t1] is a sub-shape of [t2]'s shape *)
 
 val ( ==: ) : atom -> permuted_atom -> constr
-(** [ a ==: α] is a [constr] that [a] is equal to [α] (same as [T_Atom (pure a) =: T_Atom α])*)
+(** [a ==: α] is a [constr] that [a] is equal to [α] (same as [T_Atom (pure a) =: T_Atom α])*)
 
 val ( =/=: ) : atom -> permuted_atom -> constr
-(** [ a =/=: α] is a [constr] that [a] is not equal to [α] (same as [ a #: T_Atom α])*)
+(** [a =/=: α] is a [constr] that [a] is not equal to [α] (same as [ a #: T_Atom α])*)
 
 val symbol : term -> constr
 (** [symbol t] is a [constr] that [t] is some functional symbol *)

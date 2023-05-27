@@ -34,9 +34,9 @@ let rec solve_ env assms goal =
 
 and solve_by_case env assms = function
   | C_Eq (t1, t2)        -> solve_eq env assms t1 t2
-  | C_AtomEq (a, alpha)  -> solve_eq env assms (atom a) (T_Atom alpha)
+  | C_AtomEq (a, alpha)  -> solve_eq env assms (atom a) (atom' alpha)
   | C_Fresh (a, t)       -> solve_fresh env assms a t
-  | C_AtomNeq (a, alpha) -> solve_fresh env assms a (T_Atom alpha)
+  | C_AtomNeq (a, alpha) -> solve_fresh env assms a (atom' alpha)
   | C_Shape (t1, t2)     -> solve_shape env assms t1 t2
   | C_Subshape (t1, t2)  -> solve_subshape env assms t1 t2
   | C_Symbol t           -> solve_symbol env t
@@ -44,9 +44,9 @@ and solve_by_case env assms = function
 and solve_assm_by_case env assms goal assm =
   match assm with
   | C_Eq (t1, t2)       -> solve_assm_eq env assms goal t1 t2
-  | C_AtomEq (a, b)     -> solve_assm_eq env assms goal (atom a) (T_Atom b)
+  | C_AtomEq (a, b)     -> solve_assm_eq env assms goal (atom a) (atom' b)
   | C_Fresh (a, t)      -> solve_assm_fresh env assms goal a t
-  | C_AtomNeq (a, b)    -> solve_assm_fresh env assms goal a (T_Atom b)
+  | C_AtomNeq (a, b)    -> solve_assm_fresh env assms goal a (atom' b)
   | C_Shape (t1, t2)    -> solve_assm_shape env assms goal t1 t2
   | C_Subshape (t1, t2) -> solve_assm_subshape env assms goal t1 t2
   | C_Symbol t          -> solve_assm_symbol env assms goal t
@@ -65,14 +65,14 @@ and solve_eq env assms e1 e2 =
         (*              (a = a2) :: Γ |- a1 = π b  *)
         (* --------------------------------------- *)
         (*            Γ |- a = [a1 a2]π b          *)
-        let gen_goal a = T_Atom a =: T_Atom {perm= pi; symb= b} in
+        let gen_goal a = atom' a =: atom' {perm= pi; symb= b} in
         solve_swap_cases env a swap (const assms) gen_goal )
   | T_Atom {perm= pi; symb= a}, T_Atom b ->
       (*  Γ |- a = (rev π @ π') b  *)
       (* ------------------------- *)
       (*     Γ |- π a = π' b       *)
       let a' = atom a in
-      let b' = T_Atom (permute (reverse pi) b) in
+      let b' = atom' (permute (reverse pi) b) in
       solve_eq env assms a' b'
   | T_Atom _, _ -> false
   | T_Var {perm= []; symb= x}, T_Var {perm= pi; symb= x'} when x = x' ->
@@ -112,8 +112,8 @@ and permutation_idempotent env assms pi x =
   (* -------------------------------- *)
   (*       Γ |- π idempotent on x     *)
   let test ({perm; symb= a} as alpha) =
-    solve_eq env assms (T_Atom alpha) (T_Atom (permute pi alpha))
-    || solve_fresh env assms a $ T_Var {perm= reverse perm; symb= x}
+    solve_eq env assms (atom' alpha) (atom' (permute pi alpha))
+    || solve_fresh env assms a (var' {perm= reverse perm; symb= x})
   in
   List.for_all test (free_vars_of pi)
 
@@ -133,7 +133,7 @@ and solve_fresh env assms a e =
         (*              (a = a2) :: Γ |- a1 # π b  *)
         (* --------------------------------------- *)
         (*            Γ |- a # [a1 a2]π b          *)
-        solve_fresh_swap swap $ T_Atom {perm= pi; symb= b} )
+        solve_fresh_swap swap (atom' {perm= pi; symb= b}) )
   | T_Var {perm; symb= x}  -> (
     match outer_swap perm with
     | None            ->
@@ -147,7 +147,7 @@ and solve_fresh env assms a e =
         (*              (a = a2) :: Γ |- a1 # π x  *)
         (* --------------------------------------- *)
         (*            Γ |- a # [a1 a2]π x          *)
-        solve_fresh_swap swap $ T_Var {perm= pi; symb= x} )
+        solve_fresh_swap swap $ var' {perm= pi; symb= x} )
   | T_Lam (alpha, t)       ->
       (*  (a # b) :: Γ |- a # e  *)
       (* ----------------------- *)
@@ -243,7 +243,7 @@ and solve_assm_fresh env assms goal a = function
       let swap, pi = Option.get $ outer_swap pi in
       (* Here we use Option.get because we are sure that the permutation is non-empty, *)
       (* because if it was empty the assumption would already be merged into the env by the reduce function *)
-      solve_swap_cases env a swap (fun a -> fresh a (T_Atom {perm= pi; symb= b}) :: assms) (const goal)
+      solve_swap_cases env a swap (fun a -> fresh a (atom' {perm= pi; symb= b}) :: assms) (const goal)
   | T_Var {perm= pi; symb= x}  ->
       (*  (a # a1) :: (a # a2) :: ( a # π x) :: Γ |- c  *)
       (*  (a = a1) :: (a # a2) :: (a2 # π x) :: Γ |- c  *)
@@ -252,7 +252,7 @@ and solve_assm_fresh env assms goal a = function
       (*                    (a # [a1 a2]π x) :: Γ |- c  *)
       let swap, pi = Option.get $ outer_swap pi in
       (* See comment above: we are sure the permutation is non-empty here *)
-      solve_swap_cases env a swap (fun a -> fresh a (T_Var {perm= pi; symb= x}) :: assms) (const goal)
+      solve_swap_cases env a swap (fun a -> fresh a (var' {perm= pi; symb= x}) :: assms) (const goal)
   | T_Lam (alpha, t)           ->
       (*             (a = b) :: Γ |- c  *)
       (*  (a # b) :: (a # e) :: Γ |- c  *)
@@ -293,13 +293,12 @@ and solve_assm_eq env assms goal t1 t2 =
         (*              (a = a2) :: (a1 = π b) :: Γ |- c  *)
         (* ---------------------------------------------- *)
         (*           (a = [a1 a2]π b) :: Γ |- c           *)
-        solve_swap_cases env a swap (fun a -> (T_Atom a =: T_Atom {perm= pi; symb= b}) :: assms) (const goal)
-    )
+        solve_swap_cases env a swap (fun a -> (atom' a =: atom' {perm= pi; symb= b}) :: assms) (const goal) )
   | T_Atom {perm= pi; symb= a}, T_Atom beta ->
       (*  (a = (rev π @ π') b) :: Γ |- c  *)
       (* -------------------------------- *)
       (*       (π a = π' b) :: Γ |- c     *)
-      solve_assm_eq env assms goal (atom a) (T_Atom (permute pi beta))
+      solve_assm_eq env assms goal (atom a) (atom' (permute pi beta))
   | T_Atom _, _ -> true
   | T_Var {perm= []; symb= x}, T_Var {perm= pi; symb= x'} when x = x' && permutation_idempotent env [] pi x ->
       (*   |- π idempotent on x   *)
@@ -324,7 +323,7 @@ and solve_assm_eq env assms goal t1 t2 =
       (*  (a1 # a2.e2) :: (e1 = [a1 a2] e2) :: Γ |- c  *)
       (* ------------------------------------------ *)
       (*          (a1.e1 = a2.e2) :: Γ |- c         *)
-      solve_ env (fresh a1 (T_Lam (a2, t2)) :: (t1 =: permute_term [(a1, a2)] t2) :: assms) goal
+      solve_ env (fresh a1 (lam a2 t2) :: (t1 =: permute_term [(a1, a2)] t2) :: assms) goal
   | T_Lam _, _ -> true
   | T_App (t1, t2), T_App (t1', t2') -> solve_ env ((t1 =: t1') :: (t2 =: t2') :: assms) goal
   | T_App _, _ -> true
@@ -339,7 +338,7 @@ and solve_assm_eq env assms goal t1 t2 =
 and build_permutation_idempotent_assms pi x assms =
   let add_atom_assumptions assmss a =
     List.map (List.cons (fresh a (var x))) assmss
-    @ List.map (List.cons (T_Atom a =: T_Atom (permute pi a))) assmss
+    @ List.map (List.cons (atom' a =: atom' (permute pi a))) assmss
   in
   List.fold_left add_atom_assumptions [assms] (free_vars_of pi)
 
@@ -450,5 +449,5 @@ let solve_with_assumptions = solve_ SolverEnv.empty
 let ( |-: ) = solve_with_assumptions
 
 let absurd =
-  let t = T_Fun "" in
+  let t = symb "" in
   t <: t

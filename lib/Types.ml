@@ -18,9 +18,19 @@ type term =
   | T_App  of term * term
   | T_Fun  of string
 
-let atom a = T_Atom (pure a)
+let atom' a = T_Atom a
 
-let var x = T_Var (pure x)
+let atom = atom' % pure
+
+let var' x = T_Var x
+
+let var = var' % pure
+
+let lam a e = T_Lam (a, e)
+
+let app e1 e2 = T_App (e1, e2)
+
+let symb f = T_Fun f
 
 type shape = S_Var of var | S_Atom | S_Lam of shape | S_App of shape * shape | S_Fun of string
 
