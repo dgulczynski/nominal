@@ -1,15 +1,5 @@
 open Types
 
-val syntactic_occurs_check : var -> term -> bool
-
-val free_vars_of_term : term -> var list
-
-val shape_of_term : term -> shape
-
-val term_of_shape : shape -> term * (var * var) list
-(** [term_of_shape s] returns [t] (which shape is the same as [s] up to alpha-equivalence) and [vs]
-    (mapping from the [s] variables to generated fresh variables of [t]) *)
-
 val fix_kind : var -> var -> string -> kind -> kind
 (** [fix_kind x y k] returns [forall y. [y < x] => k{y/x}], the kind of [X] in [fix X(x) in f:k]*)
 

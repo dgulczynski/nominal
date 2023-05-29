@@ -3,38 +3,6 @@ open Substitution
 open Types
 open Permutation
 
-let rec syntactic_occurs_check x = function
-  | T_Var {perm= _; symb= x'} -> x' = x
-  | T_Lam (_, t) -> syntactic_occurs_check x t
-  | T_App (t1, t2) -> syntactic_occurs_check x t1 || syntactic_occurs_check x t2
-  | T_Atom _ | T_Fun _ -> false
-
-let rec free_vars_of_term = function
-  | T_Var {perm= _; symb= x} -> [x]
-  | T_Lam (_, t) -> free_vars_of_term t
-  | T_App (t1, t2) -> free_vars_of_term t1 @ free_vars_of_term t2
-  | T_Fun _ | T_Atom _ -> []
-
-let rec shape_of_term = function
-  | T_Var {symb= x; _} -> S_Var x
-  | T_Atom _ -> S_Atom
-  | T_Lam (_, t) -> S_Lam (shape_of_term t)
-  | T_App (t1, t2) -> S_App (shape_of_term t1, shape_of_term t2)
-  | T_Fun f -> S_Fun f
-
-let rec term_of_shape = function
-  | S_Var x ->
-    let y = fresh_var () in
-    (var y, [(x, y)])
-  | S_Atom -> (atom $ fresh_atom (), [])
-  | S_Lam s ->
-    let t, vs = term_of_shape s in
-    (T_Lam (pure $ fresh_atom (), t), vs)
-  | S_App (s1, s2) ->
-    let t1, vs1 = term_of_shape s1 and t2, vs2 = term_of_shape s2 in
-    (T_App (t1, t2), vs1 @ vs2)
-  | S_Fun f -> (T_Fun f, [])
-
 let fix_kind x y y_name k =
   (*  G, X : (forall y, [y < x] => K{y/x}) |- F : K  *)
   (* ----------------------------------------------- *)

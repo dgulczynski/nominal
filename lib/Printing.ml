@@ -3,6 +3,7 @@ open Permutation
 open Format
 open Common
 open Utils
+open SolverTypes
 
 type 'a printer = formatter -> 'a -> unit
 
@@ -119,6 +120,21 @@ let pp_print_constr_in_env env fmt c =
   | C_Symbol t -> pp_print_string fmt "symbol? " ; pp_print_simple_term_in_env env fmt t
 
 let pp_print_constr = pp_print_constr_in_env []
+
+let pp_print_solver_constr_in_env env fmt c =
+  let print_binop pp_arg t1 op t2 =
+    pp_arg env fmt t1 ; print_space fmt () ; pp_print_string fmt op ; print_space fmt () ; pp_arg env fmt t2
+  in
+  match c with
+  | SC_Eq (t1, t2) -> print_binop pp_print_term_in_env t1 "=" t2
+  | SC_Shape (s1, s2) -> print_binop pp_print_shape s1 "~" s2
+  | SC_Subshape (s1, s2) -> print_binop pp_print_shape s1 "<" s2
+  | SC_Fresh (a, t) -> print_binop pp_print_term_in_env (atom a) "#" t
+  | SC_AtomEq (a, alpha) -> print_binop pp_print_term_in_env (atom a) "==" $ T_Atom alpha
+  | SC_AtomNeq (a, alpha) -> print_binop pp_print_term_in_env (atom a) "=/=" $ T_Atom alpha
+  | SC_Symbol s -> pp_print_string fmt "symbol? " ; pp_print_shape env fmt s
+
+let pp_print_solver_constr = pp_print_solver_constr_in_env []
 
 let rec pp_print_kind_in_env env fmt k =
   let rec print_foralls env = function
@@ -293,7 +309,13 @@ let string_of_shape = printer_to_string (pp_print_shape [])
 
 let string_of_term = printer_to_string pp_print_term
 
+let string_of_atom' = string_of_term % atom
+
+let string_of_var' = string_of_term % var
+
 let string_of_constr = printer_to_string pp_print_constr
+
+let string_of_solver_constr = printer_to_string pp_print_solver_constr
 
 let string_of_kind = printer_to_string pp_print_kind
 
