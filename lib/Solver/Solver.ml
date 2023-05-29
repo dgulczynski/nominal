@@ -2,7 +2,6 @@ open Types
 open Common
 open Permutation
 open Substitution
-open Utils
 
 let fresh {perm= pi; symb= a} t = a #: (permute_term (reverse pi) t)
 

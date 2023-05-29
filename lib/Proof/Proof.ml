@@ -1,13 +1,13 @@
 open Types
 open Common
-open ProofCommon
-open ProofEnv
-open ProofEquiv
 open Permutation
-open ProofException
 open Substitution
 open Solver
 open Printing
+open ProofCommon
+open ProofEnv
+open ProofEquiv
+open ProofException
 
 type proof_env = formula env
 
@@ -245,8 +245,8 @@ let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, V y)) p =
 let env_inclusion env sub_env super_env =
   List.for_all (fun h -> List.exists (fun h' -> h ==== h' <| env) (assumptions super_env)) (assumptions sub_env)
   &&
-  let super_solver_env = solver_env super_env in
-  List.for_all (fun c -> super_solver_env |-: c) (constraints sub_env)
+  let solver_assms = solver_env super_env in
+  List.for_all (fun c -> solver_assms |-: c) (constraints sub_env)
 
 let equivalent jgmt n p =
   let env, f = jgmt in

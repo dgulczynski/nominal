@@ -125,3 +125,17 @@ let fresh_atom = (fun a -> A a) % fresh
 let fresh_var = (fun x -> V x) % fresh
 
 let fresh_fvar = (fun x -> FV x) % fresh
+
+let rec shape_of_term = function
+  | T_Var {symb= x; _} -> S_Var x
+  | T_Atom _ -> S_Atom
+  | T_Lam (_, t) -> S_Lam (shape_of_term t)
+  | T_App (t1, t2) -> S_App (shape_of_term t1, shape_of_term t2)
+  | T_Fun f -> S_Fun f
+
+let rec permute_term (pi : atom permutation) = function
+  | T_Atom a -> T_Atom (permute pi a)
+  | T_Var x -> T_Var (permute pi x)
+  | T_Lam (a, t) -> T_Lam (permute pi a, permute_term pi t)
+  | T_App (t1, t2) -> T_App (permute_term pi t1, permute_term pi t2)
+  | T_Fun _ as t -> t

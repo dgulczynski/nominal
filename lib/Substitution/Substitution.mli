@@ -1,7 +1,10 @@
 open Types
-open Permutation
 
-val permute_term : atom permutation -> term -> term
+val shape_of_term : term -> shape
+
+val term_of_shape : shape -> term * (var * var) list
+(** [term_of_shape s] returns [t] (which shape is the same as [s] up to alpha-equivalence) and [vs]
+    (mapping from the [s] variables to generated fresh variables of [t]) *)
 
 val subst_atom_in_term : atom -> permuted_atom -> term -> term
 

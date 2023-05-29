@@ -4,7 +4,6 @@ open Common
 open KindChecker
 open Permutation
 open Printing
-open Substitution
 open Solver
 
 let print_result env expr res =

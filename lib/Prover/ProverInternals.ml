@@ -1,14 +1,14 @@
 open Common
-open IncProof
+open Printing
+open Substitution
+open Types
 open Proof
 open ProofCommon
 open ProofEnv
 open ProofEquiv
 open ProofException
+open IncProof
 open ProverGoal
-open Printing
-open Substitution
-open Types
 
 (** Type of in-progress proof of [Prover] *)
 type prover_state = S_Unfinished of {goal: goal; context: proof_context} | S_Finished of proof

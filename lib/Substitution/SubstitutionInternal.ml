@@ -1,8 +1,6 @@
 open Types
-open Permutation
 open Common
-
-exception SubstExn of string
+open Permutation
 
 module NameInternal = struct
   type t = name_internal
@@ -14,7 +12,11 @@ module type SubstType = Map.S with type key = name_internal
 
 module Subst = Map.Make (NameInternal)
 
-type subst_target = ST_Atom of permuted_atom | ST_Var of term | ST_FVar of formula
+type subst_target = ST_Atom of permuted_atom | ST_Var of term | ST_FVar of formula | ST_VarShape of shape
+
+type substitution = subst_target Subst.t
+
+exception SubstExn of string
 
 let on_wrong_target x expected actual =
   let exn =
@@ -22,6 +24,7 @@ let on_wrong_target x expected actual =
       ( match actual with
       | ST_Atom _ -> "atom"
       | ST_Var _ -> "term"
+      | ST_VarShape _ -> "shape"
       | ST_FVar _ -> "fvar" )
   in
   raise $ SubstExn exn
@@ -44,28 +47,34 @@ let sub_fvar env (FV x) =
   | Some t -> on_wrong_target x "fvar" t
   | None -> F_Var (FV x)
 
+let sub_var_shape env (V x) =
+  match Subst.find_opt x env with
+  | Some (ST_VarShape s) -> s
+  | Some (ST_Var t) -> shape_of_term t
+  | Some t -> on_wrong_target x "shape" t
+  | None -> S_Var (V x)
+
 let add_atom (A a) a' = Subst.add a (ST_Atom a')
 
 let add_var (V x) t = Subst.add x (ST_Var t)
 
+let add_var_shape (V x) s = Subst.add x (ST_VarShape s)
+
 let add_fvar (FV x) f = Subst.add x (ST_FVar f)
 
-let mk_atom_subst a b = add_atom a b Subst.empty
+let empty = Subst.empty
 
-let mk_var_subst x t = add_var x t Subst.empty
+let mk_atom_subst a b = add_atom a b empty
 
-let mk_fvar_subst x t = add_fvar x t Subst.empty
+let mk_var_subst x t = add_var x t empty
+
+let mk_var_shape_subst x t = add_var_shape x t empty
+
+let mk_fvar_subst x t = add_fvar x t empty
 
 let rec subst_perm sub = List.map (fun (alpha1, alpha2) -> (sub_perm_atom sub alpha1, sub_perm_atom sub alpha2))
 
 and sub_perm_atom sub {perm= pi; symb= a} = permute (subst_perm sub pi) (sub_atom sub a)
-
-let rec permute_term (pi : atom permutation) = function
-  | T_Atom a -> T_Atom (permute pi a)
-  | T_Var x -> T_Var (permute pi x)
-  | T_Lam (a, t) -> T_Lam (permute pi a, permute_term pi t)
-  | T_App (t1, t2) -> T_App (permute_term pi t1, permute_term pi t2)
-  | T_Fun _ as t -> t
 
 let rec subst_in_term sub = function
   | T_Atom alpha -> T_Atom (sub_perm_atom sub alpha)
@@ -89,6 +98,13 @@ let subst_in_constr sub = function
     | {perm= pi; symb= a} -> C_AtomNeq (a, permute (reverse pi) $ sub_perm_atom sub alpha) )
   | C_Symbol t -> C_Symbol (subst_in_term sub t)
 
+let rec subst_in_shape sub = function
+  | S_Atom -> S_Atom
+  | S_Var x -> sub_var_shape sub x
+  | S_Lam s -> S_Lam (subst_in_shape sub s)
+  | S_App (s1, s2) -> S_App (subst_in_shape sub s1, subst_in_shape sub s2)
+  | S_Fun f -> S_Fun f
+
 let rec subst_in_kind sub k =
   match k with
   | K_Prop -> K_Prop
@@ -100,12 +116,6 @@ let rec subst_in_kind sub k =
     let a' = fresh_atom () in
     K_ForallAtom (A_Bind (a_name, a'), subst_in_kind (add_atom a (pure a') sub) k')
   | K_Constr (c, k') -> K_Constr (subst_in_constr sub c, subst_in_kind sub k')
-
-let rec subst_var_in_shape x s = function
-  | S_Var x' when x = x' -> s
-  | S_Lam s' -> S_Lam (subst_var_in_shape x s s')
-  | S_App (s1, s2) -> S_App (subst_var_in_shape x s s1, subst_var_in_shape x s s2)
-  | (S_Var _ | S_Atom | S_Fun _) as s -> s
 
 let rec subst_in_formula sub f =
   let subst_f = subst_in_formula sub in
@@ -119,22 +129,22 @@ let rec subst_in_formula sub f =
   | F_Or fs -> F_Or (List.map (on_snd subst_f) fs)
   | F_Impl (f1, f2) -> F_Impl (subst_f f1, subst_f f2)
   | F_ForallAtom _ ->
-    let a_binder, f_a = instantiate_atom' sub f in
+    let a_binder, f_a = instantiate_atom sub f in
     F_ForallAtom (a_binder, f_a)
   | F_ExistsAtom _ ->
-    let a_binder, f_a = instantiate_atom' sub f in
+    let a_binder, f_a = instantiate_atom sub f in
     F_ExistsAtom (a_binder, f_a)
   | F_FunAtom _ ->
-    let a_binder, f_a = instantiate_atom' sub f in
+    let a_binder, f_a = instantiate_atom sub f in
     F_FunAtom (a_binder, f_a)
   | F_ForallTerm _ ->
-    let x_binder, f_x = instantiate_var' sub f in
+    let x_binder, f_x = instantiate_var sub f in
     F_ForallTerm (x_binder, f_x)
   | F_ExistsTerm _ ->
-    let x_binder, f_x = instantiate_var' sub f in
+    let x_binder, f_x = instantiate_var sub f in
     F_ExistsTerm (x_binder, f_x)
   | F_FunTerm _ ->
-    let x_binder, f_x = instantiate_var' sub f in
+    let x_binder, f_x = instantiate_var sub f in
     F_FunTerm (x_binder, f_x)
   | F_ConstrAnd (c, f) -> F_ConstrAnd (subst_c c, subst_f f)
   | F_ConstrImpl (c, f) -> F_ConstrImpl (subst_c c, subst_f f)
@@ -147,44 +157,16 @@ let rec subst_in_formula sub f =
     let sub' = sub |> add_var x (var x') |> add_fvar (FV fix) (fvar fix') in
     F_Fix (FV_Bind (fix_name, fix', fix_k), V_Bind (x_name, x'), k, subst_in_formula sub' f)
 
-and instantiate_atom' sub = function
+and instantiate_atom sub = function
   | F_ForallAtom (A_Bind (a_name, a), f) | F_ExistsAtom (A_Bind (a_name, a), f) | F_FunAtom (A_Bind (a_name, a), f) ->
     let a' = fresh_atom () in
     let sub' = add_atom a (pure a') sub in
     (A_Bind (a_name, a'), subst_in_formula sub' f)
   | _ -> raise $ SubstExn "Cannot instantiate atom"
 
-and instantiate_var' sub = function
+and instantiate_var sub = function
   | F_ForallTerm (V_Bind (x_name, x), f) | F_ExistsTerm (V_Bind (x_name, x), f) | F_FunTerm (V_Bind (x_name, x), f) ->
     let x' = fresh_var () in
     let sub' = add_var x (var x') sub in
     (V_Bind (x_name, x'), subst_in_formula sub' f)
   | _ -> raise $ SubstExn "Cannot instantiate var"
-
-let subst_atom_in_term = subst_in_term %% mk_atom_subst
-
-let subst_var_in_term = subst_in_term %% mk_var_subst
-
-let subst_atom_in_constr = subst_in_constr %% mk_atom_subst
-
-let subst_var_in_constr = subst_in_constr %% mk_var_subst
-
-let subst_atom_in_kind = subst_in_kind %% mk_atom_subst
-
-let subst_var_in_kind = subst_in_kind %% mk_var_subst
-
-let subst_atom_in_formula = subst_in_formula %% mk_atom_subst
-
-let subst_var_in_formula = subst_in_formula %% mk_var_subst
-
-let subst_fvar_in_formula = subst_in_formula %% mk_fvar_subst
-
-let ( |-> ) = subst_atom_in_formula
-
-let ( |=> ) = subst_var_in_formula
-
-let ( |==> ) = subst_fvar_in_formula
-
-let instantiate_atom = instantiate_atom' Subst.empty
-
-let instantiate_var = instantiate_var' Subst.empty

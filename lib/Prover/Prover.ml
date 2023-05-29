@@ -1,16 +1,16 @@
 open Types
 open Common
-open IncProof
 open Parser
 open Permutation
+open Substitution
+open Utils
 open ProofCommon
 open ProofEnv
 open ProofEquiv
 open ProofException
+open IncProof
 open ProverGoal
 open ProverInternals
-open Substitution
-open Utils
 
 let check_props env formulas =
   let check_prop f =

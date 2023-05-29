@@ -133,3 +133,7 @@ val fresh_atom : unit -> atom
 val fresh_var : unit -> var
 
 val fresh_fvar : unit -> fvar
+
+val shape_of_term : term -> shape
+
+val permute_term : atom permutation -> term -> term
