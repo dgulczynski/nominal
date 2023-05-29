@@ -5,16 +5,17 @@ open KindChecker
 open Permutation
 open Printing
 open Solver
-open Substitution
 
 let print_result env expr res =
-  Printf.printf "%s Solver %s: %s ⊢ %s\n"
-    (if res then "✅" else "❌")
-    (if res then "ran successfully" else "failed solving")
-    env expr
+  let desc =
+    Printf.sprintf "%s Solver %s: %s ⊢ %s"
+      (if res then "✅" else "❌")
+      (if res then "ran successfully" else "failed solving")
+      env expr
+  in
+  if res then print_endline desc else failwith desc
 
-let print_solver assms c =
-  print_result $ string_of_list string_of_constr assms $ string_of_constr c $ solve_with_assumptions assms c
+let print_solver assms c = print_result (string_of_list string_of_constr assms) (string_of_constr c) (assms |-: c)
 
 let print_subkind_solver (k1, k2) =
   print_result "[]" $ string_of_kind k1 ^ " ≤ " ^ string_of_kind k2 $ (k1 <=: k2) KindCheckerEnv.empty
@@ -47,10 +48,14 @@ let _ = List.iter (print_solver []) examples
 let _ = print_newline ()
 
 let _ =
-  let x = var (V 0) and y = var (V 1) and z = var (V 2) and a = pure (A 3) in
+  let x = var (V 1) and y = var (V 2) and z = var (V 3) and w = var (V 4) and v = var (V 5) and a = pure (A 0) in
   let t = T_Lam (a, T_Atom a) in
   (print_solver [x <: y; y =~: z; z =: t]) (x <: t) ;
-  (print_solver [x <: y; y =~: z; z =: t]) (y =~: t)
+  (print_solver [x <: y; y =~: z; z =: t]) (y =~: t) ;
+  (print_solver [symbol x; y =~: x]) (symbol y) ;
+  (print_solver [symbol x; y <: x]) absurd ;
+  (print_solver [z <: x; symbol x; y =~: z]) absurd ;
+  (print_solver [z <: x; v =~: w; x =~: y; w =~: z]) (v <: y)
 
 let _ = print_newline ()
 
