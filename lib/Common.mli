@@ -13,6 +13,10 @@ val ( <$> ) : ('a -> 'b) -> 'a option -> 'b option
 
 val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
 
+val some : 'a -> 'a option
+
+val none : 'a option
+
 val id : 'a -> 'a
 
 val const : 'a -> 'b -> 'a
@@ -26,6 +30,8 @@ val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
 val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
 
 val hd_opt : 'a list -> 'a option
+
+val null : 'a list -> bool
 
 val pair : 'a -> 'b -> 'a * 'b
 
@@ -41,3 +47,6 @@ val to_option : 'a -> bool -> 'a option
 
 val find_first : ('a -> bool) -> 'a list -> 'a option * 'a list
 (** [find_first p xs] returns first [x] s.t. [p x = true] (if it exists) and the remaining [xs] *)
+
+val forall2 : ('a -> 'b -> bool) -> 'a list -> 'b list -> bool
+(** [forall2] is like [List.for_all2] but returns [false] on lists of different length instead of throwing *)

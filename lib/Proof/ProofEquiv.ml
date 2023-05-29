@@ -97,7 +97,7 @@ and equiv solver_env env1 env2 n1 n2 f1 f2 =
     match lookup_formula env2 x2 with
     | Some f2 -> f1 === f2
     | None -> false (* f1 is not a fvar*) )
-  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s -> List.for_all2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
+  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s -> forall2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
   | F_And _, _ | F_Or _, _ -> false
   | F_Constr c1, F_Constr c2 -> c1 =:= c2
   | F_Constr _, _ -> false
@@ -163,7 +163,7 @@ and equiv_syntactic env1 env2 n1 n2 f1 f2 =
     match lookup_formula env2 x2 with
     | Some f2 -> f1 === f2
     | None -> false (* f1 is not a fvar*) )
-  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s -> List.for_all2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
+  | F_And f1s, F_And f2s | F_Or f1s, F_Or f2s -> forall2 (fun (_, f1) (_, f2) -> f1 === f2) f1s f2s
   | F_And _, _ | F_Or _, _ -> false
   | F_Constr c1, F_Constr c2 -> c1 = c2
   | F_Constr _, _ -> false

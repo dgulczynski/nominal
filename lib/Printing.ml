@@ -36,7 +36,7 @@ let pp_print_parenthesized ?(left = '(') ?(right = ')') pp_x fmt x =
 
 let pp_print_bracketed printer = pp_print_parenthesized ~left:'[' ~right:']' printer
 
-let pp_print_rep fmt i = pp_print_string fmt "!" ; pp_print_int fmt i
+let pp_print_rep fmt prefix i = pp_print_string fmt "!" ; pp_print_string fmt prefix ; pp_print_int fmt i
 
 let rec pp_print_swap env fmt =
   pp_print_bracketed
@@ -52,12 +52,12 @@ and pp_print_atom_permuted env fmt {perm= pi; symb= a} = pp_print_permutation en
 and pp_print_atom env fmt (A a) =
   match bind_by_rep a env with
   | Some (Bind (a_name, K_Atom _)) -> pp_print_string fmt a_name
-  | _ -> pp_print_rep fmt a
+  | _ -> pp_print_rep fmt "a" a
 
 let pp_print_var env fmt (V x) =
   match bind_by_rep x env with
   | Some (Bind (x_name, K_Var _)) -> pp_print_string fmt x_name
-  | _ -> pp_print_rep fmt x
+  | _ -> pp_print_rep fmt "x" x
 
 let pp_print_var_permuted env fmt {perm= pi; symb= x} = pp_print_permutation env fmt pi ; pp_print_var env fmt x
 
@@ -159,7 +159,7 @@ let pp_print_with_prefix prefix printer fmt x = pp_print_string fmt prefix ; pri
 let pp_print_fvar env fmt (FV x) =
   match bind_by_rep x env with
   | Some (Bind (x_name, K_FVar _)) -> pp_print_string fmt x_name
-  | _ -> pp_print_rep fmt x
+  | _ -> pp_print_rep fmt "f" x
 
 let rec pp_print_formula env fmt formula =
   let is_atomic = function

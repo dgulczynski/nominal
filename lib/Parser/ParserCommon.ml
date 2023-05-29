@@ -82,7 +82,7 @@ let permuted p =
 
 let annoted t = whitespace *> string ":" *> whitespace *> t
 
-let optional p = option None (p >>| Option.some)
+let optional p = option None (p >>| some)
 
 let typed p typ =
   parens_op

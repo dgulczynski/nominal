@@ -220,7 +220,7 @@ let or_e or_proof ps =
       let env, f' = judgement p in
       f' === F_Impl (f, c) <| env
     in
-    if List.for_all2 (test_proof % snd) fs ps then P_OrElim ((merge_envs (or_proof :: ps), c), ps)
+    if forall2 (test_proof % snd) fs ps then P_OrElim ((merge_envs (or_proof :: ps), c), ps)
     else
       let f = F_Or (List.map (pair "" % premise % label) ps) in
       let env, disjunction = judgement or_proof in
