@@ -57,3 +57,5 @@ let rec forall2 test xs ys =
   match (xs, ys) with
   | x :: xs, y :: ys -> test x y && forall2 test xs ys
   | xs, ys -> null xs && null ys
+
+let yank x = List.partition (( = ) x)

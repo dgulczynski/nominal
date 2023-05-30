@@ -274,7 +274,7 @@ and solve_assm_eq env assms goal t1 t2 =
   | T_Atom {perm= []; symb= a}, T_Atom {perm= pi; symb= b} -> (
     match outer_swap pi with
     | None -> (
-      match SolverEnv.subst_atom env a b with
+      match SolverEnv.subst_atom a b env with
       | None ->
         (*      (a # b) ∈ Γ     *)
         (* -------------------- *)
@@ -312,7 +312,8 @@ and solve_assm_eq env assms goal t1 t2 =
     (*  Γ {x -> t} |- c {x -> t}  *)
     (* -------------------------- *)
     (*     (x = t) :: Γ |- c      *)
-    solve_assm_subst_var env assms goal x t
+    let subst = subst_var_in_solver_constr x t in
+    solve_assm_in_modified_env (SolverEnv.subst_var x t) env (List.map subst assms) (subst goal)
   | T_Var {perm= pi; symb= x}, t | t, T_Var {perm= pi; symb= x} ->
     (*  (x = (rev π) t) :: Γ |- c  *)
     (* --------------------------- *)
@@ -347,14 +348,8 @@ and solve_swap_cases env a (alpha1, alpha2) assm_gen goal_gen =
 
 and solve_assm_shape env assms goal t1 t2 =
   match (t1, t2) with
-  | S_Var x1, S_Var x2 -> (
-    match SolverEnv.add_same_shape env x1 x2 with
-    | None -> true
-    | Some (env, env_assms) -> solve_ env (env_assms @ assms) goal )
-  | S_Var x, s -> (
-    match SolverEnv.set_var_shape env x s with
-    | None -> true
-    | Some (env, env_assms) -> solve_ env (env_assms @ assms) goal )
+  | S_Var x1, S_Var x2 -> solve_assm_in_modified_env (SolverEnv.add_same_shape x1 x2) env assms goal
+  | S_Var x, s -> solve_assm_in_modified_env (SolverEnv.set_var_shape x s) env assms goal
   | _, S_Var _ -> solve_assm_shape env assms goal t2 t1
   | S_Atom, S_Atom ->
     (*         Γ |- c        *)
@@ -382,10 +377,7 @@ and solve_assm_shape env assms goal t1 t2 =
   | S_Fun _, _ -> true
 
 and solve_assm_subshape env assms goal t1 = function
-  | S_Var x -> (
-    match SolverEnv.add_subshape env t1 x with
-    | Some (env, solver_assms) -> solve_ env (solver_assms @ assms) goal
-    | None -> true )
+  | S_Var x -> solve_assm_in_modified_env (SolverEnv.add_subshape t1 x) env assms goal
   | S_Lam t2 ->
     (*    (t1 ~ t2) :: Γ |- c  *)
     (*    (t1 < t2) :: Γ |- c  *)
@@ -414,20 +406,15 @@ and solve_assm_symbol env assms goal t =
     (* ----------------------- *)
     (*  (symbol? f) :: Γ |- c  *)
     solve_ env assms goal
-  | S_Var x -> (
-    match SolverEnv.add_symbol x env with
-    | Some env -> solve_ env assms goal
-    | None -> true )
+  | S_Var x -> solve_assm_in_modified_env (SolverEnv.add_symbol x) env assms goal
   | S_Atom | S_Lam _ | S_App _ ->
     (* absurd *)
     true
 
-and solve_assm_subst_var env assms goal x t =
-  match SolverEnv.subst_var env x t with
+and solve_assm_in_modified_env add_assm_to_env env assms goal =
+  match add_assm_to_env env with
   | None -> true
-  | Some (env, env_assms) ->
-    let subst = subst_var_in_solver_constr x t in
-    solve_ env (env_assms @ List.map subst assms) (subst goal)
+  | Some (env, env_assms) -> solve_ env (env_assms @ assms) goal
 
 let solve_with_assumptions assms goal =
   let solver_assms = List.map from_constr assms in

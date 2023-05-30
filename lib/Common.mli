@@ -50,3 +50,6 @@ val find_first : ('a -> bool) -> 'a list -> 'a option * 'a list
 
 val forall2 : ('a -> 'b -> bool) -> 'a list -> 'b list -> bool
 (** [forall2] is like [List.for_all2] but returns [false] on lists of different length instead of throwing *)
+
+val yank : 'a -> 'a list -> 'a list * 'a list
+(** [yank x zs = xs, ys] where [xs] are all element of [zs] equal to [x] and [ys] aren't *)

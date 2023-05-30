@@ -141,16 +141,16 @@ and occurs_check_subshapes env x y =
   (*  G, [t_1, ..., t_n] < [y_1 ~...~ y ~...~ y_m] ; x ~ t, C |- c  *)
   List.exists (occurs_check env x) $ get_subshapes env y
 
-let add_to_map_list update a = function
+let add_to_list_map update a = function
   | [] -> id
   | xs ->
     update a (function
       | None -> Some xs
       | Some ys -> Some (merge xs ys) )
 
-let add_to_subshapes = on_subshapes %% add_to_map_list VarMap.update
+let add_to_subshapes = on_subshapes %% add_to_list_map VarMap.update
 
-let add_subshape env t x =
+let add_subshape t x env =
   let x = get_varshape env x in
   if occurs_check env x t then None
   else if is_symbol env x then None
@@ -162,7 +162,7 @@ let add_subshape env t x =
     in
     Some (add_to_subshapes x [t] env, assms)
 
-let add_fresh a x = on_fresh $ add_to_map_list AtomMap.update a [x]
+let add_fresh a x = on_fresh $ add_to_list_map AtomMap.update a [x]
 
 let add_neq_atoms a1 a2 = on_neq_atoms $ merge [(a1, a2)]
 
@@ -172,7 +172,25 @@ let add_neq a1 a2 = function
 
 let add_symbol t = on_symbols $ merge [t]
 
-let add_same_shape env x y =
+let set_var_shape_in_symbols x s env =
+  let xs, symbols_without_x = yank x env.symbols in
+  (set_symbols symbols_without_x env, if null xs then [] else [symbol s])
+
+let set_var_shape_in_subshapes x s env =
+  let subshape_new_shape x_subshape = x_subshape <: s in
+  (env, List.map subshape_new_shape $ get_subshapes env x)
+
+let set_var_shape_in_shape x s env =
+  match get_shape env x with
+  | Some sx -> (env, [s =~: sx])
+  | None -> (on_shape (VarMap.add x s) env, [])
+
+let merge_shapes x y env =
+  match get_shape env x with
+  | Some x_shape -> set_var_shape_in_shape y x_shape env
+  | None -> (env, [])
+
+let add_same_shape x y env =
   (*       G; C |- c          x ∈ zs     y ∈ zs    G, [ts] < [zs]; C |- c  *)
   (* ------------------      --------------------------------------------- *)
   (*  G; x ~ x, C |- c               G, [ts] < [zs]; x ~ y, C |- c         *)
@@ -189,56 +207,64 @@ let add_same_shape env x y =
       let y_shape = get_shape_def env y in
       if occurs_check env x y_shape || occurs_check env y x_shape then None
       else
-        let x_subshapes = get_subshapes env x in
-        let assms = [x_shape =~: y_shape] @ List.map (fun x' -> x' <: y_shape) x_subshapes in
+        let env, subshape_assms = set_var_shape_in_subshapes x y_shape env in
+        let env, shape_assms = merge_shapes x y env in
         let env = set_varshape x y % remove_shape x % remove_subshapes x $ env in
-        Some (env, assms)
+        Some (env, shape_assms @ subshape_assms)
 
-let subst_atom env a b =
-  let sub_atom_in_fresh fresh =
-    match AtomMap.find_opt a fresh with
-    | None -> fresh
-    | Some xs -> add_to_map_list AtomMap.update b xs (AtomMap.remove a fresh)
-  in
-  let sub a' = if a = a' then b else a' in
-  let env_opt = env |> set_neq_atoms [] |> on_fresh sub_atom_in_fresh |> some in
-  let add_neq env (a1, a2) = env >>= add_neq (sub a1) (sub a2) in
-  List.fold_left add_neq env_opt env.neq_atoms
-
-let set_var_shape env x = function
-  | S_Var y -> add_same_shape env x y
+let set_var_shape x s env =
+  let x = get_varshape env x in
+  match rebuild_shape env s with
+  | S_Var y -> add_same_shape x y env
   | s when occurs_check env x s -> None
-  | s -> (
-    let x = get_varshape env x in
-    let s = rebuild_shape env s in
-    let symbols_with_x, symbols_without_x = List.partition (( = ) x % get_varshape env) env.symbols in
-    let symbol_assumptions = if null symbols_with_x then [] else [symbol s] in
-    let subshape_assms = List.map (fun x' -> x' <: s) $ get_subshapes env x in
-    let env = set_symbols symbols_without_x env in
-    let assms = symbol_assumptions @ subshape_assms in
-    match get_shape env x with
-    | Some sx -> Some (env, (s =~: sx) :: assms)
-    | None -> Some (on_shape (VarMap.add x s) env, assms) )
+  | s ->
+    let env, symbol_assms = set_var_shape_in_symbols x s env in
+    let env, subshape_assms = set_var_shape_in_subshapes x s env in
+    let env, shape_assms = set_var_shape_in_shape x s env in
+    Some (env, symbol_assms @ shape_assms @ subshape_assms)
 
-let sub_var_in_fresh x t fresh =
+let sub_var_in_fresh x t env =
   let sub_in_fresh a xs (fresh, assms) =
-    let xs, ys = List.partition (( = ) x) xs in
+    let xs, ys = yank x xs in
     let a_assms = if null xs then [] else [a #: t] in
     (AtomMap.add a ys fresh, a_assms @ assms)
   in
-  AtomMap.fold sub_in_fresh fresh (AtomMap.empty, [])
+  let fresh, fresh_assms = AtomMap.fold sub_in_fresh env.fresh (AtomMap.empty, []) in
+  (set_fresh fresh env, fresh_assms)
 
-let subst_var env x t =
-  let fresh, fresh_assms = sub_var_in_fresh x t env.fresh in
-  let env = set_fresh fresh env in
-  on_snd (( @ ) fresh_assms) <$> set_var_shape env x (shape_of_term env t)
+let subst_var x t env =
+  let s = shape_of_term env t in
+  let env, fresh_assms = sub_var_in_fresh x t env in
+  on_snd (( @ ) fresh_assms) <$> set_var_shape x s env
 
 let are_same_shape env x1 x2 = x1 = x2 || get_varshape env x1 = get_varshape env x2
 
+let subst_atom a b env =
+  let sub_atom_in_neq env =
+    let sub c = if c = a then b else c in
+    let add_neq env (a1, a2) = env >>= add_neq (sub a1) (sub a2) in
+    List.fold_left add_neq (some $ set_neq_atoms [] env) env.neq_atoms
+  and sub_atom_in_fresh env =
+    match AtomMap.find_opt a env.fresh with
+    | None -> env
+    | Some xs -> on_fresh (add_to_list_map AtomMap.update b xs % AtomMap.remove a) env
+  in
+  sub_atom_in_neq $ sub_atom_in_fresh env
+
+let set_var_symbol x env =
+  let env = add_symbol x env in
+  let assms =
+    match get_shape env x with
+    | Some s -> [symbol s]
+    | None -> []
+  in
+  (env, assms)
+
 let add_symbol x env =
+  let x = get_varshape env x in
   match get_subshapes env x with
-  | [] -> Some (add_symbol x env)
-  | _ :: _ -> (* no term subshapes symbols *) None
+  | [] -> Some (set_var_symbol x env)
+  | _ -> None (* no term subshapes symbols *)
 
 let string_of env =
   let string_of fold show map = "[" ^ fold (Printf.sprintf "%s; %s" %% show) map "]" in
