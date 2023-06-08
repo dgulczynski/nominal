@@ -12,11 +12,13 @@ open IncProof
 open ProverGoal
 open ProverInternals
 
+let raise_in_env env exn = raise % exn $ all_identifiers env
+
 let check_props env formulas =
   let check_prop f =
     match kind_infer env f with
     | Some K_Prop -> ()
-    | k -> raise $ formula_kind_mismatch f k K_Prop
+    | k -> raise_in_env env $ formula_kind_mismatch f k K_Prop
   in
   List.iter check_prop formulas
 
@@ -36,7 +38,7 @@ let intro state =
   | F_ConstrImpl (constr, f2) -> unfinished (env |> add_constr constr, f2) context
   | F_ForallAtom (a_bind, f') -> unfinished (env |> add_atom a_bind, f') context
   | F_ForallTerm (x_bind, f') -> unfinished (env |> add_var x_bind, f') context
-  | _ -> raise $ not_a_constr_implication f
+  | _ -> raise_in_env env $ not_a_constr_implication f
 
 let intros = flip (List.fold_left (flip intro_named))
 
@@ -99,7 +101,7 @@ let by_solver state =
     let jgmt = to_judgement (env, f) in
     find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
   | F_Bot -> find_goal_in_proof ctx % proven $ Proof.constr_e (map_assumptions snd id env)
-  | f -> raise $ not_a_constraint f
+  | f -> raise_in_env env $ not_a_constraint f
 
 let qed = finish
 
@@ -127,7 +129,7 @@ let exists witness state =
     let t = parse_term_in_env (identifiers env) witness in
     let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
     unfinished (env, (x |=> t) f_x) context
-  | f -> raise $ not_an_exists f
+  | f -> raise_in_env env $ not_an_exists f
 
 let exists' witnesses state = List.fold_left (flip exists) state witnesses
 
@@ -188,7 +190,7 @@ let destruct_assm h_name state =
   | F_Or hs -> destruct_assm_or env f h_name h_proof hs ctx
   | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
   | F_Constr c -> destruct_assm_constr env f h_name h_proof c ctx
-  | f -> raise $ cannot_destruct f
+  | f -> raise_in_env env $ cannot_destruct f
 
 let rec destruct_assm' h_name witnesses state =
   match witnesses with
@@ -209,7 +211,7 @@ let rec destruct_assm' h_name witnesses state =
      | F_Or hs -> destruct_assm_or env f h_name h_proof hs ctx
      | F_ConstrAnd (c, h) -> destruct_assm_constr_and env f h_name h_proof c h ctx
      | F_Constr c -> destruct_assm_constr env f h_name h_proof c ctx
-     | f -> raise $ cannot_destruct f )
+     | f -> raise_in_env env $ cannot_destruct f )
     |> destruct_assm' h_name ws
 
 let intros' = function
@@ -229,7 +231,7 @@ let destruct_goal state =
     let f_proof = proof_hole (env |> add_constr c) f' in
     let jgmt = to_judgement (env, f) in
     find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
-  | f -> raise $ cannot_destruct f
+  | f -> raise_in_env env $ cannot_destruct f
 
 let destruct_goal' n state =
   let env, f = goal state in
@@ -238,7 +240,7 @@ let destruct_goal' n state =
     let _, g = List.nth fs n in
     let context = PC_Or (to_judgement (env, f), context state) in
     unfinished (env, g) context
-  | f -> raise $ cannot_destruct f
+  | f -> raise_in_env env $ cannot_destruct f
 
 let by_induction y_name ind_hyp_name state =
   match goal state with
@@ -249,7 +251,7 @@ let by_induction y_name ind_hyp_name state =
     let ctx = PC_Induction (to_judgement (env, f_x), x_bind, y_bind, context state) in
     let ind_hyp = F_ForallTerm (y_bind, F_ConstrImpl (var y <: var x, f_y)) in
     unfinished (env |> add_var x_bind |> add_assumption (ind_hyp_name, ind_hyp), f_x) ctx
-  | _, f -> raise $ not_a_forall_term f
+  | env, f -> raise_in_env env $ not_a_forall_term f
 
 let step n state =
   let env, f = goal state in
@@ -263,8 +265,8 @@ let case name state =
   | F_Or fs -> (
     match List.find_opt (( = ) name % fst) fs with
     | Some (_, f) -> unfinished (env, f) ctx
-    | None -> raise $ unknown_case name f )
-  | f -> raise $ not_a_disjunction f
+    | None -> raise_in_env env $ unknown_case name f )
+  | f -> raise_in_env env $ not_a_disjunction f
 
 let assert_constr env constr =
   let void = const () in
@@ -317,4 +319,4 @@ let apply_in_assm h_name h_premise_name state =
   | h_env, _, F_Impl (_, h_conclusion) ->
     let h_conclusion_proof = proof_apply (h_env, h_conclusion) h_proof h_premise_proof in
     add_assumption_thm' h_name h_conclusion_proof state
-  | _ -> raise % not_an_implication $ label' h_premise_proof
+  | _ -> raise_in_env env % not_an_implication $ label' h_premise_proof

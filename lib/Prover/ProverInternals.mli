@@ -30,4 +30,4 @@ val unfinished : goal -> proof_context -> prover_state
 
 val finish : prover_state -> proof
 
-val pp_print_state : prover_state Printing.printer
+val pretty_prover_state : prover_state -> PrettyPrinting.printer

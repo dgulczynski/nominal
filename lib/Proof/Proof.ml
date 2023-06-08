@@ -3,7 +3,6 @@ open Prelude
 open Permutation
 open Substitution
 open Solver
-open Printing
 open ProofCommon
 open ProofEnv
 open ProofEquiv
@@ -71,11 +70,13 @@ let imp_i f p =
   let env = env p |> remove_assumption f in
   P_Intro ((env, F_Impl (f, f')), p)
 
+let raise_in_env env exn = raise % exn $ all_identifiers env
+
 let imp_e p1 p2 =
   let env = union (env p1) (env p2) in
   match (label p1, label p2) with
   | f1, f2 when f2 === premise f1 <| env -> P_Apply ((env, conclusion f1), p1, p2)
-  | f1, f2 -> raise $ premise_mismatch f1 f2
+  | f1, f2 -> raise_in_env env $ premise_mismatch f1 f2
 
 let solver_proof (env, f) solver_goal on_solved =
   let constr_assumptions = List.filter_map to_constr_op $ assumptions env in
@@ -84,7 +85,7 @@ let solver_proof (env, f) solver_goal on_solved =
   let solver_assumptions = constr_assumptions @ constraints env in
   match Solver.solve_with_assumptions solver_assumptions solver_goal with
   | true -> on_solved (env, f)
-  | false -> raise $ solver_failure solver_assumptions f
+  | false -> raise_in_env env $ solver_failure solver_assumptions f
 
 let constr_i env constr =
   let judgement = (env, F_Constr constr) in
@@ -105,7 +106,7 @@ let constr_imp_e c_proof c_imp_proof =
   | F_ConstrImpl (_c, f) when _c = c ->
     let env = union (env c_proof) (env c_imp_proof) |> remove_constraints (( = ) c) in
     P_ConstrApply ((env, f), c_proof, c_imp_proof)
-  | f -> raise $ premise_mismatch (F_Constr c) f
+  | f -> raise_in_env (env c_proof) $ premise_mismatch (F_Constr c) f
 
 let constr_and_i c p =
   let f = label p in
@@ -115,44 +116,44 @@ let constr_and_i c p =
 let constr_and_e_left c_and_proof =
   match judgement c_and_proof with
   | env, F_ConstrAnd (_, f) -> P_ConstrAndElim ((env, f), c_and_proof)
-  | _, f -> raise $ not_a_constr_and f
+  | env, f -> raise_in_env env $ not_a_constr_and f
 
 let constr_and_e_right c_and_proof =
   match judgement c_and_proof with
   | env, F_ConstrAnd (c, _) -> P_ConstrAndElim ((env, F_Constr c), c_and_proof)
-  | _, f -> raise $ not_a_constr_and f
+  | env, f -> raise_in_env env $ not_a_constr_and f
 
 let bot_e f p =
   match judgement p with
   | env, F_Bot -> P_ExFalso ((env, f), p)
-  | env, f' -> raise $ formula_mismatch (all_identifiers env) F_Bot f'
+  | env, f' -> raise_in_env env $ formula_mismatch F_Bot f'
 
 let forall_atom_i (A_Bind (a_name, A a) as a_bind) p =
   let env, f = judgement p in
   match env |> find_bind a_name with
   | None -> P_Intro ((env |> remove_identifier a, F_ForallAtom (a_bind, f)), p)
-  | Some f -> raise $ cannot_generalize a_name (all_identifiers env) f
+  | Some f -> raise_in_env env $ cannot_generalize a_name f
 
 let forall_atom_e b p =
   let env, f = judgement p in
   let on_forall_atom (A_Bind (_, a)) f = SpecializedAtom (b, (a |-> b) f) in
-  let on_forall_term _ = raise % not_a_forall_atom in
+  let on_forall_term _ = raise_in_env env % not_a_forall_atom in
   match specialize on_forall_atom on_forall_term f with
   | SpecializedAtom (b, f) -> P_SpecializeAtom ((env, f), b, p)
-  | SpecializedTerm (_, f) -> raise $ not_a_forall_atom f
+  | SpecializedTerm (_, f) -> raise_in_env env $ not_a_forall_atom f
 
 let forall_term_i (V_Bind (x_name, V x) as x_bind) p =
   let env, f = judgement p in
   match env |> find_bind x_name with
   | None -> P_Intro ((env |> remove_identifier x, F_ForallTerm (x_bind, f)), p)
-  | Some f -> raise $ cannot_generalize x_name (all_identifiers env) f
+  | Some f -> raise_in_env env $ cannot_generalize x_name f
 
 let forall_term_e t p =
   let env, f = judgement p in
-  let on_forall_atom _ = raise % not_a_forall_term in
+  let on_forall_atom _ = raise_in_env env % not_a_forall_term in
   let on_forall_term (V_Bind (_, x)) f = SpecializedTerm (t, (x |=> t) f) in
   match specialize on_forall_atom on_forall_term f with
-  | SpecializedAtom (_, f) -> raise $ not_a_forall_term f
+  | SpecializedAtom (_, f) -> raise_in_env env $ not_a_forall_term f
   | SpecializedTerm (t, f) -> P_SpecializeTerm ((env, f), t, p)
 
 let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
@@ -161,7 +162,7 @@ let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
   if f === f' <| env then
     let env = env |> remove_identifier a |> remove_assumption f_a in
     P_Intro ((env, F_ExistsAtom (a_bind, f_a)), p)
-  else raise $ formula_mismatch (all_identifiers env) f f'
+  else raise_in_env env $ formula_mismatch f f'
 
 let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   let f = (V x |=> t) f_x in
@@ -169,7 +170,7 @@ let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   if f === f' <| env then
     let env = env |> remove_identifier x |> remove_assumption f_x in
     P_Intro ((env, F_ExistsTerm (x_bind, f_x)), p)
-  else raise $ formula_mismatch (all_identifiers env) f f'
+  else raise_in_env env $ formula_mismatch f f'
 
 let exist_e p_exists witness p =
   let env, f = judgement p in
@@ -182,7 +183,7 @@ let exist_e p_exists witness p =
       match Utils.bind_by_name witness (identifiers env) with
       | Some (Bind (_, K_Atom w)) -> remove_identifier w %> remove_assumption ((a |-> pure (A w)) f_a)
       | _ -> failwith ("not an atom " ^ witness) )
-    | g -> raise $ not_an_exists g
+    | g -> raise_in_env env $ not_an_exists g
   in
   let env_x, f_x = judgement p_exists in
   P_Witness ((env |> union env_x |> remove_witness f_x, f), p_exists, p)
@@ -199,7 +200,7 @@ let and_e f p_fs =
   match judgement p_fs with
   | _, F_And [] | _, F_And [_] -> raise $ ProofException "Cannot eliminate conjunction with less than two conjuncts"
   | env, F_And fs when List.exists (fun (_, g) -> f === g <| env) fs -> P_AndElim ((env, f), p_fs)
-  | _, g -> raise $ not_a_conjunction_with f g
+  | env, g -> raise_in_env env $ not_a_conjunction_with f g
 
 let or_i disjuncts p =
   match disjuncts with
@@ -207,7 +208,7 @@ let or_i disjuncts p =
   | fs -> (
     match judgement p with
     | env, f when List.exists (fun (_, g) -> f === g <| env) fs -> P_Intro ((env, F_Or fs), p)
-    | _, f -> raise % not_a_disjunction_with f $ F_Or fs )
+    | env, f -> raise_in_env env % not_a_disjunction_with f $ F_Or fs )
 
 let or_e or_proof ps =
   match ps with
@@ -224,7 +225,7 @@ let or_e or_proof ps =
     else
       let f = F_Or (List.map (pair "" % premise % label) ps) in
       let env, disjunction = judgement or_proof in
-      raise $ formula_mismatch (all_identifiers env) disjunction f
+      raise_in_env env $ formula_mismatch disjunction f
 
 (*   G, x, forall y:term. [y < x] => f(y) |- f(x)  *)
 (* ----------------------------------------------- *)
@@ -237,10 +238,8 @@ let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, V y)) p =
   match List.filter_map (fun v -> find_bind v env) [x_name; y_name] with
   | [] -> P_Intro ((env |> remove_identifier x, F_ForallTerm (x_bind, f_x)), p)
   | f :: _ ->
-    raise
-    $ cannot_generalize
-        (x_name ^ "(" ^ string_of_int x ^ ")" ^ " or " ^ y_name ^ "(" ^ string_of_int y ^ ")" ^ "\n")
-        (all_identifiers env) f
+    raise_in_env env
+    $ cannot_generalize (x_name ^ "(" ^ string_of_int x ^ ")" ^ " or " ^ y_name ^ "(" ^ string_of_int y ^ ")") f
 
 let env_inclusion env sub_env super_env =
   List.for_all (fun h -> List.exists (fun h' -> h ==== h' <| env) (assumptions super_env)) (assumptions sub_env)
@@ -253,13 +252,12 @@ let equivalent jgmt n p =
   let ( <= ) = env_inclusion env in
   let _, _, fn = computeWHNF env n f in
   let enve, fe = judgement p in
-  if fn === fe <| env && enve <= env then P_Equivalent ((env, f), n, p)
-  else raise $ formula_mismatch (all_identifiers env) f fe
+  if fn === fe <| env && enve <= env then P_Equivalent ((env, f), n, p) else raise_in_env env $ formula_mismatch f fe
 
 let sub_constr sub constr =
   match sub $ F_Constr constr with
   | F_Constr constr' -> constr'
-  | f -> raise $ not_a_constraint f
+  | f -> raise $ not_a_constraint f []
 
 let sub_env sub = map_assumptions sub id % map_constraints (sub_constr sub)
 
@@ -269,7 +267,7 @@ let subst env f sub constr p =
     let sub_env, sub_f = (sub_env sub env, sub f) in
     let p_env, p_f = judgement p in
     if sub_f ==== p_f <| env && p_env <= sub_env then P_Equivalent (jgmt, equiv_depth, p)
-    else raise $ formula_mismatch (all_identifiers env) f p_f
+    else raise_in_env env $ formula_mismatch f p_f
   in
   solver_proof (env, f) constr on_solved
 
@@ -290,7 +288,7 @@ module Axiom = struct
 
   let term_inversion =
     parse_axiom
-    $ unwords
+    $ Printing.unwords
         [ "forall e : term."
         ; "  atom: (exists a : atom. e = a)"
         ; "  ∨"

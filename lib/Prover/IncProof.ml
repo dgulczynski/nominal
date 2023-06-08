@@ -203,13 +203,13 @@ and normalize_many proofs =
 and proof_intro jgmt conclusion_proof =
   match normalize conclusion_proof with
   | PI_Proven proof -> (
-    match snd jgmt with
-    | F_Impl (premise, _) -> proven $ imp_i premise proof
-    | F_ForallAtom (a, _) -> proven $ forall_atom_i a proof
-    | F_ForallTerm (x, _) -> proven $ forall_term_i x proof
-    | F_ConstrImpl (c, _) -> proven $ constr_imp_i c proof
-    | F_ConstrAnd (c, _) -> proven $ constr_and_i c proof
-    | f -> raise $ not_an_implication f )
+    match jgmt with
+    | _, F_Impl (premise, _) -> proven $ imp_i premise proof
+    | _, F_ForallAtom (a, _) -> proven $ forall_atom_i a proof
+    | _, F_ForallTerm (x, _) -> proven $ forall_term_i x proof
+    | _, F_ConstrImpl (c, _) -> proven $ constr_imp_i c proof
+    | _, F_ConstrAnd (c, _) -> proven $ constr_and_i c proof
+    | env, f -> raise $ not_an_implication f (ProofEnv.all_identifiers env) )
   | incproof -> PI_Intro (jgmt, incproof)
 
 and proof_ex_falso jgmt contradiction =

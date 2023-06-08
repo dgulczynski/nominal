@@ -1,93 +1,103 @@
 open Prelude
-open Printing
+open PrettyPrintingFormula
+open PrettyPrintingCore
 
 exception ProofException of string
 
 let proof_exception exn = ProofException exn
 
-let proof_finished = ProofException "Proof finished"
+let proof_exception_from_printer printer env = proof_exception $ printer_to_string (const printer) env ()
+
+let proof_finished = proof_exception "Proof finished"
 
 let unknown_hypothesis h_name =
   let exn = Printf.sprintf "Hypothesis \"%s\" not in environment" h_name in
-  ProofException exn
+  proof_exception exn
 
-let hypothesis_goal_mismatch h_name h_formula goal =
-  let h_formula' = string_of_formula h_formula in
-  let goal' = string_of_formula goal in
-  let exn = Printf.sprintf "Cannot apply hypothesis %s`%s` on goal `%s`" h_name h_formula' goal' in
-  ProofException exn
+let hole_in_proof = proof_exception "Proof cannot have holes"
 
-let not_what_expected expected instead =
-  let exn = Printf.sprintf "Expected `%s`, but got `%s` instead" expected instead in
-  ProofException exn
-
-let not_an_implication = not_what_expected "an implication" % string_of_formula
-
-let not_a_constr_implication = not_what_expected "a constraint implication" % string_of_formula
-
-let not_a_constr_and = not_what_expected "a formula guarded by a constraint" % string_of_formula
-
-let not_a_constraint = not_what_expected "a constraint" % string_of_formula
-
-let not_a_forall_atom = not_what_expected "an universal quantification over atoms" % string_of_formula
-
-let not_a_forall_term = not_what_expected "an universal quantification over terms" % string_of_formula
-
-let not_an_exists = not_what_expected "an existential quantification" % string_of_formula
-
-let not_a_disjunction = not_what_expected "a disjunction" % string_of_formula
-
-let not_what_with what with_what = not_what_expected (Printf.sprintf "a %s with %s" what with_what)
-
-let not_a_conjunction_with conjunct = not_what_with "a conjunction" (string_of_formula conjunct) % string_of_formula
-
-let not_a_disjunction_with disjunct = not_what_with "a disjunction" (string_of_formula disjunct) % string_of_formula
-
-let premise_mismatch hypothesis premise =
-  not_what_expected ("implication with premise " ^ string_of_formula premise) (string_of_formula hypothesis)
-
-let conclusion_mismatch hypothesis conclusion =
-  not_what_expected ("implication with conclusion " ^ string_of_formula conclusion) (string_of_formula hypothesis)
-
-let formula_mismatch env expected actual =
-  let string_of_formula = string_of_formula_in_env env in
-  not_what_expected (string_of_formula expected) (string_of_formula actual)
-
-let formula_kind_mismatch f f_kind expected_kind =
-  let expcted_kind = Printf.sprintf "formula with kind %s" (string_of_kind expected_kind) in
-  let actual_kind = Option.fold ~none:"None" ~some:string_of_kind f_kind in
-  let actual = Printf.sprintf "%s of kind %s" (string_of_formula f) actual_kind in
-  not_what_expected expcted_kind actual
-
-let hole_in_proof = ProofException "Proof cannot have holes"
-
-let solver_failure constraints goal =
-  let constrs' = string_of_list string_of_constr constraints in
-  let goal' = string_of_formula goal in
-  let exn = Printf.sprintf "Solver cannot solve %s |- %s" constrs' goal' in
-  ProofException exn
-
-let cannot_generalize name env f =
-  let f = string_of_formula_in_env env f in
-  let exn = Printf.sprintf "Cannot generalize %s as it is bound in %s" name f in
-  ProofException exn
-
-let cannot_destruct f =
-  let exn = Printf.sprintf "Cannot destruct %s" (string_of_formula f) in
-  ProofException exn
+let name_taken x =
+  let exn = Printf.sprintf "Name `%s` is already taken" x in
+  proof_exception exn
 
 let cannot_infer_kind f_source =
   let exn = Printf.sprintf "Cannot infer kind of formula `%s`" f_source in
   ProofException exn
 
+let pretty_sprintf fmt = str % Printf.sprintf fmt
+
+let backticked_formula f = backticked (pretty_formula f)
+
+let hypothesis_goal_mismatch env h_name h_formula goal =
+  let exn =
+    unwords
+      [ pretty_sprintf "Cannot apply hypothesis %s:" h_name
+      ; backticked_formula h_formula
+      ; str "on goal"
+      ; backticked_formula goal ]
+  in
+  proof_exception_from_printer exn env
+
+let not_what_expected expected instead env =
+  let exn = sequence [str "Expected"; expected; str "but got"; instead; str "instead."] in
+  proof_exception_from_printer exn env
+
+let not_an_implication = not_what_expected (str "an implication") % backticked_formula
+
+let not_a_constr_implication = not_what_expected (str "a constraint implication") % backticked_formula
+
+let not_a_constr_and = not_what_expected (str "a formula guarded by a constraint") % backticked_formula
+
+let not_a_constraint = not_what_expected (str "a constraint") % backticked_formula
+
+let not_a_forall_atom = not_what_expected (str "an universal quantification over atoms") % backticked_formula
+
+let not_a_forall_term = not_what_expected (str "an universal quantification over terms") % backticked_formula
+
+let not_an_exists = not_what_expected (str "an existential quantification") % backticked_formula
+
+let not_a_disjunction = not_what_expected (str "a disjunction") % backticked_formula
+
+let not_a_conjunction_with conjunct =
+  not_what_expected (with_prefix "a conjunction with " $ backticked_formula conjunct) % backticked_formula
+
+let not_a_disjunction_with disjunct =
+  not_what_expected (with_prefix "a disjunction with " $ backticked_formula disjunct) % backticked_formula
+
+let premise_mismatch hypothesis premise =
+  not_what_expected
+    (with_prefix "implication with premise " $ backticked_formula premise)
+    (backticked_formula hypothesis)
+
+let conclusion_mismatch hypothesis conclusion =
+  not_what_expected
+    (with_prefix "implication with conclusion " $ backticked_formula conclusion)
+    (backticked_formula hypothesis)
+
+let formula_mismatch expected actual = not_what_expected (backticked_formula expected) (backticked_formula actual)
+
+let formula_kind_mismatch f f_kind expected_kind =
+  let expected_kind = with_prefix "formula with kind " $ pretty_kind expected_kind in
+  let none = str "None" in
+  let actual_kind = Option.fold ~none ~some:pretty_kind f_kind in
+  not_what_expected expected_kind (sequence [backticked_formula f; str "of kind"; actual_kind])
+
+let solver_failure constraints goal =
+  let exn = with_prefix "Solver cannot solve" $ pretty_solve constraints goal in
+  proof_exception_from_printer exn
+
+let cannot_generalize name f =
+  let exn = sequence [pretty_sprintf "Cannot generalize %s as it is bound in " name; pretty_formula f] in
+  proof_exception_from_printer exn
+
+let cannot_destruct f =
+  let exn = sequence [str "Cannot destruct"; pretty_formula f] in
+  proof_exception_from_printer exn
+
 let unknown_case case f =
-  let exn = Printf.sprintf "There is no case `%s` in `%s`" case (string_of_formula f) in
-  ProofException exn
+  let exn = sequence [pretty_sprintf "There is no case '%s' in" case; pretty_formula f] in
+  proof_exception_from_printer exn
 
 let cannot_specialize f =
-  let exn = Printf.sprintf "Only implications and foralls can be specialized, not `%s`" (string_of_formula f) in
-  ProofException exn
-
-let name_taken x =
-  let exn = Printf.sprintf "Name `%s` is already taken" x in
-  ProofException exn
+  let exn = sequence [str "Only implications and foralls can be specialized, not"; pretty_formula f] in
+  proof_exception_from_printer exn

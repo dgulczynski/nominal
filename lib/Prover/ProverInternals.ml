@@ -1,5 +1,4 @@
 open Prelude
-open Printing
 open Substitution
 open Types
 open Proof
@@ -9,6 +8,8 @@ open ProofEquiv
 open ProofException
 open IncProof
 open ProverGoal
+open PrettyPrinting
+open PrettyPrintingCore
 
 (** Type of in-progress proof of [Prover] *)
 type prover_state = S_Unfinished of {goal: goal; context: proof_context} | S_Finished of proof
@@ -18,7 +19,8 @@ type prover_state = S_Unfinished of {goal: goal; context: proof_context} | S_Fin
 let unfinished goal context = S_Unfinished {goal; context}
 
 let finished jgmt proof =
-  if snd jgmt = label proof then S_Finished proof
+  let env, f = jgmt in
+  if f ==== label proof <| env then S_Finished proof
   else (* make sure we've proven what we've wanted to *)
     S_Finished (equivalent jgmt 0 proof)
 
@@ -131,7 +133,7 @@ let intro_named name state =
     let x_bind = V_Bind (name, x) in
     let ctx = PC_Intro (to_judgement (env, F_ForallTerm (x_bind, f)), context state) in
     unfinished (env |> add_var x_bind, f) ctx
-  | _ -> raise $ not_an_implication f
+  | _ -> raise $ not_an_implication f (all_identifiers env)
 
 let apply_internal ?(h_name = "") h_proof =
   let apply_impl_list env =
@@ -149,13 +151,13 @@ let apply_internal ?(h_name = "") h_proof =
   | S_Unfinished {goal= env, f; context} when f === h <| env -> find_goal_in_ctx h_proof $ mk_context (env, f) h context
   | S_Unfinished {goal= env, f; context} -> (
     match destruct_impl env f h with
-    | None -> raise $ hypothesis_goal_mismatch h_name h f
+    | None -> raise $ hypothesis_goal_mismatch (all_identifiers env) h_name h f
     | Some (assms, h) -> find_goal_in_proof (mk_context (env, f) h context) $ apply_impl_list env h_proof assms )
 
 let finish = function
   | S_Unfinished {goal; context} -> raise % unproven goal $ root_judgement context
   | S_Finished proof -> proof
 
-let pp_print_state fmt = function
-  | S_Unfinished {goal; _} -> pp_print_goal fmt goal
-  | S_Finished _ -> Format.pp_print_string fmt "Finished"
+let pretty_prover_state = function
+  | S_Finished proof -> unlines [str "Finished:"; pretty_judgement (judgement proof)]
+  | S_Unfinished {goal; _} -> unlines [str "Unfinished:"; pretty_goal goal]
