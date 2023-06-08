@@ -1,4 +1,4 @@
-open Common
+open Prelude
 open Printing
 
 exception ProofException of string

@@ -1,6 +1,6 @@
 open Nominal
 open Types
-open Common
+open Prelude
 open KindChecker
 open Permutation
 open Printing

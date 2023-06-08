@@ -1,4 +1,4 @@
-open Common
+open Prelude
 open Proof
 open ProofCommon
 open ProofException

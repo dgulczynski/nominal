@@ -1,6 +1,6 @@
 open Types
 open Permutation
-open Common
+open Prelude
 open SubstitutionInternal
 
 type solver_constr =

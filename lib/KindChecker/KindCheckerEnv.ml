@@ -1,5 +1,5 @@
 open Types
-open Common
+open Prelude
 
 type kind_assumption =
   | Constr of constr

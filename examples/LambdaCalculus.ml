@@ -1,4 +1,4 @@
-open Nominal.Common
+open Nominal.Prelude
 open Nominal.Prover
 open Nominal.Tactics
 open LambdaCalculusCore

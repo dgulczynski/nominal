@@ -3,7 +3,7 @@ open Nominal.ParserCommon
 open Nominal.Permutation
 open Nominal.ProofEquiv
 open Nominal.Types
-open Nominal.Common
+open Nominal.Prelude
 open Nominal.Printing
 open Nominal.Utils
 

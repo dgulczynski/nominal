@@ -1,4 +1,4 @@
-open Common
+open Prelude
 open Printing
 open Substitution
 open Types

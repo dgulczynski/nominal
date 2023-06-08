@@ -1,5 +1,5 @@
 open Nominal
-open Nominal.Common
+open Nominal.Prelude
 open Nominal.IncProof
 open Nominal.Parser
 open Nominal.Printing

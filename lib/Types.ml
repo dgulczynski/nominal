@@ -1,5 +1,5 @@
 open Permutation
-open Common
+open Prelude
 
 type name_internal = int
 

@@ -1,6 +1,6 @@
 open Angstrom
 open Types
-open Common
+open Prelude
 open Permutation
 open ParserTypes
 open ParserCommon

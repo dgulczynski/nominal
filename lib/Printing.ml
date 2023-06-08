@@ -1,7 +1,7 @@
 open Types
 open Permutation
 open Format
-open Common
+open Prelude
 open Utils
 open SolverTypes
 

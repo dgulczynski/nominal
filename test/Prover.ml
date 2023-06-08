@@ -1,4 +1,4 @@
-open Nominal.Common
+open Nominal.Prelude
 open Nominal.Parser
 open Nominal.ProofEnv
 open Nominal.ProofException

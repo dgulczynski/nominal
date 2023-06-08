@@ -1,4 +1,4 @@
-open Common
+open Prelude
 open Parser
 open ProofEquiv
 open ProofException

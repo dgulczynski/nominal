@@ -1,4 +1,4 @@
-open Common
+open Prelude
 open ProofCommon
 open ProofEnv
 open Solver

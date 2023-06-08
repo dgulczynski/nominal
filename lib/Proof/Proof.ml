@@ -1,5 +1,5 @@
 open Types
-open Common
+open Prelude
 open Permutation
 open Substitution
 open Solver

@@ -1,4 +1,4 @@
-open Common
+open Prelude
 open SubstitutionInternal
 
 let subst_atom_in_term = subst_in_term %% mk_atom_subst

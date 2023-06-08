@@ -1,5 +1,5 @@
 open Nominal
-open Common
+open Prelude
 open Parser
 open ProofEnv
 open Prover

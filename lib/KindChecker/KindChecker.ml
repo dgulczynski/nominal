@@ -1,7 +1,7 @@
 open Types
 open Substitution
 open KindCheckerEnv
-open Common
+open Prelude
 open Permutation
 open Utils
 

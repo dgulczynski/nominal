@@ -1,4 +1,4 @@
-open Common
+open Prelude
 open Permutation
 open Angstrom
 
