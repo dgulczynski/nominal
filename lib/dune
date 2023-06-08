@@ -1,6 +1,6 @@
 (library
  (name nominal)
  (public_name nominal)
- (libraries angstrom))
+ (libraries angstrom easy-format))
 
 (include_subdirs unqualified)
