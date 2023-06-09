@@ -20,15 +20,15 @@ let merge xs ys =
 type 'a env =
   {identifiers: bound_env; constraints: constr list; assumptions: 'a list; mapping: mapping; to_formula: 'a -> formula}
 
-let assumptions {assumptions; _} = assumptions
+let assumptions env = env.assumptions
 
-let identifiers {identifiers; _} = identifiers
+let identifiers env = env.identifiers
 
-let constraints {constraints; _} = constraints
+let constraints env = env.constraints
 
-let mapping {mapping; _} = mapping
+let mapping env = env.mapping
 
-let to_formula {to_formula; _} = to_formula
+let to_formula env = env.to_formula
 
 let env identifiers constraints assumptions mapping to_formula =
   { assumptions= sort assumptions
@@ -41,24 +41,21 @@ let empty to_formula = env [] [] [] [] to_formula
 
 let singleton f to_formula = env [] [] [f] [] to_formula
 
-let on_assumptions f {assumptions; identifiers; constraints; mapping; to_formula} =
-  {assumptions= f assumptions; identifiers; constraints; mapping; to_formula}
+let on_assumptions f env = {env with assumptions= f env.assumptions}
 
-let on_identifiers f {assumptions; identifiers; constraints; mapping; to_formula} =
-  {assumptions; identifiers= f identifiers; constraints; mapping; to_formula}
+let on_identifiers f env = {env with identifiers= f env.identifiers}
 
-let on_constraints f {assumptions; identifiers; constraints; mapping; to_formula} =
-  {assumptions; identifiers; constraints= f constraints; mapping; to_formula}
+let on_constraints f env = {env with constraints= f env.constraints}
 
-let on_mapping f {assumptions; identifiers; constraints; mapping; to_formula} =
-  {assumptions; identifiers; constraints; mapping= f mapping; to_formula}
+let on_mapping f env = {env with mapping= f env.mapping}
 
-let set_mapping mapping = on_mapping $ const mapping
+let set_mapping mapping env = {env with mapping}
 
-let union
-  {assumptions= a1; identifiers= i1; constraints= c1; mapping= v1; to_formula}
-  {assumptions= a2; identifiers= i2; constraints= c2; mapping= v2; _} =
-  {assumptions= merge a1 a2; identifiers= merge i1 i2; constraints= merge c1 c2; mapping= merge v1 v2; to_formula}
+let union env =
+  on_assumptions (merge env.assumptions)
+  % on_identifiers (merge env.identifiers)
+  % on_constraints (merge env.constraints)
+  % on_mapping (merge env.mapping)
 
 let name_eq name = function
   | Bind (x, _) -> x = name
@@ -101,19 +98,19 @@ let remove_identifiers test = on_identifiers $ unfilter test
 
 let remove_identifier name = remove_identifiers $ rep_eq name
 
-let all_identifiers {mapping; identifiers; _} =
+let all_identifiers env =
   let add_mapping ids {bind= FV_Bind (x_name, x, k); _} = Bind (x_name, K_FVar (x, k)) :: ids in
-  List.fold_left add_mapping identifiers mapping
+  List.fold_left add_mapping env.identifiers env.mapping
 
-let kind_checker_env {identifiers; mapping; _} =
+let kind_checker_env env =
   let add_identifier env = function
     | Bind (x_name, K_FVar (x, k)) -> KindCheckerEnv.map_fvar env x_name (FV x) k
     | _ -> env
   and add_mapping env = function
     | {bind= FV_Bind (x_name, x, k); _} -> KindCheckerEnv.map_fvar env x_name (FV x) k
   in
-  let from_identifiers = List.fold_left add_identifier KindCheckerEnv.empty identifiers in
-  List.fold_left add_mapping from_identifiers mapping
+  let from_identifiers = List.fold_left add_identifier KindCheckerEnv.empty env.identifiers in
+  List.fold_left add_mapping from_identifiers env.mapping
 
 let kind_infer env f = KindChecker.kind_infer (kind_checker_env env) f
 
@@ -121,23 +118,21 @@ let bound_in_assumption name = List.exists (( = ) name) % free_names_of_formula
 
 let bound_in_constr name = List.exists (( = ) name) % free_names_of_constr
 
-let find_bind name {assumptions; constraints; to_formula; identifiers; _} =
+let find_bind name env =
   let from_constr c = F_Constr c in
   let find x =
-    match List.find_opt (bound_in_assumption x % to_formula) assumptions with
-    | Some f -> Some (to_formula f)
-    | None -> from_constr <$> List.find_opt (bound_in_constr x) constraints
+    match List.find_opt (bound_in_assumption x % env.to_formula) env.assumptions with
+    | Some f -> Some (env.to_formula f)
+    | None -> from_constr <$> List.find_opt (bound_in_constr x) env.constraints
   in
-  bind_by_name name identifiers >>= binder_rep >>= find
+  bind_by_name name env.identifiers >>= binder_rep >>= find
 
-let remove_var name ({assumptions; constraints; identifiers; mapping; to_formula} as env) =
-  match List.partition (name_eq name) identifiers with
+let remove_var name env =
+  match List.partition (name_eq name) env.identifiers with
   | Bind (_, K_Var x) :: _, identifiers ->
-    { assumptions= List.filter (not % bound_in_assumption x % to_formula) assumptions
-    ; constraints= List.filter (not % bound_in_constr x) constraints
-    ; identifiers
-    ; mapping
-    ; to_formula }
+    {env with identifiers}
+    |> on_assumptions (List.filter (not % bound_in_assumption x % env.to_formula))
+    |> on_constraints (List.filter (not % bound_in_constr x))
   | _ -> env
 
 let parse_formula {identifiers; mapping; _} =
@@ -161,22 +156,20 @@ let parse_mapping identifiers constraints assumptions to_formula source_mapping 
   in
   env identifiers constraints assumptions (List.fold_left aux [] source_mapping) to_formula
 
-let subst_atom subst_assm (A a_rep as a) b {assumptions; identifiers; constraints; mapping; to_formula} =
-  let filter_out_a = not % rep_eq a_rep in
-  { assumptions= List.map (subst_assm a b) assumptions
-  ; identifiers= List.filter filter_out_a identifiers
-  ; constraints= List.map (subst_atom_in_constr a b) constraints
-  ; mapping= List.map (fun {bind; body} -> {bind; body= (a |-> b) body}) mapping
-  ; to_formula }
+let subst_atom subst_assm (A a_rep as a) b env =
+  env
+  |> on_assumptions (List.map (subst_assm a b))
+  |> on_constraints (List.map (subst_atom_in_constr a b))
+  |> on_mapping (List.map (fun {bind; body} -> {bind; body= (a |-> b) body}))
+  |> on_identifiers (List.filter (not % rep_eq a_rep))
 
-let subst_var subst_assm (V x_rep as x) t {assumptions; identifiers; constraints; mapping; to_formula} =
-  let filter_out_x = not % rep_eq x_rep in
-  { assumptions= List.map (subst_assm x t) assumptions
-  ; identifiers= List.filter filter_out_x identifiers
-  ; constraints= List.map (subst_var_in_constr x t) constraints
-  ; mapping= List.map (fun {bind; body} -> {bind; body= (x |=> t) body}) mapping
-  ; to_formula }
+let subst_var subst_assm (V x_rep as x) t env =
+  env
+  |> on_assumptions (List.map (subst_assm x t))
+  |> on_constraints (List.map (subst_var_in_constr x t))
+  |> on_mapping (List.map (fun {bind; body} -> {bind; body= (x |=> t) body}))
+  |> on_identifiers (List.filter (not % rep_eq x_rep))
 
 let solver_env env =
-  let constr_assumptions = List.filter_map (to_constr_op % to_formula env) $ assumptions env in
+  let constr_assumptions = List.filter_map (to_constr_op % to_formula env) $ env.assumptions in
   constr_assumptions @ constraints env
