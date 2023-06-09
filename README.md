@@ -3,14 +3,16 @@ This is repository of my master thesis concerning domain logic for reasoning abo
 Code and thesis text is still under development.
 
 # Usage
-Run via command: `dune exec nominal`, try it yourself with via `dune utop`, or check that examples are still working via `dune test`.
+Try it yourself with via `dune utop`, or validate examples via `dune test`.
 
 # Features / TODO list
-- [x] Solver, testing wether $c_1, ..., c_n \vdash c$
-- [x] Kind checker for formulas $\Gamma \vdash \phi : k$
-- [ ] Judgement $\Delta; \Gamma \vdash \phi$
-- [ ] HOL-like proof assistant
+- [x] Constraints solver
+- [x] Kind checker for formulas
+- [x] Proof constructors
+- [x] HOL-like proof assistant
+- [x] Parser and pretty-printer
 - [ ] Thesis text
 
 # Libraries used
-- [Angstrom](https://opam.ocaml.org/packages/angstrom/) - parser combinator library
+- [angstrom](https://opam.ocaml.org/packages/angstrom/) - parser combinator library
+- [easy-format](https://opam.ocaml.org/packages/easy-format/) - pretty printing library

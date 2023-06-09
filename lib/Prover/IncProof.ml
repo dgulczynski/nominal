@@ -20,7 +20,7 @@ type incproof =
   | PI_SpecializeTerm of judgement * term * incproof
   | PI_ExistsAtom of judgement * permuted_atom * incproof
   | PI_ExistsTerm of judgement * term * incproof
-  | PI_Witness of judgement * incproof * string * incproof (* TODO: proper type? *)
+  | PI_Witness of judgement * incproof * string * incproof
   | PI_And of judgement * incproof list
   | PI_AndElim of judgement * incproof
   | PI_Or of judgement * incproof
@@ -42,8 +42,8 @@ type proof_context =
   | PC_ConstrAndElimR of judgement * proof_context
   | PC_SpecializeAtom of judgement * permuted_atom * proof_context
   | PC_SpecializeTerm of judgement * term * proof_context
-  | PC_WitnessExists of judgement * proof_context * string * incproof (* TODO: proper type? *)
-  | PC_WitnessUsage of judgement * incproof * string * proof_context (* TODO: proper type? *)
+  | PC_WitnessExists of judgement * proof_context * string * incproof
+  | PC_WitnessUsage of judgement * incproof * string * proof_context
   | PC_ExistsAtom of judgement * permuted_atom * proof_context
   | PC_ExistsTerm of judgement * term * proof_context
   | PC_And of judgement * incproof zipper * proof_context
