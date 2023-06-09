@@ -1,7 +1,6 @@
 open Nominal.Prelude
 open Nominal.Prover
 open Nominal.Tactics
-open Nominal.Printing
 open LambdaCalculusCore
 
 let env_inclusion_cons_both_thm =

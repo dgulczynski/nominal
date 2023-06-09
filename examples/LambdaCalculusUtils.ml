@@ -1,7 +1,6 @@
 open Nominal.Prelude
 open Nominal.Prover
 open Nominal.Tactics
-open Nominal.Printing
 open LambdaCalculusCore
 open LambdaCalculusEnv
 

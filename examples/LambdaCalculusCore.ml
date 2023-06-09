@@ -1,7 +1,7 @@
+open Nominal.Prelude
 open Nominal.Parser
 open Nominal.ProverGoal
 open Nominal.ProofEnv
-open Nominal.Printing
 
 let lambda_symbols = funcs_env ["lam"; "app"; "base"; "arrow"; "nil"; "cons"]
 

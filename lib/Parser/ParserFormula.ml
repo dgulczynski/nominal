@@ -43,14 +43,14 @@ let f_forall formula =
   match k with
   | Some PQ_Atom -> formula >>| List.fold_right (fun x f -> PF_ForallAtom (x, f)) xs
   | Some PQ_Term -> formula >>| List.fold_right (fun x f -> PF_ForallTerm (x, f)) xs
-  | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
+  | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Forall" $ unwords xs
 
 let f_exists formula =
   let* xs, k = exists (typed_op (list_of' identifier) pvar_kind) in
   match k with
   | Some PQ_Atom -> formula >>| List.fold_right (fun x f -> PF_ExistsAtom (x, f)) xs
   | Some PQ_Term -> formula >>| List.fold_right (fun x f -> PF_ExistsTerm (x, f)) xs
-  | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Exists" $ Printing.unwords xs
+  | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Exists" $ unwords xs
 
 let f_constrand formula =
   let* c = bracketed constr in

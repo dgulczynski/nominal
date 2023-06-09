@@ -1,6 +1,4 @@
 open Prelude
-open Format
-open Printing
 open Types
 open Utils
 open ProofCommon
@@ -182,14 +180,3 @@ let subst_var subst_assm (V x_rep as x) t {assumptions; identifiers; constraints
 let solver_env env =
   let constr_assumptions = List.filter_map (to_constr_op % to_formula env) $ assumptions env in
   constr_assumptions @ constraints env
-
-let pp_print_env pp_print_assumption fmt {assumptions; identifiers; constraints; _} =
-  let pp_sep fmt () = pp_print_string fmt "\n; " in
-  let pp_print_bracketed_list fmt p = function
-    | [] -> pp_print_string fmt "[ ]"
-    | xs -> pp_print_string fmt "[ " ; pp_print_list ~pp_sep p fmt xs ; pp_print_string fmt "\n]"
-  in
-  pp_print_newline fmt () ;
-  pp_print_bracketed_list fmt (pp_print_constr_in_env identifiers) constraints ;
-  pp_print_newline fmt () ;
-  pp_print_bracketed_list fmt pp_print_assumption assumptions

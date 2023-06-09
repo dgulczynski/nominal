@@ -3,19 +3,25 @@ open Nominal.Parser
 open Nominal.ProofEnv
 open Nominal.ProofException
 open Nominal.Prover
-open Nominal.ProverGoal
 open Nominal.Tactics
 open Nominal.Types
+open Nominal.PrettyPrinting
+open Nominal.PrettyPrintingCore
 
 let test_proof theorem proof =
-  Printf.printf "Checking proof of `%s` ... " $ string_of_goal theorem ;
-  let _ =
-    try theorem |> proof |> qed
+  let bound_env = all_identifiers $ fst theorem in
+  let desc, res =
+    try
+      let _ = theorem |> proof |> qed in
+      let desc = unlines [str "✅ Checked proof of:"; pretty_goal theorem] in
+      (desc, true)
     with ProofException e ->
-      Printf.printf "❌ \n%s\n" e ;
-      assert false
+      let desc = unlines [str "❌ Failed to prove:"; pretty_goal theorem; str "with error:"; str e] in
+      (desc, false)
   in
-  Printf.printf "✅\n"
+  print_endline (const desc) bound_env () ;
+  print_newline () ;
+  assert res
 
 let test_thm identifiers formula =
   let env = env identifiers [] [] [] snd in
@@ -173,5 +179,3 @@ let _ = test_theorem Examples.Arithmetic.plus_symm_thm Examples.Arithmetic.plus_
 let _ = test_theorem Examples.LambdaCalculus.progress_thm Examples.LambdaCalculus.progress
 
 let _ = test_theorem Examples.LambdaCalculus.preservation_thm Examples.LambdaCalculus.preservation
-
-let _ = print_newline ()

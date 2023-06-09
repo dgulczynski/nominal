@@ -53,3 +53,7 @@ val forall2 : ('a -> 'b -> bool) -> 'a list -> 'b list -> bool
 
 val yank : 'a -> 'a list -> 'a list * 'a list
 (** [yank x zs = xs, ys] where [xs] are all element of [zs] equal to [x] and [ys] aren't *)
+
+val unwords : string list -> string
+
+val unlines : string list -> string

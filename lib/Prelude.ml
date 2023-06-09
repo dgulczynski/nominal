@@ -59,3 +59,7 @@ let rec forall2 test xs ys =
   | xs, ys -> null xs && null ys
 
 let yank x = List.partition (( = ) x)
+
+let unwords = String.concat " "
+
+let unlines = String.concat "\n"

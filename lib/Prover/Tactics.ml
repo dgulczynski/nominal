@@ -4,7 +4,7 @@ open ProofEquiv
 open ProofException
 open Prover
 open ProverInternals
-open Printing
+open PrettyPrintingCore
 open Types
 open Option
 
@@ -41,9 +41,10 @@ let add_constr_parse c_string state =
 
 let assumption state =
   let env, f = goal state in
-  let f' = string_of_formula_in_env (ProofEnv.identifiers env) f in
-  let exn = Printf.sprintf "No assumption matching goal `%s`" f' in
-  let on_fail _ = raise $ ProofException exn in
+  let on_fail _ =
+    let exn = unwords [str "No assumption matching goal"; backticked_formula f] in
+    raise $ proof_exception_from_printer exn (ProofEnv.all_identifiers env)
+  in
   match ProofEnv.lookup_assumption (fun (_, g) -> (f === g) env) env with
   | Some (h_name, _) -> apply_assm h_name state
   | None ->

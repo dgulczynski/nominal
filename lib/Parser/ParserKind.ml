@@ -17,7 +17,7 @@ let kind =
     match xk with
     | Some PQ_Atom -> kind >>| List.fold_right (fun x k -> PK_ForallAtom (x, k)) xs
     | Some PQ_Term -> kind >>| List.fold_right (fun x k -> PK_ForallTerm (x, k)) xs
-    | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Forall" $ Printing.unwords xs
+    | Some (PQ_Kind _) | None -> raise % quantifier_without_kind_annotation "Forall" $ unwords xs
   and k_constr kind =
     let* cs = many1 (bracketed constr <* whitespace) in
     let* k = kind in

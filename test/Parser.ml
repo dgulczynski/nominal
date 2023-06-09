@@ -2,37 +2,44 @@ open Nominal.Parser
 open Nominal.ParserCommon
 open Nominal.Permutation
 open Nominal.ProofEquiv
-open Nominal.Types
 open Nominal.Prelude
-open Nominal.Printing
+open Nominal.PrettyPrinting
+open Nominal.PrettyPrintingCore
+open Nominal.Types
 open Nominal.Utils
 
-let test name parser convert string_of ( === ) env source expected =
-  let actual =
-    try convert env (parse parser source)
-    with ParserException e ->
-      Printf.printf "❌ Error parsing \"%s\": %s\n" source e ;
-      assert false
+let test name parser convert pretty ( === ) env source expected =
+  let desc, pass =
+    try
+      let actual = convert env (parse parser source) in
+      if actual === expected then
+        (sequence [str $ Printf.sprintf "✅ Parsed %s '%s' into" name source; backticked $ pretty actual], true)
+      else
+        ( sequence
+            [ str $ Printf.sprintf "❌ Parsed %s '%s' into" name source
+            ; backticked $ pretty actual
+            ; str "instead of"
+            ; backticked $ pretty expected ]
+        , false )
+    with ParserException e -> (sequence [str (Printf.sprintf "❌ Error parsing '%s':" source); str e], false)
   in
-  let pass = actual === expected in
-  Printf.printf "%s Parsed %s \"%s\" into `%s` %s%s\n"
-    (if pass then "✅" else "❌")
-    name source (string_of actual)
-    ( match env with
-    | [] -> ""
-    | env -> Printf.sprintf "with %s " $ string_of_bound_env env )
-    (if pass then "" else Printf.sprintf "instead of `%s`" $ string_of expected) ;
+  let desc =
+    match env with
+    | [] -> desc
+    | env -> sequence [desc; str "in env"; pretty_bound_env env]
+  in
+  print_endline (const desc) env () ;
   assert pass
 
-let test_term = test "term" term pterm_to_term string_of_term ( = )
+let test_term env = test "term" term pterm_to_term pretty_term ( = ) env
 
-let test_constr = test "constr" constr pconstr_to_constr string_of_constr ( = )
+let test_constr env = test "constr" constr pconstr_to_constr pretty_constr ( = ) env
 
-let test_kind = test "kind" kind pkind_to_kind string_of_kind ( = )
+let test_kind env = test "kind" kind pkind_to_kind pretty_kind ( = ) env
 
 let test_formula env =
-  test "formula" formula pformula_to_formula (string_of_formula_in_env env)
-    (fun f g -> Nominal.ProofEnv.env env [] [] [] id |> (f === g))
+  test "formula" formula pformula_to_formula pretty_formula
+    (fun f g -> Nominal.ProofEnv.env env [] [] [] id |> (f ==== g))
     env
 
 let _ =
@@ -118,10 +125,17 @@ let _ =
       (K_Constr (C_Fresh (a, var x), K_Prop), K_Constr (C_Fresh (b, T_Var {perm= [(pure a, pure b)]; symb= x}), K_Prop))
 
 let _ =
-  let a = A (fresh () + 2) and x = V (fresh () + 2) in
-  test_kind [] "forall a : atom. forall x : term. [a # x] (prop -> prop)"
+  let a = A (fresh () + 4) and b = A (fresh () + 4) and x = V (fresh () + 4) and y = V (fresh () + 4) in
+  test_kind [] "forall a : atom. forall b : atom .forall x y : term. [a # (x y) b] (prop -> prop)"
   $ K_ForallAtom
-      (A_Bind ("a", a), K_ForallTerm (V_Bind ("x", x), K_Constr (C_Fresh (a, var x), K_Arrow (K_Prop, K_Prop))))
+      ( A_Bind ("a", a)
+      , K_ForallAtom
+          ( A_Bind ("b", b)
+          , K_ForallTerm
+              ( V_Bind ("x", x)
+              , K_ForallTerm
+                  ( V_Bind ("y", y)
+                  , K_Constr (C_Fresh (a, T_App (T_App (var x, var y), atom b)), K_Arrow (K_Prop, K_Prop)) ) ) ) )
 
 let _ = print_newline ()
 

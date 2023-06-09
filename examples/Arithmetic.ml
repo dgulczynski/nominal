@@ -4,7 +4,6 @@ open Parser
 open ProofEnv
 open Prover
 open Tactics
-open Printing
 
 let arith_symbols = funcs_env ["0"; "S"]
 

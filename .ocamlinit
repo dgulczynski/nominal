@@ -2,7 +2,6 @@ open Nominal
 open Nominal.Prelude
 open Nominal.IncProof
 open Nominal.Parser
-open Nominal.Printing
 open Nominal.Proof
 open Nominal.ProofEnv
 open Nominal.ProofException

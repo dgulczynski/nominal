@@ -26,13 +26,9 @@ let finished jgmt proof =
 
 type tactic = prover_state -> prover_state
 
-let unproven goal (env, f) =
-  let exn =
-    Printf.sprintf "Proof of `%s`: You haven't proven `%s` yet!"
-      (string_of_formula_in_env (all_identifiers $ env) f)
-      (string_of_goal goal)
-  in
-  ProofException exn
+let unproven ((env, _) as goal) (_, f) =
+  let exn = unwords [str "In the proof of"; backticked_formula f; str "You haven't yet proven"; pretty_goal goal] in
+  proof_exception_from_printer exn (all_identifiers env)
 
 (** Helper function that traverses [incproof] and returns [S_Unfinished {goal; context}] of a first found hole 
     (where [context] is its context in [incproof]) or [S_Finished incproof] if [incproof] has no holes *)

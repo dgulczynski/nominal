@@ -1,5 +1,4 @@
 open Types
-open Printing
 open ProofCommon
 
 type 'a env
@@ -72,5 +71,3 @@ val subst_var : (var -> term -> 'a -> 'a) -> var -> term -> 'a env -> 'a env
 val subst_atom : (atom -> permuted_atom -> 'a -> 'a) -> atom -> permuted_atom -> 'a env -> 'a env
 
 val solver_env : 'a env -> constr list
-
-val pp_print_env : 'a printer -> 'a env printer

@@ -3,25 +3,31 @@ open Types
 open Prelude
 open KindChecker
 open Permutation
-open Printing
+open PrettyPrinting
+open PrettyPrintingCore
 open Solver
 
 let print_result env expr res =
-  let desc =
-    Printf.sprintf "%s Solver %s: %s ⊢ %s"
-      (if res then "✅" else "❌")
-      (if res then "ran successfully" else "failed solving")
-      env expr
+  let desc _ =
+    unwords
+      [ str (if res then "✅" else "❌")
+      ; str "Solver"
+      ; str (if res then "ran successfully" else "failed solving")
+      ; env
+      ; str "⊢"
+      ; expr ]
   in
-  if res then print_endline desc else failwith desc
+  if res then print_endline desc [] () else failwith $ printer_to_string desc [] ()
 
-let print_solver assms c = print_result (string_of_list string_of_constr assms) (string_of_constr c) (assms |-: c)
+let print_solver assms c =
+  print_result (pretty_ocaml_list $ List.map pretty_constr assms) (pretty_constr c) (assms |-: c)
 
 let print_subkind_solver (k1, k2) =
-  print_result "[]" $ string_of_kind k1 ^ " ≤ " ^ string_of_kind k2 $ (k1 <=: k2) KindCheckerEnv.empty
+  print_result (str "[]") (unwords [pretty_kind k1; str "≤"; pretty_kind k2]) $ (k1 <=: k2) KindCheckerEnv.empty
 
 let print_kind_solver (formula, kind) =
-  print_result $ "[]" $ string_of_formula formula ^ " : " ^ string_of_kind kind $ (formula -: kind) KindCheckerEnv.empty
+  print_result (str "[]") (unwords [pretty_formula formula; str ":"; pretty_kind kind])
+  $ (formula -: kind) KindCheckerEnv.empty
 
 let examples =
   let a_ = A 0 and b_ = A 1 and c_ = A 2 in

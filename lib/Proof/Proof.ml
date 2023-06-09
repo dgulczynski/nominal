@@ -288,7 +288,7 @@ module Axiom = struct
 
   let term_inversion =
     parse_axiom
-    $ Printing.unwords
+    $ unwords
         [ "forall e : term."
         ; "  atom: (exists a : atom. e = a)"
         ; "  ∨"

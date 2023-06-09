@@ -57,5 +57,3 @@ val occurs_check : t -> var -> shape -> bool
 (** [occurs_check env x t] is a recursive procedure that checks whether [x] occurs syntatically in
     [t], and for each variable [y] occuring syntatically in [t] it checks if [x] occurs in any [t']
     such that we have an assumption [t' < y] *)
-
-val string_of : t -> string

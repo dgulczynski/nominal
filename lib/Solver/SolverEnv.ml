@@ -265,24 +265,3 @@ let add_symbol x env =
   match get_subshapes env x with
   | [] -> Some (set_var_symbol x env)
   | _ -> None (* no term subshapes symbols *)
-
-let string_of env =
-  let string_of fold show map = "[" ^ fold (Printf.sprintf "%s; %s" %% show) map "]" in
-  let string_of_symbols = Printing.string_of_list (Printf.sprintf "symbol %s" % Printing.string_of_term % var)
-  and string_of_neq_atoms = Printing.string_of_list (fun (a, b) -> Printing.string_of_solver_constr (a =/=: pure b)) in
-  let string_of_fresh =
-    string_of AtomMap.fold (fun a xs ->
-      Printf.sprintf "%s # %s" (Printing.string_of_atom' a) (Printing.string_of_list (Printing.string_of_term % var) xs) )
-  and string_of_subshapes =
-    string_of VarMap.fold (fun x ss ->
-      Printf.sprintf "%s < %s" (Printing.string_of_list Printing.string_of_shape ss) (Printing.string_of_var' x) )
-  and string_of_var_shapes =
-    string_of VarMap.fold (fun x y ->
-      Printf.sprintf "%s -> %s" (Printing.string_of_var' x) (Printing.string_of_var' y) )
-  in
-  Printing.unwords
-    [ string_of_fresh env.fresh
-    ; string_of_neq_atoms env.neq_atoms
-    ; string_of_subshapes env.subshapes
-    ; string_of_symbols env.symbols
-    ; string_of_var_shapes env.varshapes ]
