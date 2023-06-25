@@ -1,0 +1,561 @@
+% Opcje klasy 'iithesis' opisane sa w komentarzach w pliku klasy. Za ich pomoca
+% ustawia sie przede wszystkim jezyk oraz rodzaj (lic/inz/mgr) pracy.
+\documentclass[english, mgr]{iithesis}
+
+\usepackage[utf8]{inputenc}
+
+%%%%% DANE DO STRONY TYTUŁOWEJ
+% Niezaleznie od jezyka pracy wybranego w opcjach klasy, tytul i streszczenie
+% pracy nalezy podac zarowno w jezyku polskim, jak i angielskim.
+% Pamietaj o madrym (zgodnym z logicznym rozbiorem zdania oraz estetyka) recznym
+% zlamaniu wierszy w temacie pracy, zwlaszcza tego w jezyku pracy. Uzyj do tego
+% polecenia \fmlinebreak.
+\englishtitle   {Nominal logic \fmlinebreak for reasoning about terms \fmlinebreak with variable bindings}
+\polishtitle    {Logika dziedzinowa do wnioskowania \fmlinebreak o termach z wiązaniem zmiennych}
+\polishabstract {Przedstawiamy logikę dziedzinową do wnioskowania o termach z wiązaniem zmiennych. }
+\englishabstract{We describe logic for reasoning about terms with variable bindings.}
+\author         {Dominik Gulczyński}
+\advisor        {dr Piotr Polesiuk}
+\date           {\today}                     % Data zlozenia pracy
+% Dane do oswiadczenia o autorskim wykonaniu
+\transcriptnum  {299391}                     % Numer indeksu
+\advisorgen     {dr. Piotra Polesiuka} % Nazwisko promotora w dopelniaczu
+%%%%%
+
+%%%%% WLASNE DODATKOWE PAKIETY
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd} % For \llbracket
+\usepackage{macros}
+\usepackage{mathpartir}
+\usepackage{listings}
+
+%%%%% WŁASNE DEFINICJE I POLECENIA
+% \definecolor{codegreen}{rgb}{0,0.6,0}
+% \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+% \definecolor{codepurple}{rgb}{0.58,0,0.82}
+% \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+% \lstdefinestyle{ocamlstyle}{
+%     commentstyle=\color{codegreen},
+%     keywordstyle=\color{magenta},
+%     numberstyle=\tiny\color{codegray},
+%     stringstyle=\color{codepurple},
+%     basicstyle=\ttfamily\footnotesize,
+%     breakatwhitespace=false,
+%     breaklines=true,
+%     captionpos=b,
+%     keepspaces=true,
+%     numbers=left,
+%     numbersep=5pt,
+%     showspaces=false,
+%     showstringspaces=false,
+%     showtabs=false,
+%     tabsize=2
+% }
+% \lstset{style=ocamlstyle}
+%%%%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Introduction}
+
+Problem statement
+
+Motivation
+
+Related work (logiki nominalne i permutacje)
+
+
+Contributions
+
+% Przykłady machania rękoma nad wiązaniem zmiennych w innych tekstach jako motywacja do tej pracy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Terms and constraints}
+% Okreli odbiorce i do niego pisa
+
+In classical first-order logic, terms are built from variables and
+applications of functional symbols to other terms.
+In this work we expand terms with expressions closely resembling the syntax
+of lambda calculus, aiming to provide a flexible framework for reasoning about
+the lambda calculus and its derivations.
+
+To this end we introduce an infinite set of \textit{atoms}
+(denoted by lower-case letters), representing the bound variables in terms
+--- i.e. the variables in the sense of lambda calculus.
+That set is disjount with the set of variables commonly found in first-order logic,
+which from now on we will call \textit{variables} (and denote by uppper-case letters)
+as apposed to \textit{atoms}.
+
+Terms are given by the following grammar: \\
+\begin{tabular}{rclr}
+    $\perm$    & $::=$ & $\permid
+                   \bnfor \permswp{\atomexp}{\atomexp}{\perm}$
+        & (permutations) \\
+    $\atomexp$ & $::=$ & $\perm \apperm \atomv$
+        & (atom expressions) \\
+    $\term$    & $::=$ & $\atomexp
+                   \bnfor \perm \apperm \termv
+                   \bnfor \tbind{\atomexp} \term
+                   \bnfor \term \tapp \term
+                   \bnfor \symb$
+        & (terms)
+\end{tabular}
+% Termy są czysto sytnatkyczne, opisać ich znaczenie, a model w innym rozdziale
+
+It is important to note that terms do not incorporate any inherent notions of
+computation, reduction, or binding.
+These expressions simply \textit{look} like the lambda calculus but they lack
+the operational semantics of it.
+However, the intuitions associated with such expressions are not unfounded.
+We will observe their practical application in the sublogic of constraints
+that we define on top of terms to reason about
+notions of \textit{freshness}, \textit{variable binding} and \textit{structural}
+order and its logical model.
+
+Constraints are given by the following grammar:
+\\
+\begin{tabular}{rclr}
+    $\constr$  & $::=$ & $\atomexp \cfresh \term
+                   \bnfor \term \ceq \term
+                   \bnfor \term \csheq \term
+                   \bnfor \term \cshlt \term$
+        & (constraints)
+\end{tabular}
+\\
+with following semantics:
+\begin{eqnarray*}
+  \atomexp \cfresh \term & \text{---} & \text{
+    atom $\atomexp$ is fresh in term $\term$, i.e. does not occur in $\term$
+    as a free variable
+  } \\
+  \term_1 \ceq \term_2 & \text{---} &\text{
+    terms $\term_1$ and $\term_2$ are alpha-equivalent
+  } \\
+  \term_1 \csheq \term_2 & \text{---} &\text{
+    terms $\term_1$ and $\term_2$ possess an identical shape,
+  } \\
+  & & \text{
+    i.e. after erasing all atoms, terms $\term_1$ and $\term_2$ would be equal
+  } \\
+  \term_1 \cshlt \term_2 & \text{---} &\text{
+    shape of term $\term_1$ is structurally smaller than the shape of term
+    $\term_2$,
+  } \\
+  & & \text{
+    i.e. after erasing all atoms $\term_1$ would be equal to some
+    subterm of $\term_2$
+  } \\
+\end{eqnarray*}
+
+We use metavariable $\cEnv$ for finite sets of constraints.
+
+
+TODO: Explain Model
+
+\begin{tabular}{rclr}
+$\semterm$ & $::=$ & $\sematom
+               \bnfor n
+               \bnfor \stbind \semterm
+               \bnfor \semterm \stapp \semterm
+               \bnfor \symb$
+    & (semantic terms) \\
+$\shape$   & $::=$ & $\shatom
+               \bnfor \shbind \shape
+               \bnfor \shape \shapp \shape
+               \bnfor \symb$
+    & (semantic shapes)
+\end{tabular}
+
+\begin{eqnarray*}
+  \termMdl{\perm \apperm \atomv}{\tmEnv} & = &
+    \permMdl{\perm}{\tmEnv}(\tmEnv(\atomv)) \\
+  \termMdl{\perm \apperm \termv}{\tmEnv} & = &
+    \permMdl{\perm}{\tmEnv}(\tmEnv(\termv)) \\
+  \termMdl{\tbind{\atomexp} \term}{\tmEnv} & = &
+    \stbind (\termMdl{\term}{\tmEnv} \shiftIdx)
+      \subst{\termMdl{\atomexp}{\tmEnv}}{0} \\
+  \termMdl{\term_1 \tapp \term_2}{\tmEnv} & = &
+    \termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv} \\
+  \termMdl{\symb}{\tmEnv} & = & \symb
+\end{eqnarray*}
+
+\begin{eqnarray*}
+  \shapeof{\sematom}                     & = & \shatom \\
+  \shapeof{n}                            & = & \shatom \\
+  \shapeof{\stbind \semterm}             & = & \shbind \shapeof{\semterm} \\1
+  \shapeof{\semterm_1 \stapp \semterm_2} & = &
+    \shapeof{\semterm_1} \shapp \shapeof{\semterm_2}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+  \tmEnv \vDash \term_1 \ceq \term_2 & \textrm{iff} &
+    \termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv} \\
+  \tmEnv \vDash \atomexp \cfresh \term & \textrm{iff} &
+    \termMdl{\atomexp}{\tmEnv} \notin
+      \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv}) \\
+  \tmEnv \vDash \term_1 \csheq \term_2 & \textrm{iff} &
+    \shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}} \\
+  \tmEnv \vDash \term_1 \cshlt \term_2 & \textrm{iff} &
+    \shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
+      \shapeof{\termMdl{\term_2}{\tmEnv}}
+\end{eqnarray*}
+
+We write $\tmEnv \vDash \cEnv$ iff for all $\constr \in \cEnv$
+we have $\tmEnv \vDash \constr$.
+We write $\cEnv \vDash \constr$ iff
+for every $\tmEnv$ such that $\tmEnv \vDash \cEnv$
+we have $\tmEnv \vDash \constr$.
+
+
+With this model in mind we will se that there exists a decidibile algorithm
+for determining whether C1,...,Cn |= C0,
+i.e. a deterministic way of checking if constraints c1, ..., cn imply c0.
+We present such algorithm in the next chapter.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Constraint solver}
+Bird's eye view: Solver breaks down constraints (on both sides of the turnstile)
+to irreducible components that are solved easily.
+
+
+At the core of our work lies the Solver
+--- the algorithm of resolving the constraints.
+Given a list of assumptions $\constr_1, \dots, \constr_n$ it checks whether
+given goal $\constr_0$ holds.
+In other words it is an algorithm that verifies whether,
+for every possible substitution of closed terms (in terms of variables, not atoms)
+for variables in $\constr_0, \constr_1, \dots, \constr_n$ such that the constraints
+$\constr_1, \dots, \constr_n$ are satisfied, $\constr_0$ is also satisfied.
+
+For convenience and effectiveness of implementation, the Solver works with
+constraints a little different constraints (although not more expressive)
+than those occuring in formulas and kinds,
+main difference being use of \textit{shapes} instead of terms for shape constraints.
+Solver contraints and shapes are given by the following grammar: \\
+\begin{tabular}{rclr}
+  $\sconstr$ & $::=$ & $\atomexp \cfresh \term
+  \bnfor \term \ceq \term
+  \bnfor \shape \csheq \shape
+  \bnfor \shape \cshlt \shape$
+      & (solver constraints) \\
+  $\shape$      & $::=$ & $\shatom
+                 \bnfor  \termv
+                 \bnfor \shbind \shape
+                 \bnfor \shape \tapp \shape
+                 \bnfor \symb$
+      & (shapes)
+\end{tabular}\\
+Solver erases atoms from terms in shape contstraints, effectively transforming
+them from \textit{constraints} to \textit{solver constraints}.
+
+We add another environment $\icEnv$ to distinguish between the
+potentially-reducible assumptions in $\cEnv$.
+For convenience we will write $\atomv \cneq \atomexp$ instead of $\atomv \cfresh \atomexp$ as it gives
+good intuition of atom freshness implying inequality
+and for $\atomexp = \pi \atomv$ we will write $\atomexp \cfresh \term$ meaning
+$\atomv \cfresh \pi^{-1} \term$.
+Irreducible constraints are:
+\begin{eqnarray*}
+  \atomv_1 \cneq \atomv_2 & \text{---} & \text{
+    atoms $\atomv_1$ and $\atomv_2$ are different
+  } \\
+  \atomv   \cfresh \termv   & \text{---} & \text{
+    atom $\atomv$ is fresh in variable $\termv$
+  } \\
+  \termv_1 \csheq  \termv_2 & \text{---} & \text{
+    variables $\termv_1$ and $\termv_2$ posses the same shape
+  } \\
+  \termv   \csheq  \term    & \text{---} & \text{
+    variable $\termv$ has a shape of term $\term$
+  } \\
+  \term    \cshlt  \termv   & \text{---} & \text{
+    term $\term$ strictly subshapes variable $\termv$
+  } \\
+\end{eqnarray*}
+
+After all the constraints are reduced to such simple constraints
+we reduce the goal-constraint and repeat the reduction procedure on
+new assumptions and goal. We either arrive on a contradictory environment or
+all the assumptions and goal itself are reduced to irreducible constraints which
+is as simple as checking if the goal occurs on the left side of the turnstile.
+
+$$
+\inferrule{
+  \constr \in \icEnv
+}{
+  \cEnv ; \icEnv \vDash \constr
+}
+$$
+Decidability of atom equality plays an important role in the reduce
+procedure:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver goal eq
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+\inferrule{
+  \cEnv ; \icEnv \vDash \atomv = \perm^{-1} \atomexp
+}{
+  \cEnv ; \icEnv \vDash \perm \atomv = \atomexp
+}
+\qquad
+\inferrule{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     = \atomexp \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_2 = \atomexp \\
+  \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 = \atomexp
+}{
+  \cEnv ; \icEnv \vDash \atomv = \permswp{\atomexp_1}{\atomexp_2}{}\atomexp
+}
+$$
+$$
+\inferrule{
+  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
+}{
+  \cEnv ; \icEnv \vDash \termv = \pi \termv
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \termv_1 = \pi_1^{-1} \pi_2 \termv_2
+}{
+  \cEnv ; \icEnv \vDash \pi_1 \termv_1 = \pi_2 \termv_2
+}
+$$
+$$
+\inferrule{
+  \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \term_2
+  \\
+  \cEnv ; \icEnv \vDash \term_1 = \permswp{\atomexp_1}{\atomexp_2} \term_2
+}{
+  \cEnv ; \icEnv \vDash \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \term_1 = \term_2
+  \\
+  \cEnv ; \icEnv \vDash \term_1' = \term_2'
+}{
+  \cEnv ; \icEnv \vDash \term_1 \term_1' = \term_2 \term_2'
+}
+$$
+$$\inferrule{
+}{
+  \cEnv ; \icEnv \vDash \atomv = \atomv
+}
+\qquad
+\inferrule{
+}{
+  \cEnv ; \icEnv \vDash \termv = \termv
+}
+\qquad
+\inferrule{
+}{
+  \cEnv ; \icEnv \vDash \symb = \symb
+}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver permutation idempotent
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+\inferrule{
+  \forall \atomv \in \pi.\;
+    \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
+    \cEnv ; \icEnv \vDash \atomv \cfresh \termv
+  }{
+  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
+}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver goal fresh
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$\inferrule{
+  \atomv_1 \cneq \atomv_2 \in \icEnv
+}{
+  \cEnv ; \icEnv \vDash \atomv_1 \cfresh \atomv_2
+}
+\qquad
+\inferrule{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     \cfresh \atomexp \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \atomexp \\
+                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \atomexp
+}{
+  \cEnv ; \icEnv \vDash \atomv \cfresh \permswp{\atomexp_1}{\atomexp_2}{} \atomexp
+}
+$$
+$$\inferrule{
+  \atomv \cfresh \termv \in \icEnv
+}{
+  \cEnv ; \icEnv \vDash \atomv \cfresh \termv
+}
+\qquad
+\inferrule{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     \cfresh \pi \termv \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \pi \termv \\
+                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \pi \termv
+}{
+  \cEnv ; \icEnv \vDash \atomv \cfresh \permswp{\atomexp_1}{\atomexp_2}{\pi} \termv
+}
+$$
+$$\inferrule{
+  \atomv \cfresh \atomexp, \cEnv ; \icEnv \vDash \atomv \cfresh \term
+}{
+  \cEnv ; \icEnv \vDash \atomv \cfresh \tbind{\atomexp}{\term}
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \atomv \cfresh \term_1 \\
+  \cEnv ; \icEnv \vDash \atomv \cfresh \term_2
+}{
+  \cEnv ; \icEnv \vDash \atomv \cfresh \term_1 \term_2
+}
+\qquad
+\inferrule{
+}{
+  \cEnv ; \icEnv \vDash \atomv \cfresh \symb
+}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver goal shape
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$\inferrule{
+  \termv_1 \csheq \termv_2 \in \icEnv
+}{
+  \cEnv ; \icEnv \vDash \termv_1 \csheq \termv_2
+}
+\qquad
+\inferrule{
+  \termv  \csheq \shape' \in \icEnv \\
+  \cEnv ; \icEnv \vDash \shape'  \csheq \shape
+}{
+  \cEnv ; \icEnv \vDash \termv  \csheq \shape
+}
+$$
+$$\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+}{
+  \cEnv ; \icEnv \vDash \shbind \shape_1 \csheq \shbind \shape_2
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2 \\
+  \cEnv ; \icEnv \vDash \shape_1' \csheq \shape_2'
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \shape_1' \csheq \shape_2 \shape_2'
+}
+\qquad
+\inferrule{
+}{
+  \cEnv ; \icEnv \vDash \symb \csheq \symb
+}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver goal subshape
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$\inferrule{
+  \shape_2 \cshlt \termv \in \icEnv \\
+  \cEnv ; \icEnv \vDash \shape_2 \csheq \termv
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
+}
+\qquad
+\inferrule{
+  \shape_2 \cshlt \termv \in \icEnv \\
+  \cEnv ; \icEnv \vDash \shape_2 \cshlt \termv
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
+}
+$$
+$$\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
+}
+$$
+$$\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2'
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2'
+}{
+  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+}
+$$
+
+Define state of the solver by triple $(\cEnv, \icEnv, \constr_0)$ and such
+ordering of the states:
+\begin{enumerate}
+  \item Number of distinct variables in $\cEnv$, $\icEnv$,$ \constr_0$.
+  \item Depth of $\constr_0$.
+  \item Number of assumptions of given depth in $\cEnv$ and $\icEnv$.
+  \item Number of assumptions of given depth in $\cEnv$.
+\end{enumerate}
+
+Then by analysing each rule we can see the reductions always arrive in a smaller
+state.
+
+\section{Implementation}
+
+TODO: Description of the special environment  $\icEnv$ and occurs check
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Higher Order Logic}
+
+\section{Kinds}
+\section{Subkinding}
+
+\section{Formulas}
+
+\section{Fixpoint}
+
+
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Proof theory}
+
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Proof assistant}
+
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Example: Progress and Preservation of STLC}
+
+\dots
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Conclusion and future work}
+
+\dots
+
+%%%%% BIBLIOGRAFIA
+
+\begin{thebibliography}{1}
+\bibitem{example} \ldots
+\end{thebibliography}
+
+\end{document}
