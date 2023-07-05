@@ -60,16 +60,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Introduction}
 
-Problem statement
+\section{Problem statement}
+\dots
 
-Motivation
-
-Related work (logiki nominalne i permutacje)
-
-
-Contributions
-
+\section{Motivation}
 % Przykłady machania rękoma nad wiązaniem zmiennych w innych tekstach jako motywacja do tej pracy
+\dots
+
+\section{Related work}
+\subsection{Nominal logics \& permutations}
+
+\section{Contributions}
+\dots
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Terms and constraints}
@@ -90,12 +92,12 @@ as apposed to \textit{atoms}.
 
 Terms are given by the following grammar: \\
 \begin{tabular}{rclr}
-    $\perm$    & $::=$ & $\permid
-                   \bnfor \permswp{\atomexp}{\atomexp}{\perm}$
+    $\perm$    & $\deff$ & $\permid
+                   \bnfor \permswap{\atomexp}{\atomexp}{\perm}$
         & (permutations) \\
-    $\atomexp$ & $::=$ & $\perm \apperm \atomv$
+    $\atomexp$ & $\deff$ & $\perm \apperm \atomv$
         & (atom expressions) \\
-    $\term$    & $::=$ & $\atomexp
+    $\term$    & $\deff$ & $\atomexp
                    \bnfor \perm \apperm \termv
                    \bnfor \tbind{\atomexp} \term
                    \bnfor \term \tapp \term
@@ -117,7 +119,7 @@ order and its logical model.
 Constraints are given by the following grammar:
 \\
 \begin{tabular}{rclr}
-    $\constr$  & $::=$ & $\atomexp \cfresh \term
+    $\constr$  & $\deff$ & $\atomexp \cfresh \term
                    \bnfor \term \ceq \term
                    \bnfor \term \csheq \term
                    \bnfor \term \cshlt \term$
@@ -152,16 +154,14 @@ with following semantics:
 We use metavariable $\cEnv$ for finite sets of constraints.
 
 
-TODO: Explain Model
-
 \begin{tabular}{rclr}
-$\semterm$ & $::=$ & $\sematom
+$\semterm$ & $\deff$ & $\sematom
                \bnfor n
                \bnfor \stbind \semterm
                \bnfor \semterm \stapp \semterm
                \bnfor \symb$
     & (semantic terms) \\
-$\shape$   & $::=$ & $\shatom
+$\shape$   & $\deff$ & $\shatom
                \bnfor \shbind \shape
                \bnfor \shape \shapp \shape
                \bnfor \symb$
@@ -236,12 +236,12 @@ than those occuring in formulas and kinds,
 main difference being use of \textit{shapes} instead of terms for shape constraints.
 Solver contraints and shapes are given by the following grammar: \\
 \begin{tabular}{rclr}
-  $\sconstr$ & $::=$ & $\atomexp \cfresh \term
+  $\sconstr$ & $\deff$ & $\atomexp \cfresh \term
   \bnfor \term \ceq \term
   \bnfor \shape \csheq \shape
   \bnfor \shape \cshlt \shape$
       & (solver constraints) \\
-  $\shape$      & $::=$ & $\shatom
+  $\shape$      & $\deff$ & $\shatom
                  \bnfor  \termv
                  \bnfor \shbind \shape
                  \bnfor \shape \tapp \shape
@@ -284,9 +284,9 @@ is as simple as checking if the goal occurs on the left side of the turnstile.
 
 $$
 \inferrule{
-  \constr \in \icEnv
+  \sconstr \in \icEnv
 }{
-  \cEnv ; \icEnv \vDash \constr
+  \cEnv ; \icEnv \vDash \sconstr
 }
 $$
 Decidability of atom equality plays an important role in the reduce
@@ -306,7 +306,7 @@ $$
   \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_2 = \atomexp \\
   \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 = \atomexp
 }{
-  \cEnv ; \icEnv \vDash \atomv = \permswp{\atomexp_1}{\atomexp_2}{}\atomexp
+  \cEnv ; \icEnv \vDash \atomv = \permswap{\atomexp_1}{\atomexp_2}{}\atomexp
 }
 $$
 $$
@@ -326,7 +326,7 @@ $$
 \inferrule{
   \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \term_2
   \\
-  \cEnv ; \icEnv \vDash \term_1 = \permswp{\atomexp_1}{\atomexp_2} \term_2
+  \cEnv ; \icEnv \vDash \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
 }{
   \cEnv ; \icEnv \vDash \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
 }
@@ -380,7 +380,7 @@ $$\inferrule{
   \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \atomexp \\
                           \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \atomexp
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \permswp{\atomexp_1}{\atomexp_2}{} \atomexp
+  \cEnv ; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{} \atomexp
 }
 $$
 $$\inferrule{
@@ -394,11 +394,11 @@ $$\inferrule{
   \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \pi \termv \\
                           \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \pi \termv
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \permswp{\atomexp_1}{\atomexp_2}{\pi} \termv
+  \cEnv ; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{\pi} \termv
 }
 $$
 $$\inferrule{
-  \atomv \cfresh \atomexp, \cEnv ; \icEnv \vDash \atomv \cfresh \term
+  \atomv \cneq \atomexp, \cEnv ; \icEnv \vDash \atomv \cfresh \term
 }{
   \cEnv ; \icEnv \vDash \atomv \cfresh \tbind{\atomexp}{\term}
 }
@@ -418,7 +418,8 @@ $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % solver goal shape
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-$$\inferrule{
+$$
+\inferrule{
   \termv_1 \csheq \termv_2 \in \icEnv
 }{
   \cEnv ; \icEnv \vDash \termv_1 \csheq \termv_2
@@ -502,12 +503,290 @@ $$\inferrule{
   \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
 }
 $$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver assm eq
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+\inferrule{
+  \atomv_1 \cneq \atomv_2 \in \icEnv
+}{
+  \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+   \cEnv \subst{\atomv_1}{\atomv_2}; \icEnv\subst{\atomv_1}{\atomv_2} \vDash \sconstr\subst{\atomv_1}{\atomv_2}
+}{
+  \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
+                           \atomv \ceq  \atomexp_2, \atomexp_1 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv \ceq \permswap{\atomexp_1}{\atomexp_1} \atomexp, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \atomv \ceq \pi^{-1} \atomexp, \cEnv ; \icEnv \vDash \sconstr
+}{
+  \pi \atomv \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+}{
+   \atomv \ceq \term_1 \term_2, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+}{
+   \atomv \ceq \tbind{\atomexp} \term , \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+}{
+   \atomv \ceq \symb , \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \vDash \text{ idempotent on } \termv
+}{
+   \termv = \pi \termv, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+  \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
+}{
+   \termv = \pi \termv, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+   \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term} \vDash \sconstr\subst{\termv}{\term}
+}{
+   \termv = \term, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+   \termv = \pi^{-1} \term, \cEnv ; \icEnv \vDash \sconstr
+}{
+   \pi \termv = \term, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+   \atomexp_1 \cfresh \tbind{\atomexp_2} \term_2,\; \term_1 = \permswap{\atomexp_1}{\atomexp_2}\term_2 , \; \cEnv ; \icEnv \vDash \sconstr
+}{
+   \tbind{\atomexp_1} \term_1 \ceq \tbind{\atomexp_2} \term_2 , \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+$$
+\inferrule{
+  \term_1 \ceq \term_2 , \; \term_1' \ceq \term_2', \;\cEnv ; \icEnv \vDash \sconstr
+}{
+   \term_1 \term_1' \ceq \term_2 \term_2' , \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+$$
+\inferrule{
+  \symb_1 \neq \symb_2
+}{
+  \symb_1 \ceq \symb_2 , \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+}{
+  \symb\ceq \symb , \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver permutation idempotent
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+\inferrule{
+  (\forall \atomv \in \pi.\;
+    \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
+    \cEnv ; \icEnv \vDash \atomv \cfresh \termv), \cEnv ; \icEnv \vDash \sconstr
+}{
+\pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver assm fresh
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+\inferrule{
+}{
+  \atomv \cneq \atomv, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+  \cEnv ; \atomv_1 \cneq \atomv_2 \cup \icEnv \vDash \sconstr
+}{
+  \atomv_1 \cneq \atomv_2, \; \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+  \cEnv ; \atomv \cfresh \termv \cup \icEnv \vDash \sconstr
+}{
+  \atomv \cfresh \termv, \; \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \cfresh \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \cfresh \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
+                           \atomv \ceq  \atomexp_2, \atomexp_1 \cfresh \atomexp, \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv \cfresh \permswap{\atomexp_1}{\atomexp_1} \atomexp, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \cfresh \termv, \cEnv ; \icEnv \vDash \sconstr \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \cfresh \termv, \cEnv ; \icEnv \vDash \sconstr \\
+                           \atomv \ceq  \atomexp_2, \atomexp_1 \cfresh \termv, \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv \cfresh \permswap{\atomexp_1}{\atomexp_1} \termv, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \atomv \cfresh \atomexp, \; \cEnv ; \icEnv \vDash \sconstr \\
+  \atomv \cfresh \atomexp, \;\atomv \cfresh \term \cup \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv \cfresh \tbind{\atomexp} \term , \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \atomv \cfresh \term_1 , \cEnv ; \icEnv \vDash \sconstr \\
+  \atomv \cfresh \term_2 , \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv \cfresh \term_1 \term_2 , \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv \cfresh \symb, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver assm shape eq
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+\inferrule{
+  \cEnv ; \termv_1 \csheq \termv_2 \cup \icEnv \vDash \sconstr
+}{
+  \termv_1 \csheq \termv_2, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+  \cEnv ; \termv \csheq \shape \cup \icEnv \vDash \sconstr
+}{
+  \termv \csheq \shape,\; \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv_1 \csheq \atomv_2, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+$$
+\inferrule{
+  \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr
+}{
+  \shbind\term_1 \csheq \shbind\term_2, \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+$$
+\inferrule{
+  \term_1  \csheq \term_2 , \cEnv ; \icEnv \vDash \sconstr \\
+  \term_1' \csheq \term_2', \cEnv ; \icEnv \vDash \sconstr
+}{
+  \term_1 \term_1' \csheq \term_2\term_2', \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+$$
+\inferrule{
+  \symb_1 \neq \symb_2
+}{
+  \symb_1 \csheq \symb_2 , \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+}{
+  \symb \csheq \symb , \cEnv ; \icEnv \vDash \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solver assm shape eq
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+\inferrule{
+  \cEnv ; \term \cshlt \termv \cup \icEnv \vDash \sconstr
+}{
+  \term \cshlt \termv, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr \\
+  \term_1 \cshlt \term_2, \cEnv ; \icEnv \vDash \sconstr
+}{
+  \term_1 \cshlt \shbind \term_2, \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+  \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr \\
+  \term_1 \csheq \term_2', \cEnv ; \icEnv \vDash \sconstr \\
+  \term_1 \cshlt \term_2, \cEnv ; \icEnv \vDash \sconstr \\
+  \term_1 \cshlt \term_2', \cEnv ; \icEnv \vDash \sconstr
+}{
+  \term_1 \cshlt \term_2 \term_2', \cEnv ; \icEnv \vDash \sconstr
+}
+$$
+$$
+\inferrule{
+}{
+  \term \cshlt \atomexp ; \icEnv \vDash \sconstr
+}
+\qquad
+\inferrule{
+}{
+  \term \cshlt \symb ; \icEnv \vDash \sconstr
+}
+$$
 
-Define state of the solver by triple $(\cEnv, \icEnv, \constr_0)$ and such
+TODO: explain what is $\sconstr \cup \icEnv$
+
+Define state of the solver by triple $(\cEnv, \icEnv, \sconstr_0)$ and such
 ordering of the states:
 \begin{enumerate}
-  \item Number of distinct variables in $\cEnv$, $\icEnv$,$ \constr_0$.
-  \item Depth of $\constr_0$.
+  \item Number of distinct variables in $\cEnv$, $\icEnv$,$ \sconstr_0$.
+  \item Depth of $\sconstr_0$.
   \item Number of assumptions of given depth in $\cEnv$ and $\icEnv$.
   \item Number of assumptions of given depth in $\cEnv$.
 \end{enumerate}
@@ -517,7 +796,7 @@ state.
 
 \section{Implementation}
 
-TODO: Description of the special environment  $\icEnv$ and occurs check
+TODO: Description of the special operations over environment $\icEnv$ and occurs check
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
