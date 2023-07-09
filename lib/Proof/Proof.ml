@@ -296,5 +296,5 @@ module Axiom = struct
         ; "  ∨"
         ; "  app: (exists e1 e2 : term. e = e1 e2)"
         ; "  ∨"
-        ; "  symbol: (symbol? e)" ]
+        ; "  symbol: (symbol e)" ]
 end

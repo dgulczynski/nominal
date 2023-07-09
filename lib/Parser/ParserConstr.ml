@@ -21,7 +21,7 @@ let constr =
     let* alpha1, alpha2 = binop (permuted identifier) "=/=" (permuted identifier) in
     return $ PC_AtomNeq (alpha1, alpha2)
   and c_symbol =
-    let* _ = string "symbol?" *> whitespace in
+    let* _ = string "symbol" *> whitespace in
     let* t = term in
     return $ PC_Symbol t
   in

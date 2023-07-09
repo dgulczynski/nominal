@@ -24,7 +24,7 @@ val is_neq : t -> atom -> atom -> bool
 (** [is_neq env a1 a2] returns [true] iff there is assumption [a1 =/= a2] in [env] *)
 
 val is_symbol : t -> var -> bool
-(** [is_symbol x] returns [true] iff there is assumption [symbol? x] in [env] *)
+(** [is_symbol x] returns [true] iff there is assumption [symbol x] in [env] *)
 
 val subst_atom : atom -> atom -> t -> t option
 (** [subst_atom a1 a2 env] performs substitution [{a1 -> a2}] over all assumptions in [env]

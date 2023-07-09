@@ -71,25 +71,36 @@ let remove_subshapes = on_subshapes % VarMap.remove
 
 let remove_shape = on_shape % VarMap.remove
 
+(* x_Δ := y_Δ  when Δ.varshape(x) = y *)
+(* x_Δ := x    when Δ.varshape(x) = ∅ *)
 let rec get_varshape env x =
   match VarMap.find_opt x env.varshapes with
   | Some x' -> get_varshape env x'
   | None -> x
 
+(* (x ~ s) ∈ Δ := Δ.shape(x_Δ) = s *)
 let get_shape env x =
   let x = get_varshape env x in
   VarMap.find_opt x env.shape
 
+(* Δ|x| := Δ|y| when Δ.varshape(x) = y *)
+(* Δ|x| := s    when Δ.shape(x) = s    *)
+(* Δ|x| := x    otherwise              *)
 let get_shape_def env x =
   let x = get_varshape env x in
   let default = S_Var x in
   Option.value ~default $ get_shape env x
 
+(* (s < x) ∈ Δ := s ∈ Δ.subshape(x_Δ) *)
 let rec get_subshapes env x =
   match VarMap.find_opt x env.subshapes with
   | Some shapes -> List.map (rebuild_shape env) shapes
   | None -> []
 
+(* Δ|_|     := _           *)
+(* Δ|_.s|   := _.Δ|s|      *)
+(* Δ|s1 s2| := Δ|s1| Δ|s2| *)
+(* Δ|f|     := f           *)
 and rebuild_shape env = function
   | S_Var x -> get_shape_def env x
   | S_Atom -> S_Atom
@@ -111,13 +122,16 @@ let rec vars_of_shape = function
   | S_App (s1, s2) -> List.merge compare (vars_of_shape s1) (vars_of_shape s2)
   | S_Fun _ -> []
 
+(* (a1 =/= a2) ∈ Δ := (a1 =/= a2) ∈ Δ.neq_atoms *)
 let is_neq env a1 a2 = List.exists (pair_eq ( = ) (a1, a2)) env.neq_atoms
 
+(* (a # x) ∈ Δ := x ∈ Δ.fresh(a) *)
 let is_fresh env a x =
   match AtomMap.find_opt a env.fresh with
   | None -> false
   | Some xs -> List.mem x xs
 
+(* (symbol x) ∈ Δ := x_Δ ∈ Δ.symbols *)
 let is_symbol env x =
   let x = get_varshape env x in
   List.exists (( = ) x % get_varshape env) env.symbols
@@ -128,17 +142,20 @@ let rec syntactic_occurs_check x = function
   | S_App (s1, s2) -> syntactic_occurs_check x s1 || syntactic_occurs_check x s2
   | S_Atom | S_Fun _ -> false
 
-let rec occurs_check env x t =
+let rec occurs_check env x s =
+  (*  x_Δ occurs syntactically in Δ|s|  *)
+  (* ---------------------------------- *)
+  (*          Δ |= x occurs in s        *)
   let x = get_varshape env x in
-  (*                    x_i occurs syntactically in t                  *)
-  (* ---------------------------------------------------------------- *)
-  (*  G, [t_1, ..., t_n] < [x_1 ~...~ x ~...~ x_m] ; x ~ t, C |- c  *)
-  syntactic_occurs_check x (rebuild_shape env t) || List.exists (occurs_check_subshapes env x) $ vars_of_shape t
+  let s = rebuild_shape env s in
+  syntactic_occurs_check x s || List.exists (occurs_check_subshapes env x) $ vars_of_shape s
 
 and occurs_check_subshapes env x y =
-  (*      y occurs syntactically in t       G |- x occurs in t_i       *)
-  (* ---------------------------------------------------------------- *)
-  (*  G, [t_1, ..., t_n] < [y_1 ~...~ y ~...~ y_m] ; x ~ t, C |- c  *)
+  (*  y occurs syntactically in Δ|s| *)
+  (*        s' ∈ Δ.subshapes(y)      *)
+  (*        Δ |= x occurs in s'      *)
+  (* ------------------------------- *)
+  (*        Δ |= x occurs in s       *)
   List.exists (occurs_check env x) $ get_subshapes env y
 
 let add_to_list_map update a = function
@@ -150,68 +167,97 @@ let add_to_list_map update a = function
 
 let add_to_subshapes = on_subshapes %% add_to_list_map VarMap.update
 
-let add_subshape t x env =
+(* (s < x) ∪ Δ := ↯                                               when Δ |= x occurs in s *)
+(* (s < x) ∪ Δ := ↯                                               when x_Δ ∈ Δ.symbols    *)
+(* (s < x) ∪ Δ := Δ[subshapes(x_Δ) += s]                          when Δ.shape(x_Δ) = ∅   *)
+(* (s < x) ∪ Δ := Δ[subshapes(x_Δ) += s, assumptions += (s < s')] when Δ.shape(x_Δ) = s'  *)
+let add_subshape s x env =
   let x = get_varshape env x in
-  if occurs_check env x t then None
+  if occurs_check env x s then None
   else if is_symbol env x then None
   else
     let assms =
       match get_shape env x with
-      | Some sx -> [t <: sx]
+      | Some sx ->
+        [s <: sx]
+        (* Note: this should not be thought as  adding a new constraint to solver    *)
+        (* but rather a way of finding the actual form of the (s < x) to be (s < sx) *)
       | None -> []
     in
-    Some (add_to_subshapes x [t] env, assms)
+    Some (add_to_subshapes x [s] env, assms)
 
+(* (a # x) ∪ Δ := Δ[fresh(a) += x] *)
 let add_fresh a x = on_fresh $ add_to_list_map AtomMap.update a [x]
 
 let add_neq_atoms a1 a2 = on_neq_atoms $ merge [(a1, a2)]
 
+(* (a =/= a) ∪ Δ := ↯                      *)
+(* (a =/= b) ∪ Δ := Δ[neq_atoms += (a =/= b)] *)
 let add_neq a1 a2 = function
   | _ when a1 = a2 -> None
   | env -> Some (add_neq_atoms a1 a2 env)
 
 let add_symbol t = on_symbols $ merge [t]
 
+(* Δ.symbols{x ~> s} := Δ[symbols -= {x}, assumptions += (symbol s)] when x ∈ Δ.symbols *)
+(* Δ.symbols{x ~> s} := Δ                                            when x ∉ Δ.symbols *)
 let set_var_shape_in_symbols x s env =
   let xs, symbols_without_x = yank x env.symbols in
   (set_symbols symbols_without_x env, if null xs then [] else [symbol s])
 
+(* Δ.subshapes{x ~> s} := Δ[assumptions += Δ.subshapes(x).map(fun s_x -> s_x < s)] *)
 let set_var_shape_in_subshapes x s env =
   let subshape_new_shape x_subshape = x_subshape <: s in
   (env, List.map subshape_new_shape $ get_subshapes env x)
 
+(* Δ.shapes{x ~> s} := Δ[assumptions += (s ~ s')] when Δ.shape(x) = s' *)
+(* Δ.shapes{x ~> s} := Δ[shapes[x -> s]]          when Δ.shape(x) = ∅ *)
 let set_var_shape_in_shape x s env =
   match get_shape env x with
   | Some sx -> (env, [s =~: sx])
   | None -> (on_shape (VarMap.add x s) env, [])
 
-let merge_shapes x y env =
+(* Δ.transfer_shape(x ~> y) := Δ.shapes{y ~> s} when Δ.shape(x) = s *)
+(* Δ.transfer_shape(x ~> y) := Δ                when Δ.shape(x) = ∅ *)
+let transfer_shape x y env =
   match get_shape env x with
   | Some x_shape -> set_var_shape_in_shape y x_shape env
   | None -> (env, [])
 
+(* (x ~ y) ∪ Δ := Δ when x_Δ = y_Δ             *)
+(* (x ~ y) ∪ Δ := Δ when Δ|x| = Δ|y|           *)
+(* (x ~ y) ∪ Δ := ↯ when x_Δ occurs in Δ|y|    *)
+(* (x ~ y) ∪ Δ := ↯ when y_Δ occurs in Δ|x|    *)
+(* (x ~ y) ∪ Δ := Δ' otherwise                 *)
+(* where Δ' = Δ.symbols{x_Δ ~> Δ|y|}          *)
+(*             .subshapes{x_Δ ~> Δ|y|}        *)
+(*             .transfer_shape(x_Δ ~> y_Δ)    *)
+(*             [ shape.remove(x_Δ)            *)
+(*             , subshape.remove(x_Δ)         *)
+(*             , varshape[x_Δ -> y_Δ]         *)
+(*             ]                              *)
 let add_same_shape x y env =
-  (*       G; C |- c          x ∈ zs     y ∈ zs    G, [ts] < [zs]; C |- c  *)
-  (* ------------------      --------------------------------------------- *)
-  (*  G; x ~ x, C |- c               G, [ts] < [zs]; x ~ y, C |- c         *)
   if x = y then Some (env, [])
   else
     let x = get_varshape env x in
     let y = get_varshape env y in
     if x = y then Some (env, [])
     else
-      (* G |- x ∈ y G |- y ∈ x *)
-      (* --------------------     -------------------- *)
-      (*  G; x ~ y, C |- c        G; x ~ y, C |- c   *)
       let x_shape = get_shape_def env x in
       let y_shape = get_shape_def env y in
       if occurs_check env x y_shape || occurs_check env y x_shape then None
       else
+        let env, symbol_assms = set_var_shape_in_symbols x y_shape env in
         let env, subshape_assms = set_var_shape_in_subshapes x y_shape env in
-        let env, shape_assms = merge_shapes x y env in
+        let env, shape_assms = transfer_shape x y env in
         let env = set_varshape x y % remove_shape x % remove_subshapes x $ env in
-        Some (env, shape_assms @ subshape_assms)
+        Some (env, symbol_assms @ shape_assms @ subshape_assms)
 
+(* (x ~ s) ∪ Δ := ↯ when x occurs in s  *)
+(* (x ~ s) ∪ Δ := Δ' otherwise          *)
+(* where Δ' = Δ.symbols{x_Δ ~> Δ|s|}   *)
+(*             .subshapes{x_Δ ~> Δ|s|} *)
+(*             .shapes{x_Δ ~> Δ|s|}    *)
 let set_var_shape x s env =
   let x = get_varshape env x in
   match rebuild_shape env s with
@@ -223,6 +269,7 @@ let set_var_shape x s env =
     let env, shape_assms = set_var_shape_in_shape x s env in
     Some (env, symbol_assms @ shape_assms @ subshape_assms)
 
+(* Δ.fresh{x -> t} := (U_{(a # xs) ∈ Δ.fresh | x ∈ xs} (a # t)) ∪ Δ[fresh.map(fun (a # xs) -> (a # xs - {x})] *)
 let sub_var_in_fresh x t env =
   let sub_in_fresh a xs (fresh, assms) =
     let xs, ys = yank x xs in
@@ -232,24 +279,29 @@ let sub_var_in_fresh x t env =
   let fresh, fresh_assms = AtomMap.fold sub_in_fresh env.fresh (AtomMap.empty, []) in
   (set_fresh fresh env, fresh_assms)
 
+(* Δ {x -> t} := (x ~ Δ||t||) ∪ Δ.fresh{x -> t} *)
 let subst_var x t env =
   let s = shape_of_term env t in
   let env, fresh_assms = sub_var_in_fresh x t env in
-  on_snd (( @ ) fresh_assms) <$> set_var_shape x s env
+  on_snd (List.append fresh_assms) <$> set_var_shape x s env
 
+(* (x1 ~ x2) ∈ Δ := x1_Δ := x2_Δ*)
 let are_same_shape env x1 x2 = x1 = x2 || get_varshape env x1 = get_varshape env x2
 
-let subst_atom a b env =
-  let sub_atom_in_neq env =
-    let sub c = if c = a then b else c in
-    let add_neq env (a1, a2) = env >>= add_neq (sub a1) (sub a2) in
-    List.fold_left add_neq (some $ set_neq_atoms [] env) env.neq_atoms
-  and sub_atom_in_fresh env =
-    match AtomMap.find_opt a env.fresh with
-    | None -> env
-    | Some xs -> on_fresh (add_to_list_map AtomMap.update b xs % AtomMap.remove a) env
-  in
-  sub_atom_in_neq $ sub_atom_in_fresh env
+(* Δ.neq_atoms {a -> b} := (U_{(a1 =/= a2) in Δ.neq_atoms} (a1{a -> b} =/= a2{a -> b})) ∪ Δ[neq_atoms = ∅] *)
+let sub_atom_in_neq a b env =
+  let sub c = if c = a then b else c in
+  let add_neq env (a1, a2) = env >>= add_neq (sub a1) (sub a2) in
+  List.fold_left add_neq (some $ set_neq_atoms [] env) env.neq_atoms
+
+(* Δ.fresh {a -> b} := Δ[fresh.remove(a).(b) += Δ.fresh(a)] *)
+let sub_atom_in_fresh a b env =
+  match AtomMap.find_opt a env.fresh with
+  | None -> env
+  | Some xs -> on_fresh (add_to_list_map AtomMap.update b xs % AtomMap.remove a) env
+
+(* Δ {a -> b} := Δ.fresh{a -> b}.neq_atoms{a -> b} *)
+let subst_atom a b = sub_atom_in_neq a b % sub_atom_in_fresh a b
 
 let set_var_symbol x env =
   let env = add_symbol x env in
