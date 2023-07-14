@@ -104,7 +104,7 @@ let constr_imp_e c_proof c_imp_proof =
   let c = to_constr $ label c_proof in
   match label c_imp_proof with
   | F_ConstrImpl (_c, f) when _c = c ->
-    let env = union (env c_proof) (env c_imp_proof) |> remove_constraints (( = ) c) in
+    let env = union (env c_proof) (env c_imp_proof) in
     P_ConstrApply ((env, f), c_proof, c_imp_proof)
   | f -> raise_in_env (env c_proof) $ premise_mismatch (F_Constr c) f
 
@@ -227,9 +227,6 @@ let or_e or_proof ps =
       let env, disjunction = judgement or_proof in
       raise_in_env env $ formula_mismatch disjunction f
 
-(*   G, x, forall y:term. [y < x] => f(y) |- f(x)  *)
-(* ----------------------------------------------- *)
-(*          G |-  forall x : term. f(x)            *)
 let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, V y)) p =
   let f_x = label p in
   let f_y = (V x |=> var (V y)) f_x in
