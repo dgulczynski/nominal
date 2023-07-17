@@ -28,6 +28,7 @@
 \usepackage{stmaryrd} % For \llbracket
 \usepackage{macros}
 \usepackage{mathpartir}
+\usepackage{mathtools}
 \usepackage{listings}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
@@ -129,7 +130,7 @@ Constraints are given by the following grammar:
 with following semantics:
 \begin{eqnarray*}
   \atomexp \cfresh \term & \text{---} & \text{
-    atom $\atomexp$ is fresh in term $\term$, i.e. does not occur in $\term$
+    atom $\atomexp$ is {Fresh} in term $\term$, i.e. does not occur in $\term$
     as a free variable
   } \\
   \term_1 \ceq \term_2 & \text{---} &\text{
@@ -263,7 +264,7 @@ Irreducible constraints are:
     atoms $\atomv_1$ and $\atomv_2$ are different
   } \\
   \atomv   \cfresh \termv   & \text{---} & \text{
-    atom $\atomv$ is fresh in variable $\termv$
+    atom $\atomv$ is {Fresh} in variable $\termv$
   } \\
   \termv_1 \csheq  \termv_2 & \text{---} & \text{
     variables $\termv_1$ and $\termv_2$ posses the same shape
@@ -367,7 +368,7 @@ $$
 }
 $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% solver goal fresh
+% solver goal {Fresh}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 $$\inferrule{
   \atomv_1 \cneq \atomv_2 \in \icEnv
@@ -621,7 +622,7 @@ $$
 }
 $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% solver assm fresh
+% solver assm {Fresh}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 $$
 \inferrule{
@@ -630,13 +631,13 @@ $$
 }
 \qquad
 \inferrule{
-  \cEnv ; \atomv_1 \cneq \atomv_2 \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\atomv_1 \cneq \atomv_2\} \cup \icEnv \vDash \sconstr
 }{
   \atomv_1 \cneq \atomv_2, \; \cEnv ; \icEnv \vDash \sconstr
 }
 \qquad
 \inferrule{
-  \cEnv ; \atomv \cfresh \termv \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\atomv \cfresh \termv\} \cup \icEnv \vDash \sconstr
 }{
   \atomv \cfresh \termv, \; \cEnv ; \icEnv \vDash \sconstr
 }
@@ -662,7 +663,7 @@ $$
 $$
 \inferrule{
   \atomv \cfresh \atomexp, \; \cEnv ; \icEnv \vDash \sconstr \\
-  \atomv \cfresh \atomexp, \;\atomv \cfresh \term \cup \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \atomexp, \; \atomv \cfresh \term,\;\cEnv ; \icEnv \vDash \sconstr
 }{
   \atomv \cfresh \tbind{\atomexp} \term , \cEnv ; \icEnv \vDash \sconstr
 }
@@ -687,13 +688,13 @@ $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 $$
 \inferrule{
-  \cEnv ; \termv_1 \csheq \termv_2 \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\termv_1 \csheq \termv_2\} \cup \icEnv \vDash \sconstr
 }{
   \termv_1 \csheq \termv_2, \cEnv ; \icEnv \vDash \sconstr
 }
 \qquad
 \inferrule{
-  \cEnv ; \termv \csheq \shape \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\termv \csheq \shape\} \cup \icEnv \vDash \sconstr
 }{
   \termv \csheq \shape,\; \cEnv ; \icEnv \vDash \sconstr
 }
@@ -745,7 +746,7 @@ $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 $$
 \inferrule{
-  \cEnv ; \term \cshlt \termv \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\term \cshlt \termv\} \cup \icEnv \vDash \sconstr
 }{
   \term \cshlt \termv, \cEnv ; \icEnv \vDash \sconstr
 }
@@ -771,16 +772,24 @@ $$
 $$
 \inferrule{
 }{
-  \term \cshlt \atomexp ; \icEnv \vDash \sconstr
+  \term \cshlt \atomexp, \cEnv ; \icEnv \vDash \sconstr
 }
 \qquad
 \inferrule{
 }{
-  \term \cshlt \symb ; \icEnv \vDash \sconstr
+  \term \cshlt \symb, \cEnv ; \icEnv \vDash \sconstr
 }
 $$
 
-TODO: explain what is $\sconstr \cup \icEnv$
+TODO: explain what is $\{\sconstr\} \cup \icEnv$
+Additional rule for ariving in contradictory $\icEnv$:
+$$
+\inferrule{
+}{
+  \cEnv ; \lightning \vDash \sconstr
+}
+$$
+
 
 Define state of the solver by triple $(\cEnv, \icEnv, \sconstr_0)$ and such
 ordering of the states:
@@ -795,27 +804,424 @@ Then by analysing each rule we can see the reductions always arrive in a smaller
 state.
 
 \section{Implementation}
+Environment $\icEnv$ is a quintuple
+$({NeqAtoms}_{\icEnv}
+, {Fresh}_{\icEnv}
+, {VarShape}_{\icEnv}
+, {Shape}_{\icEnv}
+, {Subshape}_{\icEnv}
+)$ where: \\
+$NeqAtoms$ is a set of pairs of atoms that we know are different, \\
+$Fresh$ is a mapping from atoms to variables that we know the atom is {Fresh} in,\\
+$VarShape$ is a mapping from variables to shape-representative variables (i.e. all variables that are mapped in $VarShape$ to the same variable are of the same shape),\\
+$Shape$ is a mapping from shape-representative variables to shape that we know this variable must have,\\
+$SubShape$ is a mapping from shape-representative variables to sets of shapes that we know this variable must supershape.
+\\
+\\
+\newcommand{\shrep}[2][\icEnv]{\ensuremath{ #2_{#1}}}
+\newcommand{\shenv}[2][\icEnv]{\ensuremath{ |#2|_{#1}}}
+We can now define a way to compute the shape-representative variable:
+$$
+\shrep{\termv} :=
+     \begin{cases}
+      \termv          &\text{if } {VarShape}_{\icEnv}(\termv) = \emptyset \\
+       \shrep{\termv'} &\text{if } {VarShape}_{\icEnv}(\termv) = \termv'
+     \end{cases}
+$$
+And shape-reconstruction:
+\begin{eqnarray*}
+  \shenv{\termv}                 &:=&
+  \begin{cases}
+    \shenv{\termv'} &\text{if } {VarShape}_{\icEnv}(\termv) = \termv' \\
+    \shape          &\text{if } {Shape}_{\icEnv}(\termv) = \shape \\
+    \termv          &\text{otherwise}
+  \end{cases} \\
+  \shenv{\shatom}           &:=& \shatom \\
+  \shenv{\shbind \shape}    &:=& \shbind \shenv{\shape} \\
+  \shenv{\shape_1 \shape_2} &:=& \shenv{\shape_1} \shenv{\shape_2}\\
+  \shenv{\symb}             &:=& \symb \\
+  \shenv{\term}             &:=& \shenv{|\term|}
+\end{eqnarray*}
+\newcommand{\occurs}[2]{\ensuremath{ {#1}\text{ occurs in }{#2}}}
+\newcommand{\stxoccurs}[2]{\ensuremath{ {#1}\text{ occurs syntactically in }{#2}}}
+\newcommand{\pluseq}{\mathrel{+}=}
+\newcommand{\minuseq}{\mathrel{-}=}
+Now we can easily check for irreducible constraints in $\icEnv$:
 
-TODO: Description of the special operations over environment $\icEnv$ and occurs check
+\begin{eqnarray*}
+  (\atomv_1 \cneq \atomv_2) \in \icEnv &:=& (\atomv_1 \cneq \atomv_2) \in {NeqAtoms}_{\icEnv} \\
+  (\atomv \cfresh \termv) \in \icEnv &:=& \termv \in {Fresh}_{\icEnv}(\atomv) \\
+  (\termv_1 \csheq \termv_2) \in \icEnv &:=& \shenv{\termv_1} \ceq \shenv{\termv_2} \\
+  (\termv \csheq \shape) \in \icEnv &:=& \shape = {Shape}_{\icEnv}(\shrep{\termv})\\
+  (\shape \cshlt \termv) \in \icEnv &:=& \shape \in {SubShape}_{\icEnv}(\shrep{\termv})
+\end{eqnarray*}
+
+Now we can define rules for the special occurs check:
+$$
+\inferrule{
+  \stxoccurs{\shrep{\termv}}{\shenv{\shape}}
+}{
+  \icEnv \vDash \occurs{\termv}{\shape}
+}
+$$
+$$
+\inferrule{
+  \stxoccurs{\shrep{\termv'}}{\shenv{\shape}} \\
+  (\shape' \cshlt \termv') \in \icEnv  \\
+  \icEnv \vDash \occurs{\termv}{\shape'}
+}{
+  \icEnv \vDash \occurs{\termv}{\shape}
+}
+$$
+And finally the rules for $\sconstr \cup \icEnv$.
+Note that we are using meta-field of $Assumptions$ to indicate that some of the
+assumptions in $\icEnv$ are no longer "simple" and escape from $\icEnv$ back to
+$\cEnv$ to be broken up by the \textit{Solver}.
+
+$$
+ \{\atomv \cfresh \termv\} \cup \icEnv := \icEnv[{Fresh}(\atomv) \pluseq \termv]
+$$
+$$
+\{\atomv \cneq \atomv'\} \cup \icEnv :=
+  \begin{cases}
+    \lightning &\text{if } \atomv \ceq \atomv'  \\
+    \icEnv[{NeqAtoms} \pluseq (\atomv \cneq \atomv')] &\text{otherwise.}
+  \end{cases}
+$$
+
+\begin{eqnarray*}
+\{\termv \csheq \shape\} \cup \icEnv & := &
+  \begin{cases}
+    \lightning     &\text{if } \icEnv \vDash \occurs{\termv}{\shape} \\
+    \icEnv' &\text{otherwise.}\\
+  \end{cases} \\
+  \text{where } \icEnv' & = & \icEnv .{Symbols} \{\shrep{\termv} \leadsto \shenv{\shape} \}\\
+                        &   & \quad .{Subshapes}\{\shrep{\termv} \leadsto \shenv{\shape} \} \\
+                        &   & \quad .{Shape}    \{\shrep{\termv} \leadsto \shenv{\shape} \}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\{\termv \csheq \termv'\} \cup \icEnv & := &
+  \begin{cases}
+    \icEnv     &\text{if } \shrep{\termv} \ceq \shrep{\termv'} \\
+    \icEnv &\text{if } \shenv{\termv} \ceq \shenv{\termv'} \\
+    \lightning     &\text{if } \occurs{\shrep{\termv}}{\shenv{\termv'}} \\
+    \lightning     &\text{if } \occurs{\shrep{\termv'}}{\shenv{\termv}} \\
+    \icEnv' &\text{otherwise.}\\
+  \end{cases} \\
+  \text{where } \icEnv' & = & \icEnv .{Symbols}     \{\shrep{\termv} \leadsto \shrep{\termv'}\}\\
+                        &   & \quad .{Subshapes}    \{\shrep{\termv} \leadsto \shrep{\termv'}\} \\
+                        &   & \quad .{TransferShape}\{\shrep{\termv} \leadsto \shrep{\termv'}\} \\
+                        &   & \quad [\: {Shape}    \minuseq (\shrep\termv) \\
+                        &   & \quad ,   {SubShape} \minuseq (\shrep\termv) \\
+                        &   & \quad ,   {VarShape} \pluseq  (\shrep\termv \mapsto \shrep\termv') \\
+                        &   & \quad ]
+\end{eqnarray*}
+$$
+\icEnv.{Symbols}\{\termv \leadsto \shape\} :=
+  \begin{cases}
+    \icEnv[{Symbols} \minuseq \termv, {Assumptions} \pluseq \text{symbol } \shape]    &\text{if } \shrep{\termv} \in \icEnv.{Symbols} \\
+    \icEnv &\text{otherwise.}\\
+  \end{cases} \\
+$$
+$$
+\icEnv.{Shape}\{\termv \leadsto \shape\} :=
+  \begin{cases}
+    \icEnv[{Assumptions} \pluseq (\shape \csheq \shape')]    &\text{if } {Shape}_{\icEnv}(\shrep\termv) = \shape' \\
+    \icEnv[{Shapes}      \pluseq (\termv \mapsto \shape)] &\text{otherwise.}\\
+  \end{cases} \\
+$$
+$$
+\icEnv.{SubShapes}\{\termv \leadsto \shape\} :=
+  \icEnv[{Assumptions} \pluseq {Subshapes}_{\icEnv}(\termv) \cshlt \shape]
+$$
+$$
+\icEnv.{TransferShape}\{\termv \leadsto \termv'\} :=
+  \begin{cases}
+    \icEnv.{Shape}\{termv' \leadsto  \shape'\}    &\text{if } {Shape}_{\icEnv}(\shrep\termv) = \shape \\
+    \icEnv &\text{otherwise.}\\
+  \end{cases} \\
+$$
+$$
+\icEnv\{\termv \mapsto \term\} := \{\termv \csheq \shenv{\term} \} \cup \icEnv.{Fresh}\{\termv \mapsto \term\}
+$$
+$$
+\icEnv.{Fresh}\{\termv \mapsto \term\} :=
+ \icEnv[{Fresh}.map(\text{fun } (\atomv \cfresh \mathbb{\termv}) \mapsto \atomv \cfresh (\mathbb{\termv} \setminus \{ \termv\})] \;
+ \cup \bigcup_{\substack{(\atomv \cfresh \mathbb{\termv}) \in {Fresh}_{\icEnv} \\ \termv \in \mathbb{\termv}}}
+    \{ \atomv \cfresh \term \}
+$$
+$$
+\icEnv\{\atomv \mapsto \atomv'\} := \icEnv.{Fresh}\{\atomv \mapsto \atomv'\}.{NeqAtoms}\{\atomv \mapsto \atomv'\}]
+$$
+$$
+\icEnv.{Fresh}\{\atomv \mapsto \atomv'\} := \icEnv[{Fresh} \minuseq \atomv][{Fresh} \pluseq \{\atomv' \cfresh \icEnv.{Fresh}(\atomv)\}]
+$$
+$$
+\icEnv.{NeqAtoms}\{\atomv \mapsto \atomv'\} :=
+\icEnv[{NeqAtoms} = \emptyset] \;
+ \cup \bigcup_{ (\atomv_1 \cneq \atomv_2) \in {NeqAtoms}_{\icEnv}  }
+    \{ \atomv_1\{\atomv \mapsto \atomv'\} \cneq \atomv_2\{\atomv \mapsto \atomv'\}\}
+$$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
 
-\section{Kinds}
-\section{Subkinding}
+On top of sublogic of constraints we build an higher order logic.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Kinds}
+
+\begin{tabular}{rclr}
+$\kind$ & $::=$ & $\kProp
+            \bnfor \kind \karrow \kind
+            \bnfor \kForallAtom{\atomv} \kind
+            \bnfor \kForallTerm{\termv} \kind
+            \bnfor \kGuard{\constr} \kind$
+    & (kinds)
+\end{tabular}
+
+\section{Subkinding}
+\[
+\dfrac{}{\cEnv \vdash \kind \subkind \kind}
+\qquad
+\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2
+  \quad \cEnv \vdash \kind_2 \subkind \kind_3}{
+  \cEnv \vdash \kind_1 \subkind \kind_3}
+\qquad
+\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2}{
+  \cEnv \vdash \kForallAtom{\atomv} \kind_1
+       \subkind \kForallAtom{\atomv} \kind_2}
+\qquad
+\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2}{
+  \cEnv \vdash \kForallTerm{\termv} \kind_1
+       \subkind \kForallTerm{\termv} \kind_2}
+\]
+\[
+\dfrac{\cEnv \vdash \kind_1' \subkind \kind_1
+  \quad \cEnv \vdash \kind_2 \subkind \kind_2'}{
+  \cEnv \vdash \kind_1 \karrow \kind_2 \subkind \kind_1' \karrow \kind_2'}
+\qquad
+\dfrac{\cEnv \vDash \constr}{
+  \cEnv \vdash \kGuard{\constr}\kind \subkind \kind}
+\qquad
+\dfrac{\cEnv, \constr \vdash \kind_1 \subkind \kind_2}{
+  \cEnv \vdash \kind_1 \subkind \kGuard{\constr}\kind_2}
+\]
+
+Note that there is no structural subkinding rule for guarded kinds like
+\[
+\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2}{
+  \cEnv \vdash \kGuard{\constr} \kind_1 \subkind \kGuard{\constr} \kind_2}
+  \textrm{.}
+\]
+Such a rule can be derived from both subkinding rules for guarded kind,
+transitivity, and weakening.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Formulas}
 
+\begin{tabular}{rrlr}
+$\formphi$ & $::=$ & $\bot
+               \bnfor \formphi \vee \formphi
+               \bnfor \formphi \wedge \formphi
+               \bnfor \formphi \fImp \formphi
+               \bnfor \fConstr{\constr}
+               \bnfor \fCAnd{\constr} \formphi
+               \bnfor \fCImp{\constr} \formphi$ & \\
+& $|$ & $             \fForallAtom{\atomv} \formphi
+               \bnfor \fForallTerm{\termv} \formphi
+               \bnfor \fExistsAtom{\atomv} \formphi
+               \bnfor \fExistsTerm{\termv} \formphi
+               \bnfor \ldots$
+    & (formulas)
+\end{tabular}
+
+\[
+\dfrac{}{\cEnv; \kEnv \vdash \fConstr{\constr} \ofkind \kProp}
+\qquad
+\dfrac{\cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp }{
+  \cEnv; \kEnv \vdash \fCAnd{\constr} \formphi \ofkind \kProp}
+\qquad
+\dfrac{\cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp }{
+  \cEnv; \kEnv \vdash \fCImp{\constr} \formphi \ofkind \kProp}
+\qquad
+\dfrac{\cEnv;\kEnv\vdash \formphi \ofkind \kind_1
+  \quad
+  \cEnv\vdash \kind_1 \subkind \kind_2}{
+  \cEnv;\kEnv\vdash \formphi \ofkind \kind_2}
+\]
+
+\begin{tabular}{rrlr}
+$\formphi$ & $::=$ & $\ldots
+               \bnfor \propv
+               \bnfor \fLamAtom{\atomv} \formphi
+               \bnfor \fLamTerm{\termv} \formphi
+               \bnfor \fLamForm{\propv}{\kind} \formphi
+               \bnfor \formphi \fAppAtom{\atomexp}
+               \bnfor \formphi \fAppTerm{\term}
+               \bnfor \formphi \fApp \formphi
+               \bnfor \ldots$
+    & (formulas)
+\end{tabular}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
 
-
-\dots
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Proof theory}
+\chapter{Model}
 
-\dots
+Definition of a model of our logic is bit involved,
+due to presence of subkinding relation.
+We will proceed in two steps.
+First, for each kind $\kind$ we define its \emph{domain} $\kindDom{\kind}$.
+Then we will interpret each kind as a predicate on elements of its domain.
+We fix some Heyting algebra $\PropAlg$
+in which we will interpret propositions.
+Then kind domains are defined in the following way.
+\begin{eqnarray*}
+\kindDom{\kProp}                     & = & \PropAlg \\
+\kindDom{\kind_1 \karrow \kind_2}    & = & \kindDom{\kind_1} \rightarrow \kindDom{\kind_2} \\
+\kindDom{\kForallAtom{\atomv}\kind}  & = & \atomDom          \rightarrow \kindDom{\kind} \\
+\kindDom{\kForallTerm{\termv}\kind}  & = & \termDom          \rightarrow \kindDom{\kind} \\
+\kindDom{\kGuard{\constr}\kind}      & = & \kindDom{\kind}
+\end{eqnarray*}
 
+%%%%%%%%%%%%%%%%%%%%%%%
+And kind interpretation like this:
+\begin{eqnarray*}
+\termMdl{\kProp}{\tmEnv}                      & = & \{ \bot, \top \} \\
+\termMdl{\kind_1 \karrow \kind_2}{\tmEnv}     & = & \{f \mid \forall P \in \termMdl{\kind_1}{\tmEnv}.\: f(P) \in \termMdl{\kind_2}{\tmEnv} \} \\
+\termMdl{\kForallAtom{\atomv}\kind}{\tmEnv}   & = & \{f \mid \forall A \in \atomDom.\: f(A) \in \termMdl{\kind}{\tmEnv[\atomv \mapsto A]}\} \\
+\termMdl{\kForallTerm{\termv}\kind}{\tmEnv}   & = & \{f \mid \forall T \in \termDom.\: f(T) \in \termMdl{\kind}{\tmEnv[\termv \mapsto T]}\} \\
+\termMdl{\kGuard{\constr}\kind}{\tmEnv}       & = & \{x \mid \tmEnv \vDash \constr \implies x \in \termMdl{\kind}{\tmEnv} \}
+\end{eqnarray*}
+
+\newcommand{\rel}[2][\Gamma;C]{\ensuremath{#1\vdash#2}}
+\newcommand{\types}[3][\Gamma]{\rel[#1]{#2 : #3}}
+\newcommand{\interp}[2][\tmEnv]{\left\llbracket {#2} \right\rrbracket_{#1}}
+\newcommand{\arr}{\rightarrow }
+\newcommand{\inference}[2]{\inferrule{ #1}{#2}}
+\newcommand{\all}[1][x]{\ensuremath{\forall #1.\:}}
+\newcommand{\exi}[1][x]{\ensuremath{\exists #1.\:}}
+\newcommand{\karr}{\Rightarrow }
+\newcommand{\lam}[1][x]{\lambda{#1}.\;}
+\newcommand{\fix}[2]{\ensuremath{\text{fix } #1(#2).\;}}
+
+And finally the kind derivation model:
+\begin{eqnarray*}
+\interp{\inferrule{ }{\types{\top}{\kProp}}} & = & \top \\
+\interp{\inference{ }{\types{ \propv}{\Gamma( \propv)}}} & = & \tmEnv(\propv) \\
+    \interp{\inference{}{\types{\constr}{\kProp}}} & = & \texttt{if } \tmEnv \vDash \constr \texttt{ then } \top \texttt{ else } \bot
+\end{eqnarray*}
+
+\begin{eqnarray*}
+    \interp{
+        \inference{D_1 : \types{\phi_1 }{\kProp} \\ D_2 : \types{\phi_2 }{\kProp}
+    }{
+        \types{\phi_1 \wedge \phi_2}{\kProp}}
+    } & = & \interp{D_1} \wedge_\PropAlg \interp{D_2} \\
+    \interp{
+        \inference{D_1 : \types{\phi_1 }{\kProp}  \\ D_2 : \types{\phi_2 }{\kProp}
+    }{
+        \types{\phi_1 \vee \phi_2}{\kProp}}
+    } & = & \interp{D_1} \vee_\PropAlg \interp{D_2} \\
+    \interp{
+        \inference{D_1 : \types{\phi_1 }{\kProp}  \\ D_2 : \types{\phi_2 }{\kProp}
+    }{
+        \types{\phi_1 \Rightarrow \phi_2}{\kProp}}
+    } & = & \interp{D_1} \Rightarrow_\PropAlg \interp{D_2}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+    \interp{
+        \inference{D : \types{\phi}{\kProp}
+    }{
+        \types{\fForallTerm{\termv}\phi}{\kProp}}
+    } & = & \underset{T \in Term}{\bigwedge} {\interp[{\tmEnv [\termv \mapsto T]}]{D}}  \\
+    \interp{
+        \inference{D : \types{\phi}{\kProp}
+    }{
+        \types{\fForallAtom{\atomv}\phi}{\kProp}}
+    } & = & \underset{A \in Atom}{\bigwedge} {\interp[{\tmEnv [\atomv \mapsto A]}]{D}} \\
+    \interp{
+        \inference{D : \types{\phi}{\kProp}
+    }{
+        \types{\fExistsTerm{\termv} \phi}{\kProp}}
+    } & = & \underset{T \in Term}{\bigvee}\interp[{\tmEnv [\termv \mapsto T]}]{D} \\
+    \interp{
+        \inference{D : \types{\phi}{\kProp}
+    }{
+        \types{\fExistsAtom{\atomv} \phi}{\kProp}}
+    } & = & \underset{A \in Atom}{\bigvee} \interp[{\tmEnv [\atomv \mapsto A]}]{D}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+   \interp{
+        \inference{D : \types[\Gamma, c]{\phi}{\kProp}
+    }{
+        \types{[c] \wedge \phi}{\kProp}}
+    } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \bot
+    \\
+    \interp{
+        \inference{D : \types[\Gamma, c]{\phi}{\kProp}
+    }{
+        \types{[c] \Rightarrow \phi}{\kProp}}
+    } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \top
+\end{eqnarray*}
+
+\begin{eqnarray*}
+    \interp{\inference{D : \types{\phi}{\kind_2}}{\types{\lam[\propv]\phi}{\kind_1\karr\kind_2}}} & = &
+    \lambda\;(Q : \interp{\kind_1}).\;\interp[{\tmEnv[\propv\mapsto Q]}]{D}
+    \\
+    \interp{\inference{D: \types{\phi}{\kind}}{\types{\lam[\atomv]\phi}{\kForallAtom{\atomv}\kind}}} & = &
+    \lambda\;(A : Atom).\;\interp[{\tmEnv[\atomv\mapsto A]}]{D}
+    \\
+    \interp{\inference{D: \types{\phi}{\kind}}{\types{\lam[\termv]\phi}{\kForallTerm{\termv}\kind}}} & = &
+    \lambda\;(T : Term).\;\interp[{\tmEnv[\termv\mapsto T]}]{D}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+    \interp{\inference{D_1: \types{\phi_1}{\kind'\karr\kind} \\ D_2: \types{\phi_2}{\kind'}}{\types{\phi_1\;\phi_2}{\kind}}} & = &
+    \interp{D_1}\; \interp{D_2}
+    \\
+    \interp{\inference{D: \types{\phi}{\kForallAtom{\atomv}\kind}}{\types{\phi(\atomexp)}{\kind\{\atomv \mapsto \atomexp\}}}} & = &
+    \interp{D}\;\interp{\atomexp}
+    \\
+    \interp{\inference{D: \types{\phi}{\kForallTerm{\termv}\kind}}{\types{\phi(\term)}{\kind\{\termv \mapsto \term\}}}} & = &
+    \interp{D}\;\interp{\termv}
+\end{eqnarray*}
+
+%  lim w sensie tw kleenego o fixpoincie
+\begin{eqnarray*}
+    \interp{\inference{
+            D : \types[{\Gamma, X : {\all[z]{[z < \termv']}}\;\kind\subst{z}{\termv'}}]\phi\kind
+        }{
+            \types{\fix{X}{\termv'}\phi}{\all[\termv']\kind}
+        }} & = & \lim_{n \rightarrow \infty} f_n
+    \\
+    & & \texttt{ where } f_0(t) = \bot \\
+    & & \texttt{ and } f_{n+1}(t) = \interp[{\tmEnv[X\mapsto f_n, \termv' \mapsto t]}]{D} \\
+    \interp{\inference{
+            D : \types[\Gamma, c]\phi\kind
+        }{
+            \types{\phi}{[c]\kind}
+        }} & = & \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \text{''}\bot\text{''}
+    \\
+    \interp{\inference{
+            D : \types\phi\kind \\
+            \rel[\Gamma] \kind \leq \kind'
+        }{
+            \types{\phi}{\kind'}
+        }} & = &  \interp{D}
+\end{eqnarray*}
+
+\section{Fundamental Theorem}
+For any formula $\phi$, any kind $\kind$, and any environment $\Gamma$, for any kind derivation $D : \types\phi\kind$ under any interpretation $\tmEnv \in \interp[]{\Gamma}$, we have that
+$$
+    \interp{D} \in \interp{\kind}
+$$
+In other words, each kind derivation $D$ has a semantic witness that inhabits the semantic interpretation of $\kind$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Proof assistant}
 
