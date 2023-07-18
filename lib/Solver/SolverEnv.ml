@@ -59,7 +59,8 @@ let set_symbols symbols env = {env with symbols}
 
 let set_varshape x y =
   let rec set x y varshape =
-    if x = y then varshape
+    if x = y then
+      varshape
     else
       match VarMap.find_opt x varshape with
       | None -> VarMap.add x y varshape
@@ -173,8 +174,10 @@ let add_to_subshapes = on_subshapes %% add_to_list_map VarMap.update
 (* (s < x) ∪ Δ := Δ[subshapes(x_Δ) += s, assumptions += (s < s')] when Δ.shape(x_Δ) = s'  *)
 let add_subshape s x env =
   let x = get_varshape env x in
-  if occurs_check env x s then None
-  else if is_symbol env x then None
+  if occurs_check env x s then
+    None
+  else if is_symbol env x then
+    None
   else
     let assms =
       match get_shape env x with
@@ -237,15 +240,18 @@ let transfer_shape x y env =
 (*             , varshape[x_Δ -> y_Δ]         *)
 (*             ]                              *)
 let add_same_shape x y env =
-  if x = y then Some (env, [])
+  if x = y then
+    Some (env, [])
   else
     let x = get_varshape env x in
     let y = get_varshape env y in
-    if x = y then Some (env, [])
+    if x = y then
+      Some (env, [])
     else
       let x_shape = get_shape_def env x in
       let y_shape = get_shape_def env y in
-      if occurs_check env x y_shape || occurs_check env y x_shape then None
+      if occurs_check env x y_shape || occurs_check env y x_shape then
+        None
       else
         let env, symbol_assms = set_var_shape_in_symbols x y_shape env in
         let env, subshape_assms = set_var_shape_in_subshapes x y_shape env in

@@ -6,7 +6,7 @@ open ProverGoal
 open Types
 open Zipper
 
-(** Possibly incomplete proof with the same structure as [proof], but with _holes_. 
+(** Possibly incomplete proof with the same structure as [proof], but with _holes_.
     For ease of development it is exported here, but in future it will be abstract *)
 type incproof =
   | PI_Proven of proof
@@ -208,7 +208,6 @@ and proof_intro jgmt conclusion_proof =
     | _, F_ForallAtom (a, _) -> proven $ forall_atom_i a proof
     | _, F_ForallTerm (x, _) -> proven $ forall_term_i x proof
     | _, F_ConstrImpl (c, _) -> proven $ constr_imp_i c proof
-    | _, F_ConstrAnd (c, _) -> proven $ constr_and_i c proof
     | env, f -> raise $ not_an_implication f (ProofEnv.all_identifiers env) )
   | incproof -> PI_Intro (jgmt, incproof)
 
@@ -224,7 +223,7 @@ and proof_apply jgmt imp_proof premise_proof =
 
 and proof_constr_and jgmt c_proof f_proof =
   match (normalize c_proof, normalize f_proof) with
-  | PI_Proven c_proof, PI_Proven f_proof -> proven (constr_and_i (to_constr $ label c_proof) f_proof)
+  | PI_Proven c_proof, PI_Proven f_proof -> proven (constr_and_i c_proof f_proof)
   | c_proof, f_proof -> PI_ConstrAnd (jgmt, c_proof, f_proof)
 
 and proof_specialize_atom jgmt (a : permuted_atom) universal_proof =
@@ -356,7 +355,8 @@ let rec find_hole_in_proof context = function
     let context_from zipper = PC_And (jgmt, zipper, context) in
     find_hole_in_many proofs proof_from context_from
   | PI_OrElim (jgmt, or_proof, proofs) ->
-    if hasHoles or_proof then find_hole_in_proof (PC_OrElim (jgmt, context, proofs)) or_proof
+    if hasHoles or_proof then
+      find_hole_in_proof (PC_OrElim (jgmt, context, proofs)) or_proof
     else
       let proof_from proofs = (incproof_to_proof $ proof_or_elim jgmt or_proof proofs, context) in
       let context_from zipper = PC_OrElimDisjunct (jgmt, or_proof, zipper, context) in

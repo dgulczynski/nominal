@@ -31,7 +31,8 @@ let constrs_eq_in_env env c1 c2 =
   | C_AtomEq _, _ | C_Shape _, _ | C_Subshape _, _ | C_AtomNeq _, _ | C_Eq _, _ | C_Fresh _, _ | C_Symbol _, _ -> false
 
 let rec computeWHNF env n f =
-  if n <= 0 then (env, 0, f)
+  if n <= 0 then
+    (env, 0, f)
   else
     match f with
     | F_Top

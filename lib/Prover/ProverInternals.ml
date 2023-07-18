@@ -20,7 +20,8 @@ let unfinished goal context = S_Unfinished {goal; context}
 
 let finished jgmt proof =
   let env, f = jgmt in
-  if f ==== label proof <| env then S_Finished proof
+  if f ==== label proof <| env then
+    S_Finished proof
   else (* make sure we've proven what we've wanted to *)
     S_Finished (equivalent jgmt 0 proof)
 

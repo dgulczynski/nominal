@@ -3,6 +3,7 @@ open Prelude
 open Permutation
 open Substitution
 open Solver
+open KindChecker
 open ProofCommon
 open ProofEnv
 open ProofEquiv
@@ -108,14 +109,21 @@ let constr_imp_e c_proof c_imp_proof =
     P_ConstrApply ((env, f), c_proof, c_imp_proof)
   | f -> raise_in_env (env c_proof) $ premise_mismatch (F_Constr c) f
 
-let constr_and_i c p =
-  let f = label p in
-  let env = env p |> remove_constraints (( = ) c) in
-  P_Intro ((env, F_ConstrAnd (c, f)), p)
+let constr_and_i c_proof f_proof =
+  match judgement c_proof with
+  | c_env, F_Constr c ->
+    let f_env, f = judgement f_proof in
+    let env = f_env |> remove_constraints (( = ) c) |> union c_env in
+    P_AndIntro ((env, F_ConstrAnd (c, f)), [c_proof; f_proof])
+  | env, c -> raise_in_env env $ not_a_constraint c
 
 let constr_and_e_left c_and_proof =
   match judgement c_and_proof with
-  | env, F_ConstrAnd (_, f) -> P_ConstrAndElim ((env, f), c_and_proof)
+  | env, F_ConstrAnd (_, f) ->
+    if f -: K_Prop <| kind_checker_env env then
+      P_ConstrAndElim ((env, f), c_and_proof)
+    else
+      raise_in_env env $ not_a_prop f
   | env, f -> raise_in_env env $ not_a_constr_and f
 
 let constr_and_e_right c_and_proof =
@@ -162,7 +170,8 @@ let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
   if f === f' <| env then
     let env = env |> remove_identifier a |> remove_assumption f_a in
     P_Intro ((env, F_ExistsAtom (a_bind, f_a)), p)
-  else raise_in_env env $ formula_mismatch f f'
+  else
+    raise_in_env env $ formula_mismatch f f'
 
 let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   let f = (V x |=> t) f_x in
@@ -170,7 +179,8 @@ let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   if f === f' <| env then
     let env = env |> remove_identifier x |> remove_assumption f_x in
     P_Intro ((env, F_ExistsTerm (x_bind, f_x)), p)
-  else raise_in_env env $ formula_mismatch f f'
+  else
+    raise_in_env env $ formula_mismatch f f'
 
 let exist_e p_exists witness p =
   let env, f = judgement p in
@@ -221,7 +231,8 @@ let or_e or_proof ps =
       let env, f' = judgement p in
       f' === F_Impl (f, c) <| env
     in
-    if forall2 (test_proof % snd) fs ps then P_OrElim ((merge_envs (or_proof :: ps), c), ps)
+    if forall2 (test_proof % snd) fs ps then
+      P_OrElim ((merge_envs (or_proof :: ps), c), ps)
     else
       let f = F_Or (List.map (pair "" % premise % label) ps) in
       let env, disjunction = judgement or_proof in
@@ -263,8 +274,10 @@ let subst env f sub constr p =
   let on_solved jgmt =
     let sub_env, sub_f = (sub_env sub env, sub f) in
     let p_env, p_f = judgement p in
-    if sub_f ==== p_f <| env && p_env <= sub_env then P_Equivalent (jgmt, equiv_depth, p)
-    else raise_in_env env $ formula_mismatch f p_f
+    if sub_f ==== p_f <| env && p_env <= sub_env then
+      P_Equivalent (jgmt, equiv_depth, p)
+    else
+      raise_in_env env $ formula_mismatch f p_f
   in
   solver_proof (env, f) constr on_solved
 

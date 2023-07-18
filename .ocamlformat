@@ -7,3 +7,4 @@ match-indent-nested = auto
 margin = 120
 max-indent=2
 indicate-nested-or-patterns = unsafe-no
+if-then-else = fit-or-vertical
