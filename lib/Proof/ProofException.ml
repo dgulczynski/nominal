@@ -67,7 +67,7 @@ let not_a_conjunction_with conjunct =
 let not_a_disjunction_with disjunct =
   not_what_expected (with_prefix "a disjunction with " $ backticked_formula disjunct) % backticked_formula
 
-let not_a_prop = not_what_expected (with_prefix "formula with kind" $ pretty_kind K_Prop) % backticked_formula
+let not_a_prop = not_what_expected (with_prefix "formula with kind " $ pretty_kind K_Prop) % backticked_formula
 
 let premise_mismatch hypothesis premise =
   not_what_expected

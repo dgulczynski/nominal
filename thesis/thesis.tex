@@ -30,6 +30,7 @@
 \usepackage{mathpartir}
 \usepackage{mathtools}
 \usepackage{listings}
+\usepackage{semantic}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 % \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -1068,6 +1069,244 @@ $\formphi$ & $::=$ & $\ldots
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proof theory}
+
+\newcommand{\rel}[2][\Gamma;C]{\ensuremath{#1\vdash#2}}
+\newcommand{\types}[3][\Gamma]{\rel[#1]{#2 : #3}}
+\newcommand{\interp}[2][\tmEnv]{\left\llbracket {#2} \right\rrbracket_{#1}}
+\newcommand{\arr}{\rightarrow }
+% \newcommand{\inference}[2]{\inferrule{ #1}{#2}}
+\newcommand{\all}[1][x]{\ensuremath{\forall #1.\:}}
+\newcommand{\exi}[1][x]{\ensuremath{\exists #1.\:}}
+\newcommand{\karr}{\Rightarrow }
+\newcommand{\lam}[1][x]{\lambda{#1}.\;}
+\newcommand{\fix}[2]{\ensuremath{\text{fix } #1(#2).\;}}
+\newcommand{\jgmnt[2]}[\cEnv;\Theta]{\ensuremath{#1 \vdash #2}}
+\newcommand{\cjgmnt[2]}[\cEnv]{\ensuremath{#1 \vDash #2}}
+\newcommand{\fv[1]}[\cEnv;\Theta]{\ensuremath{\operatorname{FV}(#1)}}
+\begin{eqnarray*}
+  \inference{
+  }{
+    \jgmnt[\cEnv;\phi]{\phi}
+  }[(\ensuremath{Assumption})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\phi]{\bot}
+  }{
+    \jgmnt[\cEnv;\phi]{\phi}
+  }[(\ensuremath{\bot^e})]
+  \qquad
+  \inference{
+    \cjgmnt[\cEnv]{\constr}
+  }{
+    \jgmnt[\cEnv;\Theta]{\constr}
+  }[(\ensuremath{constr^i})]
+  \qquad
+  \inference{
+    \cjgmnt[\cEnv]{\bot}
+    }{
+    \jgmnt[\cEnv;\Theta]{\phi}
+  }[(\ensuremath{constr^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta,\phi_1]{\phi_2}
+  }{
+    \jgmnt[\cEnv;\Theta]{\phi_1 \fImp \phi_2}
+  }[(\ensuremath{\fImp^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv_1;\Theta_1]{\phi_1} &
+    \jgmnt[\cEnv_2;\Theta_2]{\phi_1 \fImp \phi_2}
+    }{
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\phi_2}
+  }[(\ensuremath{\fImp^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv, \constr;\Theta]{\phi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\fCImp{\constr}\phi}
+  }[(\ensuremath{\fCImp{\cdot}^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv_1;\Theta_1]{\constr} &
+    \jgmnt[\cEnv_2;\Theta_2]{\fCImp{\constr}\phi}
+    }{
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\phi}
+  }[(\ensuremath{\fCImp{\cdot}^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\phi_1}
+    }{
+    \jgmnt[\cEnv;\Theta]{\phi_1 \vee \phi_2}
+  }[(\ensuremath{\vee^i_1})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\phi_2}
+  }{
+    \jgmnt[\cEnv;\Theta]{\phi_1 \vee \phi_2}
+  }[(\ensuremath{\vee^i_2})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\phi_1 \vee \phi_2} \\
+    \jgmnt[\cEnv;\Theta,\phi_1]{\psi} &
+    \jgmnt[\cEnv;\Theta,\phi_2]{\psi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\psi}
+  }[(\ensuremath{\vee^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv_1;\Theta_1]{\phi_1} &
+    \jgmnt[\cEnv_2;\Theta_2]{\phi_2}
+  }{
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\phi_1 \wedge \phi_2}
+  }[(\ensuremath{\wedge^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\phi_1 \wedge \phi_2}
+    }{
+    \jgmnt[\cEnv;\Theta]{\phi_1}
+  }[(\ensuremath{\wedge^e_1})]\qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\phi_1 \wedge \phi_2}
+    }{
+    \jgmnt[\cEnv;\Theta]{\phi_2}
+  }[(\ensuremath{\wedge^e_2})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \cjgmnt[\cEnv]{\constr} &
+    \jgmnt[\cEnv, \constr;\Theta]{\phi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\phi}
+  }[(\ensuremath{\fCAnd{\cdot}^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\phi}
+    }{
+    \jgmnt[\cEnv;\Theta]{\constr}
+  }[(\ensuremath{\fCAnd{\cdot}^e_1})]\qquad
+  \inference{
+    \jgmnt[\cEnv]{\fCAnd{\constr}\phi} &
+    \jgmnt[\cEnv;\Theta]{\phi: \kProp}
+    }{
+    \jgmnt[\cEnv;\Theta]{\phi}
+  }[(\ensuremath{\fCAnd{\cdot}^e_2})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \atomv \notin \fv[\cEnv;\Theta] &
+    \jgmnt[\cEnv;\Theta]{\phi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\phi}
+  }[(\ensuremath{{\fForallAtom{}}^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\phi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\phi \{\atomv \mapsto \atomv'\}}
+  }[(\ensuremath{{\fForallAtom{}}^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \termv \notin \fv[\cEnv;\Theta] &
+    \jgmnt[\cEnv;\Theta]{\phi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\phi}
+  }[(\ensuremath{{\fForallTerm{}}^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\phi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\phi \{\termv \mapsto \termv'\}}
+  }[(\ensuremath{{\fForallTerm{}}^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\phi \{\atomv \mapsto \atomv'\}}
+    }{
+    \jgmnt[\cEnv;\Theta]{\fExistsAtom{\atomv}\phi}
+  }[(\ensuremath{{\fExistsAtom{}}^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv_1;\Theta_1]{\fExistsAtom{\atomv}\phi} \\
+    \jgmnt[\cEnv_2;\Theta_2,\phi \{\atomv \mapsto \atomv'\}]{\psi} \\
+    \atomv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]
+    }{
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
+  }[(\ensuremath{{\fExistsAtom{}}^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\phi \{\termv \mapsto \termv'\}}
+    }{
+    \jgmnt[\cEnv;\Theta]{\fExistsTerm{\termv}\phi}
+  }[(\ensuremath{{\fExistsTerm{}}^i})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv_1;\Theta_1]{\fExistsTerm{\termv}\phi} \\
+    \jgmnt[\cEnv_2;\Theta_2,\phi \{\termv \mapsto \termv'\}]{\psi} \\
+    \termv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]
+    }{
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
+  }[(\ensuremath{{\fExistsTerm{}}^e})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \cjgmnt[\cEnv]{\atomv \ceq \atomexp} &
+    \jgmnt[\cEnv;\Theta]{\phi}
+    }{
+    \jgmnt[\cEnv\{\atomv \mapsto \atomexp\};\Theta\{\atomv \mapsto \atomexp\}]{\phi\{\atomv \mapsto \atomexp\}}
+  }[(\ensuremath{\mapsto_A})]
+\qquad
+  \inference{
+    \cjgmnt[\cEnv]{\termv \ceq \term} &
+    \jgmnt[\cEnv;\Theta]{\phi}
+    }{
+    \jgmnt[\cEnv\{\termv \mapsto \term\};\Theta\{\termv \mapsto \term\}]{\phi\{\termv \mapsto \term\}}
+  }[(\ensuremath{\mapsto_T})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\psi} &
+    \jgmnt[\cEnv;\Theta]{\psi \equiv \phi}
+    }{
+    \jgmnt[\cEnv;\Theta]{\phi}
+  }[(\ensuremath{Equiv})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \phi(\termv'))]{\phi(\termv)}
+    }{
+    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \phi(\termv)}
+  }[(\ensuremath{Induction})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    }{
+    \jgmnt[]{\fForallAtom{\:\atomv,\:\atomv'} (\atomv \ceq \atomv') \vee (\atomv \cneq \atomv')}
+  }[(\ensuremath{Axiom_{Compare}})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    }{
+    \jgmnt[]{\fForallTerm{\termv} \:\fExistsAtom{\atomv} (\atomv \cfresh \termv)}
+  }[(\ensuremath{Axiom_{Fresh}})]
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    }{
+    \jgmnt[]{\fForallTerm{\termv} (\fExistsAtom{\atomv}\: \termv = \atomv)
+                             \vee (\fExistsAtom{\atomv}\:\fExistsTerm{\termv'}\: \termv = \tbind{\atomv}{\termv'})
+                             \vee (\fExistsTerm{\termv_1,\:\termv_2}\: \termv = \tbind{\atomv}{\termv'})
+                             \vee ({symbol}\: \termv)
+    }
+  }[(\ensuremath{Axiom_{Inversion}})]
+\end{eqnarray*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Model}
 
@@ -1097,16 +1336,7 @@ And kind interpretation like this:
 \termMdl{\kGuard{\constr}\kind}{\tmEnv}       & = & \{x \mid \tmEnv \vDash \constr \implies x \in \termMdl{\kind}{\tmEnv} \}
 \end{eqnarray*}
 
-\newcommand{\rel}[2][\Gamma;C]{\ensuremath{#1\vdash#2}}
-\newcommand{\types}[3][\Gamma]{\rel[#1]{#2 : #3}}
-\newcommand{\interp}[2][\tmEnv]{\left\llbracket {#2} \right\rrbracket_{#1}}
-\newcommand{\arr}{\rightarrow }
-\newcommand{\inference}[2]{\inferrule{ #1}{#2}}
-\newcommand{\all}[1][x]{\ensuremath{\forall #1.\:}}
-\newcommand{\exi}[1][x]{\ensuremath{\exists #1.\:}}
-\newcommand{\karr}{\Rightarrow }
-\newcommand{\lam}[1][x]{\lambda{#1}.\;}
-\newcommand{\fix}[2]{\ensuremath{\text{fix } #1(#2).\;}}
+
 
 And finally the kind derivation model:
 \begin{eqnarray*}
@@ -1228,7 +1458,7 @@ In other words, each kind derivation $D$ has a semantic witness that inhabits th
 \dots
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Example: Progress and Preservation of STLC}
+\chapter{Case study: Progress and Preservation of STLC}
 
 \dots
 
