@@ -1088,13 +1088,13 @@ $\formphi$ & $::=$ & $\ldots
 \begin{eqnarray*}
   \inference{
   }{
-    \jgmnt[\cEnv;\phi]{\phi}
+    \jgmnt[\cEnv;\formphi]{\formphi}
   }[(\ensuremath{Assumption})]
   \qquad
   \inference{
-    \jgmnt[\cEnv;\phi]{\bot}
+    \jgmnt[\cEnv;\formphi]{\bot}
   }{
-    \jgmnt[\cEnv;\phi]{\phi}
+    \jgmnt[\cEnv;\formphi]{\formphi}
   }[(\ensuremath{\bot^e})]
   \qquad
   \inference{
@@ -1106,135 +1106,135 @@ $\formphi$ & $::=$ & $\ldots
   \inference{
     \cjgmnt[\cEnv]{\bot}
     }{
-    \jgmnt[\cEnv;\Theta]{\phi}
+    \jgmnt[\cEnv;\Theta]{\formphi}
   }[(\ensuremath{constr^e})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
-    \jgmnt[\cEnv;\Theta,\phi_1]{\phi_2}
+    \jgmnt[\cEnv;\Theta,\formphi_1]{\formphi_2}
   }{
-    \jgmnt[\cEnv;\Theta]{\phi_1 \fImp \phi_2}
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \fImp \formphi_2}
   }[(\ensuremath{\fImp^i})]
   \qquad
   \inference{
-    \jgmnt[\cEnv_1;\Theta_1]{\phi_1} &
-    \jgmnt[\cEnv_2;\Theta_2]{\phi_1 \fImp \phi_2}
+    \jgmnt[\cEnv_1;\Theta_1]{\formphi_1} &
+    \jgmnt[\cEnv_2;\Theta_2]{\formphi_1 \fImp \formphi_2}
     }{
-    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\phi_2}
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi_2}
   }[(\ensuremath{\fImp^e})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
-    \jgmnt[\cEnv, \constr;\Theta]{\phi}
+    \jgmnt[\cEnv, \constr;\Theta]{\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\fCImp{\constr}\phi}
+    \jgmnt[\cEnv;\Theta]{\fCImp{\constr}\formphi}
   }[(\ensuremath{\fCImp{\cdot}^i})]
   \qquad
   \inference{
     \jgmnt[\cEnv_1;\Theta_1]{\constr} &
-    \jgmnt[\cEnv_2;\Theta_2]{\fCImp{\constr}\phi}
+    \jgmnt[\cEnv_2;\Theta_2]{\fCImp{\constr}\formphi}
     }{
-    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\phi}
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi}
   }[(\ensuremath{\fCImp{\cdot}^e})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
-    \jgmnt[\cEnv;\Theta]{\phi_1}
+    \jgmnt[\cEnv;\Theta]{\formphi_1}
     }{
-    \jgmnt[\cEnv;\Theta]{\phi_1 \vee \phi_2}
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
   }[(\ensuremath{\vee^i_1})]
   \qquad
   \inference{
-    \jgmnt[\cEnv;\Theta]{\phi_2}
+    \jgmnt[\cEnv;\Theta]{\formphi_2}
   }{
-    \jgmnt[\cEnv;\Theta]{\phi_1 \vee \phi_2}
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
   }[(\ensuremath{\vee^i_2})]
   \qquad
   \inference{
-    \jgmnt[\cEnv;\Theta]{\phi_1 \vee \phi_2} \\
-    \jgmnt[\cEnv;\Theta,\phi_1]{\psi} &
-    \jgmnt[\cEnv;\Theta,\phi_2]{\psi}
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2} \\
+    \jgmnt[\cEnv;\Theta,\formphi_1]{\psi} &
+    \jgmnt[\cEnv;\Theta,\formphi_2]{\psi}
   }{
     \jgmnt[\cEnv;\Theta]{\psi}
   }[(\ensuremath{\vee^e})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
-    \jgmnt[\cEnv_1;\Theta_1]{\phi_1} &
-    \jgmnt[\cEnv_2;\Theta_2]{\phi_2}
+    \jgmnt[\cEnv_1;\Theta_1]{\formphi_1} &
+    \jgmnt[\cEnv_2;\Theta_2]{\formphi_2}
   }{
-    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\phi_1 \wedge \phi_2}
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi_1 \wedge \formphi_2}
   }[(\ensuremath{\wedge^i})]
   \qquad
   \inference{
-    \jgmnt[\cEnv;\Theta]{\phi_1 \wedge \phi_2}
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \wedge \formphi_2}
     }{
-    \jgmnt[\cEnv;\Theta]{\phi_1}
+    \jgmnt[\cEnv;\Theta]{\formphi_1}
   }[(\ensuremath{\wedge^e_1})]\qquad
   \inference{
-    \jgmnt[\cEnv;\Theta]{\phi_1 \wedge \phi_2}
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \wedge \formphi_2}
     }{
-    \jgmnt[\cEnv;\Theta]{\phi_2}
+    \jgmnt[\cEnv;\Theta]{\formphi_2}
   }[(\ensuremath{\wedge^e_2})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
     \cjgmnt[\cEnv]{\constr} &
-    \jgmnt[\cEnv, \constr;\Theta]{\phi}
+    \jgmnt[\cEnv, \constr;\Theta]{\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\phi}
+    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\formphi}
   }[(\ensuremath{\fCAnd{\cdot}^i})]
   \qquad
   \inference{
-    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\phi}
+    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\formphi}
     }{
     \jgmnt[\cEnv;\Theta]{\constr}
   }[(\ensuremath{\fCAnd{\cdot}^e_1})]\qquad
   \inference{
-    \jgmnt[\cEnv]{\fCAnd{\constr}\phi} &
-    \jgmnt[\cEnv;\Theta]{\phi: \kProp}
+    \jgmnt[\cEnv]{\fCAnd{\constr}\formphi} &
+    \jgmnt[\cEnv;\Theta]{\formphi: \kProp}
     }{
-    \jgmnt[\cEnv;\Theta]{\phi}
+    \jgmnt[\cEnv;\Theta]{\formphi}
   }[(\ensuremath{\fCAnd{\cdot}^e_2})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
     \atomv \notin \fv[\cEnv;\Theta] &
-    \jgmnt[\cEnv;\Theta]{\phi}
+    \jgmnt[\cEnv;\Theta]{\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\phi}
+    \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\formphi}
   }[(\ensuremath{{\fForallAtom{}}^i})]
   \qquad
   \inference{
-    \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\phi}
+    \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\phi \{\atomv \mapsto \atomv'\}}
+    \jgmnt[\cEnv;\Theta]{\formphi \{\atomv \mapsto \atomv'\}}
   }[(\ensuremath{{\fForallAtom{}}^e})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
     \termv \notin \fv[\cEnv;\Theta] &
-    \jgmnt[\cEnv;\Theta]{\phi}
+    \jgmnt[\cEnv;\Theta]{\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\phi}
+    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\formphi}
   }[(\ensuremath{{\fForallTerm{}}^i})]
   \qquad
   \inference{
-    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\phi}
+    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\phi \{\termv \mapsto \termv'\}}
+    \jgmnt[\cEnv;\Theta]{\formphi \{\termv \mapsto \termv'\}}
   }[(\ensuremath{{\fForallTerm{}}^e})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
-    \jgmnt[\cEnv;\Theta]{\phi \{\atomv \mapsto \atomv'\}}
+    \jgmnt[\cEnv;\Theta]{\formphi \{\atomv \mapsto \atomv'\}}
     }{
-    \jgmnt[\cEnv;\Theta]{\fExistsAtom{\atomv}\phi}
+    \jgmnt[\cEnv;\Theta]{\fExistsAtom{\atomv}\formphi}
   }[(\ensuremath{{\fExistsAtom{}}^i})]
   \qquad
   \inference{
-    \jgmnt[\cEnv_1;\Theta_1]{\fExistsAtom{\atomv}\phi} \\
-    \jgmnt[\cEnv_2;\Theta_2,\phi \{\atomv \mapsto \atomv'\}]{\psi} \\
+    \jgmnt[\cEnv_1;\Theta_1]{\fExistsAtom{\atomv}\formphi} \\
+    \jgmnt[\cEnv_2;\Theta_2,\formphi \{\atomv \mapsto \atomv'\}]{\psi} \\
     \atomv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]
     }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
@@ -1242,14 +1242,14 @@ $\formphi$ & $::=$ & $\ldots
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
-    \jgmnt[\cEnv;\Theta]{\phi \{\termv \mapsto \termv'\}}
+    \jgmnt[\cEnv;\Theta]{\formphi \{\termv \mapsto \termv'\}}
     }{
-    \jgmnt[\cEnv;\Theta]{\fExistsTerm{\termv}\phi}
+    \jgmnt[\cEnv;\Theta]{\fExistsTerm{\termv}\formphi}
   }[(\ensuremath{{\fExistsTerm{}}^i})]
   \qquad
   \inference{
-    \jgmnt[\cEnv_1;\Theta_1]{\fExistsTerm{\termv}\phi} \\
-    \jgmnt[\cEnv_2;\Theta_2,\phi \{\termv \mapsto \termv'\}]{\psi} \\
+    \jgmnt[\cEnv_1;\Theta_1]{\fExistsTerm{\termv}\formphi} \\
+    \jgmnt[\cEnv_2;\Theta_2,\formphi \{\termv \mapsto \termv'\}]{\psi} \\
     \termv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]
     }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
@@ -1258,31 +1258,31 @@ $\formphi$ & $::=$ & $\ldots
 \begin{eqnarray*}
   \inference{
     \cjgmnt[\cEnv]{\atomv \ceq \atomexp} &
-    \jgmnt[\cEnv;\Theta]{\phi}
+    \jgmnt[\cEnv;\Theta]{\formphi}
     }{
-    \jgmnt[\cEnv\{\atomv \mapsto \atomexp\};\Theta\{\atomv \mapsto \atomexp\}]{\phi\{\atomv \mapsto \atomexp\}}
+    \jgmnt[\cEnv\{\atomv \mapsto \atomexp\};\Theta\{\atomv \mapsto \atomexp\}]{\formphi\{\atomv \mapsto \atomexp\}}
   }[(\ensuremath{\mapsto_A})]
 \qquad
   \inference{
     \cjgmnt[\cEnv]{\termv \ceq \term} &
-    \jgmnt[\cEnv;\Theta]{\phi}
+    \jgmnt[\cEnv;\Theta]{\formphi}
     }{
-    \jgmnt[\cEnv\{\termv \mapsto \term\};\Theta\{\termv \mapsto \term\}]{\phi\{\termv \mapsto \term\}}
+    \jgmnt[\cEnv\{\termv \mapsto \term\};\Theta\{\termv \mapsto \term\}]{\formphi\{\termv \mapsto \term\}}
   }[(\ensuremath{\mapsto_T})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
     \jgmnt[\cEnv;\Theta]{\psi} &
-    \jgmnt[\cEnv;\Theta]{\psi \equiv \phi}
+    \jgmnt[\cEnv;\Theta]{\psi \equiv \formphi}
     }{
-    \jgmnt[\cEnv;\Theta]{\phi}
+    \jgmnt[\cEnv;\Theta]{\formphi}
   }[(\ensuremath{Equiv})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
-    \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \phi(\termv'))]{\phi(\termv)}
+    \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \formphi(\termv'))]{\formphi(\termv)}
     }{
-    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \phi(\termv)}
+    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \formphi(\termv)}
   }[(\ensuremath{Induction})]
 \end{eqnarray*}
 \begin{eqnarray*}
@@ -1298,15 +1298,61 @@ $\formphi$ & $::=$ & $\ldots
   }[(\ensuremath{Axiom_{Fresh}})]
 \end{eqnarray*}
 \begin{eqnarray*}
-  \inference{
+  & \inference{
     }{
-    \jgmnt[]{\fForallTerm{\termv} (\fExistsAtom{\atomv}\: \termv = \atomv)
-                             \vee (\fExistsAtom{\atomv}\:\fExistsTerm{\termv'}\: \termv = \tbind{\atomv}{\termv'})
-                             \vee (\fExistsTerm{\termv_1,\:\termv_2}\: \termv = \tbind{\atomv}{\termv'})
-                             \vee ({symbol}\: \termv)
-    }
-  }[(\ensuremath{Axiom_{Inversion}})]
+    \jgmnt[]{\fForallTerm{\termv} (\fExistsAtom{\atomv}\: \termv = \atomv) \vee (\fExistsAtom{\atomv}\:\fExistsTerm{\termv'}\: \termv = \tbind{\atomv}{\termv'}) }
+  }[(\ensuremath{Axiom_{Inversion}})] \\
+  & \ensuremath{\vee (\fExistsTerm{\termv_1,\:\termv_2}\: \termv = \tbind{\atomv}{\termv'}) \vee ({symbol}\: \termv) } \\
 \end{eqnarray*}
+
+The equivalence relation ($\formphi_1 \equiv \formphi_2$) is rather straightforward,
+the only interesting parts being fixpoint, functions and applications.
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\Gamma; \Sigma]{\formphi_1[\termv_1 \mapsto  \term_1] \equiv \formphi_2[\termv_2 \mapsto \term_2] }
+    }{
+    \jgmnt[\Gamma; \Sigma]{(\fLamTerm{\termv_1}\formphi_1) \fAppTerm \term_1 \equiv (\fLamTerm{\termv_2}\formphi_2) \fAppTerm \term_2}
+  }
+\end{eqnarray*}
+(TODO: Also we do kind-checking).
+Otherwise we compute weak head normal form and recurse on subformulas:
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\Gamma; \Sigma; S n]{(\fix{P}{\termv}\formphi) \fAppTerm \term}
+    }{
+    \jgmnt[\Gamma; \Sigma, P \mapsto \formphi; n]{\formphi[\termv \mapsto \term]}
+  }
+\end{eqnarray*}
+Until we \textit{run out of gas} or cannot compute the formula further,
+resorting to \textit{naive} checking:
+\begin{eqnarray*}
+  \inference{
+    \cjgmnt[\Gamma]{\term_1 \ceq \term_2} &
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \fAppTerm \term_1 \equiv \formphi_2 \fAppTerm \term_2 }
+  }
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \termv \notin \fv[\Gamma; \Sigma] \\
+    \jgmnt[\Gamma; \Sigma]{\formphi_1[\termv_1 \mapsto \termv] \equiv \formphi_2[\termv_2 \mapsto \termv] }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\fLamTerm{\termv_1}\formphi_1 \equiv \fLamTerm{\termv_2}\formphi_2 }
+  }
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    P \notin \fv[\Gamma; \Sigma] & \termv \notin \fv[\Gamma; \Sigma] \\
+    \jgmnt[\Gamma; \Sigma]{\formphi_1[P_1 \mapsto P, \termv_1 \mapsto \termv] \equiv \formphi_2[P_2 \mapsto P, \termv_2 \mapsto \termv] }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\fix{P_1}{\termv_1}\formphi_1 \equiv \fix{P_2}{\termv_2}\formphi_2}
+  }
+\end{eqnarray*}
+Note that we allow \textit{different terms} in equivalent formulas as long as
+constraints-enviroment $\cEnv$ ensures their equality is provable.
+Quantifiers are handled the same way as function above --- as they all are a form of bind.
+(TODO: Also we do constraints-equivalence).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Model}
 
@@ -1347,107 +1393,107 @@ And finally the kind derivation model:
 
 \begin{eqnarray*}
     \interp{
-        \inference{D_1 : \types{\phi_1 }{\kProp} \\ D_2 : \types{\phi_2 }{\kProp}
+        \inference{D_1 : \types{\formphi_1 }{\kProp} \\ D_2 : \types{\formphi_2 }{\kProp}
     }{
-        \types{\phi_1 \wedge \phi_2}{\kProp}}
+        \types{\formphi_1 \wedge \formphi_2}{\kProp}}
     } & = & \interp{D_1} \wedge_\PropAlg \interp{D_2} \\
     \interp{
-        \inference{D_1 : \types{\phi_1 }{\kProp}  \\ D_2 : \types{\phi_2 }{\kProp}
+        \inference{D_1 : \types{\formphi_1 }{\kProp}  \\ D_2 : \types{\formphi_2 }{\kProp}
     }{
-        \types{\phi_1 \vee \phi_2}{\kProp}}
+        \types{\formphi_1 \vee \formphi_2}{\kProp}}
     } & = & \interp{D_1} \vee_\PropAlg \interp{D_2} \\
     \interp{
-        \inference{D_1 : \types{\phi_1 }{\kProp}  \\ D_2 : \types{\phi_2 }{\kProp}
+        \inference{D_1 : \types{\formphi_1 }{\kProp}  \\ D_2 : \types{\formphi_2 }{\kProp}
     }{
-        \types{\phi_1 \Rightarrow \phi_2}{\kProp}}
+        \types{\formphi_1 \Rightarrow \formphi_2}{\kProp}}
     } & = & \interp{D_1} \Rightarrow_\PropAlg \interp{D_2}
 \end{eqnarray*}
 
 \begin{eqnarray*}
     \interp{
-        \inference{D : \types{\phi}{\kProp}
+        \inference{D : \types{\formphi}{\kProp}
     }{
-        \types{\fForallTerm{\termv}\phi}{\kProp}}
+        \types{\fForallTerm{\termv}\formphi}{\kProp}}
     } & = & \underset{T \in Term}{\bigwedge} {\interp[{\tmEnv [\termv \mapsto T]}]{D}}  \\
     \interp{
-        \inference{D : \types{\phi}{\kProp}
+        \inference{D : \types{\formphi}{\kProp}
     }{
-        \types{\fForallAtom{\atomv}\phi}{\kProp}}
+        \types{\fForallAtom{\atomv}\formphi}{\kProp}}
     } & = & \underset{A \in Atom}{\bigwedge} {\interp[{\tmEnv [\atomv \mapsto A]}]{D}} \\
     \interp{
-        \inference{D : \types{\phi}{\kProp}
+        \inference{D : \types{\formphi}{\kProp}
     }{
-        \types{\fExistsTerm{\termv} \phi}{\kProp}}
+        \types{\fExistsTerm{\termv} \formphi}{\kProp}}
     } & = & \underset{T \in Term}{\bigvee}\interp[{\tmEnv [\termv \mapsto T]}]{D} \\
     \interp{
-        \inference{D : \types{\phi}{\kProp}
+        \inference{D : \types{\formphi}{\kProp}
     }{
-        \types{\fExistsAtom{\atomv} \phi}{\kProp}}
+        \types{\fExistsAtom{\atomv} \formphi}{\kProp}}
     } & = & \underset{A \in Atom}{\bigvee} \interp[{\tmEnv [\atomv \mapsto A]}]{D}
 \end{eqnarray*}
 
 \begin{eqnarray*}
    \interp{
-        \inference{D : \types[\Gamma, c]{\phi}{\kProp}
+        \inference{D : \types[\Gamma, c]{\formphi}{\kProp}
     }{
-        \types{[c] \wedge \phi}{\kProp}}
+        \types{[c] \wedge \formphi}{\kProp}}
     } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \bot
     \\
     \interp{
-        \inference{D : \types[\Gamma, c]{\phi}{\kProp}
+        \inference{D : \types[\Gamma, c]{\formphi}{\kProp}
     }{
-        \types{[c] \Rightarrow \phi}{\kProp}}
+        \types{[c] \Rightarrow \formphi}{\kProp}}
     } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \top
 \end{eqnarray*}
 
 \begin{eqnarray*}
-    \interp{\inference{D : \types{\phi}{\kind_2}}{\types{\lam[\propv]\phi}{\kind_1\karr\kind_2}}} & = &
+    \interp{\inference{D : \types{\formphi}{\kind_2}}{\types{\lam[\propv]\formphi}{\kind_1\karr\kind_2}}} & = &
     \lambda\;(Q : \interp{\kind_1}).\;\interp[{\tmEnv[\propv\mapsto Q]}]{D}
     \\
-    \interp{\inference{D: \types{\phi}{\kind}}{\types{\lam[\atomv]\phi}{\kForallAtom{\atomv}\kind}}} & = &
+    \interp{\inference{D: \types{\formphi}{\kind}}{\types{\lam[\atomv]\formphi}{\kForallAtom{\atomv}\kind}}} & = &
     \lambda\;(A : Atom).\;\interp[{\tmEnv[\atomv\mapsto A]}]{D}
     \\
-    \interp{\inference{D: \types{\phi}{\kind}}{\types{\lam[\termv]\phi}{\kForallTerm{\termv}\kind}}} & = &
+    \interp{\inference{D: \types{\formphi}{\kind}}{\types{\lam[\termv]\formphi}{\kForallTerm{\termv}\kind}}} & = &
     \lambda\;(T : Term).\;\interp[{\tmEnv[\termv\mapsto T]}]{D}
 \end{eqnarray*}
 
 \begin{eqnarray*}
-    \interp{\inference{D_1: \types{\phi_1}{\kind'\karr\kind} \\ D_2: \types{\phi_2}{\kind'}}{\types{\phi_1\;\phi_2}{\kind}}} & = &
+    \interp{\inference{D_1: \types{\formphi_1}{\kind'\karr\kind} \\ D_2: \types{\formphi_2}{\kind'}}{\types{\formphi_1\;\formphi_2}{\kind}}} & = &
     \interp{D_1}\; \interp{D_2}
     \\
-    \interp{\inference{D: \types{\phi}{\kForallAtom{\atomv}\kind}}{\types{\phi(\atomexp)}{\kind\{\atomv \mapsto \atomexp\}}}} & = &
+    \interp{\inference{D: \types{\formphi}{\kForallAtom{\atomv}\kind}}{\types{\formphi(\atomexp)}{\kind\{\atomv \mapsto \atomexp\}}}} & = &
     \interp{D}\;\interp{\atomexp}
     \\
-    \interp{\inference{D: \types{\phi}{\kForallTerm{\termv}\kind}}{\types{\phi(\term)}{\kind\{\termv \mapsto \term\}}}} & = &
+    \interp{\inference{D: \types{\formphi}{\kForallTerm{\termv}\kind}}{\types{\formphi(\term)}{\kind\{\termv \mapsto \term\}}}} & = &
     \interp{D}\;\interp{\termv}
 \end{eqnarray*}
 
 %  lim w sensie tw kleenego o fixpoincie
 \begin{eqnarray*}
     \interp{\inference{
-            D : \types[{\Gamma, X : {\all[z]{[z < \termv']}}\;\kind\subst{z}{\termv'}}]\phi\kind
+            D : \types[{\Gamma, X : {\all[z]{[z < \termv']}}\;\kind\subst{z}{\termv'}}]\formphi\kind
         }{
-            \types{\fix{X}{\termv'}\phi}{\all[\termv']\kind}
+            \types{\fix{X}{\termv'}\formphi}{\all[\termv']\kind}
         }} & = & \lim_{n \rightarrow \infty} f_n
     \\
     & & \texttt{ where } f_0(t) = \bot \\
     & & \texttt{ and } f_{n+1}(t) = \interp[{\tmEnv[X\mapsto f_n, \termv' \mapsto t]}]{D} \\
     \interp{\inference{
-            D : \types[\Gamma, c]\phi\kind
+            D : \types[\Gamma, c]\formphi\kind
         }{
-            \types{\phi}{[c]\kind}
+            \types{\formphi}{[c]\kind}
         }} & = & \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \text{''}\bot\text{''}
     \\
     \interp{\inference{
-            D : \types\phi\kind \\
+            D : \types\formphi\kind \\
             \rel[\Gamma] \kind \leq \kind'
         }{
-            \types{\phi}{\kind'}
+            \types{\formphi}{\kind'}
         }} & = &  \interp{D}
 \end{eqnarray*}
 
 \section{Fundamental Theorem}
-For any formula $\phi$, any kind $\kind$, and any environment $\Gamma$, for any kind derivation $D : \types\phi\kind$ under any interpretation $\tmEnv \in \interp[]{\Gamma}$, we have that
+For any formula $\formphi$, any kind $\kind$, and any environment $\Gamma$, for any kind derivation $D : \types\formphi\kind$ under any interpretation $\tmEnv \in \interp[]{\Gamma}$, we have that
 $$
     \interp{D} \in \interp{\kind}
 $$
