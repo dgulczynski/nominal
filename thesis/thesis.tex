@@ -969,6 +969,8 @@ $$
 \chapter{Higher Order Logic}
 
 On top of sublogic of constraints we build an higher order logic.
+Due to involvement of atoms, terms, binders and constraints,
+we introduce kinds to make sure the formulas we deal with \textit{make sense}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Kinds}
@@ -983,79 +985,131 @@ $\kind$ & $::=$ & $\kProp
 \end{tabular}
 
 \section{Subkinding}
-\[
-\dfrac{}{\cEnv \vdash \kind \subkind \kind}
+Naturally, subkinding relation is reflexive and transitive:
+$$
+\inference{
+}{
+  \cEnv \vdash \kind \subkind \kind
+}
 \qquad
-\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2
-  \quad \cEnv \vdash \kind_2 \subkind \kind_3}{
-  \cEnv \vdash \kind_1 \subkind \kind_3}
+\inference{
+  \cEnv \vdash \kind_1 \subkind \kind_2 &
+  \cEnv \vdash \kind_2 \subkind \kind_3
+}{
+  \cEnv \vdash \kind_1 \subkind \kind_3
+}
+$$
+Universally quantified kinds only subkind if they are quantified over the same name:
+$$
+\inference{
+  \cEnv \vdash \kind_1 \subkind \kind_2
+}{
+  \cEnv \vdash \kForallAtom{\atomv} \kind_1 \subkind \kForallAtom{\atomv} \kind_2
+}
 \qquad
-\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2}{
-  \cEnv \vdash \kForallAtom{\atomv} \kind_1
-       \subkind \kForallAtom{\atomv} \kind_2}
-\qquad
-\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2}{
-  \cEnv \vdash \kForallTerm{\termv} \kind_1
-       \subkind \kForallTerm{\termv} \kind_2}
-\]
-\[
-\dfrac{\cEnv \vdash \kind_1' \subkind \kind_1
-  \quad \cEnv \vdash \kind_2 \subkind \kind_2'}{
-  \cEnv \vdash \kind_1 \karrow \kind_2 \subkind \kind_1' \karrow \kind_2'}
-\qquad
-\dfrac{\cEnv \vDash \constr}{
-  \cEnv \vdash \kGuard{\constr}\kind \subkind \kind}
-\qquad
-\dfrac{\cEnv, \constr \vdash \kind_1 \subkind \kind_2}{
-  \cEnv \vdash \kind_1 \subkind \kGuard{\constr}\kind_2}
-\]
-
+\inference{
+  \cEnv \vdash \kind_1 \subkind \kind_2
+}{
+  \cEnv \vdash \kForallTerm{\termv} \kind_1 \subkind \kForallTerm{\termv} \kind_2
+}
+$$
+Function kind is contravariant to the subkinding relation:
+$$
+\inference{
+  \cEnv \vdash \kind_1' \subkind \kind_1 &
+  \cEnv \vdash \kind_2 \subkind \kind_2'
+}{
+  \cEnv \vdash \kind_1 \karrow \kind_2 \subkind \kind_1' \karrow \kind_2'
+}
+$$
+Constraints that are solved through $\vDash$ relation can be dropped:
+$$
+\inference{
+  \cEnv \vDash \constr
+}{
+  \cEnv \vdash \kGuard{\constr}\kind \subkind \kind
+}
+$$
+And constraints can be moved from right-hand side to the enviroment:
+$$
+\inference{
+  \cEnv, \constr \vdash \kind_1 \subkind \kind_2
+}{
+  \cEnv \vdash \kind_1 \subkind \kGuard{\constr}\kind_2
+}
+$$
 Note that there is no structural subkinding rule for guarded kinds like
-\[
-\dfrac{\cEnv \vdash \kind_1 \subkind \kind_2}{
-  \cEnv \vdash \kGuard{\constr} \kind_1 \subkind \kGuard{\constr} \kind_2}
-  \textrm{.}
-\]
+$$
+\inference{\cEnv \vdash \kind_1 \subkind \kind_2}{
+  \cEnv \vdash \kGuard{\constr} \kind_1 \subkind \kGuard{\constr} \kind_2
+}[\ensuremath{\times}]
+$$
 Such a rule can be derived from both subkinding rules for guarded kind,
 transitivity, and weakening.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Formulas}
+Formulas include standard connectives (of kind $\kProp$):
 
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\bot
+               \bnfor \top
                \bnfor \formphi \vee \formphi
                \bnfor \formphi \wedge \formphi
                \bnfor \formphi \fImp \formphi
-               \bnfor \fConstr{\constr}
-               \bnfor \fCAnd{\constr} \formphi
-               \bnfor \fCImp{\constr} \formphi$ & \\
-& $|$ & $             \fForallAtom{\atomv} \formphi
+               \bnfor \ldots $ & (formulas)
+\end{tabular}
+\\ \\
+Quantification over atoms and terms (on formulas of kind $\kProp$):
+
+\begin{tabular}{rrlr}
+$\formphi$ & $::=$ & $\ldots
+               \bnfor \fForallAtom{\atomv} \formphi
                \bnfor \fForallTerm{\termv} \formphi
                \bnfor \fExistsAtom{\atomv} \formphi
                \bnfor \fExistsTerm{\termv} \formphi
                \bnfor \ldots$
     & (formulas)
 \end{tabular}
-
-\[
-\dfrac{}{\cEnv; \kEnv \vdash \fConstr{\constr} \ofkind \kProp}
-\qquad
-\dfrac{\cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp }{
-  \cEnv; \kEnv \vdash \fCAnd{\constr} \formphi \ofkind \kProp}
-\qquad
-\dfrac{\cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp }{
-  \cEnv; \kEnv \vdash \fCImp{\constr} \formphi \ofkind \kProp}
-\qquad
-\dfrac{\cEnv;\kEnv\vdash \formphi \ofkind \kind_1
-  \quad
-  \cEnv\vdash \kind_1 \subkind \kind_2}{
-  \cEnv;\kEnv\vdash \formphi \ofkind \kind_2}
-\]
+\\ \\
+Constraints, guards, and propositional variables:
 
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\ldots
+               \bnfor \fConstr{\constr}
+               \bnfor \fCAnd{\constr} \formphi
+               \bnfor \fCImp{\constr} \formphi
                \bnfor \propv
+               \bnfor \ldots$  (formulas)
+\end{tabular}
+$$
+\inference{
+}{
+  \cEnv; \kEnv \vdash \fConstr{\constr} \ofkind \kProp
+}
+\qquad
+\inference{
+  \cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp
+}{
+  \cEnv; \kEnv \vdash \fCAnd{\constr} \formphi \ofkind \kProp
+}
+\qquad
+\inference{
+  \cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp
+}{
+  \cEnv; \kEnv \vdash \fCImp{\constr} \formphi \ofkind \kProp
+}
+\qquad
+\inference{
+  (\propv \ofkind \kind) \in \kEnv
+}{
+  \cEnv; \kEnv \vdash  \propv \ofkind \kind
+}
+$$
+Propositional variables, functions and applications:
+
+\begin{tabular}{rrlr}
+$\formphi$ & $::=$ & $\ldots
                \bnfor \fLamAtom{\atomv} \formphi
                \bnfor \fLamTerm{\termv} \formphi
                \bnfor \fLamForm{\propv}{\kind} \formphi
@@ -1065,9 +1119,54 @@ $\formphi$ & $::=$ & $\ldots
                \bnfor \ldots$
     & (formulas)
 \end{tabular}
-
+$$
+\inference{
+  \cEnv; \kEnv \vdash \formphi \ofkind \kind
+}{
+  \cEnv; \kEnv \vdash \fLamAtom{\atomv} \formphi \ofkind \kForallAtom{\atomv}\kind
+}
+\qquad
+\inference{
+  \cEnv; \kEnv \vdash \formphi \ofkind \kind
+}{
+  \cEnv; \kEnv \vdash \fLamTerm{\termv} \formphi \ofkind \kForallTerm{\termv}\kind
+}
+\qquad
+\inference{
+  \cEnv; \kEnv, \propv \ofkind \kind_1 \vdash \formphi \ofkind \kind_2
+}{
+  \cEnv; \kEnv \vdash \fLamForm{\propv}{\kind_1} \formphi \ofkind \kind_1 \karrow \kind_2
+}
+$$
+$$
+\inference{
+  \cEnv;\kEnv\vdash \formphi \ofkind \kForallAtom{\atomv}\kind
+}{
+  \cEnv;\kEnv\vdash \formphi \fAppAtom{\atomexp} \ofkind \kind[\atomv \mapsto \atomexp]
+}
+\qquad
+\inference{
+  \cEnv;\kEnv\vdash \formphi \ofkind \kForallTerm{\termv}\kind
+}{
+  \cEnv;\kEnv\vdash \formphi \fAppTerm{\term} \ofkind \kind[\termv \mapsto \term]
+}
+\qquad
+\inference{
+  \cEnv; \kEnv \vdash \formphi_1 \ofkind \kind' \karrow \kind &
+  \cEnv; \kEnv \vdash \formphi_2 \ofkind \kind'
+}{
+  \cEnv;\kEnv\vdash \formphi_1 \fApp \formphi_2 \ofkind \kind
+}
+$$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
+And finish the definition of formulas with \textit{fixpoint} function:
+
+\begin{tabular}{rrlr}
+$\formphi$ & $::=$ & $\ldots
+               \bnfor {fix} $
+    & (formulas)
+\end{tabular}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Proof theory}
@@ -1085,6 +1184,15 @@ $\formphi$ & $::=$ & $\ldots
 \newcommand{\jgmnt[2]}[\cEnv;\Theta]{\ensuremath{#1 \vdash #2}}
 \newcommand{\cjgmnt[2]}[\cEnv]{\ensuremath{#1 \vDash #2}}
 \newcommand{\fv[1]}[\cEnv;\Theta]{\ensuremath{\operatorname{FV}(#1)}}
+
+Finally we define can proof-theoretic rules. Starting with inference rules for
+assumption and \textit{ex falso}, we already define their constraint-sublogic analogues
+that employ the solver.
+And while the $\vdash$ relation we define is purely syntactic,
+we can still use semantic $\vDash$ because of it's decidability.
+Not that there are many constraints that can be used as $\bot_\constr$, i.e.
+constraints that are always false and solver will only \textit{prove} them
+if we supply it with contradictory constraint enviroment (and that's the intend of this rule).
 \begin{eqnarray*}
   \inference{
   }{
@@ -1104,11 +1212,13 @@ $\formphi$ & $::=$ & $\ldots
   }[(\ensuremath{constr^i})]
   \qquad
   \inference{
-    \cjgmnt[\cEnv]{\bot}
+    \cjgmnt[\cEnv]{\bot_\constr}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi}
   }[(\ensuremath{constr^e})]
 \end{eqnarray*}
+Inference rules for implication are standard and the reason we present them here
+is not to bore the reader but to point the similarities to their constraint analogues.
 \begin{eqnarray*}
   \inference{
     \jgmnt[\cEnv;\Theta,\formphi_1]{\formphi_2}
@@ -1137,27 +1247,11 @@ $\formphi$ & $::=$ & $\ldots
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi}
   }[(\ensuremath{\fCImp{\cdot}^e})]
 \end{eqnarray*}
-\begin{eqnarray*}
-  \inference{
-    \jgmnt[\cEnv;\Theta]{\formphi_1}
-    }{
-    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
-  }[(\ensuremath{\vee^i_1})]
-  \qquad
-  \inference{
-    \jgmnt[\cEnv;\Theta]{\formphi_2}
-  }{
-    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
-  }[(\ensuremath{\vee^i_2})]
-  \qquad
-  \inference{
-    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2} \\
-    \jgmnt[\cEnv;\Theta,\formphi_1]{\psi} &
-    \jgmnt[\cEnv;\Theta,\formphi_2]{\psi}
-  }{
-    \jgmnt[\cEnv;\Theta]{\psi}
-  }[(\ensuremath{\vee^e})]
-\end{eqnarray*}
+Notice that in the case constraint-and-guard the rule for elimination is restricted
+to only formulas of kind $\kProp$.
+This is due to nature of the guard --- if we want to eliminate it,
+we can only do so with formulas that \textit{make sense} on their own,
+without that $\constr$ guard.
 \begin{eqnarray*}
   \inference{
     \jgmnt[\cEnv_1;\Theta_1]{\formphi_1} &
@@ -1196,6 +1290,31 @@ $\formphi$ & $::=$ & $\ldots
     }{
     \jgmnt[\cEnv;\Theta]{\formphi}
   }[(\ensuremath{\fCAnd{\cdot}^e_2})]
+\end{eqnarray*}
+Inference rules for disjunction and quantifier are rather straightforward.
+As one would expect we restrict generalized name to be \textit{fresh} in the enviroment (it may not occur in any of the assumptions)
+and the names given to witnesses of existentential quantification must also be \textit{fresh}.
+Rules for quantifiers always come in pairs --- one for the atoms and one for the variables.
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\formphi_1}
+    }{
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
+  }[(\ensuremath{\vee^i_1})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\formphi_2}
+  }{
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
+  }[(\ensuremath{\vee^i_2})]
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2} \\
+    \jgmnt[\cEnv;\Theta,\formphi_1]{\psi} &
+    \jgmnt[\cEnv;\Theta,\formphi_2]{\psi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\psi}
+  }[(\ensuremath{\vee^e})]
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
@@ -1255,6 +1374,16 @@ $\formphi$ & $::=$ & $\ldots
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
   }[(\ensuremath{{\fExistsTerm{}}^e})]
 \end{eqnarray*}
+To make the framework more flexible we introduce a way for using equivalent formulas:
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\psi} &
+    \jgmnt[\cEnv;\Theta]{\psi \equiv \formphi}
+    }{
+    \jgmnt[\cEnv;\Theta]{\formphi}
+  }[(\ensuremath{Equiv})]
+\end{eqnarray*}
+And a way to substitute atoms for atomic expression and variables for terms, if the solver can prove their equality:
 \begin{eqnarray*}
   \inference{
     \cjgmnt[\cEnv]{\atomv \ceq \atomexp} &
@@ -1270,14 +1399,9 @@ $\formphi$ & $::=$ & $\ldots
     \jgmnt[\cEnv\{\termv \mapsto \term\};\Theta\{\termv \mapsto \term\}]{\formphi\{\termv \mapsto \term\}}
   }[(\ensuremath{\mapsto_T})]
 \end{eqnarray*}
-\begin{eqnarray*}
-  \inference{
-    \jgmnt[\cEnv;\Theta]{\psi} &
-    \jgmnt[\cEnv;\Theta]{\psi \equiv \formphi}
-    }{
-    \jgmnt[\cEnv;\Theta]{\formphi}
-  }[(\ensuremath{Equiv})]
-\end{eqnarray*}
+Finall we define induction over term structure,
+and thanks to the constraints sublogic we can easily define the notion of
+\textit{smaller terms} for inductive hypothesis:
 \begin{eqnarray*}
   \inference{
     \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \formphi(\termv'))]{\formphi(\termv)}
@@ -1285,18 +1409,23 @@ $\formphi$ & $::=$ & $\ldots
     \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \formphi(\termv)}
   }[(\ensuremath{Induction})]
 \end{eqnarray*}
+We also define some axioms about constraint sublogic:
+\begin{enumerate}
+\item Atoms can be compared in a deterministic fashion,
 \begin{eqnarray*}
   \inference{
     }{
     \jgmnt[]{\fForallAtom{\:\atomv,\:\atomv'} (\atomv \ceq \atomv') \vee (\atomv \cneq \atomv')}
   }[(\ensuremath{Axiom_{Compare}})]
 \end{eqnarray*}
+\item There are always exists a \textit{fresh} atom,
 \begin{eqnarray*}
   \inference{
     }{
     \jgmnt[]{\fForallTerm{\termv} \:\fExistsAtom{\atomv} (\atomv \cfresh \termv)}
   }[(\ensuremath{Axiom_{Fresh}})]
 \end{eqnarray*}
+\item We can deduce the structure of a term.
 \begin{eqnarray*}
   & \inference{
     }{
@@ -1304,9 +1433,13 @@ $\formphi$ & $::=$ & $\ldots
   }[(\ensuremath{Axiom_{Inversion}})] \\
   & \ensuremath{\vee (\fExistsTerm{\termv_1,\:\termv_2}\: \termv = \tbind{\atomv}{\termv'}) \vee ({symbol}\: \termv) } \\
 \end{eqnarray*}
+\end{enumerate}
 
-The equivalence relation ($\formphi_1 \equiv \formphi_2$) is rather straightforward,
-the only interesting parts being fixpoint, functions and applications.
+The equivalence relation ($\formphi_1 \equiv \formphi_2$) is a bit complicated
+due to the presence of evironment with variable mapping, subkinding and formulas
+with fixpoints, functions, and applications.
+Nonetheless, it's simply that - \textit{an equvialence relation} - and it
+behaves as expected. We will only highlighting the interesting parts.
 \begin{eqnarray*}
   \inference{
     \jgmnt[\Gamma; \Sigma]{\formphi_1[\termv_1 \mapsto  \term_1] \equiv \formphi_2[\termv_2 \mapsto \term_2] }
@@ -1314,8 +1447,7 @@ the only interesting parts being fixpoint, functions and applications.
     \jgmnt[\Gamma; \Sigma]{(\fLamTerm{\termv_1}\formphi_1) \fAppTerm \term_1 \equiv (\fLamTerm{\termv_2}\formphi_2) \fAppTerm \term_2}
   }
 \end{eqnarray*}
-(TODO: Also we do kind-checking).
-Otherwise we compute weak head normal form and recurse on subformulas:
+Otherwise we compute weak head normal form (up to some \textit{depth}) and recurse on subformulas:
 \begin{eqnarray*}
   \inference{
     \jgmnt[\Gamma; \Sigma; S n]{(\fix{P}{\termv}\formphi) \fAppTerm \term}
@@ -1323,8 +1455,8 @@ Otherwise we compute weak head normal form and recurse on subformulas:
     \jgmnt[\Gamma; \Sigma, P \mapsto \formphi; n]{\formphi[\termv \mapsto \term]}
   }
 \end{eqnarray*}
-Until we \textit{run out of gas} or cannot compute the formula further,
-resorting to \textit{naive} checking:
+Until we reach WHNF computation \textit{depth} or cannot compute the formula further,
+we resort to \textit{naive} checking:
 \begin{eqnarray*}
   \inference{
     \cjgmnt[\Gamma]{\term_1 \ceq \term_2} &
@@ -1343,6 +1475,15 @@ resorting to \textit{naive} checking:
 \end{eqnarray*}
 \begin{eqnarray*}
   \inference{
+    \kind_1 \subkind \kind_2 \\
+    \jgmnt[\Gamma; \Sigma]{\formphi_1[P_1 \mapsto P] \equiv \formphi_2[P_2 \mapsto P] }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\fLamForm{P_1}{\kind_1}{\formphi_1} \equiv \fLamForm{P_2}{\kind_2}{\formphi_2}}
+  }
+\end{eqnarray*}
+\begin{eqnarray*}
+  \inference{
+    \kind_1 \subkind \kind_2 &
     P \notin \fv[\Gamma; \Sigma] & \termv \notin \fv[\Gamma; \Sigma] \\
     \jgmnt[\Gamma; \Sigma]{\formphi_1[P_1 \mapsto P, \termv_1 \mapsto \termv] \equiv \formphi_2[P_2 \mapsto P, \termv_2 \mapsto \termv] }
     }{
@@ -1351,8 +1492,24 @@ resorting to \textit{naive} checking:
 \end{eqnarray*}
 Note that we allow \textit{different terms} in equivalent formulas as long as
 constraints-enviroment $\cEnv$ ensures their equality is provable.
-Quantifiers are handled the same way as function above --- as they all are a form of bind.
-(TODO: Also we do constraints-equivalence).
+Quantifiers are handled the same way as function above --- as they all a form of bind.
+\begin{eqnarray*}
+  \inference{
+    \jgmnt[\Gamma]{\constr_1 \equiv \constr_2 } &
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 }
+  }{
+    \jgmnt[\Gamma; \Sigma]{\fCAnd{\constr_1}\formphi_1 \equiv \fCAnd{\constr_2}\formphi_2 }
+  }
+\qquad
+  \inference{
+    \cjgmnt[\Gamma]{\atomv_1 \ceq \atomv_2 } & \cjgmnt[\Gamma]{\term_1 \ceq \term_2 }
+  }{
+    \jgmnt[\Gamma]{(\atomv_1 \cfresh \term_1) \equiv (\atomv_2 \cfresh \term_2) }
+  }
+\end{eqnarray*}
+To handle formulas with constraints we introduce constraint equivalence relation,
+which does nothing more than use solver to check that arguments and constructors
+of constraint are equal in the solver sense.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Model}
 
