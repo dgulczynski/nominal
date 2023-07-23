@@ -58,8 +58,8 @@
 % Kinds
 \def\kProp{\star}
 \def\karrow{\to}
-\newcommand\kForallAtom[1]{\forall_A #1 .}
-\newcommand\kForallTerm[1]{\forall_T #1 .}
+\newcommand\kForallAtom[1]{\forall_A #1 .\:}
+\newcommand\kForallTerm[1]{\forall_T #1 .\:}
 \newcommand\kGuard[1]{[#1]}
 
 % Formulas
@@ -67,13 +67,13 @@
 \newcommand\fConstr[1]{#1}
 \newcommand\fCAnd[1]{[#1]\wedge}
 \newcommand\fCImp[1]{[#1]\to}
-\newcommand\fForallAtom[1]{\forall_A #1 .}
-\newcommand\fForallTerm[1]{\forall_T #1 .}
-\newcommand\fExistsAtom[1]{\exists_A #1 .}
-\newcommand\fExistsTerm[1]{\exists_T #1 .}
-\newcommand\fLamAtom[1]{\lambda_A #1 .}
-\newcommand\fLamTerm[1]{\lambda_T #1 .}
-\newcommand\fLamForm[2]{\lambda #1 :: #2.}
+\newcommand\fForallAtom[1]{\forall_A #1 .\:}
+\newcommand\fForallTerm[1]{\forall_T #1 .\:}
+\newcommand\fExistsAtom[1]{\exists_A #1 .\:}
+\newcommand\fExistsTerm[1]{\exists_T #1 .\:}
+\newcommand\fLamAtom[1]{\lambda_A #1 .\:}
+\newcommand\fLamTerm[1]{\lambda_T #1 .\:}
+\newcommand\fLamForm[2]{\lambda #1 :: #2.\:}
 \newcommand\fAppAtom[1]{\;#1}
 \newcommand\fAppTerm[1]{\;#1}
 \def\fApp{\;}
