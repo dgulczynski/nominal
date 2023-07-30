@@ -81,7 +81,7 @@
 \ProcessOptions\relax
 
 \RequirePackage[OT4]{fontenc}
-\RequirePackage{babel,titling,geometry}
+\RequirePackage{babel,titling,geometry,xcolor}
 \geometry{margin=3cm,bindingoffset=1cm,a4paper,onecolumn,twoside}
 
 \pagestyle{headings}
