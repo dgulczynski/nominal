@@ -1581,151 +1581,151 @@ Quantifiers are handled the same way as function above --- as they all a form of
 To handle formulas with constraints we introduce constraint equivalence relation,
 which does nothing more than use solver to check that arguments and constructors
 of constraint are equal in the solver sense.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Model}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \chapter{Model}
 
-Definition of a model of our logic is bit involved,
-due to presence of subkinding relation.
-We will proceed in two steps.
-First, for each kind $\kind$ we define its \emph{domain} $\kindDom{\kind}$.
-Then we will interpret each kind as a predicate on elements of its domain.
-We fix some Heyting algebra $\PropAlg$
-in which we will interpret propositions.
-Then kind domains are defined in the following way.
-\begin{eqnarray*}
-\kindDom{\kProp}                     & = & \PropAlg \\
-\kindDom{\kind_1 \karrow \kind_2}    & = & \kindDom{\kind_1} \rightarrow \kindDom{\kind_2} \\
-\kindDom{\kForallAtom{\atomv}\kind}  & = & \atomDom          \rightarrow \kindDom{\kind} \\
-\kindDom{\kForallTerm{\termv}\kind}  & = & \termDom          \rightarrow \kindDom{\kind} \\
-\kindDom{\kGuard{\constr}\kind}      & = & \kindDom{\kind}
-\end{eqnarray*}
+% Definition of a model of our logic is bit involved,
+% due to presence of subkinding relation.
+% We will proceed in two steps.
+% First, for each kind $\kind$ we define its \emph{domain} $\kindDom{\kind}$.
+% Then we will interpret each kind as a predicate on elements of its domain.
+% We fix some Heyting algebra $\PropAlg$
+% in which we will interpret propositions.
+% Then kind domains are defined in the following way.
+% \begin{eqnarray*}
+% \kindDom{\kProp}                     & = & \PropAlg \\
+% \kindDom{\kind_1 \karrow \kind_2}    & = & \kindDom{\kind_1} \rightarrow \kindDom{\kind_2} \\
+% \kindDom{\kForallAtom{\atomv}\kind}  & = & \atomDom          \rightarrow \kindDom{\kind} \\
+% \kindDom{\kForallTerm{\termv}\kind}  & = & \termDom          \rightarrow \kindDom{\kind} \\
+% \kindDom{\kGuard{\constr}\kind}      & = & \kindDom{\kind}
+% \end{eqnarray*}
 
-%%%%%%%%%%%%%%%%%%%%%%%
-And kind interpretation like this:
-\begin{eqnarray*}
-\termMdl{\kProp}{\tmEnv}                      & = & \{ \bot, \top \} \\
-\termMdl{\kind_1 \karrow \kind_2}{\tmEnv}     & = & \{f \mid \forall P \in \termMdl{\kind_1}{\tmEnv}.\: f(P) \in \termMdl{\kind_2}{\tmEnv} \} \\
-\termMdl{\kForallAtom{\atomv}\kind}{\tmEnv}   & = & \{f \mid \forall A \in \atomDom.\: f(A) \in \termMdl{\kind}{\tmEnv[\atomv \mapsto A]}\} \\
-\termMdl{\kForallTerm{\termv}\kind}{\tmEnv}   & = & \{f \mid \forall T \in \termDom.\: f(T) \in \termMdl{\kind}{\tmEnv[\termv \mapsto T]}\} \\
-\termMdl{\kGuard{\constr}\kind}{\tmEnv}       & = & \{x \mid \tmEnv \vDash \constr \implies x \in \termMdl{\kind}{\tmEnv} \}
-\end{eqnarray*}
+% %%%%%%%%%%%%%%%%%%%%%%%
+% And kind interpretation like this:
+% \begin{eqnarray*}
+% \termMdl{\kProp}{\tmEnv}                      & = & \{ \bot, \top \} \\
+% \termMdl{\kind_1 \karrow \kind_2}{\tmEnv}     & = & \{f \mid \forall P \in \termMdl{\kind_1}{\tmEnv}.\: f(P) \in \termMdl{\kind_2}{\tmEnv} \} \\
+% \termMdl{\kForallAtom{\atomv}\kind}{\tmEnv}   & = & \{f \mid \forall A \in \atomDom.\: f(A) \in \termMdl{\kind}{\tmEnv[\atomv \mapsto A]}\} \\
+% \termMdl{\kForallTerm{\termv}\kind}{\tmEnv}   & = & \{f \mid \forall T \in \termDom.\: f(T) \in \termMdl{\kind}{\tmEnv[\termv \mapsto T]}\} \\
+% \termMdl{\kGuard{\constr}\kind}{\tmEnv}       & = & \{x \mid \tmEnv \vDash \constr \implies x \in \termMdl{\kind}{\tmEnv} \}
+% \end{eqnarray*}
 
 
 
-And finally the kind derivation model:
-\begin{eqnarray*}
-\interp{\inferrule{ }{\types{\top}{\kProp}}} & = & \top \\
-\interp{\inference{ }{\types{ \propv}{\Gamma( \propv)}}} & = & \tmEnv(\propv) \\
-    \interp{\inference{}{\types{\constr}{\kProp}}} & = & \texttt{if } \tmEnv \vDash \constr \texttt{ then } \top \texttt{ else } \bot
-\end{eqnarray*}
+% And finally the kind derivation model:
+% \begin{eqnarray*}
+% \interp{\inferrule{ }{\types{\top}{\kProp}}} & = & \top \\
+% \interp{\inference{ }{\types{ \propv}{\Gamma( \propv)}}} & = & \tmEnv(\propv) \\
+%     \interp{\inference{}{\types{\constr}{\kProp}}} & = & \texttt{if } \tmEnv \vDash \constr \texttt{ then } \top \texttt{ else } \bot
+% \end{eqnarray*}
 
-\begin{eqnarray*}
-    \interp{
-        \inference{D_1 : \types{\formphi_1 }{\kProp} \\ D_2 : \types{\formphi_2 }{\kProp}
-    }{
-        \types{\formphi_1 \wedge \formphi_2}{\kProp}}
-    } & = & \interp{D_1} \wedge_\PropAlg \interp{D_2} \\
-    \interp{
-        \inference{D_1 : \types{\formphi_1 }{\kProp}  \\ D_2 : \types{\formphi_2 }{\kProp}
-    }{
-        \types{\formphi_1 \vee \formphi_2}{\kProp}}
-    } & = & \interp{D_1} \vee_\PropAlg \interp{D_2} \\
-    \interp{
-        \inference{D_1 : \types{\formphi_1 }{\kProp}  \\ D_2 : \types{\formphi_2 }{\kProp}
-    }{
-        \types{\formphi_1 \Rightarrow \formphi_2}{\kProp}}
-    } & = & \interp{D_1} \Rightarrow_\PropAlg \interp{D_2}
-\end{eqnarray*}
+% \begin{eqnarray*}
+%     \interp{
+%         \inference{D_1 : \types{\formphi_1 }{\kProp} \\ D_2 : \types{\formphi_2 }{\kProp}
+%     }{
+%         \types{\formphi_1 \wedge \formphi_2}{\kProp}}
+%     } & = & \interp{D_1} \wedge_\PropAlg \interp{D_2} \\
+%     \interp{
+%         \inference{D_1 : \types{\formphi_1 }{\kProp}  \\ D_2 : \types{\formphi_2 }{\kProp}
+%     }{
+%         \types{\formphi_1 \vee \formphi_2}{\kProp}}
+%     } & = & \interp{D_1} \vee_\PropAlg \interp{D_2} \\
+%     \interp{
+%         \inference{D_1 : \types{\formphi_1 }{\kProp}  \\ D_2 : \types{\formphi_2 }{\kProp}
+%     }{
+%         \types{\formphi_1 \Rightarrow \formphi_2}{\kProp}}
+%     } & = & \interp{D_1} \Rightarrow_\PropAlg \interp{D_2}
+% \end{eqnarray*}
 
-\begin{eqnarray*}
-    \interp{
-        \inference{D : \types{\formphi}{\kProp}
-    }{
-        \types{\fForallTerm{\termv}\formphi}{\kProp}}
-    } & = & \underset{T \in Term}{\bigwedge} {\interp[{\tmEnv [\termv \mapsto T]}]{D}}  \\
-    \interp{
-        \inference{D : \types{\formphi}{\kProp}
-    }{
-        \types{\fForallAtom{\atomv}\formphi}{\kProp}}
-    } & = & \underset{A \in Atom}{\bigwedge} {\interp[{\tmEnv [\atomv \mapsto A]}]{D}} \\
-    \interp{
-        \inference{D : \types{\formphi}{\kProp}
-    }{
-        \types{\fExistsTerm{\termv} \formphi}{\kProp}}
-    } & = & \underset{T \in Term}{\bigvee}\interp[{\tmEnv [\termv \mapsto T]}]{D} \\
-    \interp{
-        \inference{D : \types{\formphi}{\kProp}
-    }{
-        \types{\fExistsAtom{\atomv} \formphi}{\kProp}}
-    } & = & \underset{A \in Atom}{\bigvee} \interp[{\tmEnv [\atomv \mapsto A]}]{D}
-\end{eqnarray*}
+% \begin{eqnarray*}
+%     \interp{
+%         \inference{D : \types{\formphi}{\kProp}
+%     }{
+%         \types{\fForallTerm{\termv}\formphi}{\kProp}}
+%     } & = & \underset{T \in Term}{\bigwedge} {\interp[{\tmEnv [\termv \mapsto T]}]{D}}  \\
+%     \interp{
+%         \inference{D : \types{\formphi}{\kProp}
+%     }{
+%         \types{\fForallAtom{\atomv}\formphi}{\kProp}}
+%     } & = & \underset{A \in Atom}{\bigwedge} {\interp[{\tmEnv [\atomv \mapsto A]}]{D}} \\
+%     \interp{
+%         \inference{D : \types{\formphi}{\kProp}
+%     }{
+%         \types{\fExistsTerm{\termv} \formphi}{\kProp}}
+%     } & = & \underset{T \in Term}{\bigvee}\interp[{\tmEnv [\termv \mapsto T]}]{D} \\
+%     \interp{
+%         \inference{D : \types{\formphi}{\kProp}
+%     }{
+%         \types{\fExistsAtom{\atomv} \formphi}{\kProp}}
+%     } & = & \underset{A \in Atom}{\bigvee} \interp[{\tmEnv [\atomv \mapsto A]}]{D}
+% \end{eqnarray*}
 
-\begin{eqnarray*}
-   \interp{
-        \inference{D : \types[\Gamma, c]{\formphi}{\kProp}
-    }{
-        \types{[c] \wedge \formphi}{\kProp}}
-    } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \bot
-    \\
-    \interp{
-        \inference{D : \types[\Gamma, c]{\formphi}{\kProp}
-    }{
-        \types{[c] \Rightarrow \formphi}{\kProp}}
-    } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \top
-\end{eqnarray*}
+% \begin{eqnarray*}
+%    \interp{
+%         \inference{D : \types[\Gamma, c]{\formphi}{\kProp}
+%     }{
+%         \types{[c] \wedge \formphi}{\kProp}}
+%     } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \bot
+%     \\
+%     \interp{
+%         \inference{D : \types[\Gamma, c]{\formphi}{\kProp}
+%     }{
+%         \types{[c] \Rightarrow \formphi}{\kProp}}
+%     } & = &  \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \top
+% \end{eqnarray*}
 
-\begin{eqnarray*}
-    \interp{\inference{D : \types{\formphi}{\kind_2}}{\types{\lam[\propv]\formphi}{\kind_1\karr\kind_2}}} & = &
-    \lambda\;(Q : \interp{\kind_1}).\;\interp[{\tmEnv[\propv\mapsto Q]}]{D}
-    \\
-    \interp{\inference{D: \types{\formphi}{\kind}}{\types{\lam[\atomv]\formphi}{\kForallAtom{\atomv}\kind}}} & = &
-    \lambda\;(A : Atom).\;\interp[{\tmEnv[\atomv\mapsto A]}]{D}
-    \\
-    \interp{\inference{D: \types{\formphi}{\kind}}{\types{\lam[\termv]\formphi}{\kForallTerm{\termv}\kind}}} & = &
-    \lambda\;(T : Term).\;\interp[{\tmEnv[\termv\mapsto T]}]{D}
-\end{eqnarray*}
+% \begin{eqnarray*}
+%     \interp{\inference{D : \types{\formphi}{\kind_2}}{\types{\lam[\propv]\formphi}{\kind_1\karr\kind_2}}} & = &
+%     \lambda\;(Q : \interp{\kind_1}).\;\interp[{\tmEnv[\propv\mapsto Q]}]{D}
+%     \\
+%     \interp{\inference{D: \types{\formphi}{\kind}}{\types{\lam[\atomv]\formphi}{\kForallAtom{\atomv}\kind}}} & = &
+%     \lambda\;(A : Atom).\;\interp[{\tmEnv[\atomv\mapsto A]}]{D}
+%     \\
+%     \interp{\inference{D: \types{\formphi}{\kind}}{\types{\lam[\termv]\formphi}{\kForallTerm{\termv}\kind}}} & = &
+%     \lambda\;(T : Term).\;\interp[{\tmEnv[\termv\mapsto T]}]{D}
+% \end{eqnarray*}
 
-\begin{eqnarray*}
-    \interp{\inference{D_1: \types{\formphi_1}{\kind'\karr\kind} \\ D_2: \types{\formphi_2}{\kind'}}{\types{\formphi_1\;\formphi_2}{\kind}}} & = &
-    \interp{D_1}\; \interp{D_2}
-    \\
-    \interp{\inference{D: \types{\formphi}{\kForallAtom{\atomv}\kind}}{\types{\formphi(\atomexp)}{\kind\{\atomv \mapsto \atomexp\}}}} & = &
-    \interp{D}\;\interp{\atomexp}
-    \\
-    \interp{\inference{D: \types{\formphi}{\kForallTerm{\termv}\kind}}{\types{\formphi(\term)}{\kind\{\termv \mapsto \term\}}}} & = &
-    \interp{D}\;\interp{\termv}
-\end{eqnarray*}
+% \begin{eqnarray*}
+%     \interp{\inference{D_1: \types{\formphi_1}{\kind'\karr\kind} \\ D_2: \types{\formphi_2}{\kind'}}{\types{\formphi_1\;\formphi_2}{\kind}}} & = &
+%     \interp{D_1}\; \interp{D_2}
+%     \\
+%     \interp{\inference{D: \types{\formphi}{\kForallAtom{\atomv}\kind}}{\types{\formphi(\atomexp)}{\kind\{\atomv \mapsto \atomexp\}}}} & = &
+%     \interp{D}\;\interp{\atomexp}
+%     \\
+%     \interp{\inference{D: \types{\formphi}{\kForallTerm{\termv}\kind}}{\types{\formphi(\term)}{\kind\{\termv \mapsto \term\}}}} & = &
+%     \interp{D}\;\interp{\termv}
+% \end{eqnarray*}
 
-%  lim w sensie tw kleenego o fixpoincie
-\begin{eqnarray*}
-    \interp{\inference{
-            D : \types[{\Gamma, X : {\all[z]{[z < \termv']}}\;\kind\subst{z}{\termv'}}]\formphi\kind
-        }{
-            \types{\fix{X}{\termv'}\formphi}{\all[\termv']\kind}
-        }} & = & \lim_{n \rightarrow \infty} f_n
-    \\
-    & & \texttt{ where } f_0(t) = \bot \\
-    & & \texttt{ and } f_{n+1}(t) = \interp[{\tmEnv[X\mapsto f_n, \termv' \mapsto t]}]{D} \\
-    \interp{\inference{
-            D : \types[\Gamma, c]\formphi\kind
-        }{
-            \types{\formphi}{[c]\kind}
-        }} & = & \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \text{''}\bot\text{''}
-    \\
-    \interp{\inference{
-            D : \types\formphi\kind \\
-            \rel[\Gamma] \kind \leq \kind'
-        }{
-            \types{\formphi}{\kind'}
-        }} & = &  \interp{D}
-\end{eqnarray*}
+% %  lim w sensie tw kleenego o fixpoincie
+% \begin{eqnarray*}
+%     \interp{\inference{
+%             D : \types[{\Gamma, X : {\all[z]{[z < \termv']}}\;\kind\subst{z}{\termv'}}]\formphi\kind
+%         }{
+%             \types{\fix{X}{\termv'}\formphi}{\all[\termv']\kind}
+%         }} & = & \lim_{n \rightarrow \infty} f_n
+%     \\
+%     & & \texttt{ where } f_0(t) = \bot \\
+%     & & \texttt{ and } f_{n+1}(t) = \interp[{\tmEnv[X\mapsto f_n, \termv' \mapsto t]}]{D} \\
+%     \interp{\inference{
+%             D : \types[\Gamma, c]\formphi\kind
+%         }{
+%             \types{\formphi}{[c]\kind}
+%         }} & = & \texttt{if } \tmEnv \vDash c \texttt{ then } \interp{D} \texttt{ else } \text{''}\bot\text{''}
+%     \\
+%     \interp{\inference{
+%             D : \types\formphi\kind \\
+%             \rel[\Gamma] \kind \leq \kind'
+%         }{
+%             \types{\formphi}{\kind'}
+%         }} & = &  \interp{D}
+% \end{eqnarray*}
 
-\section{Fundamental Theorem}
-For any formula $\formphi$, any kind $\kind$, and any environment $\Gamma$, for any kind derivation $D : \types\formphi\kind$ under any interpretation $\tmEnv \in \interp[]{\Gamma}$, we have that
-$$
-    \interp{D} \in \interp{\kind}
-$$
-In other words, each kind derivation $D$ has a semantic witness that inhabits the semantic interpretation of $\kind$.
+% \section{Fundamental Theorem}
+% For any formula $\formphi$, any kind $\kind$, and any environment $\Gamma$, for any kind derivation $D : \types\formphi\kind$ under any interpretation $\tmEnv \in \interp[]{\Gamma}$, we have that
+% $$
+%     \interp{D} \in \interp{\kind}
+% $$
+% In other words, each kind derivation $D$ has a semantic witness that inhabits the semantic interpretation of $\kind$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Proof assistant}
 All the stuff mentioned above has their implementation in OCaml,
