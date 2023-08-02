@@ -1801,7 +1801,231 @@ We will use $\hole$ to indicate \textit{holes} in the incomplete proofs:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Case study: Progress and Preservation of STLC}
 
-\dots
+The ultimate gold of our work is to create a logic for dealing with variable binding,
+and there's no better way to use than to prove some things about lambda calculus.
+
+We will take a look on simply typed lambda calculus and examine proofs of
+its two major properties of \textit{type soundness}: \textit{progress} and \textit{preservation}.
+Before we delve into the proofs, let's first establish needed relations:
+
+\begin{eqnarray*}
+\fix{Type}{t}{\kProp} &
+  (t \ceq {base}) \\
+   \vee & (\fExistsTerm{t_1, t_2}{\fCAnd{\termv \ceq {arrow}\fAppTerm{t_1}\fAppTerm{t_2}}{({Type}\fAppTerm{T_1}) \wedge ({Type}\fAppTerm{t_2}) }}) \\
+\fix{InEnv}{env}{\kForallAtom{a}\kForallTerm{t}\kProp}  \fLamAtom{a} \fLamTerm{t} &
+  (\fExistsTerm{env'} {env \ceq {cons}\fAppTerm{a}\fAppTerm{t}\fAppTerm{env'}})  \\
+  \vee &
+  (\fExistsAtom{b}\fExistsTerm{t', env'}\fCAnd{env \ceq {cons}\fAppTerm{b}\fAppTerm{t'}\fAppTerm{env'}}\fCAnd{a \cneq b}({InEnv}\fAppTerm{env'}\fAppTerm{a}\fAppTerm{t}) ) \\
+  \cdots & \cdots
+\end{eqnarray*}
+
+As one would expec, we will need a lemma about \textit{canonical forms},
+which states all values are of \textit{arrow} type and can be \textit{inversed} into an abstraction term.
+(because we did not consider any true base type like a \texttt{Bool} or \texttt{Int}).
+Other lemmas are unimportant boilerplate.
+
+\begin{lstlisting}[language=OCaml]
+let empty_contradiction_thm = lambda_thm
+    "forall a :atom. forall t :term. (InEnv nil a t) => false"
+
+let typing_terms_thm = lambda_thm
+    "forall e env t : term. (Typing e env t) => (Term e)"
+
+let canonical_form_thm = lambda_thm $ concat
+      [ "forall v t :term."
+      ; " (Value v) =>"
+      ; " (Typing v nil t) =>"
+      ; " (exists a :atom. exists e :term. [v = lam (a.e)] /\ (Term e))"
+      ; " /\ "
+      ; " (exists t1 t2 :term. [t = arrow t1 t2])" ]
+
+let subst_exists_thm = lambda_thm $ unwords
+      [ "forall a :atom."
+      ; "forall v :term. (Value v) =>"
+      ; "forall e :term. (Term e) =>"
+      ; "exists e' :term. (Sub e a v e')" ]
+
+let progress_thm = lambda_thm
+    "forall e t :term. (Typing e nil t) => (Progressive e)"
+\end{lstlisting}
+Otherwise the proof goes the same way as usual, simple induction over $Typing$.
+\begin{lstlisting}[language=OCaml]
+let progress =
+  proof' progress_thm
+  |> by_induction "e0" "IH" %> intro %> destr_intro
+  |> intros' ["Ha"; "a"; ""]
+    (* e is a var in empty env - contradiction *)
+     %> ex_falso
+     %> apply_thm_specialized empty_contradiction ["a"; "t"]
+     %> assumption
+  |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""; ""; ""]
+    (* e is a lambda - value *)
+     %> case "value"
+     %> case "lam"
+     %> exists' ["a"; "e_a"]
+     %> by_solver
+     %> apply_thm_specialized typing_terms ["e_a"; "cons a t1 nil"; "t2"]
+     %> assumption
+  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
+  (* e is an application - steps *)
+  |> add_assumption_parse "He1" "Progressive e1"
+  |> add_assumption_parse "He2" "Progressive e2"
+  |> destruct_assm "He1"
+     %> intros ["Hv1"]
+     %> destruct_assm "He2"
+     %> intros ["Hv2"] (* Value e1, Value e2 *)
+     %> ( add_assumption_thm_specialized "He1lam" canonical_form' ["e1"; "t2"; "t"]
+        (* He1lam: [e1 = lam (a.e_a)] /\ (Term e_a) *)
+        %> apply_in_assm "He1lam" "Hv1"
+        %> apply_in_assm "He1lam" "Happ_1"
+        %> destruct_assm' "He1lam" ["a"; "e_a"; ""] )
+     %> ( add_assumption_thm_specialized "He_a" subst_exists ["a"; "e2"; "e_a"]
+        %> apply_in_assm "He_a" "Hv2"
+        %> apply_in_assm "He_a" "He1lam"
+        %> destruct_assm' "He_a" ["e_a'"] (* He_a: Sub e_a a e2 e_a' *) )
+     %> case "steps"
+     %> exists "e_a'"
+     %> case "app"
+     %> exists' ["a"; "e_a"; "e2"]
+     %> by_solver
+     %> destruct_goal
+     %> apply_assm "Hv2"
+     %> apply_assm "He_a"
+  |> intros' ["Hs2"; "e2'"] (* Value e1, Steps e2 e2' *)
+     %> case "steps"
+     %> exists "app e1 e2'"
+     %> case "app_r"
+     %> exists' ["e1"; "e2"; "e2'"]
+     %> by_solver
+     %> by_solver
+     %> destruct_goal
+     %> apply_assm "Hv1"
+     %> apply_assm "Hs2"
+  |> intros' ["Hs1"; "e1'"] (* Steps e1 *)
+     %> case "steps"
+     %> exists "app e1' e2"
+     %> case "app_l"
+     %> exists' ["e1"; "e1'"; "e2"]
+     %> by_solver
+     %> by_solver
+     %> apply_assm "Hs1"
+  |> apply_assm_specialized "IH" ["e2"; "t2"] %> by_solver
+    %> apply_assm "Happ_2" (* Progressive e2 *)
+  |> apply_assm_specialized "IH" ["e1"; "arrow t2 t"] %> by_solver
+    %> apply_assm "Happ_1" (* Progressive e1 *)
+  |> qed
+\end{lstlisting}
+
+\pagebreak
+
+To prove \textit{Preservation}, we will need more lemmas:
+
+1. Substitution lemma:
+if term $e$ has a type $t$ in enviroment ${cons}\fAppAtom{a}\fAppTerm{ta}\fAppTerm{env}$,
+then we can substitute $a$ for any value $v$ of type $ta$ in $e$ without breaking the typing.
+\begin{lstlisting}[language=OCaml]
+let sub_lemma_thm = lambda_thm $ concat
+      [ "forall e env t :term."
+      ; "forall a : atom. forall ta :term."
+      ; "forall v e' :term."
+      ; " (Typing v env ta) =>"
+      ; " (Typing e {cons a ta env} t) =>"
+      ; " (Sub e a v e') =>"
+      ; " (Typing e' env t)" ]
+\end{lstlisting}
+
+2. Swap lemma:
+If we have a typing of $e$ in $env$ then we can
+swap $a$ with (\textit{fresh enough}) $b$ in both $e$ and $env$ without breaking the typing.
+This is particularly useful for mainipulating the abstraction terms ---
+we can have any atom we want in the argument position while preserving typing.
+\begin{lstlisting}[language=OCaml]
+let swap_lambda_typing_lemma_thm = lambda_thm $ unwords
+      [ "forall e env t :term. "
+      ; "forall a b :atom. forall t' :term. "
+      ; " [b # a e] => "
+      ; " (Typing {e} {cons a t' env} t) => "
+      ; " (Typing {[a b]e} {cons b t' env} t)" ]
+\end{lstlisting}
+
+3. Weakening lemma: for any enviroment $env_1$, we can use larger enviroment $env_2$ without breaking the typing.
+\begin{lstlisting}[language=OCaml]
+let weakening_lemma_thm = lambda_thm $ concat
+      [ "forall e env1 t env2 : term."
+      ; " (Typing e env1 t) =>"
+      ; " (EnvInclusion env1 env2) =>"
+      ; " (Typing e env2 t)" ]
+\end{lstlisting}
+
+Now to the proof:
+\begin{lstlisting}[language=OCaml]
+let preservation =
+  let contra_var = intros' ["contra"; "_"; ""] %> discriminate in
+  let contra_app = intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate in
+  let deduce_app_typing =
+    destruct_assm "Htyp"
+    %> (intros' ["contra"; "_"; ""] %> discriminate)
+    %> (intros' ["contra"; "_"; "e_"; "t1"; "t2"; ""] %> discriminate)
+    %> intros' ["Happ"; "e_1"; "e_2"; "t2"; ""; ""]
+  in
+  proof' preservation_thm
+  |> by_induction "e0" "IH"
+  |> intro %> intro %> intro %> intros ["Htyp"; "Hstep"]
+  |> destruct_assm "Hstep"
+  |> intros' ["He1"; "e1"; "e1'"; "e2"; ""; ""]
+    (* e = app e1 e2, Steps e1 e1' *)
+     %> deduce_app_typing
+     %> case "app"
+     %> exists' ["e1'"; "e2"; "t2"]
+     %> by_solver
+     %> destruct_goal
+     %> apply_assm_specialized "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
+     (* Typing e1 env {arrow t2 t} =>
+            Steps e1 e1' => Typing e1' env {arrow t2 t} *)
+     %> by_solver
+     %> apply_assm "Happ_1"
+     %> apply_assm "He1"
+     (* Typing e2 env t2 *)
+     %> apply_assm "Happ_2"
+  |> intros' ["He2"; "v1"; "e2"; "e2'"; ""; ""; ""]
+     (* e = app v1 e2, Value e1, Steps e2 e2' *)
+     %> deduce_app_typing
+     %> case "app"
+     %> exists' ["v1"; "e2'"; "t2"]
+     %> by_solver
+     %> destruct_goal
+     (* Typing e1 env {arrow t2 t} *)
+     %> apply_assm "Happ_1"
+     (* Typing e2 env t2 => Steps e2 e2' => Typing e2' env t2*)
+     %> apply_assm_specialized "IH" ["e2"; "e2'"; "env"; "t2"]
+     %> by_solver
+     %> apply_assm "Happ_2"
+     %> apply_assm "He2_2"
+  |> intros' ["Hbeta"; "a"; "e_a"; "v"; ""; ""]
+     (* e = app (lam (a.e_a)) v, Value v *)
+     %> deduce_app_typing
+     %> destruct_assm "Happ_1"
+     %> contra_var (* e_1 =/= var *)
+     %> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""] (* e_1 = b.e_b *)
+     %> apply_thm_specialized sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
+     (* Typing v env t2 => Typing e_a {cons a t2 env} t =>
+            Sub e_a a v e' => Typing e' env t *)
+     %> apply_assm "Happ_2" (* Typing v env t2 *)
+     %> compare_atoms "a" "b" (* Typing e_a cons a t2 env t *)
+     %> destr_intro
+     (* a = b *) %> apply_assm "Hlam_2"
+     %> destr_intro (* a =/= b *)
+     (* [a # b e_b] => Typing e_b {cons b t2 env} t =>
+            Typing {[b a]e_b} {cons a t2 env} t *)
+     %> apply_thm_specialized
+        swap_lambda_typing ["e_b"; "env"; "t"; "b"; "a"; "t2"]
+     %> by_solver
+     %> apply_assm "Hlam_2"
+     %> apply_assm "Hbeta_2" (* Sub e_a a v e' *)
+     %> contra_app (* e_1 =/= app _ _ *)
+  |> qed
+\end{lstlisting}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Conclusion and future work}
