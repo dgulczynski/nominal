@@ -83,44 +83,20 @@
 \chapter{Terms and constraints}
 % Okreli odbiorce i do niego pisa
 
-In classical first-order logic, terms are built from variables and
-applications of functional symbols to other terms.
-In this work we expand terms with expressions closely resembling the syntax
-of lambda calculus, aiming to provide a flexible framework for reasoning about
-the lambda calculus and its derivations.
+In classical first-order logic, terms are constructed from variables and applications of functional symbols to other terms. This work introduces an extension to terms with expressions closely resembling the syntax of lambda calculus. The aim is to create a flexible framework for reasoning about the lambda calculus and its derivations.
 
-To this end we introduce an infinite set of \textit{atoms}
-(denoted by lower-case letters), representing the bound variables in terms
---- i.e. the variables in the sense of lambda calculus.
-That set is disjount with the set of variables commonly found in first-order logic,
-which from now on we will call \textit{variables} (and denote by uppper-case letters)
-as apposed to \textit{atoms}.
+To achieve this goal, we introduce an infinite set of \textit{atoms} (represented by lowercase letters) which correspond to the bound variables in terms, analogous to the variables in lambda calculus. This set is disjoint from the set of variables commonly used in first-order logic, which we will refer to as \textit{variables} (denoted by uppercase letters).
 
-Terms are given by the following grammar: \\
+Terms are defined by the following grammar:
+\\
 \begin{tabular}{rclr}
-    $\perm$    & $\deff$ & $\permid
-                   \bnfor \permswap{\atomexp}{\atomexp}{\perm}$
-        & (permutations) \\
-    $\atomexp$ & $\deff$ & $\perm \apperm \atomv$
-        & (atom expressions) \\
-    $\term$    & $\deff$ & $\atomexp
-                   \bnfor \perm \apperm \termv
-                   \bnfor \tbind{\atomexp} \term
-                   \bnfor \term \tapp \term
-                   \bnfor \symb$
-        & (terms)
+    $\perm$    & $\deff \permid \mid \permswap{\atomexp}{\atomexp}{\perm}$ \\
+    $\atomexp$ & $\deff \perm \apperm \atomv$ \\
+    $\term$    & $\deff \atomexp \mid \perm \apperm \termv \mid \tbind{\atomexp} \term \mid \term \tapp \term \mid \symb$
 \end{tabular}
-% Termy są czysto sytnatkyczne, opisać ich znaczenie, a model w innym rozdziale
+\\
 
-It is important to note that terms do not incorporate any inherent notions of
-computation, reduction, or binding.
-These expressions simply \textit{look} like the lambda calculus but they lack
-the operational semantics of it.
-However, the intuitions associated with such expressions are not unfounded.
-We will observe their practical application in the sublogic of constraints
-that we define on top of terms to reason about
-notions of \textit{freshness}, \textit{variable binding} and \textit{structural}
-order and its logical model.
+It's important to note that terms do not inherently incorporate notions of computation, reduction, or binding. These expressions closely resemble lambda calculus syntax but lack its operational semantics. However, the intuitions associated with these expressions are not baseless. Their practical application is observed in the sublogic of constraints defined on top of terms, used to reason about concepts such as \textit{freshness}, \textit{variable binding}, and \textit{structural} order, as well as their logical model.
 
 Constraints are given by the following grammar:
 \\
@@ -157,7 +133,7 @@ with following semantics:
   } \\
 \end{eqnarray*}
 
-We use metavariable $\cEnv$ for finite sets of constraints.
+We use metavariable $\cEnv$ to represent finite sets of constraints.
 
 
 \begin{tabular}{rclr}
@@ -208,39 +184,30 @@ $\shape$   & $\deff$ & $\shatom
       \shapeof{\termMdl{\term_2}{\tmEnv}}
 \end{eqnarray*}
 
-We write $\tmEnv \vDash \cEnv$ iff for all $\constr \in \cEnv$
+We write $\tmEnv \vDash \cEnv$ iff for all $\constr \in \cEnv$,
 we have $\tmEnv \vDash \constr$.
 We write $\cEnv \vDash \constr$ iff
-for every $\tmEnv$ such that $\tmEnv \vDash \cEnv$
+for every $\tmEnv$ such that $\tmEnv \vDash \cEnv$,
 we have $\tmEnv \vDash \constr$.
 
-
-With this model in mind we will se that there exists a decidibile algorithm
-for determining whether C1,...,Cn |= C0,
-i.e. a deterministic way of checking if constraints c1, ..., cn imply c0.
-We present such algorithm in the next chapter.
+Within this model, we establish the existence of a decidible algorithm for determining whether $C_1, \ldots, C_n \models C_0$, meaning there is a deterministic way to check whether constraints $C_1, \ldots, C_n$ imply $C_0$. This algorithm is presented in the following chapter.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Constraint solver}
-Bird's eye view: Solver breaks down constraints (on both sides of the turnstile)
-to irreducible components that are solved easily.
+At the heart of our work lies the Solver, an algorithm designed to resolve constraints.
+A high level perspective of the Solver is that it dissects constraints on both sides of the turnstile into irreducible components that are solved easily.
 
+Given a set of assumptions $\constr_1, \dots, \constr_n$, it verifies whether a given goal $\constr_0$ holds.
+Technically, the Solver determines whether,
+every possible substitution of variables into closed terms in $\constr_0, \constr_1, \dots, \constr_n$,
+such that $\constr_1, \dots, \constr_n$ are satisfied, will also satisfy $\constr_0$.
 
-At the core of our work lies the Solver
---- the algorithm of resolving the constraints.
-Given a list of assumptions $\constr_1, \dots, \constr_n$ it checks whether
-given goal $\constr_0$ holds.
-In other words it is an algorithm that verifies whether,
-for every possible substitution of closed terms (in terms of variables, not atoms)
-for variables in $\constr_0, \constr_1, \dots, \constr_n$ such that the constraints
-$\constr_1, \dots, \constr_n$ are satisfied, $\constr_0$ is also satisfied.
+For the sake of convenience and implementation efficiency, the Solver operates
+on slightly different constraints compared to those found in formulas and kinds.
+The key distinction lies in the use of \textit{shapes} in shape constraints rather than terms.
 
-For convenience and effectiveness of implementation, the Solver works with
-constraints a little different constraints (although not more expressive)
-than those occuring in formulas and kinds,
-main difference being use of \textit{shapes} instead of terms for shape constraints.
-Solver contraints and shapes are given by the following grammar: \\
+Solver constraints and shapes are defined by the following grammar: \\
 \begin{tabular}{rclr}
   $\sconstr$ & $\deff$ & $\atomexp \cfresh \term
   \bnfor \term \ceq \term
@@ -254,15 +221,13 @@ Solver contraints and shapes are given by the following grammar: \\
                  \bnfor \symb$
       & (shapes)
 \end{tabular}\\
-Solver erases atoms from terms in shape contstraints, effectively transforming
-them from \textit{constraints} to \textit{solver constraints}.
+Solver erases atoms from terms in shape constraints,
+effectively transforming them from \textit{constraints} to \textit{solver constraints}.
 
-We add another environment $\icEnv$ to distinguish between the
-potentially-reducible assumptions in $\cEnv$.
-For convenience we will write $\atomv \cneq \atomexp$ instead of $\atomv \cfresh \atomexp$ as it gives
-good intuition of atom freshness implying inequality
-and for $\atomexp = \pi \atomv$ we will write $\atomexp \cfresh \term$ meaning
-$\atomv \cfresh \pi^{-1} \term$.
+We add another environment $\icEnv$ to distinguish between the potentially-reducible assumptions in $\cEnv$.
+For convenience, we will write $\atomv \cneq \atomexp$ instead of $\atomv \cfresh \atomexp$ as it gives a clear intuition of atom freshness implying inequality.
+Additionally, when $\atomexp = \pi \atomv$, we will denote $\atomexp \cfresh \term$ to mean $\atomv \cfresh \pi^{-1} \term$.
+
 Irreducible constraints are:
 \begin{eqnarray*}
   \atomv_1 \cneq \atomv_2 & \text{---} & \text{
@@ -284,13 +249,20 @@ Irreducible constraints are:
 
 After all the constraints are reduced to such simple constraints
 we reduce the goal-constraint and repeat the reduction procedure on
-new assumptions and goal. We either arrive on a contradictory environment or
-all the assumptions and goal itself are reduced to irreducible constraints which
-is as simple as checking if the goal occurs on the left side of the turnstile.
-
+new assumptions and goal. We either arrive at a contradictory environment or
+all the assumptions and goal itself are reduced to irreducible constraints, which
+is as simple as checking if the goal occurs on the left side of the turnstile:
 $$
 \inferrule{
-  \sconstr \in \icEnv
+  \inferrule{
+    \sconstr'' \in \icEnv''
+    }{
+    \inferrule{
+     \cdots
+    }{
+     \cEnv' ; \icEnv' \vDash \sconstr' \\ \cdots
+  }
+  }
 }{
   \cEnv ; \icEnv \vDash \sconstr
 }
@@ -819,7 +791,7 @@ $({NeqAtoms}_{\icEnv}
 $NeqAtoms$ is a set of pairs of atoms that we know are different, \\
 $Fresh$ is a mapping from atoms to variables that we know the atom is {Fresh} in,\\
 $VarShape$ is a mapping from variables to shape-representative variables (i.e. all variables that are mapped in $VarShape$ to the same variable are of the same shape),\\
-$Shape$ is a mapping from shape-representative variables to shape that we know this variable must have,\\
+$Shape$ is a mapping from shape-representative variables to the shape that we know this variable must have,\\
 $SubShape$ is a mapping from shape-representative variables to sets of shapes that we know this variable must supershape.
 \\
 \\
@@ -878,8 +850,8 @@ $$
   \icEnv \vDash \occurs{\termv}{\shape}
 }
 $$
-And finally the rules for $\sconstr \cup \icEnv$.
-Note that we are using meta-field of $Assumptions$ to indicate that some of the
+And finally, the rules for $\sconstr \cup \icEnv$.
+Note that we are using the meta-field of $Assumptions$ to indicate that some of the
 assumptions in $\icEnv$ are no longer "simple" and escape from $\icEnv$ back to
 $\cEnv$ to be broken up by the \textit{Solver}.
 
@@ -972,9 +944,9 @@ $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
 
-On top of sublogic of constraints we build an higher order logic.
-Due to involvement of atoms, terms, binders and constraints,
-we introduce kinds to make sure the formulas we deal with \textit{make sense}.
+On top of the sublogic of constraints, we build a higher-order logic.
+Due to the involvement of atoms, terms, binders, and constraints,
+we introduce kinds to ensure that the formulas we deal with \textit{make sense}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Kinds}
@@ -1004,7 +976,7 @@ from atoms some kind ${Atom}\karrow\kind$, but we must know \textit{which} atom
 is bound there, to substitute for it in $\kind$ the same way we substitute
 that atom for an atom expression in the function body when applying it to the formula.
 The \textit{guarded kind} $\kGuard{\constr} \kind$ is most importantly used in
-kinding of the fixpoint formulas that we will explain in later sections.
+kinding of the fixpoint formulas, which we will explain in later sections.
 
 \section{Subkinding}
 Kinding relation is relaxed through the \textit{subkinding},
@@ -1198,24 +1170,26 @@ $$
   \cEnv;\kEnv\vdash (\fix{\propv}{\termv}{\kind}{\formphi}) \ofkind \kForallTerm{\termv}{\kind}
 }
 $$
-Fixpoint constructor allows us to express \textit{recursive} predicates over terms,
+The fixpoint constructor allows us to express \textit{recursive} predicates over terms,
 but only such that the recursive applications are on structurally smaller terms,
 which we express in the kinding rule through the kinding $(\propv \ofkind \kForallTerm{Y} \kGuard{Y \cshlt \termv}{\kind\subst{\termv}{Y}})$.
-To evaluate a fixpoint function applied on a term, simply substitute the bound
-variable with given term and recursive calls inside fixpoint's body with the fixpoint itself.
+To evaluate a fixpoint function applied to a term, simply substitute the bound
+variable with the given term and replace recursive calls inside the fixpoint's body with the fixpoint itself.
+
 $$
 (\fix{\propv}{\termv}{\kind}{\formphi})\fApp\term
 \equiv
 \formphi\subst{\termv}{\term}\subst{\propv}{(\fix{\propv}{\termv}{\kind}{\formphi})}
 $$
-Because the applied term is finite and we always recurse on structurally smaller
-terms, the final formula after all substitutions must also be finite ---
-thanks to semantics of constraints and kinds.
+Because the applied term is finite
+and we always recurse on structurally smaller terms,
+the final formula after all substitutions must also be finite
+--— thanks to the semantics of constraints and kinds.
 
-To familiarize the reader with the fixpoint formulas we present
-how peano arithmetic can be modeled in our logic.
-Given symbols $0$ and $S$ for natural numbers construction one can write a
-predicate that a term models some natural number:
+To familiarize the reader with the fixpoint formulas,
+we present how Peano arithmetic can be modeled in our logic.
+Given symbols $0$ and $S$ for natural number construction,
+one can write a predicate that a term models some natural number:
 $$
 \fix{Nat}{N}{\kProp}{(N \ceq 0) \vee (\fExistsTerm{M} \fCAnd{N \ceq {S \tapp M}} ({Nat}\fAppTerm{M}))}
 $$
@@ -1252,11 +1226,11 @@ See more interesting examples of fixpoints usage in the chapter on STLC.
 \newcommand{\cjgmnt[2]}[\cEnv]{\ensuremath{#1 \vDash #2}}
 \newcommand{\fv[1]}[\cEnv;\Theta]{\ensuremath{\operatorname{FV}(#1)}}
 
-Finally we can define proof-theoretic rules.
+Finally, we can define proof-theoretic rules.
 Starting with inference rules for assumption,
-we can already define it's constraint-sublogic analogues that employ the solver.
+we can already define its constraint-sublogic analogues that employ the solver.
 And while the $\vdash$ relation we define is purely syntactic,
-we can still use semantic $\vDash$ because of it's decidability.
+we can still use semantic $\vDash$ because of its decidability.
 $$
   \inference{
     \formphi \in \Theta
@@ -1270,11 +1244,11 @@ $$
     \jgmnt[\cEnv;\Theta]{\constr}
   }[(\ensuremath{constr^i})]
 $$
-Again for \textit{ex falso} we define analogic proof constructor for dealing with contradictory
-constraint evironment.
+Again, for \textit{ex falso}, we define an analogous proof constructor for dealing with a contradictory
+constraint environment.
 Note that there are many constraints that can be used as $\bot_\constr$, i.e.
-constraints that are always false and solver will only \textit{prove} them
-if we supply it with contradictory assumptions
+constraints that are always false, and the solver will only \textit{prove} them
+if we supply it with contradictory assumptions.
 $$
   \inference{
     \jgmnt[\cEnv;\Theta]{\bot}
@@ -1288,8 +1262,8 @@ $$
     \jgmnt[\cEnv;\Theta]{\formphi}
   }[(\ensuremath{constr^e})]
 $$
-Inference rules for implication are standard and the reason we present them here
-is not to bore the reader but to point the similarities to their constraint analogues.
+Inference rules for implication are standard, and the reason we present them here
+is not to bore the reader, but to point out the similarities to their constraint analogues.
 $$
   \inference{
     \jgmnt[\cEnv;\Theta,\formphi_1]{\formphi_2}
@@ -1318,9 +1292,9 @@ $$
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi}
   }[(\ensuremath{\fCImp{\cdot}^e})]
 $$
-Notice that in the case constraint-and-guard the rule for elimination is restricted
+Notice that in the case of constraint-and-guard, the rule for elimination is restricted
 to only formulas of kind $\kProp$.
-This is due to nature of the guard --- if we want to eliminate it,
+This is due to the nature of the guard --- if we want to eliminate it,
 we can only do so with formulas that \textit{make sense} on their own,
 without that $\constr$ guard.
 $$
@@ -1363,8 +1337,8 @@ $$
   }[(\ensuremath{\fCAnd{\cdot}^e_2})]
 $$
 Inference rules for disjunction and quantifiers are rather straightforward.
-As one would expect we restrict generalized name to be \textit{fresh} in the enviroment (it may not occur in any of the assumptions)
-and the names given to witnesses of existentential quantification must also be \textit{fresh}.
+As one would expect, we restrict the generalized name to be \textit{fresh} in the environment (it may not occur in any of the assumptions),
+and the names given to witnesses of existential quantification must also be \textit{fresh}.
 Rules for quantifiers always come in pairs --- one for the atoms and one for the variables.
 $$
   \inference{
@@ -1507,10 +1481,10 @@ $$
 \end{enumerate}
 
 The equivalence relation ($\formphi_1 \equiv \formphi_2$) is a bit complicated
-due to the presence of evironment with variable mapping, subkinding and formulas
+due to the presence of an environment with variable mapping, subkinding, and formulas
 with fixpoints, functions, and applications.
-Nonetheless, it's simply that - \textit{an equvialence relation} - and it
-behaves as expected. We will only highlighting the interesting parts.
+Nonetheless, it's simply that - \textit{an equivalence relation} - and it
+behaves as expected. We will only highlight the interesting parts.
 $$
   \inference{
     \jgmnt[\Gamma; \Sigma]{\formphi_1[\termv_1 \mapsto  \term_1] \equiv \formphi_2[\termv_2 \mapsto \term_2] }
@@ -1733,16 +1707,16 @@ in modules \texttt{Solver} and \texttt{SolverEnv},
 \texttt{KindChecker} and \texttt{KindCheckerEnv},
 \texttt{Proof} and \texttt{ProofEnv}, respectively.
 
-Constraints, kinds and formulas constructors mirror the grammars we defined
+Constraints, kinds, and formulas constructors mirror the grammars we defined
 in previous chapters.
-Atoms and variables are represented internally by integers (but still are disjount sets)
+Atoms and variables are represented internally by integers (but still are disjoint sets)
 --- and their string \textit{names} are kept in the environment and binders
 (quantifiers and functions).
 
-Addionaly, we provide a \textit{proof assistant} (in module \texttt{Prover}),
+Additionally, we provide a \textit{proof assistant} (in module \texttt{Prover}),
 that enables the user to conveniently work with \textit{backwards} and incomplete
 proof --- inspired by the HOL family of theorem provers.
-While simple it is also powerful and easy to use.
+While simple, it is also powerful and easy to use.
 
 The interface to the Prover provides multiple \textit{tactics}
 (functions that manipulate \textit{prover state}) and ways to combine them:
@@ -1801,12 +1775,12 @@ We will use $\hole$ to indicate \textit{holes} in the incomplete proofs:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Case study: Progress and Preservation of STLC}
 
-The ultimate gold of our work is to create a logic for dealing with variable binding,
-and there's no better way to use than to prove some things about lambda calculus.
+The ultimate goal of our work is to create a logic for dealing with variable binding,
+and there's no better way to do that than to prove some things about lambda calculus.
 
-We will take a look on simply typed lambda calculus and examine proofs of
+We will take a look at simply typed lambda calculus and examine proofs of
 its two major properties of \textit{type soundness}: \textit{progress} and \textit{preservation}.
-Before we delve into the proofs, let's first establish needed relations:
+Before we delve into the proofs, let's first establish the needed relations:
 
 \begin{eqnarray*}
 \fix{Type}{t}{\kProp} &
@@ -1819,9 +1793,9 @@ Before we delve into the proofs, let's first establish needed relations:
   \cdots & \cdots
 \end{eqnarray*}
 
-As one would expec, we will need a lemma about \textit{canonical forms},
-which states all values are of \textit{arrow} type and can be \textit{inversed} into an abstraction term.
-(because we did not consider any true base type like a \texttt{Bool} or \texttt{Int}).
+As one would expect, we will need a lemma about \textit{canonical forms},
+which states that all values are of \textit{arrow} type and can be \textit{inversed} into an abstraction term
+(since we did not consider any true base types like \texttt{Bool} or \texttt{Int}).
 Other lemmas are unimportant boilerplate.
 
 \begin{lstlisting}[language=OCaml]
