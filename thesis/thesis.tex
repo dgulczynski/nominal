@@ -267,56 +267,7 @@ $$
   \cEnv ; \icEnv \vDash \sconstr
 }
 $$
-Decidability of atom equality plays an important role in the reduce
-procedure:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% solver goal eq
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-$$
-\inferrule{
-  \cEnv ; \icEnv \vDash \atomv = \perm^{-1} \atomexp
-}{
-  \cEnv ; \icEnv \vDash \perm \atomv = \atomexp
-}
-\qquad
-\inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     = \atomexp \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_2 = \atomexp \\
-  \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 = \atomexp
-}{
-  \cEnv ; \icEnv \vDash \atomv = \permswap{\atomexp_1}{\atomexp_2}{}\atomexp
-}
-$$
-$$
-\inferrule{
-  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
-}{
-  \cEnv ; \icEnv \vDash \termv = \pi \termv
-}
-\qquad
-\inferrule{
-  \cEnv ; \icEnv \vDash \termv_1 = \pi_1^{-1} \pi_2 \termv_2
-}{
-  \cEnv ; \icEnv \vDash \pi_1 \termv_1 = \pi_2 \termv_2
-}
-$$
-$$
-\inferrule{
-  \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \term_2
-  \\
-  \cEnv ; \icEnv \vDash \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
-}{
-  \cEnv ; \icEnv \vDash \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
-}
-\qquad
-\inferrule{
-  \cEnv ; \icEnv \vDash \term_1 = \term_2
-  \\
-  \cEnv ; \icEnv \vDash \term_1' = \term_2'
-}{
-  \cEnv ; \icEnv \vDash \term_1 \term_1' = \term_2 \term_2'
-}
-$$
+And now for the solving procedure we start with the most simple equality check:
 $$\inferrule{
 }{
   \cEnv ; \icEnv \vDash \atomv = \atomv
@@ -331,11 +282,73 @@ $$\inferrule{
 }{
   \cEnv ; \icEnv \vDash \symb = \symb
 }
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \term_1 = \term_2
+  \\
+  \cEnv ; \icEnv \vDash \term_1' = \term_2'
+}{
+  \cEnv ; \icEnv \vDash \term_1 \term_1' = \term_2 \term_2'
+}
 $$
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% solver permutation idempotent
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Checking equality of abstraction terms requires that the left side's argument is
+fresh in the whole right side's term (either arguments are the same or left's argument doesnt occur in right's body)
+and that left body is equal to the right body with right argument swapped for the left one:
 $$
+\inferrule{
+  \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \term_2
+  \\
+  \cEnv ; \icEnv \vDash \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
+}{
+  \cEnv ; \icEnv \vDash \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
+}
+$$
+
+To compare a \textit{pure} atom with permuted one, we employ the decidability of
+atom equality to strip the right hand-side permutation through applying the
+outermost swap on the left side, while adding to assumption.
+There's three possible ways: \begin{enumerate}
+\item $\atomv$ is different from both $\atomexp_1$ and $\atomexp_2$,
+so the swap doesn't change the goal,\\
+\item $\atomv$ is equal to $\atomexp_1$ but different from $\atomexp_2$,
+so the swap substitutes it for $\atomexp_2$,\\
+\item $\atomv$ is equal to $\atomexp_2$,
+so the swap substitutes it for $\atomexp_1$.
+\end{enumerate}
+Notice that it is impossible for any two of these assumption to be valid at the same time ---
+the contradictory branches will resolve through absurd environment.
+$$
+\inferrule{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     = \atomexp \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_2 = \atomexp \\
+  \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 = \atomexp
+}{
+  \cEnv ; \icEnv \vDash \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
+}
+$$
+
+If the left-hand side's term is permuted we simply move the permutation to the right-hand side:
+$$
+\inferrule{
+  \cEnv ; \icEnv \vDash \atomv = \perm^{-1} \atomexp
+}{
+  \cEnv ; \icEnv \vDash \perm \atomv = \atomexp
+}
+\qquad
+\inferrule{
+  \cEnv ; \icEnv \vDash \termv_1 = \pi_1^{-1} \pi_2 \termv_2
+}{
+  \cEnv ; \icEnv \vDash \pi_1 \termv_1 = \pi_2 \termv_2
+}
+$$
+Variables can be equal to their permuted selves if that permutation is idempotent:
+$$
+\inferrule{
+  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
+}{
+  \cEnv ; \icEnv \vDash \termv = \pi \termv
+}
+\qquad
 \inferrule{
   \forall \atomv \in \pi.\;
     \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
@@ -344,6 +357,7 @@ $$
   \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
 }
 $$
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % solver goal {Fresh}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
