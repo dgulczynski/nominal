@@ -14,14 +14,14 @@ let type_formula =
 
 let inenv_formula =
   unwords
-    [ "fix InEnv(env): forall a :atom. forall t :term. * = fun a :atom -> fun t :term -> "
+    [ "fix InEnv(env): forall a :atom. forall t :term. * = fun (a :atom) (t :term) -> "
     ; " current: ( exists env': term. [env = cons a t env'] ) "
     ; " ∨   "
     ; " next: ( exists b :atom. exists s env': term. [env = cons b s env'] ∧ [a =/= b] ∧ (InEnv env' a {t}))" ]
 
 let typing_formula =
   unwords
-    [ "fix Typing(e): forall env t :term. * = fun env :term -> fun t :term -> "
+    [ "fix Typing(e): forall env t :term. * = fun env t :term -> "
     ; " var: ( exists a :atom.   "
     ; " [e = a] ∧ InEnv {env} a {t} )  "
     ; " ∨   "
@@ -49,7 +49,7 @@ let value_formula =
 
 let sub_formula =
   unwords
-    [ "fix Sub(e): forall a :atom. forall v e':term.* = fun a :atom -> fun v :term -> fun e' :term -> "
+    [ "fix Sub(e): forall a :atom. forall v e' :term.* = fun (a :atom) (v  e' :term) -> "
     ; " var_same: ([e = a] ∧ [e' = v])"
     ; " ∨"
     ; " var_diff: (exists b :atom. [e = b] ∧ [e' = b] ∧ [a =/= b])"
@@ -80,10 +80,7 @@ let progressive_formula =
     ; "  steps: (exists e':term. Steps e e')" ]
 
 let env_inclusion_formula =
-  unwords
-    [ "fun env1 : term -> fun env2 : term ->"
-    ; "  forall a : atom. forall t : term."
-    ; "  (InEnv env1 a t) => (InEnv env2 a t)" ]
+  "fun env1 env2 : term -> forall a : atom. forall t : term. (InEnv env1 a t) => (InEnv env2 a t)"
 
 let lambda_env =
   parse_mapping lambda_symbols [] [] snd

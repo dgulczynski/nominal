@@ -69,9 +69,7 @@ let rec pretty_formula = function
   | F_ForallTerm _ as f -> pretty_formula_forall_term [] f
   | F_ExistsAtom _ as f -> pretty_formula_exists_atom [] f
   | F_ExistsTerm _ as f -> pretty_formula_exists_term [] f
-  | F_FunAtom (a, f) -> pretty_formula_fun (atom_binder_to_binder a) f
-  | F_FunTerm (x, f) -> pretty_formula_fun (var_binder_to_binder x) f
-  | F_Fun (x, f) -> pretty_formula_fun (fvar_binder_to_binder x) f
+  | (F_FunAtom _ | F_FunTerm _ | F_Fun _) as f -> pretty_formula_fun [] f
   | (F_AppAtom _ | F_AppTerm _ | F_App _) as f -> pretty_formula_app f
   | F_Fix (fix, x, k, f) -> pretty_fix fix x k f
 
@@ -123,8 +121,11 @@ and pretty_formula_exists_term vars = function
   | F_ExistsTerm (x, f) -> pretty_formula_exists_term (x :: vars) f
   | f -> pretty_quantifier_term exists vars (pretty_formula f)
 
-and pretty_formula_fun x f =
-  pretty_label (with_prefix_suffix "fun " " ->" (pretty_binder x)) (with_binders [x] (pretty_formula f))
+and pretty_formula_fun xs = function
+  | F_FunAtom (a, f) -> pretty_formula_fun (atom_binder_to_binder a :: xs) f
+  | F_FunTerm (x, f) -> pretty_formula_fun (var_binder_to_binder x :: xs) f
+  | F_Fun (x, f) -> pretty_formula_fun (fvar_binder_to_binder x :: xs) f
+  | f -> pretty_label (with_prefix_suffix "fun " " ->" (pretty_binders xs)) (with_binders xs (pretty_formula f))
 
 and pretty_binder_kind = function
   | K_Atom _ -> str "atom"
@@ -136,6 +137,26 @@ and pretty_binder x =
   let x_name = str $ binder_name x in
   let x_kind = pretty_binder_kind $ binder_kind x in
   pretty_typed x_name x_kind
+
+and pretty_binders =
+  let ( <: ) k1 k2 =
+    let ( <: ) = KindChecker.subkind KindCheckerEnv.empty in
+    match (k1, k2) with
+    | K_Atom _, K_Atom _ -> true
+    | K_Var _, K_Var _ -> true
+    | K_FVar (_, k1), K_FVar (_, k2) -> k1 <: k2
+    | _ -> false
+  in
+  let pretty_binders' xs k = parenthesized $ pretty_typed (sequence $ List.map str xs) (pretty_binder_kind k) in
+  let rec process_binders (xs, k) = function
+    | Bind (x', k') :: xs' when k' <: k -> process_binders (x' :: xs, k) xs'
+    | Bind (x', k') :: xs' -> sequence $ [process_binders ([x'], k') xs'; pretty_binders' xs k]
+    | [] -> pretty_binders' xs k
+  in
+  function
+  | [] -> assert false
+  | [x] -> pretty_binder x
+  | Bind (x, k) :: xs -> process_binders ([x], k) xs
 
 let pretty_solve assms goal =
   pretty_label (pretty_ocaml_list $ List.map pretty_constr assms) (with_prefix "⊢ " $ pretty_formula goal)

@@ -65,18 +65,27 @@ let f_constrimpl formula =
   return $ PF_ConstrImpl (c, f)
 
 let f_fun formula =
+  let sequence p = many1 (whitespace *> p) in
+  let typed_args = typed_op (sequence identifier) pvar_kind in
+  let add_args (xs, k) =
+    let add_arg x f =
+      match k with
+      | Some PQ_Atom -> PF_FunAtom (x, f)
+      | Some PQ_Term -> PF_FunTerm (x, f)
+      | Some (PQ_Kind k) -> PF_Fun (x, k, f)
+      | None ->
+        raise
+        $ ParserException
+            (Printf.sprintf
+               "Functions must be used with type annotation, like 'fun x : k -> ...' where 'k' is 'atom', 'term' or \
+                kind" )
+    in
+    List.fold_right add_arg xs
+  in
   let* _ = string "fun" <* whitespace1 in
-  let* x, k = typed_op identifier pvar_kind in
+  let* args = sequence typed_args in
   let* _ = whitespace *> arrow <* whitespace in
-  match k with
-  | Some PQ_Atom -> formula >>| fun f -> PF_FunAtom (x, f)
-  | Some PQ_Term -> formula >>| fun f -> PF_FunTerm (x, f)
-  | Some (PQ_Kind k) -> formula >>| fun f -> PF_Fun (x, k, f)
-  | None ->
-    raise
-    $ ParserException
-        (Printf.sprintf
-           "Functions must be used with type annotation, like 'fun x : k -> ...' where 'k' is 'atom', 'term' or kind" )
+  formula >>| List.fold_right add_args args
 
 type pf_app_arg =
   | PFA_Identfier of string

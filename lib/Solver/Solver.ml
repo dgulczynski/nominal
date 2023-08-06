@@ -82,13 +82,12 @@ and solve_eq env assms e1 e2 =
     (*     Γ, Δ |- π x = π' x       *)
     solve_eq env assms (var x) (permute_term (reverse pi) e2)
   | T_Var _, _ -> false
-  | T_Lam (({perm= pi; symb= a1} as alpha1), t1), T_Lam (alpha2, t2) ->
-    (*      Γ, Δ |- a1 # e2      *)
+  | T_Lam (a1, t1), T_Lam (a2, t2) ->
+    (*    Γ, Δ |- a1 # (a2.e2)   *)
     (*  Γ, Δ |- e1 = [a1 a2] e2  *)
     (* ------------------------- *)
     (*   Γ, Δ |- a1.e1 = a2.e2   *)
-    solve_fresh env assms a1 $ permute_term (reverse pi) e2
-    && solve_eq env assms t1 $ permute_term [(alpha1, alpha2)] t2
+    solve_ env assms $ fresh a1 e2 && solve_eq env assms t1 $ permute_term [(a1, a2)] t2
   | T_Lam _, _ -> false
   | T_App (t1, t2), T_App (t1', t2') ->
     (*      Γ, Δ |- e1 = e2      *)

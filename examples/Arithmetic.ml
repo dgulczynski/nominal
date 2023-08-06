@@ -16,7 +16,7 @@ let is_num =
 
 let plus_eq =
   unwords
-    [ "fix PlusEq(n) : forall m k : term. * = fun m : term -> fun k : term ->  "
+    [ "fix PlusEq(n) : forall m k : term. * = fun m k : term ->                "
     ; "  zero: ([n = 0] ∧ [m = k])                                             "
     ; "  ∨                                                                     "
     ; "  succ: (exists n' k' :term. [n = S n'] ∧ [k = S k'] ∧ PlusEq n' m k')" ]
