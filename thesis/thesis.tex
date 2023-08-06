@@ -61,6 +61,7 @@
     morekeywords={val, ProofEnv}
 }
 \setlist{nolistsep}
+\renewcommand{\tt}[1]{\texttt{\small{#1}}}
 %%%%%
 
 \begin{document}
@@ -1162,46 +1163,46 @@ $\formphi$ & $::=$ & $\ldots
                \bnfor \formphi \fApp \formphi
                \bnfor \ldots$
     & (formulas)
-\end{tabular}
-$$
+\end{tabular}\\
+\begin{align*}
 \inference{
   \cEnv; \kEnv \vdash \formphi \ofkind \kind
 }{
   \cEnv; \kEnv \vdash \fLamAtom{\atomv} \formphi \ofkind \kForallAtom{\atomv}\kind
 }
-\qquad
-\inference{
-  \cEnv; \kEnv \vdash \formphi \ofkind \kind
-}{
-  \cEnv; \kEnv \vdash \fLamTerm{\termv} \formphi \ofkind \kForallTerm{\termv}\kind
-}
-\qquad
-\inference{
-  \cEnv; \kEnv, \propv \ofkind \kind_1 \vdash \formphi \ofkind \kind_2
-}{
-  \cEnv; \kEnv \vdash \fLamForm{\propv}{\kind_1} \formphi \ofkind \kind_1 \karrow \kind_2
-}
-$$
-$$
+& \qquad
 \inference{
   \cEnv;\kEnv\vdash \formphi \ofkind \kForallAtom{\atomv}\kind
 }{
   \cEnv;\kEnv\vdash \formphi \fAppAtom{\atomexp} \ofkind \kind \subst{\atomv}{\atomexp}
 }
-\qquad
+\\ & \\
+\inference{
+  \cEnv; \kEnv \vdash \formphi \ofkind \kind
+}{
+  \cEnv; \kEnv \vdash \fLamTerm{\termv} \formphi \ofkind \kForallTerm{\termv}\kind
+}
+& \qquad
 \inference{
   \cEnv;\kEnv\vdash \formphi \ofkind \kForallTerm{\termv}\kind
 }{
   \cEnv;\kEnv\vdash \formphi \fAppTerm{\term} \ofkind \kind\subst{\termv}{\term}
 }
-\qquad
+\\ & \\
+\inference{
+  \cEnv; \kEnv, \propv \ofkind \kind_1 \vdash \formphi \ofkind \kind_2
+}{
+  \cEnv; \kEnv \vdash \fLamForm{\propv}{\kind_1} \formphi \ofkind \kind_1 \karrow \kind_2
+}
+& \qquad
 \inference{
   \cEnv; \kEnv \vdash \formphi_1 \ofkind \kind' \karrow \kind &
   \cEnv; \kEnv \vdash \formphi_2 \ofkind \kind'
 }{
   \cEnv;\kEnv\vdash \formphi_1 \fApp \formphi_2 \ofkind \kind
 }
-$$
+\end{align*}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
 \newcommand{\fix}[3]{\ensuremath{\text{fix }#1(#2)\ofkind#3=}}
@@ -1250,7 +1251,7 @@ $({Nat} \ofkind \kForallTerm{N}{\kProp})$.
 Similarly, we can define addition: \\ \\
 $\fix{PlusEq}{N}{\kForallTerm{M}\kForallTerm{K}\kProp}{\fLamTerm{M}\fLamTerm{K}}$ \\
 $\text{ }\qquad
-  (\fCAnd{N \ceq 0}{(M \ceq K)}) \vee
+  (\fCAnd{N \ceq 0}{(M \ceq K)}) \;\vee\;
    (\fExistsTerm{N', K'}\fCAnd{N \ceq {S \tapp N'}}\fCAnd{K \ceq {S \tapp K'}}{({PlusEq}\fApp{N'}\fApp{M}\fApp{K'})}
    )
 $
@@ -1493,9 +1494,9 @@ $$
     \jgmnt[\cEnv\{\termv \mapsto \term\};\Theta\{\termv \mapsto \term\}]{\formphi\{\termv \mapsto \term\}}
   }[(\ensuremath{\mapsto_T})]
 $$
-Finall we define induction over term structure,
+Finally, we define induction over term structure,
 and thanks to the constraints sublogic we can easily define the notion of
-\textit{smaller terms} for inductive hypothesis:
+\textit{smaller terms} needed for the inductive hypothesis:
 $$
   \inference{
     \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \formphi(\termv'))]{\formphi(\termv)}
@@ -1503,6 +1504,7 @@ $$
     \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \formphi(\termv)}
   }[(\ensuremath{Induction})]
 $$
+\\
 We also define some axioms about constraint sublogic:
 \begin{enumerate}
 \item Atoms can be compared in a deterministic fashion,
@@ -1512,14 +1514,14 @@ $$
     \jgmnt[]{\fForallAtom{\:\atomv,\:\atomv'} (\atomv \ceq \atomv') \vee (\atomv \cneq \atomv')}
   }[(\ensuremath{Axiom_{Compare}})]
 $$
-\item There are always exists a \textit{fresh} atom,
+\item There always exists a \textit{fresh} atom,
 $$
   \inference{
     }{
     \jgmnt[]{\fForallTerm{\termv} \:\fExistsAtom{\atomv} (\atomv \cfresh \termv)}
   }[(\ensuremath{Axiom_{Fresh}})]
 $$
-\item We can deduce the structure of a term.
+\item We can always deduce the structure of a term.
 \begin{eqnarray*}
   & \inference{
     }{
@@ -1530,27 +1532,44 @@ $$
 \end{enumerate}
 
 The equivalence relation ($\formphi_1 \equiv \formphi_2$) is a bit complicated
-due to the presence of an environment with variable mapping, subkinding, and formulas
-with fixpoints, functions, and applications.
+due to subkinding, existence of formulas
+with fixpoints, functions, applications,
+and presence of an environment with variable mapping.
 Nonetheless, it's simply that - \textit{an equivalence relation} - and it
 behaves as expected. We will only highlight the interesting parts.
-$$
-  \inference{
-    \jgmnt[\Gamma; \Sigma]{\formphi_1[\termv_1 \mapsto  \term_1] \equiv \formphi_2[\termv_2 \mapsto \term_2] }
-    }{
-    \jgmnt[\Gamma; \Sigma]{(\fLamTerm{\termv_1}\formphi_1) \fAppTerm \term_1 \equiv (\fLamTerm{\termv_2}\formphi_2) \fAppTerm \term_2}
-  }
-$$
-Otherwise we compute weak head normal form (up to some \textit{depth}) and recurse on subformulas:
-$$
-  \inference{
-    \jgmnt[\Gamma; \Sigma; S n]{(\fix{P}{\termv}{\kind}\formphi) \fAppTerm \term}
-    }{
-    \jgmnt[\Gamma; \Sigma, P \mapsto \formphi; n]{\formphi[\termv \mapsto \term]}
-  }
-$$
-Until we reach WHNF computation \textit{depth} or cannot compute the formula further,
-we resort to \textit{naive} checking:
+
+Equivalence checking procedure starts by computing weak head normal form (up to some \textit{depth} denoted by $n$):
+\begin{align*}
+\tt{compute }\Sigma\tt{ }n\tt{ }P
+& \quad\leadsto\quad
+\tt{compute }\Sigma\tt{ }n\tt{ }\formphi
+\\
+&\;\text{when} \quad \Sigma(P) = \formphi
+\\ & \\
+\tt{compute }\Sigma\tt{ }n\tt{ }{(\formphi \fAppAtom \atomexp )}
+& \quad\leadsto\quad
+\tt{compute }\Sigma\tt{ }(n' - 1)\tt{ }{\formphi'\subst{\atomv}{\atomexp}} \\
+&\;\text{when} \quad \tt{compute }\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fLamAtom{\atomv}\formphi')
+\\ & \\
+\tt{compute }\Sigma\tt{ }n\tt{ }{(\formphi \fAppTerm \term )}
+& \quad\leadsto\quad
+\tt{compute }\Sigma\tt{ }(n' - 1)\tt{ }{\formphi'\subst{\termv}{\term}} \\
+&\;\text{when} \quad \tt{compute }\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fLamTerm{\termv}\formphi')
+\\ & \\
+\tt{compute }\Sigma\tt{ }n\tt{ }{(\formphi \fAppTerm \term )}
+& \quad\leadsto\quad
+\tt{compute }\Sigma\subst{P}{\phi'}\tt{ }(n' - 1)\tt{ }{\formphi'\subst{\termv}{\term}}\\
+&\;\text{when} \quad \tt{compute }\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fix{P}{\termv}{\kind}\formphi')
+\\ & \\
+\tt{compute }\Sigma\tt{ }n\tt{ }{(\formphi_1 \fApp \formphi_2 )}
+& \quad\leadsto\quad
+\tt{compute }\Sigma\tt{ }(n_2 - 1)\tt{ }{\psi_1\subst{\propv}{\psi_2}}\\
+&\;\text{when} \quad \tt{compute }\Sigma\tt{ }n\tt{ }{\formphi_1} \;\leadsto^{*}\; (n_1, \fLamForm{\propv}{\kind}{\psi_1})\\
+&\;\text{ and } \quad \tt{compute }\Sigma\tt{ }n_1\tt{ }{\formphi_2} \;\leadsto^{*}\; (n_2, \psi_2)
+\end{align*}
+After we've reached WHNF computation \textit{depth} ($ n \leqslant 0$) or cannot reduce the formula further,
+we can progress naively:
+\\
 $$
   \inference{
     \cjgmnt[\Gamma]{\term_1 \ceq \term_2} &
@@ -1559,6 +1578,12 @@ $$
     \jgmnt[\Gamma; \Sigma]{\formphi_1 \fAppTerm \term_1 \equiv \formphi_2 \fAppTerm \term_2 }
   }
 $$
+\\
+Note that we allow \textit{different terms} in equivalent formulas as long as
+constraints-enviroment $\cEnv$ ensures their equality is provable.
+For functions, we simply substitute the arguments of both left and right side
+to the same, fresh name.
+\\
 $$
   \inference{
     \termv \notin \fv[\Gamma; \Sigma] \\
@@ -1567,6 +1592,7 @@ $$
     \jgmnt[\Gamma; \Sigma]{\fLamTerm{\termv_1}\formphi_1 \equiv \fLamTerm{\termv_2}\formphi_2 }
   }
 $$
+
 $$
   \inference{
     \kind_1 \subkind \kind_2 \\
@@ -1575,6 +1601,7 @@ $$
     \jgmnt[\Gamma; \Sigma]{\fLamForm{P_1}{\kind_1}{\formphi_1} \equiv \fLamForm{P_2}{\kind_2}{\formphi_2}}
   }
 $$
+
 $$
   \inference{
     \kind_1 \subkind \kind_2 &
@@ -1584,10 +1611,12 @@ $$
     \jgmnt[\Gamma; \Sigma]{\fix{P_1}{\termv_1}{\kind_1}\formphi_1 \equiv \fix{P_2}{\termv_2}{\kind_2}\formphi_2}
   }
 $$
-Note that we allow \textit{different terms} in equivalent formulas as long as
-constraints-enviroment $\cEnv$ ensures their equality is provable.
 Quantifiers are handled the same way as function above --- as they all a form of bind.
-\begin{eqnarray*}
+To handle formulas with constraints we introduce constraint equivalence relation,
+which does nothing more than use the Solver to check that arguments and constructors
+of constraint are equal to each other in the Solver's sense.
+\\
+$$
   \inference{
     \jgmnt[\Gamma]{\constr_1 \equiv \constr_2 } &
     \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 }
@@ -1600,10 +1629,9 @@ Quantifiers are handled the same way as function above --- as they all a form of
   }{
     \jgmnt[\Gamma]{(\atomv_1 \cfresh \term_1) \equiv (\atomv_2 \cfresh \term_2) }
   }
-\end{eqnarray*}
-To handle formulas with constraints we introduce constraint equivalence relation,
-which does nothing more than use solver to check that arguments and constructors
-of constraint are equal in the solver sense.
+\qquad
+\cdots
+$$
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Model}
 
