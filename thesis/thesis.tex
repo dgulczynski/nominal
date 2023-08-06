@@ -93,9 +93,9 @@ To achieve this goal, we introduce an infinite set of \textit{atoms} (represente
 Terms are defined by the following grammar:
 \\
 \begin{tabular}{rclr}
-    $\perm$    & $\deff \permid \mid \permswap{\atomexp}{\atomexp}{\perm}$ \\
-    $\atomexp$ & $\deff \perm \apperm \atomv$ \\
-    $\term$    & $\deff \atomexp \mid \perm \apperm \termv \mid \tbind{\atomexp} \term \mid \term \tapp \term \mid \symb$
+    $\perm$    & $\deff$ & $\permid \mid \permswap{\atomexp}{\atomexp}{\perm}$ \\
+    $\atomexp$ & $\deff$ & $\perm \apperm \atomv$ \\
+    $\term$    & $\deff$ & $\atomexp \mid \perm \apperm \termv \mid \tbind{\atomexp} \term \mid \term \tapp \term \mid \symb$
 \end{tabular}
 \\
 
@@ -520,12 +520,13 @@ $$
    \pi \termv = \term, \cEnv ; \icEnv \vDash \sconstr
 }
 $$
-Again, we consider special case where variable is equal to itself permuted.
-While the assumption of permutation being idempotent multiplies the assumptions exponentially by the number of atoms in given
-permutation, this number is not going to be very high as permutations are
-rarely longer than a couple swaps.
-In practice, the solver implementation will first check if the permutation is idempotent with empty assumptions and only if that check failed it will go through the permutation atom by atom.
-!!! TODO: this is a terrible sentence, rewrite it.
+Once again, we consider the special case where a variable is equal to itself when permuted.
+While the assumption of the permutation being idempotent might appear to multiply the number of assumptions exponentially based on the number of atoms in the given permutation,
+it's worth noting that this number is unlikely to be very high, as permutations rarely consist of more than a few swaps.
+
+In practice, the solver implementation will initially check whether the permutation is idempotent with an empty set of assumptions.
+Only if this initial check fails, will it proceed to examine the permutation atom by atom.
+
 $$
 \inferrule{
   \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
@@ -1572,6 +1573,24 @@ we can progress naively:
 \\
 $$
   \inference{
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 } &
+    \jgmnt[\Gamma; \Sigma]{\psi_1 \equiv \psi_2 }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \fImp \psi_1 \equiv \formphi_2 \fImp \psi_2 }
+  }
+  \quad
+  \inference{
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 } &
+    \jgmnt[\Gamma; \Sigma]{\psi_1 \equiv \psi_2 }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \wedge \psi_1 \equiv \formphi_2 \wedge \psi_2 }
+  }
+  \quad
+  \cdots
+$$
+\\
+$$
+  \inference{
     \cjgmnt[\Gamma]{\term_1 \ceq \term_2} &
     \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 }
     }{
@@ -1611,10 +1630,11 @@ $$
     \jgmnt[\Gamma; \Sigma]{\fix{P_1}{\termv_1}{\kind_1}\formphi_1 \equiv \fix{P_2}{\termv_2}{\kind_2}\formphi_2}
   }
 $$
-Quantifiers are handled the same way as function above --- as they all a form of bind.
-To handle formulas with constraints we introduce constraint equivalence relation,
-which does nothing more than use the Solver to check that arguments and constructors
-of constraint are equal to each other in the Solver's sense.
+Quantifiers are handled the same way as function above --- as they all are a form of bind.
+To handle formulas with constraints we introduce \textit{constraint equivalence} relation,
+which does nothing more than use the Solver to check that the constructors
+of constraint are the same and that arguments are equal to each other in the Solver's sense,
+analogusly as with terms above.
 \\
 $$
   \inference{
@@ -1794,10 +1814,9 @@ Additionally, we provide a \textit{proof assistant} (in module \texttt{Prover}),
 that enables the user to conveniently work with \textit{backwards} and incomplete
 proof --- inspired by the HOL family of theorem provers.
 While simple, it is also powerful and easy to use.
-
 The interface to the Prover provides multiple \textit{tactics}
 (functions that manipulate \textit{prover state}) and ways to combine them:
-\begin{lstlisting}[language=OCaml]
+\begin{lstlisting}[mathescape, language=OCaml]
 type goal_env = (string * formula) ProofEnv.env
 
 type goal = goal_env * formula
@@ -1805,19 +1824,19 @@ type goal = goal_env * formula
 type prover_state = S_Unfinished of {goal: goal; context: proof_context}
                   | S_Finished of proof
 
-type tactic = prover_state -> prover_state
+type tactic = prover_state $\rightarrow$ prover_state
 
-val proof : goal_env -> formula -> prover_state
+val proof : goal_env $\rightarrow$ formula $\rightarrow$ prover_state
 
-val qed : prover_state -> proof
+val qed : prover_state $\rightarrow$ proof
 
-val (|>) : prover_state -> tactic -> prover_state
+val (|>) : prover_state $\rightarrow$ tactic $\rightarrow$ prover_state
 
-val (%>) : tactic -> tactic -> tactic
+val (%>) : tactic $\rightarrow$ tactic $\rightarrow$ tactic
 
-val repeat : tactic -> tactic
+val repeat : tactic $\rightarrow$ tactic
 
-val try_tactic : tactic -> tactic
+val try_tactic : tactic $\rightarrow$ tactic
 \end{lstlisting}
 \newcommand{\hole}{\ensuremath{\bullet}}
 We will use $\hole$ to indicate \textit{holes} in the incomplete proofs:
@@ -1848,77 +1867,200 @@ We will use $\hole$ to indicate \textit{holes} in the incomplete proofs:
   \text{\lstinline[columns=fixed]{compare_atoms "a" "b"} }& & \\
   \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\atomv \ceq \atomv'\vee\atomv \cneq \atomv')\fImp{\formphi}}} \\
    & \text{when} & (\texttt{a} \ofkind \atomv) \in \Sigma \text{ and } (\texttt{b} \ofkind \atomv') \in \Sigma\\
+   \\ \cdots
 \end{eqnarray*}
+
+Additionally, we allow conjunction and disjunction to have more than two arguments
+and the  arguments to be labeled by names
+- which gives the user an easy way to select the desired branch while writing proofs.
+
+Naturally, we also provide a pretty-printer (written using library \texttt{EasyFormat})
+and a parser (written using parser combinator library \texttt{Angstrom})
+for terms, constraints, kinds and formulas.
+See how $Nat$ and $PlusEq$ predicates can be written using "programming" syntax:
+\begin{lstlisting}[mathescape, language=OCaml]
+let fix Nat(n) : * =
+ zero: (n = 0)
+ $\vee$
+ succ: ($\exists$ m :term. [n = S m] $\wedge$ Nat m)
+
+let fix PlusEq(n) : $\forall$ m k : term. * = fun m k : term $\rightarrow$
+ zero: ([n = 0] $\wedge$ [m = k])
+ $\vee$
+ succ: ($\exists$ n' k' :term. [n = S n'] $\wedge$ [k = S k'] $\wedge$ PlusEq n' m k')
+\end{lstlisting}
+And a short proof that 1 is a natural number:
+\begin{lstlisting}[mathescape, language=OCaml]
+let nat_1_thm = arith_thm
+    Nat {S 0}
+
+let nat_1 =
+  proof' nat_1thm (* goal: Nat {S 0} *)
+  |> case "succ"  (* goal: $\exists$ m :term. [S 0 = S m] $\wedge$ Nat m *)
+  |> exists "0"   (* goal: [S 0 = S 0] $\wedge$ Nat 0 *)
+  |> by_solver    (* goal: Nat 0 *)
+  |> case "zero"  (* goal: 0 = 0 *)
+  |> by_solver    (* finished *)
+  |> qed
+\end{lstlisting}
+Another example theorem could be the symmetry of addition:
+\begin{lstlisting}[mathescape, language=OCaml]
+let plus_symm_thm = arith_thm
+  $\forall$ x y z :term. (IsNum x) $\implies$ (IsNum y) $\implies$
+    (PlusEq x y z) $\implies$ (PlusEq y x z)
+\end{lstlisting}
+The proof of which is included in the \tt{examples} subdirectory of the project,
+together with the case study from the next chapter.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Case study: Progress and Preservation of STLC}
 
 The ultimate goal of our work is to create a logic for dealing with variable binding,
-and there's no better way to do that than to prove some things about lambda calculus.
+and there's no better way to put it to work than to prove some things about lambda calculus.
 
 We will take a look at simply typed lambda calculus and examine proofs of
 its two major properties of \textit{type soundness}: \textit{progress} and \textit{preservation}.
-Before we delve into the proofs, let's first establish the needed relations:
+But before we delve into the proofs, let's first establish the needed relations:
+\\ \\
+$\fix{Type}{t}{\kProp}$ \\
+${}\qquad (t \ceq {base})$ \\
+${}\quad \vee  (\fExistsTerm{t_1, t_2}{\fCAnd{t \ceq {arrow}\fAppTerm{t_1}\fAppTerm{t_2}}{({Type}\fAppTerm{T_1}) \wedge ({Type}\fAppTerm{t_2}) }})$ \\
+\\
+$\fix{InEnv}{env}{\kForallAtom{a}\kForallTerm{t}\kProp} \fLamAtom{a} \fLamTerm{t} $\\
+${}\qquad(\fExistsTerm{env'} {env \ceq {cons}\fAppTerm{a}\fAppTerm{t}\fAppTerm{env'}})$ \\
+${}\quad\vee
+  (\fExistsAtom{b}\fExistsTerm{t', env'}\fCAnd{env \ceq {cons}\fAppTerm{b}\fAppTerm{t'}\fAppTerm{env'}}\fCAnd{a \cneq b}({InEnv}\fAppTerm{env'}\fAppTerm{a}\fAppTerm{t}) )$ \\
+\\
+$\fix{Typing}{e}{\kForallTerm{env, t}\kProp} \fLamTerm{env, t} $\\
+${}\qquad(\fExistsAtom{a} {\fCAnd{e \ceq a} {InEnv}}\fAppTerm{env}\fAppTerm{a}\fAppTerm{t})$ \\
+${}\quad\vee (\fExistsAtom{a} \fExistsTerm{e_a, t_1, t_2}\fCAnd{e \ceq \tbind{a}{e_a}} \fCAnd{t \ceq {arrow}\fAppTerm{t_1}\fAppTerm{t_2}} {Type}\fAppTerm{t_1} \wedge {Typing}\fAppTerm{e_a}\fAppTerm{\{{cons}\fAppTerm{a}\fAppTerm{t_1}\fAppTerm{env}\}}\fAppTerm{t_2}$ \\
 
-\begin{eqnarray*}
-\fix{Type}{t}{\kProp} &
-  (t \ceq {base}) \\
-   \vee & (\fExistsTerm{t_1, t_2}{\fCAnd{\termv \ceq {arrow}\fAppTerm{t_1}\fAppTerm{t_2}}{({Type}\fAppTerm{T_1}) \wedge ({Type}\fAppTerm{t_2}) }}) \\
-\fix{InEnv}{env}{\kForallAtom{a}\kForallTerm{t}\kProp}  \fLamAtom{a} \fLamTerm{t} &
-  (\fExistsTerm{env'} {env \ceq {cons}\fAppTerm{a}\fAppTerm{t}\fAppTerm{env'}})  \\
-  \vee &
-  (\fExistsAtom{b}\fExistsTerm{t', env'}\fCAnd{env \ceq {cons}\fAppTerm{b}\fAppTerm{t'}\fAppTerm{env'}}\fCAnd{a \cneq b}({InEnv}\fAppTerm{env'}\fAppTerm{a}\fAppTerm{t}) ) \\
-  \cdots & \cdots
-\end{eqnarray*}
+\begin{lstlisting}[mathescape,language=OCaml]
+let lambda_symbols = [lam; app; base; arrow; nil; cons]
 
-As one would expect, we will need a lemma about \textit{canonical forms},
-which states that all values are of \textit{arrow} type and can be \textit{inversed} into an abstraction term
+let fix Term(e): * =
+ var: ($\exists$ a :atom. [e = a])
+ $\vee$
+ lam: ($\exists$ a :atom.$\exists$ e' :term. [e = lam (a.e')] $\wedge$ (Term e'))
+ $\vee$
+ app: ($\exists$ e1 e2 :term. [e = app e1 e2] $\wedge$ (Term e1) $\wedge$ (Term e2))
+
+let fix Type(t): * =
+ base: (t = base)
+ $\vee$
+ arrow: ($\exists$ t1 t2 :term. [t $\ceq$ arrow t1 t2] $\wedge$ (Type t1) $\wedge$ (Type t2))
+
+let fix InEnv(env): $\forall$ a :atom. $\forall$ t :term. * = fun (a :atom) (t :term) $\rightarrow$
+ current: ($\exists$ env': term. [env = cons a t env'])
+ $\vee$
+ next: ($\exists$ b :atom. $\exists$ s env': term.
+         [env = cons b s env'] $\wedge$ [a =/= b] $\wedge$ (InEnv env' a t))
+
+let fix Typing(e): $\forall$ env t :term. * = fun env t :term $\rightarrow$
+ var: ($\exists$ a :atom. [e = a] $\wedge$ (InEnv env a t))
+ $\vee$
+ lam: ($\exists$ a :atom.$\exists$ e' t1 t2 :term.
+        [e = lam (a.e')] $\wedge$ [t = arrow t1 t2]
+          $\wedge$ (Type t1) $\wedge$ (Typing e' {cons a t1 env} t2))
+ $\vee$
+ app: ($\exists$ e1 e2 t2 :term.
+        [e = app e1 e2]
+          $\wedge$ (Typing e1 env {arrow t2 t}) $\wedge$ (Typing e2 env t2))
+\end{lstlisting}
+For the proof of \textit{progress}, we will naturally need the predicate
+that a term is \textit{progressive}, and a lemma about \textit{canonical forms},
+which states that all values in the empty environment
+are of \textit{arrow} type and can be \textit{inversed} into an abstraction term
 (since we did not consider any true base types like \texttt{Bool} or \texttt{Int}).
 Other lemmas are unimportant boilerplate.
+\begin{lstlisting}[mathescape,language=OCaml]
+let Value :: $\forall$ e :term.* = fun e :term $\rightarrow$
+ var: (exists a :atom. [e = a])
+ $\vee$
+ lam: (exists a :atom. $\exists$ e' : term. [e = lam (a.e')] $\wedge$ (Term e'))
 
-\begin{lstlisting}[language=OCaml]
-let empty_contradiction_thm = lambda_thm
-    "forall a :atom. forall t :term. (InEnv nil a t) => false"
+let fix Steps(e): $\forall$ e' :term.* = fun e' :term $\rightarrow$
+ app_l: ($\exists$ e1 e1' e2 :term. [e = app e1 e2]
+          $\wedge$ [e' = app e1' e2] $\wedge$ (Steps e1 e1') )
+ $\vee$
+ app_r: ($\exists$ v e2 e2' :term. [e = app v e2]
+          $\wedge$ [e' = app v e2'] $\wedge$ (Value v) $\wedge$ (Steps e2 e2') )
+ $\vee$
+ app: ($\exists$ a :atom.$\exists$ e_a v :term. [e = app (lam (a.e_a)) v]
+        $\wedge$ (Value v) $\wedge$ (Sub e_a a v e') )
 
-let typing_terms_thm = lambda_thm
-    "forall e env t : term. (Typing e env t) => (Term e)"
+let Progressive :: $\forall$ e :term.* = fun e:term $\rightarrow$
+ value: (Value e)
+ $\vee$
+ steps: (exists e' :term. Steps e e')
 
-let canonical_form_thm = lambda_thm $ concat
-      [ "forall v t :term."
-      ; " (Value v) =>"
-      ; " (Typing v nil t) =>"
-      ; " (exists a :atom. exists e :term. [v = lam (a.e)] /\ (Term e))"
-      ; " /\ "
-      ; " (exists t1 t2 :term. [t = arrow t1 t2])" ]
-
-let subst_exists_thm = lambda_thm $ unwords
-      [ "forall a :atom."
-      ; "forall v :term. (Value v) =>"
-      ; "forall e :term. (Term e) =>"
-      ; "exists e' :term. (Sub e a v e')" ]
+let canonical_form_thm = lambda_thm
+  $\forall$ v :term. (Value v) $\implies$
+  $\forall$ t :term. (Typing v nil t) $\implies$
+     ($\exists$ a :atom. $\exists$ e :term. [v = lam (a.e)] $\wedge$ (Term e))
+       $\wedge$
+     ($\exists$ t1 t2 :term. [t = arrow t1 t2])
 
 let progress_thm = lambda_thm
-    "forall e t :term. (Typing e nil t) => (Progressive e)"
+  $\forall$ e t :term. (Typing e nil t) $\implies$ (Progressive e)
+
+let empty_contradiction_thm = lambda_thm
+  $\forall$ a :atom. $\forall$ t :term. (InEnv nil a t) $\implies$ false
+
+let typing_terms_thm = lambda_thm
+  $\forall$ e env t : term. (Typing e env t) $\implies$ (Term e)
+
+let subst_exists_thm = lambda_thm
+  $\forall$ a :atom.
+  $\forall$ v :term. (Value v) $\implies$
+  $\forall$ e :term. (Term e) $\implies$
+    $\exists$ e' :term. (Sub e a v e')
 \end{lstlisting}
-Otherwise the proof goes the same way as usual, simple induction over $Typing$.
+Otherwise the proof is a simple induction over $Typing$ derivation:
 \begin{lstlisting}[language=OCaml]
 let progress =
   proof' progress_thm
-  |> by_induction "e0" "IH" %> intro %> destr_intro
-  |> intros' ["Ha"; "a"; ""]
-    (* e is a var in empty env - contradiction *)
+  |> by_induction "e0" "IH" %> intro
+\end{lstlisting}
+\begin{lstlisting}[mathescape]
+Unfinished:
+[ ]
+[ IH : $\forall$ e0 : term. [e0 $\cshlt$ e] $\implies$ $\forall$ t'1 : term.
+        (Typing {e0} {nil} {t'1}) $\implies$ Progressive {e0} ]
+$\vdash$ (Typing {e} {nil} {t}) $\implies$ Progressive {e}
+\end{lstlisting}
+To analyze all the possible branches of the \tt{Typing} predicate,
+we simply use \tt{{destr\_intro}} tactic to destruct the assumption into multiple branches.
+\begin{lstlisting}[language=OCaml]
+  |> destr_intro
+\end{lstlisting}
+First one is that \tt{e} is a variable - which contradicts with empty enviroment:
+\begin{lstlisting}[language=OCaml]
+  |> intros' ["contra"; "a"; ""]
      %> ex_falso
      %> apply_thm_specialized empty_contradiction ["a"; "t"]
      %> assumption
+\end{lstlisting}
+Next, \tt{e} is a lambda abstraction - so a value.
+\begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""; ""; ""]
-    (* e is a lambda - value *)
      %> case "value"
+Unfinished:
+[ e = lam (a.e_a) ; t = arrow t1 t2 ]
+[
+  Hlam_2 : Typing {e_a} {cons a t1 nil} {t2} ;
+  Hlam_1 : Type {t1} ;
+  $\cdots$
+]
+$\vdash$ Value {e}
+\end{lstlisting}
+\begin{lstlisting}[language=OCaml]
      %> case "lam"
      %> exists' ["a"; "e_a"]
      %> by_solver
      %> apply_thm_specialized typing_terms ["e_a"; "cons a t1 nil"; "t2"]
      %> assumption
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
-  (* e is an application - steps *)
+    (* e is an application - steps *)
   |> add_assumption_parse "He1" "Progressive e1"
   |> add_assumption_parse "He2" "Progressive e2"
   |> destruct_assm "He1"
@@ -1926,7 +2068,7 @@ let progress =
      %> destruct_assm "He2"
      %> intros ["Hv2"] (* Value e1, Value e2 *)
      %> ( add_assumption_thm_specialized "He1lam" canonical_form' ["e1"; "t2"; "t"]
-        (* He1lam: [e1 = lam (a.e_a)] /\ (Term e_a) *)
+        (* He1lam: [e1 = lam (a.e_a)] $\wedge$ (Term e_a) *)
         %> apply_in_assm "He1lam" "Hv1"
         %> apply_in_assm "He1lam" "Happ_1"
         %> destruct_assm' "He1lam" ["a"; "e_a"; ""] )
@@ -1968,21 +2110,36 @@ let progress =
 \end{lstlisting}
 
 \pagebreak
+To prove \textit{Preservation}, we will need some more relations and lemmas:
+\begin{lstlisting}[mathescape, language=OCaml]
+let fix Sub(e): $\forall$ a :atom. $\forall$ v e':term.* = fun (a :atom) (v e' :term) $\rightarrow$
+ var_same: ([e = a] $\wedge$ [e' = v])
+ $\vee$
+ var_diff: (exists b :atom. [e = b] $\wedge$ [e' = b] $\wedge$ [a =/= b])
+ $\vee$
+ lam: ($\exists$ b :atom. $\exists$ e_b e_b' :term. [e = lam (b.e_b)] $\wedge$
+        [e' = lam (b.e_b')] $\wedge$ [b # v] $\wedge$ [a =/= b] $\wedge$ (Sub e_b a v e_b') )
+ $\vee$
+ app: ($\exists$ e1 e2 e1' e2' :term.
+        [e = app e1 e2] $\wedge$ [e' = app e1' e2']
+          $\wedge$ (Sub e1 a v e1') $\wedge$ (Sub e2 a v e2') )
 
-To prove \textit{Preservation}, we will need more lemmas:
+let EnvInclusion :: $\forall$ env1 env2 :term.* = fun env1 env2 : term $\rightarrow$
+  $\forall$ a : atom. $\forall$ t : term. (InEnv env1 a t) $\implies$ (InEnv env2 a t)
+\end{lstlisting}
 
 1. Substitution lemma:
 if term $e$ has a type $t$ in enviroment ${cons}\fAppAtom{a}\fAppTerm{ta}\fAppTerm{env}$,
 then we can substitute $a$ for any value $v$ of type $ta$ in $e$ without breaking the typing.
-\begin{lstlisting}[language=OCaml]
-let sub_lemma_thm = lambda_thm $ concat
-      [ "forall e env t :term."
-      ; "forall a : atom. forall ta :term."
-      ; "forall v e' :term."
-      ; " (Typing v env ta) =>"
-      ; " (Typing e {cons a ta env} t) =>"
-      ; " (Sub e a v e') =>"
-      ; " (Typing e' env t)" ]
+\begin{lstlisting}[mathescape,language=OCaml]
+let sub_lemma_thm = lambda_thm
+  $\forall$ e env t :term.
+  $\forall$ a : atom. $\forall$ ta :term.
+  $\forall$ v e' :term.
+    (Typing v env ta) $\implies$
+    (Typing e {cons a ta env} t) $\implies$
+    (Sub e a v e') $\implies$
+      (Typing e' env t)
 \end{lstlisting}
 
 2. Swap lemma:
@@ -1990,22 +2147,24 @@ If we have a typing of $e$ in $env$ then we can
 swap $a$ with (\textit{fresh enough}) $b$ in both $e$ and $env$ without breaking the typing.
 This is particularly useful for mainipulating the abstraction terms ---
 we can have any atom we want in the argument position while preserving typing.
-\begin{lstlisting}[language=OCaml]
-let swap_lambda_typing_lemma_thm = lambda_thm $ unwords
-      [ "forall e env t :term. "
-      ; "forall a b :atom. forall t' :term. "
-      ; " [b # a e] => "
-      ; " (Typing {e} {cons a t' env} t) => "
-      ; " (Typing {[a b]e} {cons b t' env} t)" ]
+!!! TODO: Is this an example of a property that should be true in nominal logic
+by the law of permuting predicates?
+\begin{lstlisting}[mathescape,language=OCaml]
+let swap_lambda_typing_lemma_thm = lambda_thm
+  $\forall$ e env t :term.
+  $\forall$ a b :atom. $\forall$ t' :term.
+    [b # a e] $\implies$
+    (Typing e {cons a t' env} t) $\implies$
+      (Typing {[a b]e} {cons b t' env} t)
 \end{lstlisting}
 
 3. Weakening lemma: for any enviroment $env_1$, we can use larger enviroment $env_2$ without breaking the typing.
-\begin{lstlisting}[language=OCaml]
-let weakening_lemma_thm = lambda_thm $ concat
-      [ "forall e env1 t env2 : term."
-      ; " (Typing e env1 t) =>"
-      ; " (EnvInclusion env1 env2) =>"
-      ; " (Typing e env2 t)" ]
+\begin{lstlisting}[mathescape,language=OCaml]
+let weakening_lemma_thm = lambda_thm
+  $\forall$ e env1 t env2 : term.
+    (Typing e env1 t) $\implies$
+    (EnvInclusion env1 env2) $\implies$
+      (Typing e env2 t)
 \end{lstlisting}
 
 Now to the proof:
@@ -2031,8 +2190,8 @@ let preservation =
      %> by_solver
      %> destruct_goal
      %> apply_assm_specialized "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
-     (* Typing e1 env {arrow t2 t} =>
-            Steps e1 e1' => Typing e1' env {arrow t2 t} *)
+     (* Typing e1 env {arrow t2 t} $\implies$
+            Steps e1 e1' $\implies$ Typing e1' env {arrow t2 t} *)
      %> by_solver
      %> apply_assm "Happ_1"
      %> apply_assm "He1"
@@ -2047,7 +2206,7 @@ let preservation =
      %> destruct_goal
      (* Typing e1 env {arrow t2 t} *)
      %> apply_assm "Happ_1"
-     (* Typing e2 env t2 => Steps e2 e2' => Typing e2' env t2*)
+     (* Typing e2 env t2 $\implies$ Steps e2 e2' $\implies$ Typing e2' env t2*)
      %> apply_assm_specialized "IH" ["e2"; "e2'"; "env"; "t2"]
      %> by_solver
      %> apply_assm "Happ_2"
@@ -2059,14 +2218,14 @@ let preservation =
      %> contra_var (* e_1 =/= var *)
      %> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""] (* e_1 = b.e_b *)
      %> apply_thm_specialized sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
-     (* Typing v env t2 => Typing e_a {cons a t2 env} t =>
-            Sub e_a a v e' => Typing e' env t *)
+     (* Typing v env t2 $\implies$ Typing e_a {cons a t2 env} t $\implies$
+            Sub e_a a v e' $\implies$ Typing e' env t *)
      %> apply_assm "Happ_2" (* Typing v env t2 *)
      %> compare_atoms "a" "b" (* Typing e_a cons a t2 env t *)
      %> destr_intro
      (* a = b *) %> apply_assm "Hlam_2"
      %> destr_intro (* a =/= b *)
-     (* [a # b e_b] => Typing e_b {cons b t2 env} t =>
+     (* [a # b e_b] $\implies$ Typing e_b {cons b t2 env} t $\implies$
             Typing {[b a]e_b} {cons a t2 env} t *)
      %> apply_thm_specialized
         swap_lambda_typing ["e_b"; "env"; "t"; "b"; "a"; "t2"]
