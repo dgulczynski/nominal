@@ -1799,24 +1799,116 @@ $$
 % $$
 % In other words, each kind derivation $D$ has a semantic witness that inhabits the semantic interpretation of $\kind$.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Proof assistant}
-All the stuff mentioned above has their implementation in OCaml,
-in modules \tt{Solver} and \tt{SolverEnv},
-\tt{KindChecker} and \tt{KindCheckerEnv},
-\tt{Proof} and \tt{ProofEnv}, respectively.
-
-Constraints, kinds, and formulas constructors mirror the grammars we defined
-in previous chapters.
-Atoms and variables are represented internally by integers (but still are disjoint sets)
---- and their string \it{names} are kept in the environment and binders
+\chapter{Implementation}
+All the concepts discussed in previous chapters have been implementation in OCaml.
+Atoms and variables are represented internally by integers (yet remain disjoint sets)
+--- and their string \it{names} are kept within the environment and binders
 (quantifiers and functions).
+Terms, constraints, kinds, and formulas are defined in \tt{Types} module,
+mirroring their previusly described grammars.
+The only difference is that we accommodate conjunction and disjunction with more than two arguments, with the added feature of arguments being labeled by names. This naming approach empowers users to easily select desired branches while composing proofs.
+For the Solver,there's a dedicated \tt{Solver} module along with \tt{SolverEnv},
+responsible for implementing the specialized environment denoted as $\icEnv$ in section X.
+Analogously, the \texttt{KindChecker} and \texttt{KindCheckerEnv} modules serve similar roles.
+The proof theory described in previous chapter is distributed over modules
+\tt{Proof}, \tt{ProofEnv}, \tt{ProofEquiv} and is a direct implementation of the proof-theoretic rules.
+\begin{lstlisting}[mathescape, language=OCaml]
+(* Module: Types *)
+type name_internal = int
 
-Additionally, we provide a \it{proof assistant} (in module \tt{Prover}),
-that enables the user to conveniently work with \it{backwards} and incomplete
-proof --- inspired by the HOL family of theorem provers.
+type atom = A of name_internal
+
+type var = V of name_internal
+
+type term =  T_Lam of permuted_atom * term | ...
+
+type shape = S_Lam of shape | ...
+
+type constr = C_Fresh of atom * term | ...
+
+type kind = K_Prop | ...
+
+type formula = F_Constr of constr | ...
+
+(* Module: Solver *)
+val ( $\vdash$: ) : constr list -> constr -> bool
+(* env $\vdash$: c $\Longleftrightarrow \tt{env} \vDash \tt{c}$ *)
+
+(* Module: SolverEnv *)
+type SolverEnv.t
+
+val add_fresh : atom -> var -> SolverEnv.t -> SolverEnv.t
+
+...
+
+val occurs_check : SolverEnv.t -> var -> shape -> bool
+
+(* Module: KindChecker *)
+val ( -: ) : formula -> kind -> KindCheckerEnv.t -> bool
+(* (f -: k) env $\Longleftrightarrow \tt{env} \vdash \tt{f} \ofkind \tt{k}$ *)
+
+val ( <=: ) : kind -> kind -> KindCheckerEnv.t -> bool
+(* (k1 <=: k2) env $\Longleftrightarrow \tt{env} \vdash \tt{k1} \subkind \tt{k2}$ *)
+
+(* Module: ProofEnv *)
+type 'a env
+(* Polymorphic in assumption type *)
+
+(* Module: ProofEquiv *)
+val computeWHNF : 'a ProofEnv.env
+               -> int
+               -> Types.formula
+               -> 'a ProofEnv.env * int * Types.formula
+
+val ( === ) : Types.formula -> Types.formula -> 'a ProofEnv.env -> bool
+(* (f1 === f2) env $\Longleftrightarrow \tt{env} \vdash \tt{f1} \equiv \tt{f2}$ *)
+
+
+(* Module: Proof *)
+type proof_env = formula env
+
+type judgement = proof_env * formula
+
+type proof = P_Ax of judgement | ...
+
+(* ----------- *)
+(*  $\Gamma$; f $\vdash$ f   *)
+val assumption : 'a env -> formula -> proof
+
+(*    $\Gamma$; $\Theta$, f1 $\vdash$ f2   *)
+(* ------------------- *)
+(*  $\Gamma$; $\Theta$ $\vdash$ f1 $\implies$ f2  *)
+val imp_i : formula -> proof -> proof
+
+(*  $\Gamma$1; $\Theta$1 $\vdash$ f1 $\implies$ f2    $\Gamma$2; $\Theta$2 $\vdash$ f2  *)
+(* ------------------------------------- *)
+(*        $\Gamma$1 $\cup$ $\Gamma$2; $\Theta$1 $\cup$ $\Theta$2 $\vdash$ f2         *)
+val imp_e : proof -> proof -> proof
+
+(*  $\Gamma$; $\Theta$ $\vdash$ $\bot$  *)
+(* ----------- *)
+(*  $\Gamma$; $\Theta$ $\vdash$ f  *)
+val bot_e : formula -> proof -> proof
+
+(*   $\Gamma$ $\vDash$ c    *)
+(* ---------- *)
+(*  $\Gamma$; $\Theta$ $\vdash$ c  *)
+val constr_i : proof_env -> constr -> proof
+\end{lstlisting}
+Note that the \tt{Proof} modules provide methods for constructing forward proofs, i.e., those in which more complex conclusions are built from simpler, already proven facts.
+Unfortunately, this \it{bottom-up} way is not the most convenient method for conducting proofs in intuitionistic logic --- it is significantly easier to construct proofs in \it{top-down}, backwards fashion through simplifying the goal to be proven until we reach trivial matters.
+As such proofs are incomplete by nature, they must have \textit{holes},
+and live within some \textit{proof context}, as defined in modules \tt{IncProof}.
+
+Naturally that makes the implementation much more complex, so the appropriate level of confidence in proven propositions will be achieved through other means:
+we delegate the responsibility for the correctness of the proofs to the \tt{Proof} module, and the \tt{IncProof} module serves as a kind of facade for it.
+
+\section{Proof assistant}
+To facilitate user interaction with this framework, we provide a practical \it{proof assistant}.
 While simple, it is also powerful and easy to use.
-The interface to the Prover provides multiple \it{tactics}
-(functions that manipulate \it{prover state}) and ways to combine them:
+The interface defined in modules \tt{Prover}, \tt{ProverInternals}, and \tt{Tactics} provides multiple \it{tactics}
+(functions that manipulate \it{prover state}) and ways to combine them
+--- inspired by the HOL family of theorem provers.
 \begin{lstlisting}[mathescape, language=OCaml]
 type goal_env = (string * formula) ProofEnv.env
 
@@ -1876,7 +1968,7 @@ propositions and theorems.
 Note that propositions can be applied not only on the goal, but also on other
 assumptions via \tt{apply\_in\_assumption} tactic.
 One can also add introduce assumptions to the proof context from theorems via \tt{add\_assumption\_thm}
-(specialized if needed --- \tt{add\_assumption\_thm\_specialized}) --
+(specialized if needed via \tt{add\_assumption\_thm\_specialized}) --
 or simply add any assumption to the current context together with a new goal (of proving that assumption)
 via \tt{add\_assumption}.
 \begin{eqnarray*}  \text{\lstinline[columns=fixed]{apply_assm H}} & & \\
@@ -1966,19 +2058,15 @@ Additional we provide the user with some auxiliary tactics:
 \item \tt{repeat} --- applies given tactic (until failure),
 \item \tt{trivial} ---  tries applying some simple tactics
 \end{itemize}
+Finally, the function \texttt{qed} accepts a prover state and finalizes it.
+If the proof state is indeed finished, the function transforms it into a forward proof.
+This transformation guarantees correctness through the utilization of straightforward rules embedded within the \tt{proof} smart constructors.
 
-Lastly, function \tt{qed} takes a prover state and closes it:
-if it's finished it will convert it into a forward proof that is ensured to be
-correct by the simple rules inside Proof smart constructors.
-
-Additionally, we allow conjunction and disjunction to have more than two arguments
-and the  arguments to be labeled by names
-- which gives the user an easy way to select the desired branch while writing proofs.
-
-Naturally, we also provide a pretty-printer (written using library \tt{EasyFormat})
-and a parser (written using parser combinator library \tt{Angstrom})
-for terms, constraints, kinds and formulas.
-See how $Nat$ and $PlusEq$ predicates can be written using "programming" syntax:
+Naturally, we also provide a pretty-printer, created using the \texttt{EasyFormat} library,
+along with a parser developed using the \texttt{Angstrom} parser combinator library,
+designed to handle terms, constraints, kinds, and formulas.
+See how predicates such as $Nat$ and $PlusEq$ can be expressed using
+programmer-friendly syntax:
 \begin{lstlisting}[mathescape, language=OCaml]
 let fix Nat(n) : * =
  zero: (n = 0)
