@@ -4,8 +4,6 @@ open Types
 
 val apply_parse : string -> tactic
 
-val add_assumption : string -> formula -> tactic
-
 val add_assumption_parse : string -> string -> tactic
 
 val add_constr : constr -> tactic

@@ -263,14 +263,10 @@ let atom_fresh_in_type =
      %> intros ["Hbase"]
      %> by_solver
      %> intros' ["Harrow"; "t1"; "t2"; ""; ""]
-     %> add_assumption_parse "Ht1" "a # t1"
-     %> add_assumption_parse "Ht2" "a # t2"
-     %> by_solver
-     %> apply_assm_specialized "IH" ["t2"]
+     %> (add_assumption_parse "Ht1" "a # t1" %> apply_assm_specialized "IH" ["t1"] %> by_solver)
+     %> (add_assumption_parse "Ht2" "a # t2" %> apply_assm_specialized "IH" ["t2"] %> by_solver)
      %> by_solver
      %> assumption
-     %> apply_assm_specialized "IH" ["t1"]
-     %> by_solver
      %> assumption
   |> qed
 

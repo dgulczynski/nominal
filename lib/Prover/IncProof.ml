@@ -371,3 +371,34 @@ and find_hole_in_many proofs proof_from context_from =
   match extract_next (not % is_proven) (Zipper.from_list proofs) with
   | None -> Either.Left (proof_from proofs)
   | Some (incproof, zipper) -> find_hole_in_proof (context_from zipper) incproof
+
+(** [meld proof ctx] rebuilds the proof from context *)
+let rec meld incproof = function
+  | PC_Root _ -> proof_case proven id incproof
+  | PC_Intro (jgmt, ctx) -> meld (proof_intro jgmt incproof) ctx
+  | PC_ApplyRight (jgmt, lproof, rctx) -> meld (proof_apply jgmt lproof incproof) rctx
+  | PC_ApplyLeft (jgmt, lctx, rproof) -> meld (proof_apply jgmt incproof rproof) lctx
+  | PC_ConstrAndRight (jgmt, lproof, rctx) -> meld (proof_constr_and jgmt lproof incproof) rctx
+  | PC_ConstrAndLeft (jgmt, lctx, rproof) -> meld (proof_constr_and jgmt incproof rproof) lctx
+  | PC_ConstrAndElimR (jgmt, ctx) -> meld (proof_constr_and_elim_left jgmt incproof) ctx
+  | PC_ConstrAndElimL (jgmt, ctx) -> meld (proof_constr_and_elim_right jgmt incproof) ctx
+  | PC_SpecializeAtom (jgmt, a, ctx) -> meld (proof_specialize_atom jgmt a incproof) ctx
+  | PC_SpecializeTerm (jgmt, t, ctx) -> meld (proof_specialize_term jgmt t incproof) ctx
+  | PC_ExistsAtom (jgmt, witness, ctx) -> meld (proof_exists_atom jgmt witness incproof) ctx
+  | PC_ExistsTerm (jgmt, witness, ctx) -> meld (proof_exists_term jgmt witness incproof) ctx
+  | PC_WitnessExists (jgmt, ctx, witness, usage_proof) -> meld (proof_witness jgmt incproof witness usage_proof) ctx
+  | PC_WitnessUsage (jgmt, exists_proof, witness, ctx) -> meld (proof_witness jgmt exists_proof witness incproof) ctx
+  | PC_And (jgmt, proofs, ctx) ->
+    let proofs = Zipper.to_list $ Zipper.insert incproof proofs in
+    meld (proof_and jgmt proofs) ctx
+  | PC_AndElim (jgmt, ctx) -> meld (proof_and_elim jgmt incproof) ctx
+  | PC_Or (jgmt, ctx) -> meld (proof_or jgmt incproof) ctx
+  | PC_OrElim (jgmt, ctx, proofs) -> meld (proof_or_elim jgmt incproof proofs) ctx
+  | PC_OrElimDisjunct (jgmt, or_proof, proofs, ctx) ->
+    let proofs = Zipper.to_list $ Zipper.insert incproof proofs in
+    meld (proof_or_elim jgmt or_proof proofs) ctx
+  | PC_Induction (jgmt, x, y, ctx) -> meld (proof_induction jgmt x y incproof) ctx
+  | PC_Equivalent (jgmt, n, ctx) -> meld (proof_equivalent jgmt n incproof) ctx
+  | PC_SubstAtom (jgmt, a, b, ctx) -> meld (proof_subst_atom jgmt a b incproof) ctx
+  | PC_SubstVar (jgmt, x, t, ctx) -> meld (proof_subst_var jgmt x t incproof) ctx
+  | PC_ExFalso (jgmt, ctx) -> meld (proof_ex_falso jgmt incproof) ctx

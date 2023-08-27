@@ -7,6 +7,7 @@ open ProverInternals
 open PrettyPrintingCore
 open Types
 open Option
+open IncProof
 
 let proof' = uncurry proof
 
@@ -21,14 +22,10 @@ let try_many on_fail tactics state =
   | Some success -> success
   | None -> on_fail ()
 
-let add_assumption h_name h state =
-  let _, f = goal state in
-  state |> apply (F_Impl (h, f)) |> intro_named h_name
-
 let add_assumption_parse h_name h_string state =
   let env, _ = goal state in
   let h = parse_formula_in_env (ProofEnv.all_identifiers env) h_string in
-  state |> add_assumption h_name h
+  state |> add_assumption h_name (proof_hole env h)
 
 let add_constr c state =
   let _, f = goal state in

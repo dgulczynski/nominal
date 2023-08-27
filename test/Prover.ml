@@ -106,11 +106,10 @@ let proof11 th11 =
   proof' th11
   |> intros ["H"]
   |> intro
-  |> add_assumption_parse "Hc" "exists c:atom. a =/= c"
+  |> add_assumption_parse "Hc" "exists c:atom. a =/= c" %> apply_assm_specialized "H" ["a"]
   |> destruct_assm "Hc"
   |> exists "c"
   |> by_solver
-  |> apply_assm_specialized "H" ["a"]
 
 let th12 =
   let env12 = fvars_env [("p", K_Prop); ("q", K_Prop); ("r", K_Prop)] in

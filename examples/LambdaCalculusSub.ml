@@ -173,21 +173,21 @@ let subst_exists =
      %> repeat by_solver
   |> intros' ["Hlam"; "b"; "e_b"; ""]
      %> get_fresh_atom "c" "a v e_b"
-     %> add_assumption_parse "He_c" "exists e_c:term. Sub {[b c]e_b} a v e_c"
+     %> ( add_assumption_parse "He_c" "exists e_c:term. Sub {[b c]e_b} a v e_c"
+        %> apply_assm_specialized "IH" ["[c b]e_b"]
+        %> by_solver )
      %> destruct_assm' "He_c" ["e_c"]
      %> exists "lam (c.e_c)"
      %> case "lam"
      %> exists' ["c"; "[c b]e_b"; "e_c"]
      %> repeat by_solver
      %> assumption
-     %> apply_assm_specialized "IH" ["[c b]e_b"]
-     %> by_solver
      %> apply_thm_specialized swap_term_lemma ["e_b"; "c"; "b"]
      %> assumption
   |> intros' ["Happ"; "e1"; "e2"; ""; ""]
-     %> add_assumption_parse "He1" "exists e1':term. Sub e1 a v e1'"
+     %> (add_assumption_parse "He1" "exists e1':term. Sub e1 a v e1'" %> apply_assm_specialized "IH" ["e1"] %> by_solver)
+     %> (add_assumption_parse "He2" "exists e2':term. Sub e2 a v e2'" %> apply_assm_specialized "IH" ["e2"] %> by_solver)
      %> destruct_assm "He1"
-     %> add_assumption_parse "He2" "exists e2':term. Sub e2 a v e2'"
      %> destruct_assm "He2"
      %> exists "app e1' e2'"
      %> case "app"
@@ -200,10 +200,6 @@ let subst_exists =
      %> destruct_goal
      %> apply_assm "He1"
      %> apply_assm "He2"
-     %> apply_assm_specialized "IH" ["e2"]
-     %> by_solver
      %> apply_assm "Happ_2"
-     %> apply_assm_specialized "IH" ["e1"]
-     %> by_solver
      %> apply_assm "Happ_1"
   |> qed

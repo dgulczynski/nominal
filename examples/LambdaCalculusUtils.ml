@@ -80,7 +80,8 @@ let canonical_form' =
           [ "(exists a :atom. exists e :term. [v = lam (a.e)] ∧ (Term e))"
           ; "∧"
           ; "(exists t1' t2' :term. [arrow t1 t2 = arrow t1' t2'])" ] )
+     %> apply_thm_specialized canonical_form ["v"; "arrow t1 t2"]
+     %> apply_assm "Hv"
   |> destruct_assm' "H" [""]
-  |> assumption
-  |> apply_thm_specialized canonical_form ["v"; "arrow t1 t2"] %> apply_assm "Hv" %> apply_assm "Ht"
+  |> repeat assumption
   |> qed

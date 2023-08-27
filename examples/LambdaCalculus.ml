@@ -20,8 +20,8 @@ let progress =
      %> apply_thm_specialized LambdaCalculusUtils.typing_terms ["e_a"; "cons a t1 nil"; "t2"]
      %> assumption
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""] (* e is an application - steps *)
-  |> add_assumption_parse "He1" "Progressive e1"
-  |> add_assumption_parse "He2" "Progressive e2"
+  |> add_assumption_parse "He1" "Progressive e1" %> apply_assm_specialized "IH" ["e1"; "arrow t2 t"] %> by_solver
+  |> add_assumption_parse "He2" "Progressive e2" %> apply_assm_specialized "IH" ["e2"; "t2"] %> by_solver
   |> destruct_assm "He1"
      %> intros ["Hv1"]
      %> destruct_assm "He2"
@@ -60,8 +60,7 @@ let progress =
      %> by_solver
      %> by_solver
      %> apply_assm "Hs1"
-  |> apply_assm_specialized "IH" ["e2"; "t2"] %> by_solver %> apply_assm "Happ_2" (* Progressive e2 *)
-  |> apply_assm_specialized "IH" ["e1"; "arrow t2 t"] %> by_solver %> apply_assm "Happ_1" (* Progressive e1 *)
+  |> apply_assm "Happ_2" %> apply_assm "Happ_1"
   |> qed
 
 let preservation_thm = lambda_thm "forall e e' env t :term. (Typing e env t) => (Steps e e') => (Typing e' env t)"

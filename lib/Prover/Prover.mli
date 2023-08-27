@@ -1,6 +1,7 @@
 open Proof
 open ProverGoal
 open ProverInternals
+open IncProof
 open Types
 
 val proof : goal_env -> formula -> prover_state
@@ -56,3 +57,5 @@ val add_assumption_thm_specialized : string -> proof -> string list -> tactic
 val specialize_assm : string -> string -> string list -> tactic
 
 val apply_in_assm : string -> string -> tactic
+
+val add_assumption : string -> incproof -> tactic

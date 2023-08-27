@@ -291,24 +291,26 @@ let subst x_name y_source state =
     let ctx = PC_SubstVar (to_judgement (env, f), V x, t, context state) in
     unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx
 
-let add_assumption_thm' h_name h_proof state =
+let add_assumption h_name h_proof state =
+  let h = label' h_proof in
   let env, f = goal state in
-  let _, h = judgement' h_proof in
-  let h_impl_f_proof = proof_apply (to_judgement (env, f)) (proof_hole env (F_Impl (h, f))) h_proof in
-  find_goal_in_proof (context state) h_impl_f_proof |> intro_named h_name
+  let f_state = unfinished (env, F_Impl (h, f)) (PC_Root (to_judgement (env, F_Impl (h, f)))) |> intro_named h_name in
+  let f_incproof = meld (uncurry proof_hole $ goal f_state) (context f_state) in
+  let f_ctx = PC_ApplyRight (to_judgement (env, f), f_incproof, context state) in
+  find_goal_in_proof f_ctx h_proof
 
-let add_assumption_thm h_name = add_assumption_thm' h_name % proven
+let add_assumption_thm h_name = add_assumption h_name % proven
 
 let add_assumption_thm_specialized h_name h_proof specs state =
   let env, _ = goal state in
   let h_specialized_proof = specialize_proof (proven h_proof) specs env in
-  add_assumption_thm' h_name h_specialized_proof state
+  add_assumption h_name h_specialized_proof state
 
 let specialize_assm h_name h_spec_name specs state =
   let env = goal_env state in
   let h_proof = assm_proof h_name env in
   let h_spec_proof = specialize_proof h_proof specs env in
-  state |> add_assumption_thm h_spec_name (incproof_to_proof h_spec_proof)
+  state |> add_assumption h_spec_name h_spec_proof
 
 let apply_in_assm h_name h_premise_name state =
   let env, _ = goal state in
@@ -318,5 +320,5 @@ let apply_in_assm h_name h_premise_name state =
   match computeWHNF h_env 5 h with
   | h_env, _, F_Impl (_, h_conclusion) ->
     let h_conclusion_proof = proof_apply (h_env, h_conclusion) h_proof h_premise_proof in
-    add_assumption_thm' h_name h_conclusion_proof state
+    add_assumption h_name h_conclusion_proof state
   | _ -> raise_in_env env % not_an_implication $ label' h_premise_proof
