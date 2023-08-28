@@ -45,7 +45,7 @@ let value_formula =
     [ "fun e:term -> "
     ; " var: (exists a :atom. [e = a])"
     ; " ∨"
-    ; " lam: (exists a :atom. exists e' : term. [e = lam (a.e')] ∧ (Term e'))" ]
+    ; " lam: (exists a :atom. exists e' : term. [e = lam (a.e')])" ]
 
 let sub_formula =
   unwords

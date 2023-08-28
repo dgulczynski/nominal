@@ -5,6 +5,17 @@ open LambdaCalculusCore
 
 let progress_thm = lambda_thm "forall e t :term. (Typing e nil t) => (Progressive e)"
 
+(* To show progress we will need one non-trivial lemma:                                 *)
+(* 1. (Canonical forms):                                                                *)
+(*   Every closed value is an abstraction of arrow type,                                *)
+(*     i.e. (Value v) and (Typing v nil t) implies [v = lam (a.e)] /\ [t = arrow t1 t2] *)
+(* And two trivial lemma:                                                               *)
+(* 2. (Variable in empty environment contradiction):                                    *)
+(*   It's impossible for a variable to occur in empty environment,                      *)
+(*     i.e. (InEnv nil a t) is always false                                             *)
+(* 3. (Subst exists):                                                                   *)
+(*   In every term any variable can be substituted for any value,                      *)
+(*     i.e. (Value v) and (Term e) implies ∃ e' : term. (Sub e a v e')                  *)
 let progress =
   proof' progress_thm
   |> by_induction "e0" "IH" %> intro %> destr_intro
@@ -12,14 +23,12 @@ let progress =
      %> ex_falso
      %> apply_thm_specialized LambdaCalculusEnv.empty_contradiction ["a"; "t"]
      %> assumption
-  |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""; ""; ""] (* e is a lambda - value *)
+  |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""] (* e is a lambda - value *)
      %> case "value"
      %> case "lam"
      %> exists' ["a"; "e_a"]
      %> by_solver
-     %> apply_thm_specialized LambdaCalculusUtils.typing_terms ["e_a"; "cons a t1 nil"; "t2"]
-     %> assumption
-  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""] (* e is an application - steps *)
+  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""] (* e is an application - steps *) %> case "steps"
   |> add_assumption_parse "He1" "Progressive e1" %> apply_assm_specialized "IH" ["e1"; "arrow t2 t"] %> by_solver
   |> add_assumption_parse "He2" "Progressive e2" %> apply_assm_specialized "IH" ["e2"; "t2"] %> by_solver
   |> destruct_assm "He1"
@@ -34,7 +43,6 @@ let progress =
         %> apply_in_assm "He_a" "Hv2"
         %> apply_in_assm "He_a" "He1lam"
         %> destruct_assm' "He_a" ["e_a'"] (* He_a: Sub e_a a e2 e_a' *) )
-     %> case "steps"
      %> exists "e_a'"
      %> case "app"
      %> exists' ["a"; "e_a"; "e2"]
@@ -43,36 +51,33 @@ let progress =
      %> apply_assm "Hv2"
      %> apply_assm "He_a"
   |> intros' ["Hs2"; "e2'"] (* Value e1, Steps e2 e2' *)
-     %> case "steps"
      %> exists "app e1 e2'"
      %> case "app_r"
      %> exists' ["e1"; "e2"; "e2'"]
-     %> by_solver
-     %> by_solver
+     %> repeat by_solver
      %> destruct_goal
      %> apply_assm "Hv1"
      %> apply_assm "Hs2"
   |> intros' ["Hs1"; "e1'"] (* Steps e1 *)
-     %> case "steps"
      %> exists "app e1' e2"
      %> case "app_l"
      %> exists' ["e1"; "e1'"; "e2"]
-     %> by_solver
-     %> by_solver
+     %> repeat by_solver
      %> apply_assm "Hs1"
   |> apply_assm "Happ_2" %> apply_assm "Happ_1"
   |> qed
 
 let preservation_thm = lambda_thm "forall e e' env t :term. (Typing e env t) => (Steps e e') => (Typing e' env t)"
 
-(* To show preservation we will need two non-trivial lemmas: *)
-(* 1. (Sub lemma): Substituting var from env for value of same type preserves typing, *)
+(* To show preservation we will need one non-trivial lemma:                                        *)
+(* 1. (Sub lemma):                                                                                 *)
+(*   Substituting var from env for value of same type preserves typing,                            *)
 (*     i.e. (Typing e {cons a ta env} t) and (Typing v env ta) implies (Typing {e (a -> v)} env t) *)
-(* 2. (Swap lambda typing): Swapping argument of lambda abstraction preserves typing *)
-(*     i.e. (Typing e_a {cons a t1 env} t2) and [b # a e_a] implies (Typing e_b {cons b t1} t2) *)
+(* And one trivial lemma:                                                                          *)
+(* 2. (Lambda typing inversion lemma):                                                             *)
+(*   Deduce typing of a body in env with added argument from the typing of whole abstraction       *)
+(*     i.e. (Typing e_a {cons a t1 env} t2) and [b # a e_a] implies (Typing e_b {cons b t1} t2)    *)
 let preservation =
-  let contra_var = intros' ["contra"; "_"; ""] %> discriminate in
-  let contra_app = intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate in
   let deduce_app_typing =
     destruct_assm "Htyp"
     %> (intros' ["contra"; "_"; ""] %> discriminate)
@@ -111,20 +116,11 @@ let preservation =
      %> apply_assm "He2_2"
   |> intros' ["Hbeta"; "a"; "e_a"; "v"; ""; ""] (* e = app (lam (a.e_a)) v, Value v *)
      %> deduce_app_typing
-     %> destruct_assm "Happ_1"
-     %> contra_var (* e_1 =/= var *)
-     %> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""] (* e_1 = b.e_b *)
-     (* Typing v env t2 => Typing e_a {cons a t2 env} t => Sub e_a a v e' => Typing e' env t *)
      %> apply_thm_specialized LambdaCalculusSub.sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
-     %> apply_assm "Happ_2" (* Typing v env t2 *)
-     %> compare_atoms "a" "b" (* Typing e_a cons a t2 env t *)
-     %> destr_intro
-     (* a = b *) %> apply_assm "Hlam_2"
-     %> destr_intro (* a =/= b *)
-     (* [a # b e_b] => Typing e_b {cons b t2 env} t => Typing {[b a]e_b} {cons a t2 env} t *)
-     %> apply_thm_specialized LambdaCalculusEnv.swap_lambda_typing ["e_b"; "env"; "t"; "b"; "a"; "t2"]
-     %> by_solver
-     %> apply_assm "Hlam_2"
-     %> apply_assm "Hbeta_2" (* Sub e_a a v e' *)
-     %> contra_app (* e_1 =/= app _ _ *)
+        (* Typing v env t2 => Typing e_a {cons a t2 env} t => Sub e_a a v e' => Typing e' env t *)
+     %> apply_assm "Happ_2"
+     %> apply_thm_specialized LambdaCalculusUtils.lambda_typing_inversion ["a"; "e_a"; "env"; "t2"; "t"]
+        (* Typing {lam (a.e_a)} env {arrow t2 t} => Typing e_a {cons a t2 env} t *)
+     %> apply_assm "Happ_1"
+     %> apply_assm "Hbeta_2"
   |> qed

@@ -299,12 +299,18 @@ let add_assumption h_name h_proof state =
   let f_ctx = PC_ApplyRight (to_judgement (env, f), f_incproof, context state) in
   find_goal_in_proof f_ctx h_proof
 
-let add_assumption_thm h_name = add_assumption h_name % proven
+let add_assumption_thm' h_name h_proof state =
+  let h = label' h_proof in
+  let env, f = goal state in
+  let ctx = PC_ApplyLeft (to_judgement (env, f), context state, h_proof) in
+  unfinished (env, F_Impl (h, f)) ctx |> intro_named h_name
+
+let add_assumption_thm h_name = add_assumption_thm' h_name % proven
 
 let add_assumption_thm_specialized h_name h_proof specs state =
   let env, _ = goal state in
   let h_specialized_proof = specialize_proof (proven h_proof) specs env in
-  add_assumption h_name h_specialized_proof state
+  add_assumption_thm' h_name h_specialized_proof state
 
 let specialize_assm h_name h_spec_name specs state =
   let env = goal_env state in

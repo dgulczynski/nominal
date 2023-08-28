@@ -267,12 +267,12 @@ and proof_or jgmt proof =
   | incproof -> PI_Or (jgmt, incproof)
 
 and proof_or_elim jgmt or_proof proofs =
-  match normalize or_proof with
-  | PI_Proven proof -> (
-    match normalize_many proofs with
-    | Either.Right proofs -> proven $ or_e proof proofs
-    | Either.Left incproofs -> PI_OrElim (jgmt, proven proof, incproofs) )
-  | incproof -> PI_OrElim (jgmt, incproof, proofs)
+  match normalize_many proofs with
+  | Either.Left incproofs -> PI_OrElim (jgmt, or_proof, incproofs)
+  | Either.Right proofs -> (
+    match normalize or_proof with
+    | PI_Proven proof -> proven $ or_e proof proofs
+    | incproof -> PI_OrElim (jgmt, incproof, List.map proven proofs) )
 
 and proof_induction jgmt x y inductive_proof =
   match normalize inductive_proof with

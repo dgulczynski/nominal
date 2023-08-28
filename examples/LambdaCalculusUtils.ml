@@ -85,3 +85,24 @@ let canonical_form' =
   |> destruct_assm' "H" [""]
   |> repeat assumption
   |> qed
+
+let lambda_typing_inversion_thm =
+  lambda_thm
+  $ unwords
+      [ "forall a : atom. forall e env t1 t2 : term."
+      ; " (Typing {lam (a.e)} env {arrow t1 t2}) =>"
+      ; "  (Typing e {cons a t1 env} t2)" ]
+
+let lambda_typing_inversion =
+  proof' lambda_typing_inversion_thm
+  |> repeat intro %> destr_intro
+  |> intros' ["contra"; "_"; ""] %> discriminate (* lam (a.e) is not a var *)
+  |> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""] %> compare_atoms "a" "b"
+  |> destr_intro (* a = b *) %> assumption
+  |> destr_intro (* a =/= b *)
+     (* [a # b e_b] => Typing e_b {cons b t2 env} t => Typing {[b a]e_b} {cons a t2 env} t *)
+     %> apply_thm_specialized swap_lambda_typing ["e_b"; "env"; "t2"; "b"; "a"; "t1"]
+     %> by_solver
+     %> assumption
+  |> intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate (* lam (a.e) is not an app *)
+  |> qed
