@@ -510,7 +510,7 @@ let swap_lambda_typing_lemma =
      %> apply_assm "Happ_2"
   |> qed
 
-let swap_lambda_typing_thm =
+let swap_lambda_typing'_thm =
   lambda_thm
   $ unwords
       [ "forall e env t :term. "
@@ -519,9 +519,11 @@ let swap_lambda_typing_thm =
       ; " (Typing {e} {cons a t' env} t) => "
       ; " (Typing {[a b]e} {cons b t' env} t)" ]
 
-let swap_lambda_typing =
-  proof' swap_lambda_typing_thm
-  |> by_induction "e0" "IH" %> repeat intro %> destr_intro
+let swap_lambda_typing' =
+  proof' swap_lambda_typing'_thm
+  |> by_induction "e0" "IH" %> repeat intro
+  |> compare_atoms "a" "b" %> destr_intro %> trivial %> destr_intro
+  |> destr_intro
   |> intros' ["Hc"; "c"; ""; ""]
      %> intros' ["Heq"; "env'"]
      %> case "var"
@@ -583,6 +585,26 @@ let swap_lambda_typing =
      %> apply_assm "Happ_2"
   |> qed
 
+let swap_lambda_typing_thm =
+  lambda_thm
+  $ unwords
+      [ "forall a :atom. forall e_a :term.   "
+      ; "forall b :atom. forall e_b :term.   "
+      ; "forall env t1 t2 :term.             "
+      ; "  [a.e_a = b.e_b] =>                "
+      ; "  (Typing e_a {cons a t1 env} t2) =>"
+      ; "  (Typing e_b {cons b t1 env} t2)" ]
+
+let swap_lambda_typing =
+  proof' swap_lambda_typing_thm
+  |> repeat intro %> intros ["Ha"] %> compare_atoms "a" "b"
+  |> destr_intro %> trivial
+  |> destr_intro
+     %> apply_thm_specialized swap_lambda_typing' ["e_a"; "env"; "t2"; "a"; "b"; "t1"]
+     %> by_solver
+     %> assumption
+  |> qed
+
 let typing_cons_fresh_thm =
   lambda_thm
   $ unwords
@@ -618,7 +640,7 @@ let typing_cons_fresh =
           ["[c b]e_b"; "cons a ta (cons c t1 env)"; "t2"; "cons c t1 (cons a ta env)"]
      %> apply_assm_specialized "IH" ["[c b]e_b"; "t2"; "cons c t1 env"; "a"; "ta"]
      %> repeat by_solver
-     %> apply_thm_specialized swap_lambda_typing ["e_b"; "env"; "t2"; "b"; "c"; "t1"]
+     %> apply_thm_specialized swap_lambda_typing' ["e_b"; "env"; "t2"; "b"; "c"; "t1"]
      %> by_solver
      %> apply_assm "Hlam_2"
      %> apply_thm_specialized env_inclusion_shuffle ["a"; "ta"; "c"; "t1"; "env"]

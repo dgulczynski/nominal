@@ -2,7 +2,6 @@ open Nominal.Prelude
 open Nominal.Prover
 open Nominal.Tactics
 open LambdaCalculusCore
-open LambdaCalculusEnv
 
 let typing_terms_thm = lambda_thm "forall e env t : term. (Typing e env t) => (Term e)"
 
@@ -46,7 +45,7 @@ let canonical_form =
   |> intros ["Hv"; "Ht"] %> destruct_assm "Ht"
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
-     %> apply_thm_specialized empty_contradiction ["a"; "t"]
+     %> apply_thm_specialized LambdaCalculusEnv.empty_contradiction ["a"; "t"]
      %> apply_assm "contra"
   |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""]
   |> destruct_goal
@@ -97,11 +96,9 @@ let lambda_typing_inversion =
   proof' lambda_typing_inversion_thm
   |> repeat intro %> destr_intro
   |> intros' ["contra"; "_"; ""] %> discriminate (* lam (a.e) is not a var *)
-  |> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""] %> compare_atoms "a" "b"
-  |> destr_intro (* a = b *) %> assumption
-  |> destr_intro (* a =/= b *)
-     (* [a # b e_b] => Typing e_b {cons b t2 env} t => Typing {[b a]e_b} {cons a t2 env} t *)
-     %> apply_thm_specialized swap_lambda_typing ["e_b"; "env"; "t2"; "b"; "a"; "t1"]
+  |> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""]
+     %> apply_thm_specialized LambdaCalculusEnv.swap_lambda_typing ["b"; "e_b"; "a"; "e"; "env"; "t1"; "t2"]
+     (* [b.e_b = a.e] => Typing e_b {cons b t1 env} t2 => Typing e {cons a t1 env} t2 *)
      %> by_solver
      %> assumption
   |> intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate (* lam (a.e) is not an app *)
