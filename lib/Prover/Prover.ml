@@ -294,7 +294,10 @@ let subst x_name y_source state =
 let add_assumption h_name h_proof state =
   let h = label' h_proof in
   let env, f = goal state in
-  let f_state = unfinished (env, F_Impl (h, f)) (PC_Root (to_judgement (env, F_Impl (h, f)))) |> intro_named h_name in
+  let f_state =
+    unfinished (env |> remove_assm h_name, F_Impl (h, f)) (PC_Root (to_judgement (env, F_Impl (h, f))))
+    |> intro_named h_name
+  in
   let f_incproof = meld (uncurry proof_hole $ goal f_state) (context f_state) in
   let f_ctx = PC_ApplyRight (to_judgement (env, f), f_incproof, context state) in
   find_goal_in_proof f_ctx h_proof
