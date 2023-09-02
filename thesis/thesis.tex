@@ -2168,7 +2168,7 @@ let Progressive :: $\forall$ e :term.* = fun e:term $\rightarrow$
  $\vee$
  steps: (exists e' :term. Steps e e')
 
-let canonical_form_thm = lambda_thm
+let canonical_form'_thm = lambda_thm
   $\forall$ v :term. (Value v) $\implies$
   $\forall$ t :term. (Typing v nil t) $\implies$
      ($\exists$ a :atom. $\exists$ e :term. [v = lam (a.e)] $\wedge$ (Term e))
@@ -2191,17 +2191,16 @@ let subst_exists_thm = lambda_thm
     $\exists$ e' :term. (Sub e a v e')
 \end{lstlisting}
 Otherwise the proof is a simple induction over $Typing$ derivation:
-\begin{lstlisting}[language=OCaml]
+\begin{lstlisting}[mathescape, language=OCaml]
 let progress =
   proof' progress_thm
   |> by_induction "e0" "IH" %> intro
-\end{lstlisting}
-\begin{lstlisting}[mathescape]
-Unfinished:
+(* Proof state:
 [ ]
 [ IH : $\forall$ e0 : term. [e0 $\cshlt$ e] $\implies$ $\forall$ t'1 : term.
-        (Typing {e0} {nil} {t'1}) $\implies$ Progressive {e0} ]
-$\vdash$ (Typing {e} {nil} {t}) $\implies$ Progressive {e}
+        (Typing e0 nil t'1) $\implies$ Progressive e0 ]
+$\vdash$ (Typing e nil t) $\implies$ Progressive e
+*)
 \end{lstlisting}
 To analyze all the possible branches of the \tt{Typing} predicate,
 we simply use \tt{{destr\_intro}} tactic to destruct the assumption into multiple branches.
@@ -2209,78 +2208,166 @@ we simply use \tt{{destr\_intro}} tactic to destruct the assumption into multipl
   |> destr_intro
 \end{lstlisting}
 First one is that \tt{e} is a variable - which contradicts with empty enviroment:
-\begin{lstlisting}[language=OCaml]
+\begin{lstlisting}[language=OCaml, mathescape]
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
+(* Proof state:
+[ e = a ]
+[
+  contra : InEnv nil a t ;
+  ...
+]
+$\vdash$ $\bot$
+*)
      %> apply_thm_specialized empty_contradiction ["a"; "t"]
      %> assumption
 \end{lstlisting}
 Next, \tt{e} is a lambda abstraction - so a value.
 \begin{lstlisting}[mathescape, language=OCaml]
-  |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""; ""; ""]
-     %> case "value"
-Unfinished:
+  |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""] %> case "value"
+  (* e is a lambda - value *)
+(* Proof state:
 [ e = lam (a.e_a) ; t = arrow t1 t2 ]
 [
-  Hlam_2 : Typing {e_a} {cons a t1 nil} {t2} ;
-  Hlam_1 : Type {t1} ;
+  Hlam : Typing e_a {cons a t1 nil} t2 $\wedge$ Type t1 ;
   $\cdots$
 ]
-$\vdash$ Value {e}
-\end{lstlisting}
-\begin{lstlisting}[mathescape,language=OCaml]
+$\vdash$ Value e
+*)
+     %> case "lam"
      %> case "lam"
      %> exists' ["a"; "e_a"]
      %> by_solver
-     %> apply_thm_specialized typing_terms ["e_a"; "cons a t1 nil"; "t2"]
-     %> assumption
-  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
+\end{lstlisting}
+Then \tt{e} must be an application and thus must be reducing by taking steps,
+so we apply inductive hypothesis on its sub-expressions \tt{e1} and \tt{e2}
+and examine the possible cases.
+\begin{lstlisting}[mathescape,language=OCaml]
+  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""] %> case "steps"
     (* e is an application - steps *)
   |> add_assumption_parse "He1" "Progressive e1"
+     %> apply_assm_specialized "IH" ["e1"; "arrow t2 t"] %> by_solver
   |> add_assumption_parse "He2" "Progressive e2"
-  |> destruct_assm "He1"
-     %> intros ["Hv1"]
-     %> destruct_assm "He2"
-     %> intros ["Hv2"] (* Value e1, Value e2 *)
-     %> ( add_assumption_thm_specialized "He1lam" canonical_form' ["e1"; "t2"; "t"]
-        (* He1lam: [e1 = lam (a.e_a)] $\wedge$ (Term e_a) *)
-        %> apply_in_assm "He1lam" "Hv1"
-        %> apply_in_assm "He1lam" "Happ_1"
-        %> destruct_assm' "He1lam" ["a"; "e_a"; ""] )
-     %> ( add_assumption_thm_specialized "He_a" subst_exists ["a"; "e2"; "e_a"]
-        %> apply_in_assm "He_a" "Hv2"
-        %> apply_in_assm "He_a" "He1lam"
-        %> destruct_assm' "He_a" ["e_a'"] (* He_a: Sub e_a a e2 e_a' *) )
-     %> case "steps"
-     %> exists "e_a'"
-     %> case "app"
-     %> exists' ["a"; "e_a"; "e2"]
-     %> by_solver
-     %> destruct_goal
-     %> apply_assm "Hv2"
-     %> apply_assm "He_a"
+     %> apply_assm_specialized "IH" ["e2"; "t2"] %> by_solver;;
+  |> subst "e" "app e1 e2"
+(* Proof state:
+[ e = app e1 e2 ]
+[
+  Happ1 : Typing e1 nil {arrow t2 t} ;
+  Happ2 : Typing e2 nil t2 ;
+  He1 : Progressive e1 ;
+  He2 : Progressive e2 ;
+]
+$\vdash$ $\exists$ e' : term. Steps {app e1 e2} e'
+*)
+\end{lstlisting}
+First we consider the case of both \tt{e1} and \tt{e2} being a value.
+From \tt{canonical\_form} theorem we know then \tt{e1} must be an abstraction
+--- we just need to ensure the Prover that all preconditions are met.
+\begin{lstlisting}[mathescape, language=OCaml]
+  |> destruct_assm "He1" %> intros ["Hv1"]
+    %> destruct_assm "He2" %> intros ["Hv2"]  (* Value e1, Value e2 *)
+    %> add_assumption_thm_specialized "He1lam"
+         canonical_form ["e1"; "arrow t2 t"]
+(* Proof state:
+[ e = app e1 e2 ]
+[
+  He1lam : (Value e1) $\implies$ (Typing e1 nil {arrow t2 t})
+         $\implies$ $\exists$ a : atom. $\exists$ e'1 : term. [e1 = lam (a.e'1)] $\wedge$ Term e'1 ;
+  Hv1 : Value e1 ;
+  Hv2 : Value e2 ;
+  ...
+]
+$\vdash$ $\exists$ e' : term. Steps {app e1 e2} e'
+*)
+    %> apply_in_assm "He1lam" "Hv1"
+    %> apply_in_assm "He1lam" "Happ_1"
+    %> destruct_assm' "He1lam" ["a"; "e_a"; ""]
+    %> subst "e1" "lam (a.e_a)"
+(* Proof state:
+[ e = app e1 e2 ; e1 = lam (a.e_a) ]
+[
+  He1lam : Term e_a ;
+  ...
+]
+$\vdash$ $\exists$ e' : term. Steps {app (lam (a.e_a)) e2} e'
+*)
+\end{lstlisting}
+Then we need to find the \tt{e'} that \tt{app e1 e2} reduces to, and now
+that we know \tt{e1} is an abstraction, then we can use beta-reduction rule
+and find the term of abstracion body \tt{e\_a} with argument \tt{a}
+subistuted with \tt{e2}. Again, we ensure the Prover that preconditions are met
+and destruct on the final assumption to extract the term that we searched for: \tt{e\_a'}.
+\begin{lstlisting}[mathescape, language=OCaml]
+    %> add_assumption_thm_specialized "He_a"
+         subst_exists ["a"; "e2"; "e_a"]
+(* Proof state:
+[ ... ]
+[
+  He_a : (Value e2) $\implies$ (Term e_a) $\implies$ $\exists$ e' : term. Sub e_a a e2 e' ;
+  ...
+]
+$\vdash$ $\exists$ e' : term. Steps e e'
+*)
+    %> apply_in_assm "He_a" "Hv2"
+    %> apply_in_assm "He_a" "He1lam"
+    %> destruct_assm' "He_a" ["e_a'"]
+    %> exists "e_a'"
+(* Proof state:
+[ ... ]
+[
+  He_a : Sub e_a a e2 e_a' ;
+  ...
+]
+$\vdash$ Steps {app (lam (a.e_a)) e2} e_a'
+*)
+    %> case "app" %> exists' ["a"; "e_a"; "e2"] %> by_solver
+(* Proof state:
+[ ... ]
+[ ... ]
+$\vdash$ Value e2 $\wedge$ Sub e_a a e2 e_a'
+*)
+    %> destruct_goal %> apply_assm "Hv2" %> apply_assm "He_a"
+\end{lstlisting}
+Now what's left is to examine straightforward cases where either \tt{e1} or \tt{e2} steps.
+\begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Hs2"; "e2'"] (* Value e1, Steps e2 e2' *)
-     %> case "steps"
      %> exists "app e1 e2'"
-     %> case "app_r"
-     %> exists' ["e1"; "e2"; "e2'"]
-     %> by_solver
-     %> by_solver
-     %> destruct_goal
-     %> apply_assm "Hv1"
-     %> apply_assm "Hs2"
+(* Proof state:
+[ ... ]
+[
+  Hv1 : Value e1 ;
+  Hs2 : Steps e2 e2' ;
+  ...
+]
+$\vdash$ Steps {app e1 e2} {app e1 e2'}
+*)
+    %> case "app_r"
+    %> exists' ["e1"; "e2"; "e2'"]
+    %> repeat by_solver
+(* Proof state:
+[ ... ]
+[ ... ]
+$\vdash$ Value e1 $\wedge$ Steps e2 e2'
+*)
+    %> destruct_goal
+    %> apply_assm "Hv1"
+    %> apply_assm "Hs2"
   |> intros' ["Hs1"; "e1'"] (* Steps e1 *)
-     %> case "steps"
-     %> exists "app e1' e2"
-     %> case "app_l"
-     %> exists' ["e1"; "e1'"; "e2"]
-     %> by_solver
-     %> by_solver
-     %> apply_assm "Hs1"
-  |> apply_assm_specialized "IH" ["e2"; "t2"] %> by_solver
-    %> apply_assm "Happ_2" (* Progressive e2 *)
-  |> apply_assm_specialized "IH" ["e1"; "arrow t2 t"] %> by_solver
-    %> apply_assm "Happ_1" (* Progressive e1 *)
+(* Proof state:
+[ ... ]
+[
+  Hs1 : Steps e1 e1' ;
+  ...
+]
+$\vdash$ Steps {app e1 e2} {app e1' e2}
+*)
+    %> exists "app e1' e2"
+    %> case "app_l"
+    %> exists' ["e1"; "e1'"; "e2"]
+    %> repeat by_solver
+    %> apply_assm "Hs1"
+  |> apply_assm "Happ_2" %> apply_assm "Happ_1"
   |> qed
 \end{lstlisting}
 
@@ -2303,8 +2390,8 @@ let EnvInclusion :: $\forall$ env1 env2 :term.* = fun env1 env2 : term $\rightar
 \end{lstlisting}
 
 1. Substitution lemma:
-if term $e$ has a type $t$ in enviroment ${cons}\fAppAtom{a}\fAppTerm{ta}\fAppTerm{env}$,
-then we can substitute $a$ for any value $v$ of type $ta$ in $e$ without breaking the typing.
+if term \tt{e} has a type \tt{t} in enviroment \tt{\{cons a ta env\}},
+then we can substitute \tt{a} for any value \tt{v} of type \tt{ta} in \tt{e} without breaking the typing.
 \begin{lstlisting}[mathescape,language=OCaml]
 let sub_lemma_thm = lambda_thm
   $\forall$ e env t :term.
@@ -2316,23 +2403,7 @@ let sub_lemma_thm = lambda_thm
       (Typing e' env t)
 \end{lstlisting}
 
-2. Swap lemma:
-If we have a typing of $e$ in $env$ then we can
-swap $a$ with (\it{fresh enough}) $b$ in both $e$ and $env$ without breaking the typing.
-This is particularly useful for mainipulating the abstraction terms ---
-we can have any atom we want in the argument position while preserving typing.
-!!! TODO: Is this an example of a property that should be true in nominal logic
-by the law of permuting predicates?
-\begin{lstlisting}[mathescape,language=OCaml]
-let swap_lambda_typing_thm = lambda_thm
-  $\forall$ e env t :term.
-  $\forall$ a b :atom. $\forall$ t' :term.
-    [b # e] $\implies$
-    (Typing e {cons a t' env} t) $\implies$
-      (Typing {[a b]e} {cons b t' env} t)
-\end{lstlisting}
-
-3. Weakening lemma: for any enviroment $env_1$, we can use larger enviroment $env_2$ without breaking the typing.
+2. Weakening lemma: for any enviroment \tt{env1}, we can use larger enviroment \tt{env2} without breaking the typing.
 \begin{lstlisting}[mathescape,language=OCaml]
 let weakening_lemma_thm = lambda_thm
   $\forall$ e env1 t env2 : term.
@@ -2341,68 +2412,120 @@ let weakening_lemma_thm = lambda_thm
       (Typing e env2 t)
 \end{lstlisting}
 
-Now to the proof:
+3. Lambda abstraction typing inversion:
+If term \tt{lam (a.e)} has a type \tt{\{arrow t1 t2\}} in environment \tt{env},
+then it must be that the body \tt{e} has a type \tt{t2} in enviroment extended with the argument \tt{\{cons a t1 env\}}.
+\begin{lstlisting}[mathescape,language=OCaml]
+let lambda_typing_inversion_thm = lambda_thm
+  $\forall$ a :atom. $\forall$ e env t1 t2 :term.
+    (Typing {lam (a.e)} env {arrow t1 t2}) $\implies$
+      (Typing e {cons a t1 env} t2)
+\end{lstlisting}
+
+
+
+We proof preservation through induction on term \tt{e} the case analysis on assumption \tt{Steps e e'}.
 \begin{lstlisting}[mathescape, language=OCaml]
 let preservation =
-  let contra_var = $\cdots$
-  let contra_app = $\cdots$
-  let deduce_app_typing = $\cdots$
-  in
-  proof' preservation_thm
+  let deduce_app_typing = ...
+  in proof' preservation_thm
   |> by_induction "e0" "IH"
   |> intro %> intro %> intro %> intros ["Htyp"; "Hstep"]
+(* Proof state:
+[ ]
+[
+  Hstep : Steps e e' ;
+  Htyp : Typing e env t ;
+  IH : $\forall$ e0 : term. [e0 $\cshlt$ e]
+         $\implies$ $\forall$ e'1 env'1 t'1 : term. (Typing e0 env'1 t'1)
+           $\implies$ (Steps e0 e'1)
+             $\implies$ Typing e'1 env'1 t'1
+]
+$\vdash$ Typing e' env t
+*)
   |> destruct_assm "Hstep"
+\end{lstlisting}
+First two cases are rather simple: \tt{e} is \tt{app e1 e2} and either \tt{e1} or \tt{e2} take a step.
+We use local tactics \tt{deduce\_app\_typing}, \tt{contra\_var} and \tt{contra\_app} not to repeat some boilerplate operations and omit the definition here to encourae the reader to look into the
+source code themselves.
+\begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["He1"; "e1"; "e1'"; "e2"; ""; ""]
-    (* e = app e1 e2, Steps e1 e1' *)
      %> deduce_app_typing
      %> case "app"
      %> exists' ["e1'"; "e2"; "t2"]
      %> by_solver
+(* Proof state:
+[ e = app e1 e2 ; e' = app e1' e2 ]
+[
+  Happ_2 : Typing e2 env t2 ;
+  Happ_1 : Typing e1 env {arrow t2 t} ;
+  He1 : Steps e1 e1 ;
+  ...
+]
+$\vdash$ Typing e1' env {arrow t2 t} $\wedge$ Typing e2 env t2
+*)
      %> destruct_goal
-     %> apply_assm_specialized "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
-     (* Typing e1 env {arrow t2 t} $\implies$
-            Steps e1 e1' $\implies$ Typing e1' env {arrow t2 t} *)
-     %> by_solver
-     %> apply_assm "Happ_1"
-     %> apply_assm "He1"
+     (* Typing e1 env t1 *)
+       %> apply_assm_specialized "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
+       (* Typing e1 env {arrow t2 t} $\implies$
+              Steps e1 e1' $\implies$ Typing e1' env {arrow t2 t} *)
+         %> by_solver
+         %> apply_assm "Happ_1"
+         %> apply_assm "He1"
      (* Typing e2 env t2 *)
-     %> apply_assm "Happ_2"
+       %> apply_assm "Happ_2"
   |> intros' ["He2"; "v1"; "e2"; "e2'"; ""; ""; ""]
-     (* e = app v1 e2, Value e1, Steps e2 e2' *)
      %> deduce_app_typing
      %> case "app"
      %> exists' ["v1"; "e2'"; "t2"]
      %> by_solver
+(* Proof state:
+[ e = app e1 e2 ; e' = app e1' e2 ]
+[
+  He2 : Value v1 $\wedge$ Steps e2 e2' ;
+  ...
+]
+$\vdash$ Typing e1 env {arrow t2 t} $\wedge$ Typing e2' env t2
+*)
      %> destruct_goal
      (* Typing e1 env {arrow t2 t} *)
-     %> apply_assm "Happ_1"
+       %> apply_assm "Happ_1"
      (* Typing e2 env t2 $\implies$ Steps e2 e2' $\implies$ Typing e2' env t2*)
-     %> apply_assm_specialized "IH" ["e2"; "e2'"; "env"; "t2"]
-     %> by_solver
-     %> apply_assm "Happ_2"
-     %> apply_assm "He2_2"
+       %> apply_assm_specialized "IH" ["e2"; "e2'"; "env"; "t2"]
+       (* Typing e2 env t2 $\implies$
+              Steps e2 e2' $\implies$ Typing e2' env t2 *)
+         %> by_solver
+         %> apply_assm "Happ_2"
+         %> apply_assm "He2_2"
+\end{lstlisting}
+The next, final case is where we will need the established lemmas:
+application \tt{app e1 e2} beta-reduces into some term \tt{e'} and we use the \tt{sub\_lemma} to show
+that \tt{e'} still types.
+\begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Hbeta"; "a"; "e_a"; "v"; ""; ""]
-     (* e = app (lam (a.e_a)) v, Value v *)
-     %> deduce_app_typing
-     %> destruct_assm "Happ_1"
-     %> contra_var (* e_1 =/= var *)
-     %> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""] (* e_1 = b.e_b *)
-     %> apply_thm_specialized sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
-     (* Typing v env t2 $\implies$ Typing e_a {cons a t2 env} t $\implies$
-            Sub e_a a v e' $\implies$ Typing e' env t *)
-     %> apply_assm "Happ_2" (* Typing v env t2 *)
-     %> compare_atoms "a" "b" (* Typing e_a cons a t2 env t *)
-     %> destr_intro
-     (* a = b *) %> apply_assm "Hlam_2"
-     %> destr_intro (* a =/= b *)
-     (* [a # b e_b] $\implies$ Typing e_b {cons b t2 env} t $\implies$
-            Typing {[b a]e_b} {cons a t2 env} t *)
-     %> apply_thm_specialized
-        swap_lambda_typing ["e_b"; "env"; "t"; "b"; "a"; "t2"]
-     %> by_solver
-     %> apply_assm "Hlam_2"
-     %> apply_assm "Hbeta_2" (* Sub e_a a v e' *)
-     %> contra_app (* e_1 =/= app _ _ *)
+    %> deduce_app_typing
+(* Proof state:
+[ e = app (lam (a.e_a)) v ]
+[
+  Happ_2 : Typing v env t2 ;
+  Happ_1 : Typing (lam (a.e_a)) env {arrow t2 t} ;
+  Hbeta_1 : Value v ;
+  Hbeta_2 : Sub e_a a v e' ;
+  ...
+]
+$\vdash$ Typing e' env t
+*)
+    %> apply_thm_specialized
+         sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
+    (* Typing v env t2 $\implies$ Typing e_a {cons a t2 env} t
+           $\implies$ Sub e_a a v e' $\implies$ Typing e' env t *)
+    %> apply_assm "Happ_2"
+    %> apply_thm_specialized
+         lambda_typing_inversion ["a"; "e_a"; "env"; "t2"; "t"]
+    (* Typing {lam (a.e_a)} env {arrow t2 t}
+         $\implies$ Typing e_a {cons a t2 env} t *)
+    %> apply_assm "Happ_1"
+    %> apply_assm "Hbeta_2"
   |> qed
 \end{lstlisting}
 
