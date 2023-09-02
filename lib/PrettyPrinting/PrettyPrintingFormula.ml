@@ -94,7 +94,9 @@ and pretty_formula_impl f =
 and pretty_formula_app f =
   let rec squash_apps acc = function
     | F_App (f1, f2) -> squash_apps (pretty_formula f2 :: acc) f1
+    | F_AppAtom (f, ({perm= []; _} as a)) -> squash_apps (pretty_atom_permuted a :: acc) f
     | F_AppAtom (f, a) -> squash_apps (parenthesized (pretty_atom_permuted a) :: acc) f
+    | F_AppTerm (f, (T_Var {perm= []; _} as t)) | F_AppTerm (f, (T_Fun _ as t)) -> squash_apps (pretty_term t :: acc) f
     | F_AppTerm (f, t) -> squash_apps (braced (pretty_term t) :: acc) f
     | f -> (f, acc)
   in
