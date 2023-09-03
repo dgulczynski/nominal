@@ -33,6 +33,7 @@
 \usepackage{semantic}
 \usepackage{sourcecodepro}
 \usepackage{enumitem}
+\usepackage{tabularx}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -57,7 +58,7 @@
 }
 \lstset{style=ocamlstyle}
 \lstdefinelanguage{OCaml}[]{caml}{
-    morekeywords={val, ProofEnv}
+    morekeywords={val, ProofEnv, otherwise}
 }
 \setlist{nolistsep}
 \renewcommand{\tt}[1]{\texttt{\small{#1}}}
@@ -832,59 +833,84 @@ Then by analysing each rule we can see the reductions always arrive in a smaller
 state.
 
 \section{Implementation}
-Environment $\icEnv$ is a quintuple
-$({NeqAtoms}_{\icEnv}
-, {Fresh}_{\icEnv}
-, {VarShape}_{\icEnv}
-, {Shape}_{\icEnv}
-, {Subshape}_{\icEnv}
-)$ where: \\
-$NeqAtoms$ is a set of pairs of atoms that we know are different, \\
-$Fresh$ is a mapping from atoms to variables that we know the atom is {Fresh} in,\\
-$VarShape$ is a mapping from variables to shape-representative variables (i.e. all variables that are mapped in $VarShape$ to the same variable are of the same shape),\\
-$Shape$ is a mapping from shape-representative variables to the shape that we know this variable must have,\\
-$SubShape$ is a mapping from shape-representative variables to sets of shapes that we know this variable must supershape.
-\\
-\\
-\newcommand{\shrep}[2][\icEnv]{\ensuremath{ #2_{#1}}}
-\newcommand{\shenv}[2][\icEnv]{\ensuremath{ |#2|_{#1}}}
-We can now define a way to compute the shape-representative variable:
-$$
-\shrep{\termv} :=
-     \begin{cases}
-      \termv          &\text{if } {VarShape}_{\icEnv}(\termv) = \emptyset \\
-       \shrep{\termv'} &\text{if } {VarShape}_{\icEnv}(\termv) = \termv'
-     \end{cases}
-$$
-And shape-reconstruction:
-\begin{eqnarray*}
-  \shenv{\termv}                 &:=&
-  \begin{cases}
-    \shenv{\termv'} &\text{if } {VarShape}_{\icEnv}(\termv) = \termv' \\
-    \shape          &\text{if } {Shape}_{\icEnv}(\termv) = \shape \\
-    \termv          &\text{otherwise}
-  \end{cases} \\
-  \shenv{\shatom}           &:=& \shatom \\
-  \shenv{\shbind \shape}    &:=& \shbind \shenv{\shape} \\
-  \shenv{\shape_1 \shape_2} &:=& \shenv{\shape_1} \shenv{\shape_2}\\
-  \shenv{\symb}             &:=& \symb \\
-  \shenv{\term}             &:=& \shenv{|\term|}
-\end{eqnarray*}
+\newcommand{\NeqAtoms}{\tt{neq\_atoms}}
+\newcommand{\Fresh}{\tt{fresh}}
+\newcommand{\VarShape}{\tt{var\_shape}}
+\newcommand{\Shape}{\tt{shape}}
+\newcommand{\Subshape}{\tt{subshape}}
+\newcommand{\Symbols}{\tt{symbols}}
+\newcommand{\TransferShape}{\tt{transfer\_shape}}
 \newcommand{\occurs}[2]{\ensuremath{ {#1}\text{ occurs in }{#2}}}
 \newcommand{\stxoccurs}[2]{\ensuremath{ {#1}\text{ occurs syntactically in }{#2}}}
 \newcommand{\pluseq}{\mathrel{+}=}
 \newcommand{\minuseq}{\mathrel{-}=}
-Now we can easily check for irreducible constraints in $\icEnv$:
+Environment $\icEnv$ that containts all the irreducible assumptions is given by
+a sextuple
+$(\NeqAtoms_{\icEnv}
+, \Fresh_{\icEnv}
+, \VarShape_{\icEnv}
+, \Shape_{\icEnv}
+, \Subshape_{\icEnv}
+, \Symbols{\icEnv}
+)$ with following semantics:
+\\ \\
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+$\NeqAtoms$ & Set of pairs of atoms that are known to be different. \\
+\hline
+$\Fresh$ & Mapping from atoms to variables, indicating that the atom is \it{fresh} in the variable. \\
+\hline
+$\VarShape$ & Mapping from variables to shape-representative variables. All variables mapped to the same representative are considered to inhabit the same shape. \\
+\hline
+$\Shape$ & Mapping from shape-representative variables to the actual shape it must inhabit. \\
+\hline
+$\Subshape$ & Mapping from shape-representative variables to sets of shapes that the variable must supershape. \\
+\hline
+$\Symbols$ & Set of shape-representative variables that are known to be some unknown functional symbols. \\
+\hline
+\end{tabularx}
+\\ \\
+\newcommand{\shrep}[2][\icEnv]{\ensuremath{ #2_{#1}}}
+\newcommand{\shenv}[2][\icEnv]{\ensuremath{ |#2|_{#1}}}
+We can now establish a method to compute the shape-representative variable and
+outline the procedure for reconstructing the shape within the environment $\icEnv$:\\
+\noindent
+\begin{minipage}{0.5\textwidth}
+\begin{lstlisting}[mathescape, language=OCaml]
+$\shrep{\termv} :=$
+  | if $Y$ $\leftarrow\;$var_shape$_\icEnv$ $\termv$ then $\shrep{Y}$
+  | otherwise $\termv$
 
+$\shenv{\termv} :=$
+  | if $Y$ $\leftarrow\;$var_shape$_\icEnv$ $\termv$ then $\shenv{Y}$
+  | if $\shape$ $\leftarrow\;$shape$_\icEnv$ $\termv$ then $\shape$
+  | otherwise $\termv$
+
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\begin{lstlisting}[mathescape, language=OCaml]
+
+
+
+$\shenv{\shatom}          $ $\;$  $:=$ $\shatom $
+$\shenv{\shbind \shape}   $ $$ $:=$ $\shbind \shenv{\shape} $
+$\shenv{\shape_1 \shape_2}$ $:=$ $\shenv{\shape_1} \shenv{\shape_2}$
+$\shenv{\symb}            $  $$  $:=$ $\symb $
+$\shenv{\term}            $ $$  $\;\:\: :=$ $\shenv{|\term|}$
+\end{lstlisting}
+\end{minipage}
+\\
+Then, verifying whether a constraint is included in $\icEnv$ can be accomplished straightforwardly:
 \begin{eqnarray*}
-  (\atomv_1 \cneq \atomv_2) \in \icEnv &:=& (\atomv_1 \cneq \atomv_2) \in {NeqAtoms}_{\icEnv} \\
-  (\atomv \cfresh \termv) \in \icEnv &:=& \termv \in {Fresh}_{\icEnv}(\atomv) \\
+  (\atomv_1 \cneq \atomv_2) \in \icEnv &:=& (\atomv_1 \cneq \atomv_2) \in \NeqAtoms_{\icEnv} \\
+  (\atomv \cfresh \termv) \in \icEnv &:=& \termv \in \Fresh_{\icEnv}(\atomv) \\
   (\termv_1 \csheq \termv_2) \in \icEnv &:=& \shenv{\termv_1} \ceq \shenv{\termv_2} \\
-  (\termv \csheq \shape) \in \icEnv &:=& \shape = {Shape}_{\icEnv}(\shrep{\termv})\\
-  (\shape \cshlt \termv) \in \icEnv &:=& \shape \in {SubShape}_{\icEnv}(\shrep{\termv})
+  (\termv \csheq \shape) \in \icEnv &:=& \shape = \Shape_{\icEnv}(\shrep{\termv})\\
+  (\shape \cshlt \termv) \in \icEnv &:=& \shape \in \Subshape_{\icEnv}(\shrep{\termv})
 \end{eqnarray*}
-
-Now we can define rules for the special occurs check:
+And establish rules for a special 'occurs check' mechanism,
+which safeguards against handling circular references.
 $$
 \inferrule{
   \stxoccurs{\shrep{\termv}}{\shenv{\shape}}
@@ -901,97 +927,89 @@ $$
   \icEnv \vDash \occurs{\termv}{\shape}
 }
 $$
-And finally, the rules for $\sconstr \cup \icEnv$.
-Note that we are using the meta-field of $Assumptions$ to indicate that some of the
+Incorporating constraints into $\icEnv$ proceeds as follows:
+atoms that are considered fresh in variables are straightforwardly added to the $\Fresh$ mapping.
+Similarly, establihing distinctness of two atoms simply adds to the set $\NeqAtoms$,
+unless invoked with identical atoms, in which case we report a contradiction.
+\\
+\begin{minipage}{0.4\textwidth}
+\begin{lstlisting}[mathescape, language=OCaml]
+$\{\atomv \cfresh \termv\} \cup \icEnv :=$
+  $\icEnv\;$ |> fresh += ($\atomv \cfresh \termv$)
+
+
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.6\textwidth}
+\begin{lstlisting}[mathescape, language=OCaml]
+$\{\atomv \cneq \atomv'\} \cup \icEnv :=$
+  | if $\atomv \ceq \atomv'$ then $\lightning$
+  | otherwise $\icEnv\;$|> neq_atoms += ($\atomv \cneq \atomv'$)
+\end{lstlisting}
+\end{minipage}
+\\
+To meld together two shape-variables, we first check whether they have already been merged. If they have, we return contradiction.
+Next, we conduct an occurs check to ensure that merging them won't create a circular reference. If this check fails, we again report a contradiction.
+Finally, we merge all the information pertaining to $\termv$ into $\termv'$ and
+remove any traces of $\termv$ from within $\icEnv$ environment.
+To maintain a high-level description, we delegate the detailed implementation aspects to auxiliary functions responsible for substituting shape-variables within the given field of $\icEnv$.
+\begin{lstlisting}[mathescape, language=OCaml]
+$\{\termv \csheq \termv'\} \cup \icEnv :=$
+  | if $\shrep{\termv} \ceq \shrep{\termv'}$ then $\icEnv$
+  | if $\shenv{\termv} \ceq \shenv{\termv'}$ then $\icEnv$
+  | if $\occurs{\shrep{\termv}}{\shenv{\termv'}}$ then $\lightning$
+  | if $\occurs{\shrep{\termv'}}{\shenv{\termv}}$ then $\lightning$
+  | otherwise $\icEnv\;$|> symbols        $\{\shrep{\termv} \leadsto \shrep{\termv'}\}$
+                |> subshape       $\{\shrep{\termv} \leadsto \shrep{\termv'}\}$
+                |> transfer_shape $\{\shrep{\termv} \leadsto \shrep{\termv'}\}$
+                |> var_shape += $(\shrep\termv \mapsto \shrep\termv')$
+                |> shape     -= $\shrep\termv$
+                |> subshape  -= $\shrep\termv$
+\end{lstlisting}
+To set variable shape, we first make sure to perform occurs check on the proposed shape
+and then substitute the shape-variable in all affected fields.
+\begin{lstlisting}[mathescape, language=OCaml]
+$\{\termv \csheq \shape\} \cup \icEnv :=$
+  | if $\icEnv \vDash \textnormal{\occurs{\termv}{\shape}}$ then $\lightning$
+  | otherwise $\icEnv\;$|> symbols  $\{\shrep{\termv} \leadsto \shenv{\shape}\}$
+                |> subshape $\{\shrep{\termv} \leadsto \shenv{\shape}\}$
+                |> shape    $\{\shrep{\termv} \leadsto \shenv{\shape}\}$
+\end{lstlisting}
+\newcommand{\Assumptions}{\tt{assumptions}}
+Note that we are using the meta-field of $\Assumptions$ to indicate that some of the
 assumptions in $\icEnv$ are no longer "simple" and escape from $\icEnv$ back to
 $\cEnv$ to be broken up by the \it{Solver}.
+\begin{lstlisting}[mathescape, language=OCaml]
+symbols $\{\termv \leadsto \shape\}$ $\icEnv$ $:=$
+  | if $\shrep{\termv} \notin$ symbols$_\icEnv$ then $\icEnv$
+  | otherwise $\icEnv\;$|> symbols -= $\termv$
+                |> assumptions += ($\textnormal{symbol } \shape$)
 
-$$
- \{\atomv \cfresh \termv\} \cup \icEnv := \icEnv[{Fresh}(\atomv) \pluseq \termv]
-$$
-$$
-\{\atomv \cneq \atomv'\} \cup \icEnv :=
-  \begin{cases}
-    \lightning &\text{if } \atomv \ceq \atomv'  \\
-    \icEnv[{NeqAtoms} \pluseq (\atomv \cneq \atomv')] &\text{otherwise.}
-  \end{cases}
-$$
+shape $\{\termv \leadsto \shape\}$ $\icEnv$ $:=$
+  | if $\shape' \leftarrow\;$shape$_\icEnv$ $\termv$ then $\icEnv$ |> assumptions += $(\shape \csheq \shape')$
+  | otherwise $\icEnv\;$|> shapes += $(\termv \mapsto \shape)$
 
-\begin{eqnarray*}
-\{\termv \csheq \shape\} \cup \icEnv & := &
-  \begin{cases}
-    \lightning     &\text{if } \icEnv \vDash \occurs{\termv}{\shape} \\
-    \icEnv' &\text{otherwise.}\\
-  \end{cases} \\
-  \text{where } \icEnv' & = & \icEnv .{Symbols} \{\shrep{\termv} \leadsto \shenv{\shape} \}\\
-                        &   & \quad .{Subshapes}\{\shrep{\termv} \leadsto \shenv{\shape} \} \\
-                        &   & \quad .{Shape}    \{\shrep{\termv} \leadsto \shenv{\shape} \}
-\end{eqnarray*}
+subshape $\{\termv \leadsto \shape\}$ $\icEnv$ $:=$
+  $\icEnv\;$|> assumptions += $($subshapes$_\icEnv \termv \cshlt \shape)$
 
-\begin{eqnarray*}
-\{\termv \csheq \termv'\} \cup \icEnv & := &
-  \begin{cases}
-    \icEnv     &\text{if } \shrep{\termv} \ceq \shrep{\termv'} \\
-    \icEnv &\text{if } \shenv{\termv} \ceq \shenv{\termv'} \\
-    \lightning     &\text{if } \occurs{\shrep{\termv}}{\shenv{\termv'}} \\
-    \lightning     &\text{if } \occurs{\shrep{\termv'}}{\shenv{\termv}} \\
-    \icEnv' &\text{otherwise.}\\
-  \end{cases} \\
-  \text{where } \icEnv' & = & \icEnv .{Symbols}     \{\shrep{\termv} \leadsto \shrep{\termv'}\}\\
-                        &   & \quad .{Subshapes}    \{\shrep{\termv} \leadsto \shrep{\termv'}\} \\
-                        &   & \quad .{TransferShape}\{\shrep{\termv} \leadsto \shrep{\termv'}\} \\
-                        &   & \quad [\: {Shape}    \minuseq (\shrep\termv) \\
-                        &   & \quad ,   {SubShape} \minuseq (\shrep\termv) \\
-                        &   & \quad ,   {VarShape} \pluseq  (\shrep\termv \mapsto \shrep\termv') \\
-                        &   & \quad ]
-\end{eqnarray*}
-$$
-\icEnv.{Symbols}\{\termv \leadsto \shape\} :=
-  \begin{cases}
-    \icEnv[{Symbols} \minuseq \termv, {Assumptions} \pluseq \text{symbol } \shape]    &\text{if } \shrep{\termv} \in \icEnv.{Symbols} \\
-    \icEnv &\text{otherwise.}\\
-  \end{cases} \\
-$$
-$$
-\icEnv.{Shape}\{\termv \leadsto \shape\} :=
-  \begin{cases}
-    \icEnv[{Assumptions} \pluseq (\shape \csheq \shape')]    &\text{if } {Shape}_{\icEnv}(\shrep\termv) = \shape' \\
-    \icEnv[{Shapes}      \pluseq (\termv \mapsto \shape)] &\text{otherwise.}\\
-  \end{cases} \\
-$$
-$$
-\icEnv.{SubShapes}\{\termv \leadsto \shape\} :=
-  \icEnv[{Assumptions} \pluseq {Subshapes}_{\icEnv}(\termv) \cshlt \shape]
-$$
-$$
-\icEnv.{TransferShape}\{\termv \leadsto \termv'\} :=
-  \begin{cases}
-    \icEnv.{Shape}\{termv' \leadsto  \shape'\}    &\text{if } {Shape}_{\icEnv}(\shrep\termv) = \shape \\
-    \icEnv &\text{otherwise.}\\
-  \end{cases} \\
-$$
-$$
-\icEnv\{\termv \mapsto \term\} := \{\termv \csheq \shenv{\term} \} \cup \icEnv.{Fresh}\{\termv \mapsto \term\}
-$$
-$$
-\icEnv.{Fresh}\{\termv \mapsto \term\} :=
- \icEnv[{Fresh}.map(\text{fun } (\atomv \cfresh \mathbb{\termv}) \mapsto \atomv \cfresh (\mathbb{\termv} \setminus \{ \termv\})] \;
- \cup \bigcup_{\substack{(\atomv \cfresh \mathbb{\termv}) \in {Fresh}_{\icEnv} \\ \termv \in \mathbb{\termv}}}
-    \{ \atomv \cfresh \term \}
-$$
-$$
-\icEnv\{\atomv \mapsto \atomv'\} := \icEnv.{Fresh}\{\atomv \mapsto \atomv'\}.{NeqAtoms}\{\atomv \mapsto \atomv'\}]
-$$
-$$
-\icEnv.{Fresh}\{\atomv \mapsto \atomv'\} := \icEnv[{Fresh} \minuseq \atomv][{Fresh} \pluseq \{\atomv' \cfresh \icEnv.{Fresh}(\atomv)\}]
-$$
-$$
-\icEnv.{NeqAtoms}\{\atomv \mapsto \atomv'\} :=
-\icEnv[{NeqAtoms} = \emptyset] \;
- \cup \bigcup_{ (\atomv_1 \cneq \atomv_2) \in {NeqAtoms}_{\icEnv}  }
-    \{ \atomv_1\{\atomv \mapsto \atomv'\} \cneq \atomv_2\{\atomv \mapsto \atomv'\}\}
-$$
+transfer_shape $\{\termv \leadsto \termv'\}$ $\icEnv$ $:=$
+  | if $\shape \leftarrow\;$shape$_\icEnv$ $\termv$ then $\icEnv$ |> shape $\{\termv' \leadsto \shape\}$
+  | otherwise $\icEnv$
+\end{lstlisting}
+Finally, we demonstrate how the substitution of variables and atoms is accomplished,
+thereby concluding the description of the \it{Solver} and its environment.
+\begin{lstlisting}[mathescape, language=OCaml]
+$\icEnv$ $\{\termv \mapsto \term\}$ $:=$
+  $\icEnv\;$|> fresh -= $\termv$
+    |> assumptions += $(\termv \csheq \shenv{\term})$
+    |> assumptions += $\bigcup_{(\atomv \cfresh \termv) \in \icEnv} (\atomv \cfresh \term)$
 
+$\icEnv$ $\{\atomv \mapsto \atomv'\}$ $:=$
+  $\icEnv\;$|> fresh -= $\atomv$
+    |> fresh += $(\atomv' \cfresh{}$fresh$_\icEnv$$\atomv)$
+    |> clear neq_atoms
+    |> assumptions += $\bigcup_{(\atomv_1 \cneq \atomv_2) \in \icEnv} (\atomv_1\{\atomv \mapsto \atomv'\} \cneq \atomv_2\{\atomv \mapsto \atomv'\})$
+\end{lstlisting}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
 
