@@ -2517,79 +2517,162 @@ let sub_lemma =
 ]
 $\vdash$ Typing e' env t
 *)
+%> destruct_assm "He"
 \end{lstlisting}
+First case is that \tt{e} is some variable \tt{b}, with first subcases
+that it is equal to \tt{a} and substitutes to \tt{v}:
 \begin{lstlisting}[mathescape, language=OCaml]
-     %> destruct_assm "He"
   |> intros' ["Hb"; "b"; ""]
      %> destruct_assm "Hsub"
-     %> ( intros' ["Heq"; ""; ""] (* e = a, e' = v *)
+     %> ( intros' ["Heq"; ""; ""]
+(* Proof state:
+[ e = a ; e' = v ; e = b ]
+[
+  Hb : InEnv {cons a ta env} b t ;
+  Hv : Typing v env ta ;
+  ...
+]
+$\vdash$ Typing e' env t
+*)
+\end{lstlisting}
+Now because in the goal \tt{e'} has type \tt{t}, but in assumption \tt{Hv} it
+has \tt{ta}, then we again case-analyse the assumption \tt{Hb}
+and get that either \tt{t = ta} or arrive at contradiction:
+\begin{lstlisting}[mathescape, language=OCaml]
         %> destruct_assm "Hb"
-        %> intros' ["Heq"; "env'"; ""]
-        %> apply_assm "Hv"
-        %> intros' ["Hdiff"; "b'"; "t'"; "env'"; ""; ""]
-        %> discriminate )
-     %> ( intros' ["Hdiff"; "b'"; ""; ""; ""] (* e = b, e' = b *)
+        %> ( intros' ["Heq"; "env'"; ""] (* t = ta *)
+             %> apply_assm "Hv" )
+        %> ( intros' ["Hdiff"; "b'"; "t'"; "env'"; ""; ""] (* a =/= b *)
+             %> discriminate )
+        \end{lstlisting}
+Second subcase is that \tt{b} is be different than
+\tt{a} and thus is not be affected by the subistution.
+We will again case-analyse \tt{Hb} assumption to extract additional facts.
+\begin{lstlisting}[mathescape, language=OCaml]
+     %> ( intros' ["Hdiff"; "b'"; ""; ""; ""] (* a =/= b *)
         %> destruct_assm "Hb"
-        %> intros' ["Heq"; "env'"; ""]
-        %> discriminate
-        %> intros' ["Hdiff"; "a'"; "ta'"; "env'"; ""; ""]
-        %> case "var"
-        %> exists "b"
-        %> by_solver
-        %> assumption )
-     %> contra_sub_lam
-     %> contra_sub_app
+        %> ( intros' ["Heq"; "env'"; ""] (* a = b *)
+             %> discriminate )
+        %> ( intros' ["Hdiff"; "a'"; "ta'"; "env'"; ""; ""]
+(* Proof state:
+[  e = b ; e' = b ; a =/= b ; ... ]
+[
+  Hdiff : InEnv env' b t ;
+  ...
+]
+$\vdash$ Typing e' env t
+*)
+             %> case "var"
+             %> exists "b"
+             %> by_solver
+             %> assumption )
+\end{lstlisting}
+Second case is that \tt{e} is some abstraction \tt{lam (b.e\_b)}.
+Because of the way we defined subsitution, abstraction argument must
+be different than the substituted variable and not occur in the substitutee value
+--- which is made possible by swapping atoms while maintaining alpha-equality.
+Consequence of that is when we destruct \tt{Hsub} we get that
+\tt{e = lam (c.e\_c)} and \tt{e' = lam (c.e\_c')}
+--- while \tt{b.e\_b} and \tt{c.e\_c} are equal, \tt{b} and \tt{c} don't have to be.
+Abstracting the mundane details to auxiliary lemmas allows us to present the
+derivation in a simple chain of applications and assumptions:
+\begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Hlam"; "b"; "e_b"; "t1"; "t2"; ""; ""; ""]
      %> destruct_assm "Hsub"
-     %> contra_var
-     %> contra_sub_var
-     %> ( intros' ["Hsub"; "c"; "e_c"; "e_c'"; ""; ""; ""; ""] (* e = b.e_b, e' = c.e_c' *)
-        %> case "lam"
-        %> exists' ["c"; "e_c'"; "t1"; "t2"]
-        %> by_solver
-        %> by_solver
-        %> destruct_goal
-        %> assumption
-        %> apply_assm_specialized "IH" ["e_c"; "cons c t1 env"; "t2"; "a"; "ta"; "v"; "e_c'"]
-        %> by_solver
-        %> ( apply_thm_specialized LambdaCalculusEnv.cons_fresh_typing ["v"; "env"; "ta"; "c"; "t1"]
-           %> by_solver
-           %> apply_assm "Hv"
-           %> apply_thm_specialized LambdaCalculusEnv.typing_env_shuffle ["e_c"; "env"; "t2"; "c"; "t1"; "a"; "ta"]
-           %> by_solver
-           %> apply_thm_specialized LambdaCalculusEnv.swap_lambda_typing
-                ["b"; "e_b"; "c"; "e_c"; "cons a ta env"; "t1"; "t2"]
-           %> by_solver
-           %> apply_assm "Hlam_2" )
-        %> apply_assm "Hsub" )
-     %> contra_sub_app
+     %> intros' ["Hsub"; "c"; "e_c"; "e_c'"; ""; ""; ""; ""]
+     %> case "lam"
+     %> exists' ["c"; "e_c'"; "t1"; "t2"]
+     %> repeat by_solver
+(* Proof state:
+[ e = lam (b.e_b) ; e = lam (c.e_c) ; e' = lam (c.e_c') ;
+  a =/= c ; c # v ; t = arrow t1 t2 ]
+[
+  Hsub : Sub e_c a v e_c' ;
+  Hlam_1 : Type t1 ;
+  Hlam_2 : Typing e_b {cons b t1 (cons a ta env)} t2 ;
+  Hv : Typing v env ta ;
+  ...
+]
+$\vdash$ Type t1 $\wedge$ Typing e_c' {cons c t1 env} t2
+*)
+     %> destruct_goal
+     %> assumption
+     %> apply_assm_specialized
+        "IH" ["e_c"; "cons c t1 env"; "t2"; "a"; "ta"; "v"; "e_c'"]
+     (* [e_c $\cshlt$ e] $\implies$ Typing v {cons c t1 env} ta $\implies$
+          Typing e_c {cons a ta (cons c t1 env)} t2 $\implies$
+            Sub e_c a v e_c' $\implies$ Typing e_c' {cons c t1 env} t2  *)
+     %> by_solver
+     %> ( apply_thm_specialized
+            cons_fresh_typing ["v"; "env"; "ta"; "c"; "t1"]
+            (* [c # v] $\implies$ Typing v env ta $\implies$
+                 Typing v {cons c t1 env} ta *)
+          %> by_solver
+          %> apply_assm "Hv" )
+     %> ( apply_thm_specialized
+           typing_env_shuffle ["e_c"; "env"; "t2"; "c"; "t1"; "a"; "ta"]
+           (* [c =/= a] $\implies$
+                Typing e_c {cons c t1 (cons a ta env)} t2 $\implies$
+                  Typing e_c {cons a ta (cons c t1 env)} t2 *)
+          %> by_solver
+          %> apply_thm_specialized swap_lambda_typing
+               ["b"; "e_b"; "c"; "e_c"; "cons a ta env"; "t1"; "t2"]
+               (* [b.e_b = c.e_c] $\implies$
+                    Typing e_b {cons b t1 (cons a ta env)} t2 $\implies$
+                      Typing e_c {cons c t1 (cons a ta env)} t2 *)
+          %> by_solver
+          %> apply_assm "Hlam_2" )
+     %> apply_assm "Hsub"
+\end{lstlisting}
+Finally, we consider the case that \tt{e} is an application \tt{e1 e2},
+which goes straightly from inductive hypothesis:
+\begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
-     %> destruct_assm "Hsub"
-     %> contra_var
-     %> contra_sub_var
-     %> contra_sub_lam
-     %> ( intros' ["Hsub"; "_e1"; "_e2"; "e1'"; "e2'"; ""; ""; ""] (* e = e1 e2, e' = e1' e2' *)
-        %> case "app"
-        %> exists' ["e1'"; "e2'"; "t2"]
-        %> by_solver
-        %> destruct_goal
-        %> ( apply_assm_specialized "IH" ["e1"; "env"; "arrow t2 t"; "a"; "ta"; "v"; "e1'"]
-           %> by_solver
-           %> apply_assm "Hv"
-           %> apply_assm "Happ_1"
-           %> apply_assm "Hsub_1" )
-        %> ( apply_assm_specialized "IH" ["e2"; "env"; "t2"; "a"; "ta"; "v"; "e2'"]
-           %> by_solver
-           %> apply_assm "Hv"
-           %> apply_assm "Happ_2"
-           %> apply_assm "Hsub_2" ) )
+     %> intros' ["Hsub"; "_e1"; "_e2"; "e1'"; "e2'"; ""; ""; ""]
+     %> case "app"
+     %> exists' ["e1'"; "e2'"; "t2"]
+     %> by_solver
+(* Proof state:
+[ e = app e1 e2 ; e' = app e1' e2']
+[
+  Happ_1 : Typing e1 {cons a ta env} {arrow t2 t} ;
+  Happ_2 : Typing e2 {cons a ta env} t2 ;
+  Hsub_1 : Sub e1 a v e1' ;
+  Hsub_2 : Sub e2 a v e2' ;
+  ...
+]
+$\vdash$ Typing e1' env {arrow t2 t} $\wedge$ Typing e2' env t2
+*)
+     %> destruct_goal
+     %> ( apply_assm_specialized
+            "IH" ["e1"; "env"; "arrow t2 t"; "a"; "ta"; "v"; "e1'"]
+            (* [e1 $\cshlt$ e] $\implies$
+                 Typing v env ta $\implies$
+                   Typing e1 {cons a ta env} {arrow t2 t} $\implies$
+                     Sub e1 a v e1' $\implies$
+                       Typing e1' env {arrow t2 t} *)
+          %> by_solver
+          %> apply_assm "Hv"
+          %> apply_assm "Happ_1"
+          %> apply_assm "Hsub_1" )
+     %> ( apply_assm_specialized
+            "IH" ["e2"; "env"; "t2"; "a"; "ta"; "v"; "e2'"]
+            (* [e2 $\cshlt$ e] $\implies$
+                 Typing v env ta $\implies$
+                   Typing e2 {cons a ta env} t2 $\implies$
+                     Sub e2 a v e2' $\implies$
+                       Typing e2' env t2 *)
+          %> by_solver
+          %> apply_assm "Hv"
+          %> apply_assm "Happ_2"
+          %> apply_assm "Hsub_2" )
   |> qed
 \end{lstlisting}
-We prove preservation through induction on term \tt{e} the case analysis on assumption \tt{Steps e e'}.
+Now that we've shown the \tt{sub\_lemma}, we can go on with the final proof
+of \it{preservation}.
+The proof goes through induction on term \tt{e} the case analysis on assumption \tt{Steps e e'}.
 \begin{lstlisting}[mathescape, language=OCaml]
-let preservation =
-  let deduce_app_typing = ...
-  in proof' preservation_thm
+let preservation = proof' preservation_thm
   |> by_induction "e0" "IH"
   |> intro %> intro %> intro %> intros ["Htyp"; "Hstep"]
 (* Proof state:
@@ -2607,11 +2690,8 @@ $\vdash$ Typing e' env t
   |> destruct_assm "Hstep"
 \end{lstlisting}
 First two cases are rather simple: \tt{e} is \tt{app e1 e2} and either \tt{e1} or \tt{e2} take a step.
-We use local tactics \tt{deduce\_app\_typing}, \tt{contra\_var} and \tt{contra\_app} not to repeat some boilerplate operations and omit the definition here to encourae the reader to look into the
-source code themselves.
 \begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["He1"; "e1"; "e1'"; "e2"; ""; ""]
-     %> deduce_app_typing
      %> case "app"
      %> exists' ["e1'"; "e2"; "t2"]
      %> by_solver
@@ -2626,17 +2706,16 @@ source code themselves.
 $\vdash$ Typing e1' env {arrow t2 t} $\wedge$ Typing e2 env t2
 *)
      %> destruct_goal
-     (* Typing e1 env t1 *)
-       %> apply_assm_specialized "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
-       (* Typing e1 env {arrow t2 t} $\implies$
-              Steps e1 e1' $\implies$ Typing e1' env {arrow t2 t} *)
-         %> by_solver
-         %> apply_assm "Happ_1"
-         %> apply_assm "He1"
-     (* Typing e2 env t2 *)
+       %> (apply_assm_specialized "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
+            (* [e1 $\cshlt$ e] $\implies$
+                 Typing e1 env {arrow t2 t} $\implies$
+                   Steps e1 e1' $\implies$
+                     Typing e1' env {arrow t2 t} *)
+            %> by_solver
+            %> apply_assm "Happ_1"
+            %> apply_assm "He1" )
        %> apply_assm "Happ_2"
   |> intros' ["He2"; "v1"; "e2"; "e2'"; ""; ""; ""]
-     %> deduce_app_typing
      %> case "app"
      %> exists' ["v1"; "e2'"; "t2"]
      %> by_solver
@@ -2649,22 +2728,21 @@ $\vdash$ Typing e1' env {arrow t2 t} $\wedge$ Typing e2 env t2
 $\vdash$ Typing e1 env {arrow t2 t} $\wedge$ Typing e2' env t2
 *)
      %> destruct_goal
-     (* Typing e1 env {arrow t2 t} *)
        %> apply_assm "Happ_1"
-     (* Typing e2 env t2 $\implies$ Steps e2 e2' $\implies$ Typing e2' env t2*)
-       %> apply_assm_specialized "IH" ["e2"; "e2'"; "env"; "t2"]
-       (* Typing e2 env t2 $\implies$
-              Steps e2 e2' $\implies$ Typing e2' env t2 *)
-         %> by_solver
-         %> apply_assm "Happ_2"
-         %> apply_assm "He2_2"
+       %> ( apply_assm_specialized "IH" ["e2"; "e2'"; "env"; "t2"]
+            (* [e2 $\cshlt$ e] $\implies$
+                 Typing e2 env t2 $\implies$
+                   Steps e2 e2' $\implies$
+                     Typing e2' env t2 *)
+            %> by_solver
+            %> apply_assm "Happ_2"
+            %> apply_assm "He2_2" )
 \end{lstlisting}
 The next, final case is where we will need the established lemmas:
 application \tt{app e1 e2} beta-reduces into some term \tt{e'} and we use the \tt{sub\_lemma} to show
 that \tt{e'} still types.
 \begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Hbeta"; "a"; "e_a"; "v"; ""; ""]
-    %> deduce_app_typing
 (* Proof state:
 [ e = app (lam (a.e_a)) v ]
 [
@@ -2678,19 +2756,20 @@ $\vdash$ Typing e' env t
 *)
     %> apply_thm_specialized
          sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
-    (* Typing v env t2 $\implies$ Typing e_a {cons a t2 env} t
-           $\implies$ Sub e_a a v e' $\implies$ Typing e' env t *)
+    (* Typing v env t2 $\implies$
+         Typing e_a {cons a t2 env} t $\implies$
+           Sub e_a a v e' $\implies$
+             Typing e' env t *)
     %> apply_assm "Happ_2"
-    %> apply_thm_specialized
-         lambda_typing_inversion ["a"; "e_a"; "env"; "t2"; "t"]
-    (* Typing {lam (a.e_a)} env {arrow t2 t}
-         $\implies$ Typing e_a {cons a t2 env} t *)
-    %> apply_assm "Happ_1"
+    %> ( apply_thm_specialized
+           lambda_typing_inversion ["a"; "e_a"; "env"; "t2"; "t"]
+           (* Typing {lam (a.e_a)} env {arrow t2 t}
+              $\implies$ Typing e_a {cons a t2 env} t *)
+         %> apply_assm "Happ_1" )
     %> apply_assm "Hbeta_2"
   |> qed
 \end{lstlisting}
-
-
+And that's it.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Conclusion and future work}
 
