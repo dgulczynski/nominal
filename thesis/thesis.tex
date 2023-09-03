@@ -49,7 +49,6 @@
     breaklines=true,
     captionpos=b,
     keepspaces=true,
-    numbers=left,
     numbersep=5pt,
     showspaces=false,
     showstringspaces=false,
@@ -2141,12 +2140,8 @@ let fix Typing(e): $\forall$ env t :term. * = fun env t :term $\rightarrow$
         [e = app e1 e2]
           $\wedge$ (Typing e1 env {arrow t2 t}) $\wedge$ (Typing e2 env t2))
 \end{lstlisting}
-For the proof of \it{progress}, we will naturally need the predicate
-that a term is \it{progressive}, and a lemma about \it{canonical forms},
-which states that all values in the empty environment
-are of \it{arrow} type and can be \it{inversed} into an abstraction term
-(since we did not consider any true base types like \tt{Bool} or \tt{Int}).
-Other lemmas are unimportant boilerplate.
+To state the theorem of \it{progress}, we will naturally need the predicate
+that a term is \it{progressive}:
 \begin{lstlisting}[mathescape,language=OCaml]
 let Value :: $\forall$ e :term.* = fun e :term $\rightarrow$
  var: (exists a :atom. [e = a])
@@ -2168,16 +2163,21 @@ let Progressive :: $\forall$ e :term.* = fun e:term $\rightarrow$
  $\vee$
  steps: (exists e' :term. Steps e e')
 
-let canonical_form'_thm = lambda_thm
+let progress_thm = lambda_thm
+  $\forall$ e t :term. (Typing e nil t) $\implies$ (Progressive e)
+\end{lstlisting}
+We will also require a lemma about \it{canonical forms},
+which states that all values in the empty environment
+are of \it{arrow} type and can be \it{inversed} into an abstraction term
+(since we did not consider any true base types like \tt{Bool} or \tt{Int}).
+\begin{lstlisting}[mathescape,language=OCaml]
+let canonical_form_thm = lambda_thm
   $\forall$ v :term. (Value v) $\implies$
   $\forall$ t :term. (Typing v nil t) $\implies$
      ($\exists$ a :atom. $\exists$ e :term. [v = lam (a.e)] $\wedge$ (Term e))
-       $\wedge$
-     ($\exists$ t1 t2 :term. [t = arrow t1 t2])
-
-let progress_thm = lambda_thm
-  $\forall$ e t :term. (Typing e nil t) $\implies$ (Progressive e)
-
+\end{lstlisting}
+As well as some boilerplate lemmas:
+\begin{lstlisting}[mathescape,language=OCaml]
 let empty_contradiction_thm = lambda_thm
   $\forall$ a :atom. $\forall$ t :term. (InEnv nil a t) $\implies$ false
 
@@ -2190,7 +2190,81 @@ let subst_exists_thm = lambda_thm
   $\forall$ e :term. (Term e) $\implies$
     $\exists$ e' :term. (Sub e a v e')
 \end{lstlisting}
-Otherwise the proof is a simple induction over $Typing$ derivation:
+Lets begin with the proof of \it{canonical forms}:
+\begin{lstlisting}[mathescape,language=OCaml]
+let canonical_form =
+  proof' canonical_form_thm
+  |> intros ["v"; "t"; "Hv"; "Ht"]
+(* Proof state:
+[ ]
+[ Ht : Typing v nil t ;
+  Hv : Value v
+]
+$\vdash$ $\exists$ a :atom. $\exists$ e :term. [v = lam (a.e)] $\wedge$ Term e
+*)
+\end{lstlisting}
+The proof will follow from case analysis of \tt{Typing} relation, so let's \it{destruct} assumption \tt{Ht}
+and consider the first case, where \tt{v} is some variable \tt{a}.
+This case is impossible in empty environment, so we named the assumption \tt{contra}
+and show it through the tactic \tt{ex\_falso}.
+\begin{lstlisting}[mathescape,language=OCaml]
+  |> destruct_assm "Ht"
+  |> intros' ["contra"; "a"; ""]
+     %> ex_falso
+(* Proof state:
+[ v = a ]
+[ Hv : Value v ;
+  contra : InEnv nil a t
+]
+$\vdash$ $\bot$
+*)
+     %> apply_thm_specialized empty_contradiction ["a"; "t"]
+        (* InEnv nil a t $\implies$ $\bot$ *)
+     %> apply_assm "contra"
+\end{lstlisting}
+Next case is the only sensible one: that \tt{v} is some \tt{lam (a.e)} of type \tt{arrow t1 t2}.
+\begin{lstlisting}[mathescape,language=OCaml]
+  |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""]
+     %> exists' ["a"; "e"]
+     %> by_solver
+(* Proof state:
+[ v = lam (a.e) ; t = arrow t1 t2]
+[ Hlam : Type t1 $\wedge$ Typing e {cons a t1 nil} t2 ;
+  ...
+]
+$\vdash$ Term e
+*)
+\end{lstlisting}
+Now, obviously every term that \it{types} is indeed a proper \it{term},
+so we simply use the \tt{typing\_terms} lemma and we're done here.
+\begin{lstlisting}[mathescape,language=OCaml]
+     %> apply_thm_specialized typing_terms ["e"; "cons a t1 nil"; "t2"]
+        (* Typing e {cons a t1 nil} t2 $\implies$ Term e *)
+     %> assumption
+\end{lstlisting}
+Final case is that \tt{e} is an application, but then it can't be a value,
+so we analyse the \tt{Hv} assumption, arriving at contradiction in either case:
+\begin{lstlisting}[mathescape, language=OCaml]
+  |> intros' ["contra"; "e1"; "e2"; "t2"; ""]
+     %> ex_falso
+     %> destruct_assm "Hv"
+(* Proof state:
+[ v = app e1 e2 ]
+[ contra : Typing e1 nil {arrow t2 t} $\wedge$ Typing e2 nil t2 ]
+$\vdash$ ($\exists$ a : atom. v = a) $\implies$ $\bot$
+*)
+     %> intros' ["contra_var"; "a"]
+     %> discriminate
+(* Proof state:
+[ v = app e1 e2 ]
+[ contra : Typing e1 nil {arrow t2 t} $\wedge$ Typing e2 nil t2 ]
+$\vdash$ ($\exists$ a : atom. $\exists$ e' : term. v = lam (a.e)) $\implies$ $\bot$
+*)
+     %> intros' ["contra_lam"; "a"; "e"; ""] %> discriminate
+     %> discriminate
+  |> qed
+\end{lstlisting}
+Now we can proceed with the proof of \it{progress}, a simple induction over $Typing$ derivation:
 \begin{lstlisting}[mathescape, language=OCaml]
 let progress =
   proof' progress_thm
@@ -2207,7 +2281,7 @@ we simply use \tt{{destr\_intro}} tactic to destruct the assumption into multipl
 \begin{lstlisting}[language=OCaml]
   |> destr_intro
 \end{lstlisting}
-First one is that \tt{e} is a variable - which contradicts with empty enviroment:
+First one is that \tt{e} is a variable - which again contradicts with empty enviroment:
 \begin{lstlisting}[language=OCaml, mathescape]
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
@@ -2370,8 +2444,7 @@ $\vdash$ Steps {app e1 e2} {app e1' e2}
   |> apply_assm "Happ_2" %> apply_assm "Happ_1"
   |> qed
 \end{lstlisting}
-
-To prove \it{Preservation}, we will need some more relations and lemmas:
+Now, to prove \it{Preservation}, we will need some more relations and lemmas:
 \begin{lstlisting}[mathescape, language=OCaml]
 let fix Sub(e): $\forall$ a :atom. $\forall$ v e':term.* = fun (a :atom) (v e' :term) $\rightarrow$
  var_same: ([e = a] $\wedge$ [e' = v])
@@ -2421,10 +2494,98 @@ let lambda_typing_inversion_thm = lambda_thm
     (Typing {lam (a.e)} env {arrow t1 t2}) $\implies$
       (Typing e {cons a t1 env} t2)
 \end{lstlisting}
-
-
-
-We proof preservation through induction on term \tt{e} the case analysis on assumption \tt{Steps e e'}.
+To maintain reader engagement and prevent excessive technicality, we will omit
+here the proofs of rather obvious lemmas 2 and 3 and instead focus on the more
+important lemma 1:
+\begin{lstlisting}[mathescape, language=OCaml]
+let sub_lemma =
+  proof' sub_lemma_thm
+  |> by_induction "e0" "IH"
+     %> repeat intro %> intros ["Hv"; "He"; "Hsub"]
+(* Proof state:
+[ ]
+[
+  He : Typing e {cons a ta env} t ;
+  Hsub : Sub e a v e' ;
+  Hv : Typing v env ta ;
+  IH : $\forall$ e0 : term. [e0 $\cshlt$ e] $\implies$
+        $\forall$ env'1 t'1 : term. $\forall$ a'1 : atom. $\forall$ ta'1 v'1 e''1 : term.
+          Typing v'1 env'1 ta'1 $\implies$
+          Typing e0 {cons a'1 ta'1 env'1} t'1 $\implies$
+          Sub e0 a'1 v'1 e''1 $\implies$
+            Typing e''1 env'1 t'1
+]
+$\vdash$ Typing e' env t
+*)
+\end{lstlisting}
+\begin{lstlisting}[mathescape, language=OCaml]
+     %> destruct_assm "He"
+  |> intros' ["Hb"; "b"; ""]
+     %> destruct_assm "Hsub"
+     %> ( intros' ["Heq"; ""; ""] (* e = a, e' = v *)
+        %> destruct_assm "Hb"
+        %> intros' ["Heq"; "env'"; ""]
+        %> apply_assm "Hv"
+        %> intros' ["Hdiff"; "b'"; "t'"; "env'"; ""; ""]
+        %> discriminate )
+     %> ( intros' ["Hdiff"; "b'"; ""; ""; ""] (* e = b, e' = b *)
+        %> destruct_assm "Hb"
+        %> intros' ["Heq"; "env'"; ""]
+        %> discriminate
+        %> intros' ["Hdiff"; "a'"; "ta'"; "env'"; ""; ""]
+        %> case "var"
+        %> exists "b"
+        %> by_solver
+        %> assumption )
+     %> contra_sub_lam
+     %> contra_sub_app
+  |> intros' ["Hlam"; "b"; "e_b"; "t1"; "t2"; ""; ""; ""]
+     %> destruct_assm "Hsub"
+     %> contra_var
+     %> contra_sub_var
+     %> ( intros' ["Hsub"; "c"; "e_c"; "e_c'"; ""; ""; ""; ""] (* e = b.e_b, e' = c.e_c' *)
+        %> case "lam"
+        %> exists' ["c"; "e_c'"; "t1"; "t2"]
+        %> by_solver
+        %> by_solver
+        %> destruct_goal
+        %> assumption
+        %> apply_assm_specialized "IH" ["e_c"; "cons c t1 env"; "t2"; "a"; "ta"; "v"; "e_c'"]
+        %> by_solver
+        %> ( apply_thm_specialized LambdaCalculusEnv.cons_fresh_typing ["v"; "env"; "ta"; "c"; "t1"]
+           %> by_solver
+           %> apply_assm "Hv"
+           %> apply_thm_specialized LambdaCalculusEnv.typing_env_shuffle ["e_c"; "env"; "t2"; "c"; "t1"; "a"; "ta"]
+           %> by_solver
+           %> apply_thm_specialized LambdaCalculusEnv.swap_lambda_typing
+                ["b"; "e_b"; "c"; "e_c"; "cons a ta env"; "t1"; "t2"]
+           %> by_solver
+           %> apply_assm "Hlam_2" )
+        %> apply_assm "Hsub" )
+     %> contra_sub_app
+  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
+     %> destruct_assm "Hsub"
+     %> contra_var
+     %> contra_sub_var
+     %> contra_sub_lam
+     %> ( intros' ["Hsub"; "_e1"; "_e2"; "e1'"; "e2'"; ""; ""; ""] (* e = e1 e2, e' = e1' e2' *)
+        %> case "app"
+        %> exists' ["e1'"; "e2'"; "t2"]
+        %> by_solver
+        %> destruct_goal
+        %> ( apply_assm_specialized "IH" ["e1"; "env"; "arrow t2 t"; "a"; "ta"; "v"; "e1'"]
+           %> by_solver
+           %> apply_assm "Hv"
+           %> apply_assm "Happ_1"
+           %> apply_assm "Hsub_1" )
+        %> ( apply_assm_specialized "IH" ["e2"; "env"; "t2"; "a"; "ta"; "v"; "e2'"]
+           %> by_solver
+           %> apply_assm "Hv"
+           %> apply_assm "Happ_2"
+           %> apply_assm "Hsub_2" ) )
+  |> qed
+\end{lstlisting}
+We prove preservation through induction on term \tt{e} the case analysis on assumption \tt{Steps e e'}.
 \begin{lstlisting}[mathescape, language=OCaml]
 let preservation =
   let deduce_app_typing = ...
