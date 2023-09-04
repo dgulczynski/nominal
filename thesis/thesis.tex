@@ -34,6 +34,7 @@
 \usepackage{sourcecodepro}
 \usepackage{enumitem}
 \usepackage{tabularx}
+\usepackage{makecell}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -87,9 +88,14 @@
 \chapter{Terms and constraints}
 % Okreli odbiorce i do niego pisa
 
-In classical first-order logic, terms are constructed from variables and applications of functional symbols to other terms. This work introduces an extension to terms with expressions closely resembling the syntax of lambda calculus. The aim is to create a flexible framework for reasoning about the lambda calculus and its derivations.
+In classical first-order logic, terms are constructed from variables and applications of functional symbols to other terms.
+This work introduces an extension to terms with expressions closely resembling the syntax of lambda calculus.
+The aim is to create a flexible framework for reasoning about the lambda calculus and its derivations.
 
-To achieve this goal, we introduce an infinite set of \it{atoms} (represented by lowercase letters) which correspond to the bound variables in terms, analogous to the variables in lambda calculus. This set is disjoint from the set of variables commonly used in first-order logic, which we will refer to as \it{variables} (denoted by uppercase letters).
+To achieve this goal, we introduce an infinite set of \it{atoms} (represented by lowercase letters)
+that correspond to the bound variables in terms, analogous to the variables in lambda calculus.
+This set is disjoint from the set of variables commonly used in first-order logic,
+which we will refer to as \it{variables} (denoted by uppercase letters).
 
 Terms are defined by the following grammar:
 \\
@@ -100,9 +106,13 @@ Terms are defined by the following grammar:
 \end{tabular}
 \\
 
-It's important to note that terms do not inherently incorporate notions of computation, reduction, or binding. These expressions closely resemble lambda calculus syntax but lack its operational semantics. However, the intuitions associated with these expressions are not baseless. Their practical application is observed in the sublogic of constraints defined on top of terms, used to reason about concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order, as well as their logical model.
+It's important to note that terms do not inherently incorporate notions of computation, reduction, or binding.
+These expressions closely resemble lambda calculus syntax but lack its operational semantics.
+However, the intuitions associated with these expressions are not baseless.
+Their practical application is observed in the sublogic of constraints defined on top of terms,
+used to reason about concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order, as well as their logical model.
 
-Constraints are given by the following grammar:
+Constraints are given by the following grammar and semantics:
 \\
 \begin{tabular}{rclr}
     $\constr$  & $\deff$ & $\atomexp \cfresh \term
@@ -112,33 +122,20 @@ Constraints are given by the following grammar:
         & (constraints)
 \end{tabular}
 \\
-with following semantics:
-\begin{eqnarray*}
-  \atomexp \cfresh \term & \text{---} & \text{
-    atom $\atomexp$ is {Fresh} in term $\term$, i.e. does not occur in $\term$
-    as a free variable
-  } \\
-  \term_1 \ceq \term_2 & \text{---} &\text{
-    terms $\term_1$ and $\term_2$ are alpha-equivalent
-  } \\
-  \term_1 \csheq \term_2 & \text{---} &\text{
-    terms $\term_1$ and $\term_2$ possess an identical shape,
-  } \\
-  & & \text{
-    i.e. after erasing all atoms, terms $\term_1$ and $\term_2$ would be equal
-  } \\
-  \term_1 \cshlt \term_2 & \text{---} &\text{
-    shape of term $\term_1$ is structurally smaller than the shape of term
-    $\term_2$,
-  } \\
-  & & \text{
-    i.e. after erasing all atoms $\term_1$ would be equal to some
-    subterm of $\term_2$
-  } \\
-\end{eqnarray*}
+\begin{tabularx}{\linewidth}{|l|X|}
+  \hline
+  $\atomexp \cfresh \term$ & Atom $\atomexp$ is fresh in term $\term$, meaning it does not occur in $\term$ as a free variable. \\
+  \hline
+  $\term_1 \ceq \term_2$ & Terms $\term_1$ and $\term_2$ are alpha-equivalent. \\
+  \hline
+  $\term_1 \csheq \term_2$ & Terms $\term_1$ and $\term_2$ possess an identical shape, i.e., after erasing all atoms, terms $\term_1$ and $\term_2$ would be equal. \\
+  \hline
+  $\term_1 \cshlt \term_2$ & The shape of term $\term_1$ is structurally smaller than the shape of term $\term_2$, i.e., after erasing all atoms, $\term_1$ would be equal to some subterm of $\term_2$. \\
+  \hline
+\end{tabularx}
 
-We use metavariable $\cEnv$ to represent finite sets of constraints.
-
+For terms and constraints, we can construct a model.
+To that end, we introduce \it{semantic terms} and \it{semantic shapes} that will inhabit the model.
 
 \begin{tabular}{rclr}
 $\semterm$ & $\deff$ & $\sematom
@@ -153,7 +150,8 @@ $\shape$   & $\deff$ & $\shatom
                \bnfor \symb$
     & (semantic shapes)
 \end{tabular}
-
+\\ \\
+And naturally, a term interpretation function, mapping syntactic terms to semantic terms:
 \begin{eqnarray*}
   \termMdl{\perm \apperm \atomv}{\tmEnv} & = &
     \permMdl{\perm}{\tmEnv}(\tmEnv(\atomv)) \\
@@ -166,7 +164,7 @@ $\shape$   & $\deff$ & $\shatom
     \termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv} \\
   \termMdl{\symb}{\tmEnv} & = & \symb
 \end{eqnarray*}
-
+As well as shape interpretation function, mapping semantic terms to semantic shapes:
 \begin{eqnarray*}
   \shapeof{\sematom}                     & = & \shatom \\
   \shapeof{n}                            & = & \shatom \\
@@ -174,7 +172,7 @@ $\shape$   & $\deff$ & $\shatom
   \shapeof{\semterm_1 \stapp \semterm_2} & = &
     \shapeof{\semterm_1} \shapp \shapeof{\semterm_2}
 \end{eqnarray*}
-
+Then, we can establish how to \it{interpret} the constraints in our model:
 \begin{eqnarray*}
   \tmEnv \vDash \term_1 \ceq \term_2 & \textrm{iff} &
     \termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv} \\
@@ -187,14 +185,16 @@ $\shape$   & $\deff$ & $\shatom
     \shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
       \shapeof{\termMdl{\term_2}{\tmEnv}}
 \end{eqnarray*}
-
-We write $\tmEnv \vDash \cEnv$ iff for all $\constr \in \cEnv$,
+\\
+We will use metavariable $\cEnv$ to represent finite sets of constraints,
+and write $\tmEnv \vDash \cEnv$ if for all $\constr \in \cEnv$,
+we have $\tmEnv \vDash \constr$,
+as well as write $\cEnv \vDash \constr$ if for every $\tmEnv$ such that $\tmEnv \vDash \cEnv$,
 we have $\tmEnv \vDash \constr$.
-We write $\cEnv \vDash \constr$ iff
-for every $\tmEnv$ such that $\tmEnv \vDash \cEnv$,
-we have $\tmEnv \vDash \constr$.
 
-Within this model, we establish the existence of a decidible algorithm for determining whether $C_1, \ldots, C_n \models C_0$, meaning there is a deterministic way to check whether constraints $C_1, \ldots, C_n$ imply $C_0$. This algorithm is presented in the following chapter.
+Within this model, we establish the existence of a decidable algorithm for determining whether $C_1, \ldots, C_n \vDash C_0$,
+meaning there is a deterministic way to check whether constraints $C_1, \ldots, C_n$ imply $C_0$.
+This algorithm is presented in the next chapter.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1012,13 +1012,12 @@ $\icEnv$ $\{\atomv \mapsto \atomv'\}$ $:=$
 \end{lstlisting}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
-
 On top of the sublogic of constraints, we build a higher-order logic.
-Due to the involvement of atoms, terms, binders, and constraints,
-we introduce kinds to ensure that the formulas we deal with \it{make sense}.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Kinds}
+Due to the multiple ways atoms, terms, binders, and constraints can occur in
+formulas, we introduce kinds to ensure that the formulas we will deal with \it{make sense},
+given by the following grammar and semantics:
 
 \begin{tabular}{rclr}
 $\kind$ & $::=$ & $\kProp
@@ -1028,18 +1027,21 @@ $\kind$ & $::=$ & $\kProp
             \bnfor \kGuard{\constr} \kind$
     & (kinds)
 \end{tabular}
-
-\begin{tabular}{rclr}
-$\formphi \ofkind$ & $\kProp$ & ---  $\formphi$ is a propositional formula. \\
-$\formphi \ofkind$ & $\kind_1 \karrow \kind_2$ & ---  $\formphi$ is function that takes a formula of kind $\kind_1$, \\
-  & &  and produces a formula of kind $\kind_2$. \\
-$\formphi \ofkind$ & $\kForallAtom{\atomv} \kind$ & ---  $\formphi$ is function that takes an an atom expression, \\
-  & &  binds it to $\atomv$ and produces a formula of kind $\kind$.\\
-$\formphi \ofkind$ & $\kForallTerm{\termv} \kind$ & ---  $\formphi$ is function that takes a term, \\
-  & &  binds it to $\termv$ and produces a formula of kind $\kind$.\\
-$\formphi \ofkind$ & $\kGuard{\constr} \kind$ & ---  $\formphi$ is a formula of kind $\kind$ as long as $\constr$ is satisfied.
-\end{tabular}
 \\ \\
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+$\formphi \ofkind \kProp$ & $\formphi$ is a propositional formula.
+\\ \hline
+$\formphi \ofkind \kind_1 \karrow \kind_2$ & \makecell[l]{$\formphi$ is a function that takes a formula of kind $\kind_1$, \\ and produces a formula of kind $\kind_2$.}
+\\ \hline
+$\formphi \ofkind \kForallAtom{\atomv} \kind$ & \makecell[l]{$\formphi$ is a function that takes an atom expression, binds it to $\atomv$, \\ and produces a formula of kind $\kind$.}
+\\ \hline
+$\formphi \ofkind \kForallTerm{\termv} \kind$ & \makecell[l]{$\formphi$ is a function that takes a term, binds it to $\termv$, \\ and produces a formula of kind $\kind$.}
+\\ \hline
+$\formphi \ofkind \kGuard{\constr} \kind$ & \makecell[l]{$\formphi$ is a formula of kind $\kind$ as long as $\constr$ is satisfied.}
+\\ \hline
+\end{tabularx}
+
 Notice that as constraints occur in kinds, we cannot simply give functions
 from atoms some kind ${Atom}\karrow\kind$, but we must know \it{which} atom
 is bound there, to substitute for it in $\kind$ the same way we substitute
@@ -1914,8 +1916,8 @@ val constr_i : proof_env -> constr -> proof
 \end{lstlisting}
 Note that the \tt{Proof} modules provide methods for constructing forward proofs, i.e., those in which more complex conclusions are built from simpler, already proven facts.
 Unfortunately, this \it{bottom-up} way is not the most convenient method for conducting proofs in intuitionistic logic --- it is significantly easier to construct proofs in \it{top-down}, backwards fashion through simplifying the goal to be proven until we reach trivial matters.
-As such proofs are incomplete by nature, they must have \textit{holes},
-and live within some \textit{proof context}, as defined in modules \tt{IncProof}.
+As such proofs are incomplete by nature, they must have \it{holes},
+and live within some \it{proof context}, as defined in modules \tt{IncProof}.
 
 Naturally that makes the implementation much more complex, so the appropriate level of confidence in proven propositions will be achieved through other means:
 we delegate the responsibility for the correctness of the proofs to the \tt{Proof} module, and the \tt{IncProof} module serves as a kind of facade for it.
