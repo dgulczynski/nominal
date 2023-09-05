@@ -516,7 +516,7 @@ For variables equal to some term,
 we first deal with permutation by moving it to the right-hand side.
 $$
 \inferrule{
-   \termv = \pi^{-1} \term, \cEnv ; \icEnv \ vDash \sconstr
+   \termv = \pi^{-1} \term, \cEnv ; \icEnv \vDash \sconstr
 }{
    \pi \termv = \term, \cEnv ; \icEnv \vDash \sconstr
 }
@@ -821,16 +821,17 @@ And that finishes the Solver's rules description.
 Now the curious reader should feel obliged to ask themselves an important question:
 does that procedure always stop?
 
-To answer that question, we define the Solver's state by triple $(\cEnv, \icEnv, \sconstr)$ and introduce an ordering of the states by:
+To address this question, we define the state of the Solver as a triple $(\cEnv, \icEnv, \sconstr)$.
+Upon analyzing each Solver rules, it becomes evident that each rule consistently leads to a lesser state by reducing it through one or more of the following actions:
 \begin{enumerate}[noitemsep]
-  \item Number of distinct variables in $\cEnv$, $\icEnv$, and $\sconstr$.
-  \item Depth of $\sconstr$.
-  \item Number of assumptions of given depth in both $\cEnv$ and $\icEnv$.
-  \item Number of assumptions of given depth in $\cEnv$.
+  \item Decreasing the number of distinct variables in $\cEnv$, $\icEnv$, and $\sconstr$,
+  or maintaining the same number while:
+  \item Decreasing the depth of $\sconstr$,
+  or preserving the current depth while:
+  \item Reducing assumptions with a given depth in either $\cEnv$ or $\icEnv$ into assumptions with lower depth,
+  or maintaining the number and depth of assumptions, while:
+  \item Eliminating an assumption from $\cEnv$ and introducing an assumption of the same depth into $\icEnv$.
 \end{enumerate}
-
-Then by analysing each rule we can see the reductions always arrive in a smaller
-state.
 
 \section{Implementation}
 \newcommand{\NeqAtoms}{\tt{neq\_atoms}}
