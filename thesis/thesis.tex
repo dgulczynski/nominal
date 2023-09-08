@@ -2792,9 +2792,32 @@ $\vdash$ Typing e' env t
 \end{lstlisting}
 And that's it.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Conclusion and future work}
+\chapter{Conclusion}
 
-\dots
+In summary, we've introduced and demonstrated a specialized nominal logic,
+designed for reasoning about variable binding
+through the utilization of constraints and lambda-calculus alike terms.
+We've also successfully implemented this logic in OCaml,
+complemented by essential tools, including a proof assistant.
+
+Through the proofs of classical properties of simply typed lambda calculus
+we have validated the logic's suitablility for reasoning about
+programming languages theory.
+However, the true potential of this framework is expected to shine when applied to
+specific theorems reliant on the notions of variable binding.
+One such area would be the theory of bisimulation, where we expect that ???
+would provide signifact aid in proving ???.
+
+We must also acknowledge that our framework is still in its infancy,
+requiring substantial refinement to ensure a user-friendly experience, as the
+awkardness and low-level nature of the current tooling obscures the benefits
+of underlying constraint-based sublogic.
+Consequently, it cannot be directly compared to other theorem-proving frameworks like Coq or Agda.
+
+Nonetheless, we are confident that with enough refinement,
+our framework can prove to be a valuable resource for the specific use cases and
+remain enthusiastic about the framework's potential to
+contribute to the field of formal methods and logic-based reasoning.
 
 %%%%% BIBLIOGRAFIA
 
