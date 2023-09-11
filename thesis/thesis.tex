@@ -35,6 +35,7 @@
 \usepackage{enumitem}
 \usepackage{tabularx}
 \usepackage{makecell}
+\usepackage{mdframed}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -70,19 +71,168 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Introduction}
+% \section{Motivation}
+One of the fundamental distinctions between conducting proofs manually with pen and paper
+and using a computer lies in the flexibility and liberties one can take in the first case.
+Human provers and reviewers often agree upon unexplained or unproven assumptions
+and may skip some unimportant boilerplate.
+Computers, on the other hand, are less forgiving
+and demand transparency and justification down to the smallest details.
 
-\section{Problem statement}
-\dots
+A common assumption we commonly make when writing pen-and-paper proofs pertains to
+working with abstract syntax trees,
+where we assume that the variables we choose are fresh enough
+or that substitutions avoid issues like variable capture.
 
-\section{Motivation}
-% Przykłady machania rękoma nad wiązaniem zmiennych w innych tekstach jako motywacja do tej pracy
-\dots
+For instance, when dealing with lambda calculus, we often construct inductive proofs
+over the structure of expression, where in the case for an abstracion we will implicitly only show
+the case where the variable bound in that abstraction is \it{sufficiently fresh}.
+Addressing the general case could introduce unnecessary complexities unrelated to the theorem at hand.
+Justifiably, we skip over this detail --- however, the induction principle obliges us to prove the case for arbitrary variable names.
+
+% \section{Problem statement}
+Addressing this gap in formal reasoning requires careful considerations to come up with a resolution.
+Fortunately, there exist some solutions to that problem --- and one particular
+approach, introduced by Pitts et al is of most interest to this work.
 
 \section{Related work}
-\subsection{Nominal logics \& permutations}
+Pitts' work introduces Nominal Logic, a first-order theory of names, swapping and freshness,
+that amongst other novelties, introduces the precise mathematical definition
+describing the concept of "sufficiently fresh names",
+which, as Pitts argues, bridges the gap between formal mathematical reasoning and the informal practices mentioned earlier.
+
+\begin{mdframed}[frametitle={Pitts, 2003}]
+Names of what? Names of entities that may be subject to binding by some of
+the syntactical constructions under consideration. In Nominal Logic these sorts of
+names, the ones that may be bound and hence that may be subjected to swapping
+without changing the validity of predicates involving them, will be called atoms.
+\end{mdframed}
+\begin{mdframed}[frametitle={Pitts, 2003}]
+Why the emphasis on the operation of swapping two names, rather than on the
+apparently more primitive notion of renaming one name by another? The answer
+to this question lies in the combination of the following two facts.
+
+\begin{enumerate}
+  \item First, even though swapping seems less general than renaming (since after all,
+  the act of swapping \(a\) and \(b\) can be expressed as the simultaneous renaming
+  of \(b\) by \(a\) and \(a\) by \(b\)), it is possible to found a theory of syntax modulo
+  \(\alpha\)-equivalence, free and bound variables, substitution, etc., upon this notion—
+  this is the import of the work in [17].
+  \item Secondly, swapping is an involutive operation: a swap followed by the same
+  swap is equivalent to doing nothing. This means that the class of equivariant
+  predicates, i.e., those whose validity is invariant under atom-swapping, has
+  excellent logical properties. It contains the equality predicate and is closed
+  under negation, conjunction, disjunction, existential and universal quantification,
+  formation of least and greatest fixed points of monotone operators, etc., etc.
+  The same is not true for renaming. For example, the validity of a
+  negated equality between atoms is not necessarily preserved under renaming.
+\end{enumerate}
+
+In other words, we can found a theory of variable-binding upon swapping, and it
+is convenient to do so because of its good logical properties.
+\end{mdframed}
+
+A crucial takeaway from Pitts' work is that switching from substitutions to permutations of names
+allows for all necessary concepts, including alpha-equivalence, freshness, and variable-binding,
+to be defined solely in terms of the operation of swapping pairs of names.
+As an example, consider the abstract syntax tree of untyped lambda calculus,
+given by the grammar:
+$$
+ t \deff a \mid \lambda a . t \mid t\;t
+$$
+Where $a$ ranges over an infinite set of names --- or rather \it{atoms}.
+Now, let's define what it means to swap atoms $a$ and $b$ in some tree $t$,
+written $\permswap{a}{b}{t}$:
+\begin{align*}
+\permswap{a}{b}{c} \;=&\;
+\begin{cases}
+    a & \text{if } c = b \\
+    b & \text{if } c = a \\
+    c & \text{otherwise}
+\end{cases} \\
+\permswap{a}{b}{(\lambda c . t)} \;=&\; \lambda (\permswap{a}{b}{c}) . (\permswap{a}{b}{t}) \\
+\permswap{a}{b}{(t_1\; t_2)} \;=&\; (\permswap{a}{b}{t_1}) \; (\permswap{a}{b}{t_2}) \\
+\end{align*}
+\newcommand{\aequiv}{\ensuremath{=_\alpha}}
+Notice how straightforward is operation of swapping --- simpler than the substitution,
+as it doesn't distinct betwen free and bound names, but simply changes them all the same exact way.
+
+Freshness of atom $a$ in tree $t$, written $a \cfresh t$, can be similarly simple to define
+\footnote{Pitts defines it as $a$ not being a member of the support set of $t$—but for our purposes, the simple inductive definition will suffice.}.
+$$
+\inference{
+  a \cneq b
+}{
+  a \cfresh b
+}
+\qquad
+\inference{
+  a \cfresh t_1
+  &
+  a \cfresh t_2
+}{
+  a \cfresh t_1\;t_2
+}
+\qquad
+\inference{
+ \;
+}{
+  a \cfresh \lambda a . t
+}
+\qquad
+\inference{
+  a \cfresh t
+}{
+  a \cfresh \lambda b . t
+}
+$$
+Note that \it{freshness} assumes only the comparability of atoms
+and is an \it{equivariant} relation, meaning that
+it's validity is invariant under swapping atoms
+--- which can be shown by simplest induction.
+Then with \it{swapping} and \it{freshness},
+we can define the alpha-equivalence of terms, written $t_1 \aequiv t_2$.
+$$
+\inference{
+  \text{}
+}{
+  a \aequiv a
+}
+\qquad
+\inference{
+  t_1 \aequiv t_1'
+  &
+  t_2 \aequiv t_2'
+}{
+  t_1\;t_2 \aequiv t_1'\;t_2'
+}
+\qquad
+\inference{
+  \permswap{a}{b}{t} \aequiv \permswap{a'}{b}{t'}
+  &
+  b \cfresh t
+  &
+  b \cfresh t'
+}{
+  \lambda a . t \aequiv \lambda a' . t'
+}
+$$
+As we built this definition of alpa-equivalence using only induction,
+swapping, and freshness, then as Pitts argues, it's also equivariant.
+\begin{mdframed}[frametitle={Pitts, 2003}]
+The fundamental assumption underlying Nominal Logic is that \textit{the only predicates we ever deal with} (when describing properties of syntax) \textit{are equivariant ones, in the sense that their validity is invariant under swapping} (i.e., transposing, or interchanging) \textit{names}.
+\end{mdframed}
 
 \section{Contributions}
-\dots
+We categorize the fundamental properties of abstract snytax trees of lambda calculus,
+including alpha equivalence and freshness, as \it{constraints} and construct \it{the Solver},
+a decidable algorithm tasked with automatically resolving new constraints
+based off the already established constraints.
+We use it as a logical core of the constraints sublogic that together with embeddedment of constraints into propositional formulas builds the logical framework
+that effortlessly expresses these properties.
+Through handling the constraints automatically, it liberates its users from
+the painstaking task of manually proving the seemingly trivial,
+yet crucial details, while ensuring the completeness and correctness of the written proofs
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Terms and constraints}
