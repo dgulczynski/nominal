@@ -68,17 +68,21 @@ let vee = string {|\/|} <|> string "∨"
 
 let sep_by2 s p = p <* s >>= fun head -> sep_by1 s p >>| fun tail -> head :: tail
 
-let swap =
-  bracketed
-  $ let* a1 = identifier in
-    let* _ = whitespace in
-    let* a2 = identifier in
-    return (pure a1, pure a2)
-
-let permuted p =
+let permuted' swap p =
   let* perm = many (swap <* whitespace) in
   let* symb = p in
   return {symb; perm}
+
+let swap' swap =
+  bracketed
+  $ let* a1 = permuted' swap identifier in
+    let* _ = whitespace in
+    let* a2 = permuted' swap identifier in
+    return (a1, a2)
+
+let swap = fix swap'
+
+let permuted p = permuted' swap p
 
 let annoted t = whitespace *> string ":" *> whitespace *> t
 
