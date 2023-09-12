@@ -30,10 +30,10 @@ let print_kind_solver (formula, kind) =
   $ (formula -: kind) KindCheckerEnv.empty
 
 let examples =
-  let a_ = A 0 and b_ = A 1 and c_ = A 2 in
-  let a = {perm= []; symb= a_} and b = {perm= []; symb= b_} and c = {perm= []; symb= c_} in
+  let a_ = A 0 and b_ = A 1 and c_ = A 2 and d_ = A 3 in
+  let a = pure a_ and b = pure b_ and c = pure c_ and d = pure d_ in
   let pi = [(b, c)] in
-  let x = T_Var {perm= []; symb= V 3} in
+  let x = var (V 4) in
   [ x =: x
   ; a_ #: (T_Lam (a, T_Atom a))
   ; a_ #: (permute_term [] (T_Lam (b, T_Atom b)))
@@ -41,7 +41,8 @@ let examples =
   ; T_App (T_Atom a, T_Atom b) =: T_App (T_Atom a, T_Atom b)
   ; T_Lam (a, T_Atom a) =: T_Lam (b, T_Atom b)
   ; T_Lam (a, T_Atom a) =~: T_Lam (b, T_Atom b)
-  ; T_Atom a <: T_Lam (b, T_Atom b) ]
+  ; T_Atom a <: T_Lam (b, T_Atom b)
+  ; permute_term [(a, b); (c, d)] x =: permute_term [(permute [(a, b)] c, permute [(a, b)] d); (a, b)] x ]
 
 let subkind_examples =
   [ (K_Prop, K_Prop)

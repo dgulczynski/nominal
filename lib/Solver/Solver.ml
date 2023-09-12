@@ -285,6 +285,7 @@ and solve_assm_eq env assms goal t1 t2 =
     (*            (x = π x) :: Γ, Δ |- c  *)
     let solve_with_assms assms = solve_ env assms goal in
     List.for_all solve_with_assms $ build_permutation_idempotent_assms pi x assms
+  | T_Var {perm= _ :: _; symb= x}, T_Var {perm= []; symb= x'} when x = x' -> solve_assm_eq env assms goal t2 t1
   | T_Var {perm= []; symb= x}, t | t, T_Var {perm= []; symb= x} ->
     (*  Γ {x -> t}, Δ {x -> t} |- c {x -> t}  *)
     (* -------------------------------------- *)
