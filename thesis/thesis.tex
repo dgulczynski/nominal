@@ -36,6 +36,7 @@
 \usepackage{tabularx}
 \usepackage{makecell}
 \usepackage{mdframed}
+\usepackage{hyperref}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -224,7 +225,7 @@ The fundamental assumption underlying Nominal Logic is that \textit{the only pre
 \end{mdframed}
 
 \section{Contributions}
-We categorize the fundamental properties of abstract snytax trees of lambda calculus,
+We categorize the fundamental properties of abstract syntax trees of lambda calculus,
 including alpha equivalence and freshness, as \it{constraints} and construct \it{the Solver},
 a decidable algorithm tasked with automatically resolving new constraints
 based off the already established constraints.
@@ -232,21 +233,20 @@ We use it as a logical core of the constraints sublogic that together with embed
 that effortlessly expresses these properties.
 Through handling the constraints automatically, it liberates its users from
 the painstaking task of manually proving the seemingly trivial,
-yet crucial details, while ensuring the completeness and correctness of the written proofs
+yet crucial details, while ensuring the completeness and correctness of the written proofs.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Terms and constraints}
-% Okreli odbiorce i do niego pisa
+To properly describe our framework we must start with the simplest elements:
+\it{names} and \it{terms}.
 
-In classical first-order logic, terms are constructed from variables and applications of functional symbols to other terms.
-This work introduces an extension to terms with expressions closely resembling the syntax of lambda calculus.
-The aim is to create a flexible framework for reasoning about the lambda calculus and its derivations.
-
-To achieve this goal, we introduce an infinite set of \it{atoms} (represented by lowercase letters)
-that correspond to the bound variables in terms, analogous to the variables in lambda calculus.
+The names are drawn from an infinite set of \it{atoms} (represented by lowercase letters)
+and correspond to the bound variables in terms, analogous to the variables in the lambda calculus.
 This set is disjoint from the set of variables commonly used in first-order logic,
 which we will refer to as \it{variables} (denoted by uppercase letters).
 
+The terms are constructed to mimic the structure of abstract syntax trees of the lambda calculus,
+extending it with notion of permutations (of atoms) and functional symbols.
 Terms are defined by the following grammar:
 \\
 \begin{tabular}{rclr}
@@ -256,12 +256,12 @@ Terms are defined by the following grammar:
 \end{tabular}
 \\
 
-It's important to note that terms do not inherently incorporate notions of computation, reduction, or binding.
-These expressions closely resemble lambda calculus syntax but lack its operational semantics.
-However, the intuitions associated with these expressions are not baseless.
-Their practical application is observed in the sublogic of constraints defined on top of terms,
+It's important to note that these terms are merely a data structure
+and do not incorporate notions of computation, reduction, or binding by themselves.
+Their practical application is observed in the sublogic of constraints defined on top of them,
 used to reason about concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order, as well as their logical model.
-
+\\
+\\
 Constraints are given by the following grammar and semantics:
 \\
 \begin{tabular}{rclr}
@@ -284,8 +284,8 @@ Constraints are given by the following grammar and semantics:
   \hline
 \end{tabularx}
 
-For terms and constraints, we can construct a model.
-To that end, we introduce \it{semantic terms} and \it{semantic shapes} that will inhabit the model.
+To build the mathematical model of terms and constraints,
+we introduce \it{semantic terms} and \it{semantic shapes} that will inhabit it.
 
 \begin{tabular}{rclr}
 $\semterm$ & $\deff$ & $\sematom
@@ -342,17 +342,15 @@ we have $\tmEnv \vDash \constr$,
 as well as write $\cEnv \vDash \constr$ if for every $\tmEnv$ such that $\tmEnv \vDash \cEnv$,
 we have $\tmEnv \vDash \constr$.
 
-Within this model, we establish the existence of a decidable algorithm for determining whether $C_1, \ldots, C_n \vDash C_0$,
-meaning there is a deterministic way to check whether constraints $C_1, \ldots, C_n$ imply $C_0$.
-This algorithm is presented in the next chapter.
-
+In the next chapter, we will present the deterministic \it{Solver} algorithm
+that works within this model to check whether assumed constraints $\constr_1, \ldots, \constr_n$,
+would imply the constraint-goal $\constr_0$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Constraint solver}
 At the heart of our work lies the Solver, an algorithm designed to resolve constraints.
-A high level perspective of the Solver is that it dissects constraints on both sides of the turnstile into irreducible components that are solved easily.
+A high level perspective of the Solver is that when given judgement $\constr_1, \ldots, \constr_n \vDash \constr_0$ it dissects constraints on both sides of the turnstile into irreducible components that are solved easily, veryfying  whether a given goal $\constr_0$ holds.
 
-Given a set of assumptions $\constr_1, \dots, \constr_n$, it verifies whether a given goal $\constr_0$ holds.
 Technically, the Solver determines whether,
 every possible substitution of variables into closed terms in $\constr_0, \constr_1, \dots, \constr_n$,
 such that $\constr_1, \dots, \constr_n$ are satisfied, will also satisfy $\constr_0$.
@@ -459,8 +457,8 @@ $$
 $$
 
 To compare a \it{pure} atom with permuted one, we employ the decidability of
-atom equality to strip the right hand-side permutation through applying the
-outermost swap on the left side, while adding to assumption.
+atom equality to reduce the right hand-side's permutation by
+applying it's outermost swap on the left side's atom.
 There's three possible ways: \begin{enumerate}[noitemsep]
     \item $\atomv$ is different from both $\atomexp_1$ and $\atomexp_2$,
 so the swap doesn't change the goal,
@@ -658,9 +656,10 @@ $$\inferrule{
   \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
 }
 $$
-And that finishes solving rules that recurse on the goal.
-In mathematical jargon, the Solver must first reduce all assumptions in the $\cEnv$ environment before it starts reducing the goal.
-Luckily, most of the assumption reducing rules are similar to the goal reducing analogues.
+
+But before the Solver can reduce the goal-constraint, it must first reduce all assumptions in the $\cEnv$ environment.
+We will now present the rules for reducing the left side of the turnstile,
+but fortunately most of the assumption reducing rules are similar to the goal reducing analogues.
 
 For variables equal to some term,
 we first deal with permutation by moving it to the right-hand side.
@@ -676,8 +675,7 @@ While the assumption of the permutation being idempotent might appear to multipl
 it's worth noting that this number is unlikely to be very high, as permutations rarely consist of more than a few swaps.
 
 In practice, the solver implementation will initially check whether the permutation is idempotent with an empty set of assumptions.
-Only if this initial check fails, will it proceed to examine the permutation atom by atom.
-
+Only if this initial check fails, will it proceed to examine the permutation atom by atom:
 $$
 \inferrule{
   \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
@@ -703,7 +701,7 @@ $$
 $$
 \\
 Otherwise we just substitute the variable for the equal term,
-and while substitution over the environment $\cEnv$ and goal $\sconstr$ is indeed a simple term substitution, substituting in $\icEnv$ is a more involved process that we will describe in the section on implementation.
+and while substitution over the environment $\cEnv$ and goal $\sconstr$ is indeed a simple term substitution, substituting in $\icEnv$ environment is a more involved process that we will describe in the section on implementation.
 $$
 \inferrule{
    \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term} \vDash \sconstr\subst{\termv}{\term}
@@ -763,7 +761,6 @@ $$
 $$
 \\
 To save some ink, from now on we will simply write that other constructors are trivial and not consider all the contradictory possibilities in writing.
-Other rules mirror the ones we defined for the goal reduction:
 $$
 \inferrule{
    \atomexp_1 \cfresh \tbind{\atomexp_2} \term_2,\; \term_1 = \permswap{\atomexp_1}{\atomexp_2}\term_2 , \; \cEnv ; \icEnv \vDash \sconstr
@@ -798,13 +795,8 @@ $$
 \text{Other term constructors trivial}
 $$
 \\
-Atom inequality and freshness in variable simply contradict or extend the $\icEnv$ enviroment:
+Atom inequality and freshness simply contradict to the $\icEnv$ enviroment:
 $$
-\inferrule{
-}{
-  \atomv \cneq \atomv, \cEnv ; \icEnv \vDash \sconstr
-}
-\qquad
 \inferrule{
   \cEnv ; \{\atomv_1 \cneq \atomv_2\} \cup \icEnv \vDash \sconstr
 }{
@@ -983,7 +975,8 @@ Upon analyzing each Solver rules, it becomes evident that each rule consistently
   \item Eliminating an assumption from $\cEnv$ and introducing an assumption of the same depth into $\icEnv$.
 \end{enumerate}
 
-\section{Implementation}
+\section{Irreducible constraints}
+\label{sec:solverenv}
 \newcommand{\NeqAtoms}{\tt{neq\_atoms}}
 \newcommand{\Fresh}{\tt{fresh}}
 \newcommand{\VarShape}{\tt{var\_shape}}
@@ -1079,8 +1072,8 @@ $$
 }
 $$
 Incorporating constraints into $\icEnv$ proceeds as follows:
-atoms that are considered fresh in variables are straightforwardly added to the $\Fresh$ mapping.
-Similarly, establihing distinctness of two atoms simply adds to the set $\NeqAtoms$,
+freshness of an atom in a in a variables is simply acknowledged in the $\Fresh$ mapping.
+Inequality of two atoms simply adds to the set $\NeqAtoms$,
 unless invoked with identical atoms, in which case we report a contradiction.
 \\
 \begin{minipage}{0.4\textwidth}
@@ -1099,10 +1092,14 @@ $\{\atomv \cneq \atomv'\} \cup \icEnv :=$
 \end{lstlisting}
 \end{minipage}
 \\
-To meld together two shape-variables, we first check whether they have already been merged. If they have, we return contradiction.
+To meld together two shape-variables, we first check whether they have already been merged.
+If they have, we return contradiction.
+\\
 Next, we conduct an occurs check to ensure that merging them won't create a circular reference. If this check fails, we again report a contradiction.
+\\
 Finally, we merge all the information pertaining to $\termv$ into $\termv'$ and
 remove any traces of $\termv$ from within $\icEnv$ environment.
+\\
 To maintain a high-level description, we delegate the detailed implementation aspects to auxiliary functions responsible for substituting shape-variables within the given field of $\icEnv$.
 \begin{lstlisting}[mathescape, language=OCaml]
 $\{\termv \csheq \termv'\} \cup \icEnv :=$
@@ -1393,11 +1390,10 @@ $$
 }
 $$
 The fixpoint constructor allows us to express \it{recursive} predicates over terms,
-but only such that the recursive applications are on structurally smaller terms,
-which we express in the kinding rule through the kinding $(\propv \ofkind \kForallTerm{Y} \kGuard{Y \cshlt \termv}{\kind\subst{\termv}{Y}})$.
+but only such that the recursive applications of it are on structurally smaller terms,
+which we express in it's kinding rule, through the kinding $(\propv \ofkind \kForallTerm{Y} \kGuard{Y \cshlt \termv}{\kind\subst{\termv}{Y}})$.
 To evaluate a fixpoint function applied to a term, simply substitute the bound
 variable with the given term and replace recursive calls inside the fixpoint's body with the fixpoint itself.
-
 $$
 (\fix{\propv}{\termv}{\kind}{\formphi})\fApp\term
 \equiv
@@ -1411,23 +1407,24 @@ the final formula after all substitutions must also be finite
 To familiarize the reader with the fixpoint formulas,
 we present how Peano arithmetic can be modeled in our logic.
 Given symbols $0$ and $S$ for natural number construction,
-one can write a predicate that a term models some natural number:
-$$
+one can write a predicate that a term $N$ models some natural number
+and that two terms $N$ and $M$ added together are the equal to $K$:\\ \\
+$
 \fix{Nat}{N}{\kProp}{(N \ceq 0) \vee (\fExistsTerm{M} \fCAnd{N \ceq {S \tapp M}} ({Nat}\fAppTerm{M}))}
-$$
-Notice how the constraint $(N \ceq {S \tapp M})$ guards the recursive call to $Nat$,
-ensuring that constraint $(M \cshlt N)$ will be satisfied during kind checking of
-$({{Nat}\fAppTerm{M}})$ in the kind derivation of the whole formula
-$({Nat} \ofkind \kForallTerm{N}{\kProp})$.
-
-Similarly, we can define addition: \\ \\
+$
+\\ \\
 $\fix{PlusEq}{N}{\kForallTerm{M}\kForallTerm{K}\kProp}{\fLamTerm{M}\fLamTerm{K}}$ \\
 $\text{ }\qquad
   (\fCAnd{N \ceq 0}{(M \ceq K)}) \;\vee\;
    (\fExistsTerm{N', K'}\fCAnd{N \ceq {S \tapp N'}}\fCAnd{K \ceq {S \tapp K'}}{({PlusEq}\fApp{N'}\fApp{M}\fApp{K'})}
    )
 $
-\\
+
+Notice how the constraint $(N \ceq {S \tapp M})$ guards the recursive call to $Nat$,
+ensuring that constraint $(M \cshlt N)$ will be satisfied during kind checking of
+$({{Nat}\fAppTerm{M}})$ in the kind derivation of the whole formula
+$({Nat} \ofkind \kForallTerm{N}{\kProp})$.
+
 TODO: Write how $N$ is treated differently from $M$ and $K$?
 \\
 See more interesting examples of fixpoints usage in the chapter on STLC.
@@ -1448,9 +1445,10 @@ See more interesting examples of fixpoints usage in the chapter on STLC.
 \newcommand{\cjgmnt[2]}[\cEnv]{\ensuremath{#1 \vDash #2}}
 \newcommand{\fv[1]}[\cEnv;\Theta]{\ensuremath{\operatorname{FV}(#1)}}
 
-Finally, we can define proof-theoretic rules.
+Finally, we come to the definition of proof-theoretic rules.
 Starting with inference rules for assumption,
-we can already define its constraint-sublogic analogues that employ the solver.
+we can see first an analogue between the worlds of propositional logic
+and constraint sublogic.
 And while the $\vdash$ relation we define is purely syntactic,
 we can still use semantic $\vDash$ because of its decidability.
 $$
@@ -1739,7 +1737,7 @@ Equivalence checking procedure starts by computing weak head normal form (up to 
 &\;\text{when} \quad \tt{compute }\Sigma\tt{ }n\tt{ }{\formphi_1} \;\leadsto^{*}\; (n_1, \fLamForm{\propv}{\kind}{\psi_1})\\
 &\;\text{ and } \quad \tt{compute }\Sigma\tt{ }n_1\tt{ }{\formphi_2} \;\leadsto^{*}\; (n_2, \psi_2)
 \end{align*}
-After we've reached WHNF computation \it{depth} ($ n \leqslant 0$) or cannot reduce the formula further,
+After we've reached WHNF computation \it{depth} (when $ n \leqslant 0$) or cannot reduce the formula further,
 we can progress naively:
 \\
 $$
@@ -1976,10 +1974,15 @@ Atoms and variables are represented internally by integers (yet remain disjoint 
 (quantifiers and functions).
 Terms, constraints, kinds, and formulas are defined in \tt{Types} module,
 mirroring their previusly described grammars.
-The only difference is that we accommodate conjunction and disjunction with more than two arguments, with the added feature of arguments being labeled by names. This naming approach empowers users to easily select desired branches while composing proofs.
-For the Solver,there's a dedicated \tt{Solver} module along with \tt{SolverEnv},
-responsible for implementing the specialized environment denoted as $\icEnv$ in section X.
-Analogously, the \texttt{KindChecker} and \texttt{KindCheckerEnv} modules serve similar roles.
+The only difference is that we allow conjunction and disjunction to be used with
+more than two arguments, with the added feature of arguments being labeled by names.
+This naming approach lets the user to easily select desired branches while composing proofs
+or to give meaningful names within the definition of properties.
+
+The \it{Solver} ihabits its own dedicated \tt{Solver} module along with \tt{SolverEnv}
+responsible for implementing the specialized environment $\icEnv$ handling the \hyperref[sec:solverenv]{irreducible assumptions}.
+Analogously, the \tt{KindChecker} and \tt{KindCheckerEnv} modules serve similar roles.
+
 The proof theory described in previous chapter is distributed over modules
 \tt{Proof}, \tt{ProofEnv}, \tt{ProofEquiv} and is a direct implementation of the proof-theoretic rules.
 \begin{lstlisting}[mathescape, language=OCaml]
@@ -2944,9 +2947,9 @@ And that's it.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Conclusion}
 
-In summary, we've introduced and demonstrated a specialized nominal logic,
+In summary, we've introduced and demonstrated a specialized variant of Nominal Logic,
 designed for reasoning about variable binding
-through the utilization of constraints and lambda-calculus alike terms.
+through the utilization of constraints solving.
 We've also successfully implemented this logic in OCaml,
 complemented by essential tools, including a proof assistant.
 
