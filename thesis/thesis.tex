@@ -10,7 +10,7 @@
 % Pamietaj o madrym (zgodnym z logicznym rozbiorem zdania oraz estetyka) recznym
 % zlamaniu wierszy w temacie pracy, zwlaszcza tego w jezyku pracy. Uzyj do tego
 % polecenia \fmlinebreak.
-\englishtitle   {Nominal logic \fmlinebreak for reasoning about terms \fmlinebreak with variable bindings}
+\englishtitle   {Domain-specific logic \fmlinebreak for terms with variable binding}
 \polishtitle    {Logika dziedzinowa do wnioskowania \fmlinebreak o termach z wiązaniem zmiennych}
 \polishabstract {Przedstawiamy logikę dziedzinową do wnioskowania o termach z wiązaniem zmiennych. }
 \englishabstract{We describe logic for reasoning about terms with variable bindings.}
@@ -66,7 +66,10 @@
 \setlist{nolistsep}
 \renewcommand{\tt}[1]{\texttt{\small{#1}}}
 \renewcommand{\it}[1]{\textit{#1}}
-%%%%%
+
+\usepackage[backend=bibtex]{biblatex}
+\addbibresource{references.bib}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
 
@@ -84,7 +87,6 @@ A common assumption we commonly make when writing pen-and-paper proofs pertains 
 working with abstract syntax trees,
 where we assume that the variables we choose are fresh enough
 or that substitutions avoid issues like variable capture.
-
 For instance, when dealing with lambda calculus, we often construct inductive proofs
 over the structure of expression, where in the case for an abstracion we will implicitly only show
 the case where the variable bound in that abstraction is \it{sufficiently fresh}.
@@ -94,21 +96,21 @@ Justifiably, we skip over this detail --- however, the induction principle oblig
 % \section{Problem statement}
 Addressing this gap in formal reasoning requires careful considerations to come up with a resolution.
 Fortunately, there exist some solutions to that problem --- and one particular
-approach, introduced by Pitts et al is of most interest to this work.
+approach, coined \it{nominal logic} and introduced by Andrew M. Pitts\cite{pitts2003} is of most interest to this work.
 
-\section{Related work}
-Pitts' work introduces Nominal Logic, a first-order theory of names, swapping and freshness,
+\section{Nominal approach}
+Pitts' work introduces \it{nominal logic}, a first-order theory of names, swapping, and freshness,
 that amongst other novelties, introduces the precise mathematical definition
 describing the concept of "sufficiently fresh names",
 which, as Pitts argues, bridges the gap between formal mathematical reasoning and the informal practices mentioned earlier.
 
-\begin{mdframed}[frametitle={Pitts, 2003}]
+\begin{mdframed}[frametitle={Pitts, 2003\cite{pitts2003}}]
 Names of what? Names of entities that may be subject to binding by some of
 the syntactical constructions under consideration. In Nominal Logic these sorts of
 names, the ones that may be bound and hence that may be subjected to swapping
 without changing the validity of predicates involving them, will be called atoms.
 \end{mdframed}
-\begin{mdframed}[frametitle={Pitts, 2003}]
+\begin{mdframed}[frametitle={Pitts, 2003\cite{pitts2003}}]
 Why the emphasis on the operation of swapping two names, rather than on the
 apparently more primitive notion of renaming one name by another? The answer
 to this question lies in the combination of the following two facts.
@@ -118,7 +120,7 @@ to this question lies in the combination of the following two facts.
   the act of swapping \(a\) and \(b\) can be expressed as the simultaneous renaming
   of \(b\) by \(a\) and \(a\) by \(b\)), it is possible to found a theory of syntax modulo
   \(\alpha\)-equivalence, free and bound variables, substitution, etc., upon this notion—
-  this is the import of the work in [17].
+  this is the import of the work in \cite{subnbinders}.
   \item Secondly, swapping is an involutive operation: a swap followed by the same
   swap is equivalent to doing nothing. This means that the class of equivariant
   predicates, i.e., those whose validity is invariant under atom-swapping, has
@@ -158,8 +160,10 @@ written $\permswap{a}{b}{t}$:
 Notice how straightforward is operation of swapping --- simpler than the substitution,
 as it doesn't distinct betwen free and bound names, but simply changes them all the same exact way.
 
-Freshness of atom $a$ in tree $t$, written $a \cfresh t$, can be similarly simple to define
-\footnote{Pitts defines it as $a$ not being a member of the support set of $t$—but for our purposes, the simple inductive definition will suffice.}.
+Freshness of atom $a$ in tree $t$, written $a \cfresh t$, can be similarly
+simple to define.\footnote{Pitts defines it as
+$a$ not being a member of the \it{support set} of $t$ ---
+but for our purposes, the simple inductive definition will suffice.}
 $$
 \inference{
   a \cneq b
@@ -225,15 +229,19 @@ The fundamental assumption underlying Nominal Logic is that \textit{the only pre
 \end{mdframed}
 
 \section{Contributions}
-We categorize the fundamental properties of abstract syntax trees of lambda calculus,
+We categorize the fundamental properties of terms with variable binding,
 including alpha equivalence and freshness, as \it{constraints} and construct \it{the Solver},
-a decidable algorithm tasked with automatically resolving new constraints
+an algorithm tasked with automatically resolving new constraints
 based off the already established constraints.
 We use it as a logical core of the constraints sublogic that together with embeddedment of constraints into propositional formulas builds the logical framework
 that effortlessly expresses these properties.
 Through handling the constraints automatically, it liberates its users from
 the painstaking task of manually proving the seemingly trivial,
 yet crucial details, while ensuring the completeness and correctness of the written proofs.
+
+TODO: write about proof assistant.
+
+TODO: add related work
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Terms and constraints}
@@ -262,7 +270,7 @@ Their practical application is observed in the sublogic of constraints defined o
 used to reason about concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order, as well as their logical model.
 \\
 \\
-Constraints are given by the following grammar and semantics:
+Constraints are given by the following grammar and the informal semantics:
 \\
 \begin{tabular}{rclr}
     $\constr$  & $\deff$ & $\atomexp \cfresh \term
@@ -356,8 +364,9 @@ every possible substitution of variables into closed terms in $\constr_0, \const
 such that $\constr_1, \dots, \constr_n$ are satisfied, will also satisfy $\constr_0$.
 
 For the sake of convenience and implementation efficiency, the Solver operates
-on slightly different constraints compared to those found in formulas and kinds.
-The key distinction lies in the use of \it{shapes} in shape constraints rather than terms.
+on its own internal representation of constraints, that slightly differs from
+constraints described in the previous section,
+as it uses \it{shapes} instead of terms to to construct shape constraints.
 
 Solver constraints and shapes are defined by the following grammar: \\
 \begin{tabular}{rclr}
@@ -398,6 +407,7 @@ Irreducible constraints are:
     term $\term$ strictly subshapes variable $\termv$
   } \\
 \end{eqnarray*}
+\newcommand{\solverRule}{\vdash}
 
 After all the constraints are reduced to such simple constraints
 we reduce the goal-constraint and repeat the reduction procedure on
@@ -412,35 +422,37 @@ $$
     \inferrule{
      \cdots
     }{
-     \cEnv' ; \icEnv' \vDash \sconstr' \\ \cdots
+     \cEnv' ; \icEnv' \solverRule \sconstr' \\ \cdots
   }
   }
 }{
-  \cEnv ; \icEnv \vDash \sconstr
+  \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
+
+\section{Goal-reducing rules}
 And now for the solving procedure we start with the most simple equality check:
 $$\inferrule{
 }{
-  \cEnv ; \icEnv \vDash \atomv = \atomv
+  \cEnv ; \icEnv \solverRule \atomv = \atomv
 }
 \qquad
 \inferrule{
 }{
-  \cEnv ; \icEnv \vDash \termv = \termv
+  \cEnv ; \icEnv \solverRule \termv = \termv
 }
 \qquad
 \inferrule{
 }{
-  \cEnv ; \icEnv \vDash \symb = \symb
+  \cEnv ; \icEnv \solverRule \symb = \symb
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \term_1 = \term_2
+  \cEnv ; \icEnv \solverRule \term_1 = \term_2
   \\
-  \cEnv ; \icEnv \vDash \term_1' = \term_2'
+  \cEnv ; \icEnv \solverRule \term_1' = \term_2'
 }{
-  \cEnv ; \icEnv \vDash \term_1 \term_1' = \term_2 \term_2'
+  \cEnv ; \icEnv \solverRule \term_1 \term_1' = \term_2 \term_2'
 }
 $$
 Checking equality of abstraction terms requires that the left side's argument is
@@ -448,11 +460,11 @@ fresh in the whole right side's term (either arguments are the same or left's ar
 and that left body is equal to the right body with right argument swapped for the left one:
 $$
 \inferrule{
-  \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
+  \cEnv ; \icEnv \solverRule \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
   \\
-  \cEnv ; \icEnv \vDash \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
+  \cEnv ; \icEnv \solverRule \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
 }{
-  \cEnv ; \icEnv \vDash \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
+  \cEnv ; \icEnv \solverRule \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
 }
 $$
 
@@ -471,42 +483,42 @@ Notice that it is impossible for any two of these assumption to be valid at the 
 the contradictory branches will resolve through absurd environment.
 $$
 \inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     = \atomexp \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_2 = \atomexp \\
-  \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 = \atomexp
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomv     = \atomexp \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_2 = \atomexp \\
+  \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_1 = \atomexp
 }{
-  \cEnv ; \icEnv \vDash \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
+  \cEnv ; \icEnv \solverRule \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
 }
 $$
 
 If the left-hand side's term is permuted we simply move the permutation to the right-hand side:
 $$
 \inferrule{
-  \cEnv ; \icEnv \vDash \atomv = \perm^{-1} \atomexp
+  \cEnv ; \icEnv \solverRule \atomv = \perm^{-1} \atomexp
 }{
-  \cEnv ; \icEnv \vDash \perm \atomv = \atomexp
+  \cEnv ; \icEnv \solverRule \perm \atomv = \atomexp
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \termv_1 = \pi_1^{-1} \pi_2 \termv_2
+  \cEnv ; \icEnv \solverRule \termv_1 = \pi_1^{-1} \pi_2 \termv_2
 }{
-  \cEnv ; \icEnv \vDash \pi_1 \termv_1 = \pi_2 \termv_2
+  \cEnv ; \icEnv \solverRule \pi_1 \termv_1 = \pi_2 \termv_2
 }
 $$
 Variables can be equal to their permuted selves if that permutation is idempotent:
 $$
 \inferrule{
-  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
+  \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
 }{
-  \cEnv ; \icEnv \vDash \termv = \pi \termv
+  \cEnv ; \icEnv \solverRule \termv = \pi \termv
 }
 \qquad
 \inferrule{
   \forall \atomv \in \pi.\;
-    \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
-    \cEnv ; \icEnv \vDash \atomv \cfresh \termv
+    \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
+    \cEnv ; \icEnv \solverRule \atomv \cfresh \termv
   }{
-  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
+  \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
 }
 $$
 \\
@@ -514,51 +526,51 @@ Freshness is checked through the $\icEnv$ environment and freshness in symbols i
 $$\inferrule{
   \atomv_1 \cneq \atomv_2 \in \icEnv
 }{
-  \cEnv ; \icEnv \vDash \atomv_1 \cfresh \atomv_2
+  \cEnv ; \icEnv \solverRule \atomv_1 \cfresh \atomv_2
 }
 \qquad
 \inferrule{
   \atomv \cfresh \termv \in \icEnv
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \termv
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \termv
 }
 \qquad
 \inferrule{
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \symb
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \symb
 }
 $$
 Similarly we recurse on the term structure, assuming checked atom is different than abstraction argument --- otherwise it would be trivially true:
 $$\inferrule{
-  \atomv \cneq \atomexp, \cEnv ; \icEnv \vDash \atomv \cfresh \term
+  \atomv \cneq \atomexp, \cEnv ; \icEnv \solverRule \atomv \cfresh \term
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \tbind{\atomexp}{\term}
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \tbind{\atomexp}{\term}
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \term_1 \\
-  \cEnv ; \icEnv \vDash \atomv \cfresh \term_2
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \term_1 \\
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \term_2
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \term_1 \term_2
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \term_1 \term_2
 }
 $$
 Again when faced with swap on the right side, we apply it on the left side:
 $$
 \inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     \cfresh \atomexp \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \atomexp \\
-                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \atomexp
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomv     \cfresh \atomexp \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_1 \cfresh \atomexp \\
+                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \solverRule \atomexp_2 \cfresh \atomexp
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{} \atomexp
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{} \atomexp
 }
 $$
 $$
 \inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     \cfresh \pi \termv \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \pi \termv \\
-                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \pi \termv
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomv     \cfresh \pi \termv \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_1 \cfresh \pi \termv \\
+                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \solverRule \atomexp_2 \cfresh \pi \termv
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{\pi} \termv
+  \cEnv ; \icEnv \solverRule \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{\pi} \termv
 }
 $$
 \\
@@ -566,12 +578,12 @@ All atoms have the same shape, while only equal symbols have equal shape:
 $$
 \inferrule{
 }{
-  \cEnv ; \icEnv \vDash \shatom \csheq \shatom
+  \cEnv ; \icEnv \solverRule \shatom \csheq \shatom
 }
 \qquad
 \inferrule{
 }{
-  \cEnv ; \icEnv \vDash \symb \csheq \symb
+  \cEnv ; \icEnv \solverRule \symb \csheq \symb
 }
 $$
 Variables can share shape and be shape-substituted through $\icEnv$:
@@ -579,84 +591,85 @@ $$
 \inferrule{
   \termv_1 \csheq \termv_2 \in \icEnv
 }{
-  \cEnv ; \icEnv \vDash \termv_1 \csheq \termv_2
+  \cEnv ; \icEnv \solverRule \termv_1 \csheq \termv_2
 }
 \qquad
 \inferrule{
   \termv  \csheq \shape' \in \icEnv \\
-  \cEnv ; \icEnv \vDash \shape'  \csheq \shape
+  \cEnv ; \icEnv \solverRule \shape'  \csheq \shape
 }{
-  \cEnv ; \icEnv \vDash \termv  \csheq \shape
+  \cEnv ; \icEnv \solverRule \termv  \csheq \shape
 }
 $$
 Shape equality is naturally structural:
 $$\inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+  \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shbind \shape_1 \csheq \shbind \shape_2
+  \cEnv ; \icEnv \solverRule \shbind \shape_1 \csheq \shbind \shape_2
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2 \\
-  \cEnv ; \icEnv \vDash \shape_1' \csheq \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2 \\
+  \cEnv ; \icEnv \solverRule \shape_1' \csheq \shape_2'
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \shape_1' \csheq \shape_2 \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \shape_1' \csheq \shape_2 \shape_2'
 }
 $$
 \\
 Solving subshape recurses through right-hand side shape's structure to find a shape-equal sub-shape:
 $$\inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+  \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shbind \shape_2
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shbind \shape_2
 }
 $$
 $$\inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+  \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2 \shape_2'
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2'
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2 \shape_2'
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2 \shape_2'
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2'
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2 \shape_2'
 }
 $$
 Environment $\icEnv$ keeps track of all shapes that  given variable subshapes:
 $$\inferrule{
   \shape_2 \cshlt \termv \in \icEnv \\
-  \cEnv ; \icEnv \vDash \shape_2 \csheq \termv
+  \cEnv ; \icEnv \solverRule \shape_2 \csheq \termv
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \termv
 }
 \qquad
 \inferrule{
   \shape_2 \cshlt \termv \in \icEnv \\
-  \cEnv ; \icEnv \vDash \shape_2 \cshlt \termv
+  \cEnv ; \icEnv \solverRule \shape_2 \cshlt \termv
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
+  \cEnv ; \icEnv \solverRule \shape_1 \cshlt \termv
 }
 $$
 
+\section{Assumptions-reducing rules}
 But before the Solver can reduce the goal-constraint, it must first reduce all assumptions in the $\cEnv$ environment.
 We will now present the rules for reducing the left side of the turnstile,
 but fortunately most of the assumption reducing rules are similar to the goal reducing analogues.
@@ -665,9 +678,9 @@ For variables equal to some term,
 we first deal with permutation by moving it to the right-hand side.
 $$
 \inferrule{
-   \termv = \pi^{-1} \term, \cEnv ; \icEnv \vDash \sconstr
+   \termv = \pi^{-1} \term, \cEnv ; \icEnv \solverRule \sconstr
 }{
-   \pi \termv = \term, \cEnv ; \icEnv \vDash \sconstr
+   \pi \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 Once again, we consider the special case where a variable is equal to itself when permuted.
@@ -678,25 +691,25 @@ In practice, the solver implementation will initially check whether the permutat
 Only if this initial check fails, will it proceed to examine the permutation atom by atom:
 $$
 \inferrule{
-  \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
+  \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
 }{
-   \termv = \pi \termv, \cEnv ; \icEnv \vDash \sconstr
+   \termv = \pi \termv, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
-  \vDash \text{ idempotent on } \termv \\
-  \cEnv ; \icEnv \vDash \sconstr
+  \solverRule \text{ idempotent on } \termv \\
+  \cEnv ; \icEnv \solverRule \sconstr
 }{
-   \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
+   \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 $$
 \inferrule{
   (\forall \atomv \in \pi.\;
-    \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
-    \cEnv ; \icEnv \vDash \atomv \cfresh \termv), \cEnv ; \icEnv \vDash \sconstr
+    \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
+    \cEnv ; \icEnv \solverRule \atomv \cfresh \termv), \cEnv ; \icEnv \solverRule \sconstr
 }{
-\pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
+\pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 \\
@@ -704,9 +717,9 @@ Otherwise we just substitute the variable for the equal term,
 and while substitution over the environment $\cEnv$ and goal $\sconstr$ is indeed a simple term substitution, substituting in $\icEnv$ environment is a more involved process that we will describe in the section on implementation.
 $$
 \inferrule{
-   \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term} \vDash \sconstr\subst{\termv}{\term}
+   \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term} \solverRule \sconstr\subst{\termv}{\term}
 }{
-   \termv = \term, \cEnv ; \icEnv \vDash \sconstr
+   \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 With atom equality, we either arrive at a contradiction with $\icEnv$ or update the environment accordingly
@@ -715,30 +728,30 @@ $$
 \inferrule{
   \atomv_1 \cneq \atomv_2 \in \icEnv
 }{
-  \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \vDash \sconstr
+  \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
-   \cEnv \subst{\atomv_1}{\atomv_2}; \icEnv\subst{\atomv_1}{\atomv_2} \vDash \sconstr\subst{\atomv_1}{\atomv_2}
+   \cEnv \subst{\atomv_1}{\atomv_2}; \icEnv\subst{\atomv_1}{\atomv_2} \solverRule \sconstr\subst{\atomv_1}{\atomv_2}
 }{
-  \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \vDash \sconstr
+  \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 \\
 Just like in reduction on the goal, we deal with permutations through moving it to the right-hand side and then reducing it swap by swap through the left-hand side:
 $$
 \inferrule{
-  \atomv \ceq \pi^{-1} \atomexp, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \ceq \pi^{-1} \atomexp, \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \pi \atomv \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr
+  \pi \atomv \ceq \atomexp, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
-                           \atomv \ceq  \atomexp_2, \atomexp_1 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \ceq \atomexp, \cEnv ; \icEnv \solverRule \sconstr \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \ceq \atomexp, \cEnv ; \icEnv \solverRule \sconstr \\
+                           \atomv \ceq  \atomexp_2, \atomexp_1 \ceq \atomexp, \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \atomv \ceq \permswap{\atomexp_1}{\atomexp_1} \atomexp, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \ceq \permswap{\atomexp_1}{\atomexp_1} \atomexp, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 If the constructors of the term don't match, then we arrive at a contradiction
@@ -746,35 +759,35 @@ and consider the judgement solved:
 $$
 \inferrule{
 }{
-   \atomv \ceq \term_1 \term_2, \cEnv ; \icEnv \vDash \sconstr
+   \atomv \ceq \term_1 \term_2, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
 }{
-   \atomv \ceq \tbind{\atomexp} \term , \cEnv ; \icEnv \vDash \sconstr
+   \atomv \ceq \tbind{\atomexp} \term , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
 }{
-   \atomv \ceq \symb , \cEnv ; \icEnv \vDash \sconstr
+   \atomv \ceq \symb , \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 \\
 To save some ink, from now on we will simply write that other constructors are trivial and not consider all the contradictory possibilities in writing.
 $$
 \inferrule{
-   \atomexp_1 \cfresh \tbind{\atomexp_2} \term_2,\; \term_1 = \permswap{\atomexp_1}{\atomexp_2}\term_2 , \; \cEnv ; \icEnv \vDash \sconstr
+   \atomexp_1 \cfresh \tbind{\atomexp_2} \term_2,\; \term_1 = \permswap{\atomexp_1}{\atomexp_2}\term_2 , \; \cEnv ; \icEnv \solverRule \sconstr
 }{
-   \tbind{\atomexp_1} \term_1 \ceq \tbind{\atomexp_2} \term_2 , \cEnv ; \icEnv \vDash \sconstr
+   \tbind{\atomexp_1} \term_1 \ceq \tbind{\atomexp_2} \term_2 , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \text{Other term constructors trivial}
 $$
 $$
 \inferrule{
-  \term_1 \ceq \term_2 , \; \term_1' \ceq \term_2', \;\cEnv ; \icEnv \vDash \sconstr
+  \term_1 \ceq \term_2 , \; \term_1' \ceq \term_2', \;\cEnv ; \icEnv \solverRule \sconstr
 }{
-   \term_1 \term_1' \ceq \term_2 \term_2' , \cEnv ; \icEnv \vDash \sconstr
+   \term_1 \term_1' \ceq \term_2 \term_2' , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \text{Other term constructors trivial}
@@ -783,115 +796,115 @@ $$
 \inferrule{
   \symb_1 \cneq \symb_2
 }{
-  \symb_1 \ceq \symb_2 , \cEnv ; \icEnv \vDash \sconstr
+  \symb_1 \ceq \symb_2 , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \sconstr
+  \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \symb\ceq \symb , \cEnv ; \icEnv \vDash \sconstr
+  \symb\ceq \symb , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \text{Other term constructors trivial}
 $$
 \\
-Atom inequality and freshness simply contradict to the $\icEnv$ enviroment:
+Atom inequality and freshness simply added to the $\icEnv$ enviroment:
 $$
 \inferrule{
-  \cEnv ; \{\atomv_1 \cneq \atomv_2\} \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\atomv_1 \cneq \atomv_2\} \cup \icEnv \solverRule \sconstr
 }{
-  \atomv_1 \cneq \atomv_2, \; \cEnv ; \icEnv \vDash \sconstr
+  \atomv_1 \cneq \atomv_2, \; \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
-  \cEnv ; \{\atomv \cfresh \termv\} \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\atomv \cfresh \termv\} \cup \icEnv \solverRule \sconstr
 }{
-  \atomv \cfresh \termv, \; \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \termv, \; \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 \\
 Otherwise it's a recursion on the right-hand side with the already established rules for dealing with permutations:
 $$
 \inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \cfresh \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \cfresh \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
-                           \atomv \ceq  \atomexp_2, \atomexp_1 \cfresh \atomexp, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \cfresh \atomexp, \cEnv ; \icEnv \solverRule \sconstr \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \cfresh \atomexp, \cEnv ; \icEnv \solverRule \sconstr \\
+                           \atomv \ceq  \atomexp_2, \atomexp_1 \cfresh \atomexp, \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \atomv \cfresh \permswap{\atomexp_1}{\atomexp_1} \atomexp, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \permswap{\atomexp_1}{\atomexp_1} \atomexp, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 $$
 \inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \cfresh \perm\termv, \cEnv ; \icEnv \vDash \sconstr \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \cfresh \perm\termv, \cEnv ; \icEnv \vDash \sconstr \\
-                           \atomv \ceq  \atomexp_2, \atomexp_1 \cfresh \perm\termv, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \cfresh \perm\termv, \cEnv ; \icEnv \solverRule \sconstr \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \cfresh \perm\termv, \cEnv ; \icEnv \solverRule \sconstr \\
+                           \atomv \ceq  \atomexp_2, \atomexp_1 \cfresh \perm\termv, \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \atomv \cfresh \permswap{\atomexp_1}{\atomexp_1} \perm\termv, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \permswap{\atomexp_1}{\atomexp_1} \perm\termv, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 $$
 \inferrule{
-  \atomv \cfresh \atomexp, \; \cEnv ; \icEnv \vDash \sconstr \\
-  \atomv \cfresh \atomexp, \; \atomv \cfresh \term,\;\cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \atomexp, \; \cEnv ; \icEnv \solverRule \sconstr \\
+  \atomv \cfresh \atomexp, \; \atomv \cfresh \term,\;\cEnv ; \icEnv \solverRule \sconstr
 }{
-  \atomv \cfresh \tbind{\atomexp} \term , \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \tbind{\atomexp} \term , \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 $$
 \inferrule{
-  \atomv \cfresh \term_1 , \cEnv ; \icEnv \vDash \sconstr \\
-  \atomv \cfresh \term_2 , \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \term_1 , \cEnv ; \icEnv \solverRule \sconstr \\
+  \atomv \cfresh \term_2 , \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \atomv \cfresh \term_1 \term_2 , \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \term_1 \term_2 , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
-  \cEnv ; \icEnv \vDash \sconstr
+  \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \atomv \cfresh \symb, \cEnv ; \icEnv \vDash \sconstr
+  \atomv \cfresh \symb, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 \\
 Variable being the same shape as other term is added to the $\icEnv$ environment:
 $$
 \inferrule{
-  \cEnv ; \{\termv_1 \csheq \termv_2\} \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\termv_1 \csheq \termv_2\} \cup \icEnv \solverRule \sconstr
 }{
-  \termv_1 \csheq \termv_2, \cEnv ; \icEnv \vDash \sconstr
+  \termv_1 \csheq \termv_2, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
-  \cEnv ; \{\termv \csheq \shape\} \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\termv \csheq \shape\} \cup \icEnv \solverRule \sconstr
 }{
-  \termv \csheq \shape,\; \cEnv ; \icEnv \vDash \sconstr
+  \termv \csheq \shape,\; \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 \\
 Otherwise shape assumptions recurse on the shape structure:
 $$
 \inferrule{
-  \cEnv ; \icEnv \vDash \sconstr
+  \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \atomv_1 \csheq \atomv_2, \cEnv ; \icEnv \vDash \sconstr
+  \atomv_1 \csheq \atomv_2, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \text{Other term constructors trivial}
 $$
 $$
 \inferrule{
-  \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr
+  \term_1 \csheq \term_2, \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \shbind\term_1 \csheq \shbind\term_2, \cEnv ; \icEnv \vDash \sconstr
+  \shbind\term_1 \csheq \shbind\term_2, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \text{Other term constructors trivial}
 $$
 $$
 \inferrule{
-  \term_1  \csheq \term_2 , \cEnv ; \icEnv \vDash \sconstr \\
-  \term_1' \csheq \term_2', \cEnv ; \icEnv \vDash \sconstr
+  \term_1  \csheq \term_2 , \cEnv ; \icEnv \solverRule \sconstr \\
+  \term_1' \csheq \term_2', \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \term_1 \term_1' \csheq \term_2\term_2', \cEnv ; \icEnv \vDash \sconstr
+  \term_1 \term_1' \csheq \term_2\term_2', \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \text{Other term constructors trivial}
@@ -900,12 +913,12 @@ $$
 \inferrule{
   \symb_1 \neq \symb_2
 }{
-  \symb_1 \csheq \symb_2 , \cEnv ; \icEnv \vDash \sconstr
+  \symb_1 \csheq \symb_2 , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
 }{
-  \symb \csheq \symb , \cEnv ; \icEnv \vDash \sconstr
+  \symb \csheq \symb , \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \text{Other term constructors trivial}
@@ -913,40 +926,40 @@ $$
 Again, $\icEnv$ keeps track of terms that subshape given variable:
 $$
 \inferrule{
-  \cEnv ; \{\term \cshlt \termv\} \cup \icEnv \vDash \sconstr
+  \cEnv ; \{\term \cshlt \termv\} \cup \icEnv \solverRule \sconstr
 }{
-  \term \cshlt \termv, \cEnv ; \icEnv \vDash \sconstr
+  \term \cshlt \termv, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 \\
 Otherwise subshape assumptions recurse on the shape structure:
 $$
 \inferrule{
-  \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr \\
-  \term_1 \cshlt \term_2, \cEnv ; \icEnv \vDash \sconstr
+  \term_1 \csheq \term_2, \cEnv ; \icEnv \solverRule \sconstr \\
+  \term_1 \cshlt \term_2, \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \term_1 \cshlt \shbind \term_2, \cEnv ; \icEnv \vDash \sconstr
+  \term_1 \cshlt \shbind \term_2, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 $$
 \inferrule{
-  \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr \\
-  \term_1 \csheq \term_2', \cEnv ; \icEnv \vDash \sconstr \\
-  \term_1 \cshlt \term_2, \cEnv ; \icEnv \vDash \sconstr \\
-  \term_1 \cshlt \term_2', \cEnv ; \icEnv \vDash \sconstr
+  \term_1 \csheq \term_2, \cEnv ; \icEnv \solverRule \sconstr \\
+  \term_1 \csheq \term_2', \cEnv ; \icEnv \solverRule \sconstr \\
+  \term_1 \cshlt \term_2, \cEnv ; \icEnv \solverRule \sconstr \\
+  \term_1 \cshlt \term_2', \cEnv ; \icEnv \solverRule \sconstr
 }{
-  \term_1 \cshlt \term_2 \term_2', \cEnv ; \icEnv \vDash \sconstr
+  \term_1 \cshlt \term_2 \term_2', \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 $$
 \inferrule{
 }{
-  \term \cshlt \atomexp, \cEnv ; \icEnv \vDash \sconstr
+  \term \cshlt \atomexp, \cEnv ; \icEnv \solverRule \sconstr
 }
 \qquad
 \inferrule{
 }{
-  \term \cshlt \symb, \cEnv ; \icEnv \vDash \sconstr
+  \term \cshlt \symb, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
 In the next section we will explaining the semantics of environment extension $(\{\sconstr\} \cup \icEnv)$,
@@ -955,7 +968,7 @@ short-cuircuts the procedure:
 $$
 \inferrule{
 }{
-  \cEnv ; \lightning \vDash \sconstr
+  \cEnv ; \lightning \solverRule \sconstr
 }
 $$
 \\
@@ -1002,7 +1015,7 @@ $(\NeqAtoms_{\icEnv}
 \hline
 $\NeqAtoms$ & Set of pairs of atoms that are known to be different. \\
 \hline
-$\Fresh$ & Mapping from atoms to variables, indicating that the atom is \it{fresh} in the variable. \\
+$\Fresh$ & Set of pairs of atom and variable, indicating that the atom is \it{fresh} in the variable. \\
 \hline
 $\VarShape$ & Mapping from variables to shape-representative variables. All variables mapped to the same representative are considered to inhabit the same shape. \\
 \hline
@@ -1059,16 +1072,16 @@ $$
 \inferrule{
   \stxoccurs{\shrep{\termv}}{\shenv{\shape}}
 }{
-  \icEnv \vDash \occurs{\termv}{\shape}
+  \icEnv \solverRule \occurs{\termv}{\shape}
 }
 $$
 $$
 \inferrule{
   \stxoccurs{\shrep{\termv'}}{\shenv{\shape}} \\
   (\shape' \cshlt \termv') \in \icEnv  \\
-  \icEnv \vDash \occurs{\termv}{\shape'}
+  \icEnv \solverRule \occurs{\termv}{\shape'}
 }{
-  \icEnv \vDash \occurs{\termv}{\shape}
+  \icEnv \solverRule \occurs{\termv}{\shape}
 }
 $$
 Incorporating constraints into $\icEnv$ proceeds as follows:
@@ -1118,7 +1131,7 @@ To set variable shape, we first make sure to perform occurs check on the propose
 and then substitute the shape-variable in all affected fields.
 \begin{lstlisting}[mathescape, language=OCaml]
 $\{\termv \csheq \shape\} \cup \icEnv :=$
-  | if $\icEnv \vDash \textnormal{\occurs{\termv}{\shape}}$ then $\lightning$
+  | if $\icEnv \solverRule \textnormal{\occurs{\termv}{\shape}}$ then $\lightning$
   | otherwise $\icEnv\;$|> symbols  $\{\shrep{\termv} \leadsto \shenv{\shape}\}$
                 |> subshape $\{\shrep{\termv} \leadsto \shenv{\shape}\}$
                 |> shape    $\{\shrep{\termv} \leadsto \shenv{\shape}\}$
@@ -1430,7 +1443,7 @@ TODO: Write how $N$ is treated differently from $M$ and $K$?
 See more interesting examples of fixpoints usage in the chapter on STLC.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Proof theory}
+\section{Natural deduction}
 
 \newcommand{\rel}[2][\Gamma;C]{\ensuremath{#1\vdash#2}}
 \newcommand{\types}[3][\Gamma]{\rel[#1]{#2 : #3}}
@@ -2974,8 +2987,6 @@ contribute to the field of formal methods and logic-based reasoning.
 
 %%%%% BIBLIOGRAFIA
 
-\begin{thebibliography}{1}
-\bibitem{example} \ldots
-\end{thebibliography}
+\printbibliography
 
 \end{document}
