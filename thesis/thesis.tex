@@ -254,29 +254,39 @@ This set is disjoint from the set of variables commonly used in first-order logi
 which we will refer to as \it{variables} (denoted by uppercase letters).
 
 The terms are constructed to mimic the structure of abstract syntax trees of the lambda calculus,
-extending it with notion of permutations (of atoms) and functional symbols.
+extending it with notion of permutations (of atoms) and functional symbols,
+denoted by metavariable $\symb$,
+that are drawn from yet another set disjoint with atoms and variables.
 Terms are defined by the following grammar:
-\\
+\\ \\
 \begin{tabular}{rclr}
-    $\perm$    & $\deff$ & $\permid \mid \permswap{\atomexp}{\atomexp}{\perm}$ \\
-    $\atomexp$ & $\deff$ & $\perm \apperm \atomv$ \\
-    $\term$    & $\deff$ & $\atomexp \mid \perm \apperm \termv \mid \tbind{\atomexp} \term \mid \term \tapp \term \mid \symb$
+    $\perm$    & $\deff$ & $\permid \mid \permswap{\atomexp}{\atomexp}{\perm}$  & (permutations) \\
+    $\atomexp$ & $\deff$ & $\perm \apperm \atomv$  & (atom expressions) \\
+    $\term$    & $\deff$ & $\atomexp \mid \perm \apperm \termv \mid \tbind{\atomexp} \term \mid \term \tapp \term \mid \symb$  & (terms)
 \end{tabular}
-\\
+\\ \\
+Construction $\tbind{\atomexp} \term$ represents a \it{binder} --- binding the
+occurences of $\atomexp$ in $\term$, similarly to a lambda abstraction.
+Note that we do not restrict the binding construction to the form of $\tbind{\atomv} \term$,
+allowing permuted atoms to appear in binders.
+Additionaly, when dealing with atom expressions with identity permutation $\permid \atomv$
+we will skip the permutation and simply write $\atomv$ and sometimes call such
+atoms \it{pure}. The same rule applies to permuted variabless
 
 It's important to note that these terms are merely a data structure
 and do not incorporate notions of computation, reduction, or binding by themselves.
 Their practical application is observed in the sublogic of constraints defined on top of them,
 used to reason about concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order, as well as their logical model.
-\\
-\\
-Constraints are given by the following grammar and the informal semantics:
+
+\pagebreak
+Constraints are given by the following grammar and informal semantics:
 \\
 \begin{tabular}{rclr}
     $\constr$  & $\deff$ & $\atomexp \cfresh \term
-                   \bnfor \term \ceq \term
-                   \bnfor \term \csheq \term
-                   \bnfor \term \cshlt \term$
+                   \mid \term \ceq \term
+                   \mid \term \csheq \term
+                   \mid \term \cshlt \term
+                   \mid \csymb \term$
         & (constraints)
 \end{tabular}
 \\
@@ -290,10 +300,18 @@ Constraints are given by the following grammar and the informal semantics:
   \hline
   $\term_1 \cshlt \term_2$ & The shape of term $\term_1$ is structurally smaller than the shape of term $\term_2$, i.e., after erasing all atoms, $\term_1$ would be equal to some subterm of $\term_2$. \\
   \hline
+  $\csymb \term$ & term $\term$ is equal to some functional symbol. \\
+  \hline
 \end{tabularx}
 
+\section{Model}
 To build the mathematical model of terms and constraints,
 we introduce \it{semantic terms} and \it{semantic shapes} that will inhabit it.
+We will use metavariable $\sematom$ for \it{semantic names} drawn from an arbitrary
+infinite set of names, representing the free variables.
+Binders in semantic terms will be achieved by De Bruijn indices and consequently
+the bound names will be represented by natural numbers, denoted by $n$,
+and the binding construction will have no explicit argument, denoted by $\stbind$.
 
 \begin{tabular}{rclr}
 $\semterm$ & $\deff$ & $\sematom
@@ -302,14 +320,17 @@ $\semterm$ & $\deff$ & $\sematom
                \bnfor \semterm \stapp \semterm
                \bnfor \symb$
     & (semantic terms) \\
-$\shape$   & $\deff$ & $\shatom
-               \bnfor \shbind \shape
-               \bnfor \shape \shapp \shape
+$\semshape$   & $\deff$ & $\shatom
+               \bnfor \stbind \semshape
+               \bnfor \semshape \stapp \semshape
                \bnfor \symb$
     & (semantic shapes)
 \end{tabular}
 \\ \\
-And naturally, a term interpretation function, mapping syntactic terms to semantic terms:
+The term interpretation function, mapping syntactic terms to semantic terms
+utilizes the standard shifting of De Bruijn indices (denoted by { }$\shiftIdx$).
+It is parametrized by function $\rho$ from atoms and variables into
+semantic shapes.
 \begin{eqnarray*}
   \termMdl{\perm \apperm \atomv}{\tmEnv} & = &
     \permMdl{\perm}{\tmEnv}(\tmEnv(\atomv)) \\
@@ -322,28 +343,35 @@ And naturally, a term interpretation function, mapping syntactic terms to semant
     \termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv} \\
   \termMdl{\symb}{\tmEnv} & = & \symb
 \end{eqnarray*}
-As well as shape interpretation function, mapping semantic terms to semantic shapes:
+The shape interpretation function is a mapping from semantic terms to semantic
+shapes by erasing names.
 \begin{eqnarray*}
   \shapeof{\sematom}                     & = & \shatom \\
   \shapeof{n}                            & = & \shatom \\
-  \shapeof{\stbind \semterm}             & = & \shbind \shapeof{\semterm} \\1
+  \shapeof{\stbind \semterm}             & = & \stbind \shapeof{\semterm} \\
   \shapeof{\semterm_1 \stapp \semterm_2} & = &
     \shapeof{\semterm_1} \shapp \shapeof{\semterm_2}
 \end{eqnarray*}
-Then, we can establish how to \it{interpret} the constraints in our model:
-\begin{eqnarray*}
-  \tmEnv \vDash \term_1 \ceq \term_2 & \textrm{iff} &
-    \termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv} \\
-  \tmEnv \vDash \atomexp \cfresh \term & \textrm{iff} &
-    \termMdl{\atomexp}{\tmEnv} \notin
-      \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv}) \\
-  \tmEnv \vDash \term_1 \csheq \term_2 & \textrm{iff} &
-    \shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}} \\
-  \tmEnv \vDash \term_1 \cshlt \term_2 & \textrm{iff} &
-    \shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
-      \shapeof{\termMdl{\term_2}{\tmEnv}}
-\end{eqnarray*}
-\\
+With above machinery, we can establish how to \it{interpret} the constraints
+in our model: \\ \\
+\begin{tabular}{lclr}
+  $\tmEnv \vDash \term_1 \ceq \term_2 $  & \textrm{iff} &
+    $\termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv}$ \\
+  $\tmEnv \vDash \atomexp \cfresh \term$ & \textrm{iff} &
+    $\termMdl{\atomexp}{\tmEnv} \notin
+      \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv})$ \\
+  $\tmEnv \vDash \term_1 \csheq \term_2$ & \textrm{iff} &
+    $\shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\
+  $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
+    $\shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
+      \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\
+\end{tabular}
+\\ \\
+Note that the freshness can be expressed through membership check of $\mathsf{FreeAtoms}$ set,
+which is trivial to compute as a consequence of using of De Bruijn indices.
+Note that  it's possible for terms of form $\tbind{a}{X}$ and $\tbind{b}{Y}$
+to be equal in this model.
+
 We will use metavariable $\cEnv$ to represent finite sets of constraints,
 and write $\tmEnv \vDash \cEnv$ if for all $\constr \in \cEnv$,
 we have $\tmEnv \vDash \constr$,
@@ -367,6 +395,8 @@ For the sake of convenience and implementation efficiency, the Solver operates
 on its own internal representation of constraints, that slightly differs from
 constraints described in the previous section,
 as it uses \it{shapes} instead of terms to to construct shape constraints.
+
+TODO: add symbol constraints and its rules
 
 Solver constraints and shapes are defined by the following grammar: \\
 \begin{tabular}{rclr}
@@ -675,13 +705,21 @@ We will now present the rules for reducing the left side of the turnstile,
 but fortunately most of the assumption reducing rules are similar to the goal reducing analogues.
 
 For variables equal to some term,
-we first deal with permutation by moving it to the right-hand side.
+we first deal with permutation by inverting it and moving it to the right-hand side.
+TODO: describe notation of pseudocode.
 $$
 \inferrule{
    \termv = \pi^{-1} \term, \cEnv ; \icEnv \solverRule \sconstr
 }{
    \pi \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
 }
+$$
+TODO: rewrite this
+$$
+  \permid ^ {-1} \;\term = \permid\;\term
+$$
+$$
+  (\permswap{\atomexp_1}{\atomexp_2} \perm) ^ {-1} \;\term = \perm^{-1}\permswap{\atomexp_1}{\atomexp_2} \;\term
 $$
 Once again, we consider the special case where a variable is equal to itself when permuted.
 While the assumption of the permutation being idempotent might appear to multiply the number of assumptions exponentially based on the number of atoms in the given permutation,
@@ -971,22 +1009,6 @@ $$
   \cEnv ; \lightning \solverRule \sconstr
 }
 $$
-\\
-And that finishes the Solver's rules description.
-Now the curious reader should feel obliged to ask themselves an important question:
-does that procedure always stop?
-
-To address this question, we define the state of the Solver as a triple $(\cEnv, \icEnv, \sconstr)$.
-Upon analyzing each Solver rules, it becomes evident that each rule consistently leads to a lesser state by reducing it through one or more of the following actions:
-\begin{enumerate}[noitemsep]
-  \item Decreasing the number of distinct variables in $\cEnv$, $\icEnv$, and $\sconstr$,
-  or maintaining the same number while:
-  \item Decreasing the depth of $\sconstr$,
-  or preserving the current depth while:
-  \item Reducing assumptions with a given depth in either $\cEnv$ or $\icEnv$ into assumptions with lower depth,
-  or maintaining the number and depth of assumptions, while:
-  \item Eliminating an assumption from $\cEnv$ and introducing an assumption of the same depth into $\icEnv$.
-\end{enumerate}
 
 \section{Irreducible constraints}
 \label{sec:solverenv}
@@ -1171,6 +1193,28 @@ $\icEnv$ $\{\atomv \mapsto \atomv'\}$ $:=$
     |> clear neq_atoms
     |> assumptions += $\bigcup_{(\atomv_1 \cneq \atomv_2) \in \icEnv} (\atomv_1\{\atomv \mapsto \atomv'\} \cneq \atomv_2\{\atomv \mapsto \atomv'\})$
 \end{lstlisting}
+
+And that finishes the Solver description.
+Now the curious reader should feel obliged to ask themselves an important question:
+does that procedure always stop?
+
+To address this question, we define the state of the Solver as a triple $(\cEnv, \icEnv, \sconstr)$.
+Upon analyzing the Solver rules, it becomes evident that each rule consistently
+leads to a lesser state by reducing it through one or more of the following actions:
+\begin{enumerate}[noitemsep]
+  \item Decreasing the number of distinct variables in $\cEnv$, $\icEnv$, and $\sconstr$,
+  or maintaining the same number while:
+  \item Decreasing the depth of $\sconstr$,
+  or preserving the current depth while:
+  \item Reducing assumptions with a given depth in either $\cEnv$ or $\icEnv$ into assumptions with lower depth,
+  or maintaining the number and depth of assumptions, while:
+  \item Eliminating an assumption from $\cEnv$ and introducing an assumption of the same depth into $\icEnv$.
+\end{enumerate}
+
+In the following chapters, we will write $\cEnv \vDash \constr$
+but mean $\cEnv ; \emptyset \solverRule \sconstr$,
+which by the construction of $\solverRule$ we consider equivalent
+to $\cEnv \vDash \constr$ as defined in the model.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
 On top of the sublogic of constraints, we build a higher-order logic.
