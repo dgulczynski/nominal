@@ -265,10 +265,13 @@ Terms are defined by the following grammar:
     $\term$    & $\deff$ & $\atomexp \mid \perm \apperm \termv \mid \tbind{\atomexp} \term \mid \term \tapp \term \mid \symb$  & (terms)
 \end{tabular}
 \\ \\
-Construction $\tbind{\atomexp} \term$ represents a \it{binder} --- binding the
-occurences of $\atomexp$ in $\term$, similarly to a lambda abstraction.
-Note that we do not restrict the binding construction to the form of $\tbind{\atomv} \term$,
-allowing permuted atoms to appear in binders.
+Construction $\tbind{\atomexp} \term$ represents a \it{binder} ---
+informally, we think of it as binding the occurences of $\atomexp$ in $\term$,
+similarly to a lambda abstraction --- yet it \it{isn't} a binder,
+but a simple syntactical construction glueing together an atom with another term.
+The semantics of binding will apply only after we interpret this syntactical term in the model.
+Also note that we do not restrict this construction to the form of $\tbind{\atomv} \term$,
+but allow permuted atoms to appear in bind-like terms.
 Additionaly, when dealing with atom expressions with identity permutation $\permid \atomv$
 we will skip the permutation and simply write $\atomv$ and sometimes call such
 atoms \it{pure}. The same rule applies to permuted variabless
@@ -1343,14 +1346,13 @@ $\formphi$ & $::=$ & $\ldots
     & (formulas)
 \end{tabular}
 \\ \\
-Constraints, guards, and propositional variables:
+Constraints and guards:
 
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\ldots
                \bnfor \fConstr{\constr}
                \bnfor \fCAnd{\constr} \formphi
                \bnfor \fCImp{\constr} \formphi
-               \bnfor \propv
                \bnfor \ldots$  (formulas)
 \end{tabular}
 $$
@@ -1370,17 +1372,23 @@ $$
 }{
   \cEnv; \kEnv \vdash \fCImp{\constr} \formphi \ofkind \kProp
 }
-\qquad
-\inference{
-  (\propv \ofkind \kind) \in \kEnv
-}{
-  \cEnv; \kEnv \vdash  \propv \ofkind \kind
-}
 $$
-Propositional variables, functions and applications:
+Naturally, constraints can act as propositions, as we can reason about their
+validity, and thus they are of kind $\kProp$.
+Constructions $\fCAnd{\constr} \formphi$ and $\fCImp{\constr} \formphi$
+are called \it{guards} and make assumptions about the environment in which
+one shall interpret the guarded formula.
+The latter states that the formula $\formphi$ holds if the constraint $\constr$ is valid,
+analogously to a propositional implication.
+The former additionaly requires that $\constr$ already holds.
+
+TODO: Write why not simply use propositional implication and conjunction (kinding example?)
+
+Next: propositional variables, functions and applications:
 
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\ldots
+               \bnfor \propv
                \bnfor \fLamAtom{\atomv} \formphi
                \bnfor \fLamTerm{\termv} \formphi
                \bnfor \fLamForm{\propv}{\kind} \formphi
@@ -1427,7 +1435,15 @@ $\formphi$ & $::=$ & $\ldots
 }{
   \cEnv;\kEnv\vdash \formphi_1 \fApp \formphi_2 \ofkind \kind
 }
+\\ & \\
+\inference{
+  (\propv \ofkind \kind) \in \kEnv
+}{
+  \cEnv; \kEnv \vdash  \propv \ofkind \kind
+}
+&
 \end{align*}
+Functions are as they look like.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
@@ -2138,7 +2154,7 @@ To facilitate user interaction with this framework, we provide a practical \it{p
 While simple, it is also powerful and easy to use.
 The interface defined in modules \tt{Prover}, \tt{ProverInternals}, and \tt{Tactics} provides multiple \it{tactics}
 (functions that manipulate \it{prover state}) and ways to combine them
---- inspired by the HOL family of theorem provers.
+--- inspired by the HOL family of theorem provers TODO: cite.
 \begin{lstlisting}[mathescape, language=OCaml]
 type goal_env = (string * formula) ProofEnv.env
 
@@ -2225,7 +2241,7 @@ will also be included in calls to Solver.
   & & \\
   \text{\lstinline[columns=fixed]{destr_goal} }& & \\
   \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fCAnd{\constr}\formphi}} & \leadsto & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\constr}} \\
-  & \text{and} & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi}} \\
+  & \text{and} & \jgmnt[\Gamma, \constr; \Theta;\Sigma]{\hole\ofkind{\formphi}} \\
   \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\formphi_1 \wedge \formphi_2}} & \leadsto & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_1}} \\
   & \text{and} & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_2}} \\
   & & \\
@@ -2375,9 +2391,25 @@ To state the theorem of \it{progress}, we will naturally need the predicate
 that a term is \it{progressive}:
 \begin{lstlisting}[mathescape,language=OCaml]
 let Value :: $\forall$ e :term.* = fun e :term $\rightarrow$
- var: (exists a :atom. [e = a])
+ var: ($\exists$ a :atom. [e = a])
  $\vee$
- lam: (exists a :atom. $\exists$ e' : term. [e = lam (a.e')] $\wedge$ (Term e'))
+ lam: ($\exists$ a :atom. $\exists$ e' : term. [e = lam (a.e')] $\wedge$ (Term e'))
+
+ let fix Sub(e): $\forall$ a :atom. $\forall$ v e':term.* = fun (a :atom) (v e' :term) $\rightarrow$
+ var_same: ([e = a] $\wedge$ [e' = v])
+ $\vee$
+ var_diff: ($\exists$ b :atom. [e = b] $\wedge$ [e' = b] $\wedge$ [a =/= b])
+ $\vee$
+ lam: ($\exists$ b :atom. $\exists$ e_b e_b' :term. [e = lam (b.e_b)] $\wedge$
+        [e' = lam (b.e_b')] $\wedge$ [b # v] $\wedge$ [a =/= b] $\wedge$ (Sub e_b a v e_b') )
+ $\vee$
+ app: ($\exists$ e1 e2 e1' e2' :term.
+        [e = app e1 e2] $\wedge$ [e' = app e1' e2']
+          $\wedge$ (Sub e1 a v e1') $\wedge$ (Sub e2 a v e2') )
+(* TODO: describe why [lam] case is so cool *)
+
+let EnvInclusion :: $\forall$ env1 env2 :term.* = fun env1 env2 : term $\rightarrow$
+  $\forall$ a : atom. $\forall$ t : term. (InEnv env1 a t) $\implies$ (InEnv env2 a t)
 
 let fix Steps(e): $\forall$ e' :term.* = fun e' :term $\rightarrow$
  app_l: ($\exists$ e1 e1' e2 :term. [e = app e1 e2]
@@ -2392,7 +2424,7 @@ let fix Steps(e): $\forall$ e' :term.* = fun e' :term $\rightarrow$
 let Progressive :: $\forall$ e :term.* = fun e:term $\rightarrow$
  value: (Value e)
  $\vee$
- steps: (exists e' :term. Steps e e')
+ steps: ($\exists$ e' :term. Steps e e')
 
 let progress_thm = lambda_thm
   $\forall$ e t :term. (Typing e nil t) $\implies$ (Progressive e)
@@ -2601,7 +2633,7 @@ $\vdash$ $\exists$ e' : term. Steps {app (lam (a.e_a)) e2} e'
 Then we need to find the \tt{e'} that \tt{app e1 e2} reduces to, and now
 that we know \tt{e1} is an abstraction, then we can use beta-reduction rule
 and find the term of abstracion body \tt{e\_a} with argument \tt{a}
-subistuted with \tt{e2}. Again, we ensure the Prover that preconditions are met
+substituted with \tt{e2}. Again, we ensure the Prover that preconditions are met
 and destruct on the final assumption to extract the term that we searched for: \tt{e\_a'}.
 \begin{lstlisting}[mathescape, language=OCaml]
     %> add_assumption_thm_specialized "He_a"
@@ -2675,23 +2707,7 @@ $\vdash$ Steps {app e1 e2} {app e1' e2}
   |> apply_assm "Happ_2" %> apply_assm "Happ_1"
   |> qed
 \end{lstlisting}
-Now, to prove \it{Preservation}, we will need some more relations and lemmas:
-\begin{lstlisting}[mathescape, language=OCaml]
-let fix Sub(e): $\forall$ a :atom. $\forall$ v e':term.* = fun (a :atom) (v e' :term) $\rightarrow$
- var_same: ([e = a] $\wedge$ [e' = v])
- $\vee$
- var_diff: (exists b :atom. [e = b] $\wedge$ [e' = b] $\wedge$ [a =/= b])
- $\vee$
- lam: ($\exists$ b :atom. $\exists$ e_b e_b' :term. [e = lam (b.e_b)] $\wedge$
-        [e' = lam (b.e_b')] $\wedge$ [b # v] $\wedge$ [a =/= b] $\wedge$ (Sub e_b a v e_b') )
- $\vee$
- app: ($\exists$ e1 e2 e1' e2' :term.
-        [e = app e1 e2] $\wedge$ [e' = app e1' e2']
-          $\wedge$ (Sub e1 a v e1') $\wedge$ (Sub e2 a v e2') )
-
-let EnvInclusion :: $\forall$ env1 env2 :term.* = fun env1 env2 : term $\rightarrow$
-  $\forall$ a : atom. $\forall$ t : term. (InEnv env1 a t) $\implies$ (InEnv env2 a t)
-\end{lstlisting}
+Now, to prove \it{Preservation}, we will need some more lemmas:
 
 1. Substitution lemma:
 if term \tt{e} has a type \tt{t} in enviroment \tt{\{cons a ta env\}},
@@ -2858,6 +2874,7 @@ $\vdash$ Type t1 $\wedge$ Typing e_c' {cons c t1 env} t2
 Finally, we consider the case that \tt{e} is an application \tt{e1 e2},
 which goes straightly from inductive hypothesis:
 \begin{lstlisting}[mathescape, language=OCaml]
+  (* TODO: shorten it, uninteresting part *)
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      %> intros' ["Hsub"; "_e1"; "_e2"; "e1'"; "e2'"; ""; ""; ""]
      %> case "app"
@@ -3011,8 +3028,7 @@ We've also successfully implemented this logic in OCaml,
 complemented by essential tools, including a proof assistant.
 
 Through the proofs of classical properties of simply typed lambda calculus
-we have validated the logic's suitablility for reasoning about
-programming languages theory.
+we have validated the logic's suitablility for reasoning about programming languages.
 However, the true potential of this framework is expected to shine when applied to
 specific theorems reliant on the notions of variable binding.
 One such area would be the theory of bisimulation, where we expect that ???
