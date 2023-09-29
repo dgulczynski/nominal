@@ -406,7 +406,8 @@ Solver constraints and shapes are defined by the following grammar: \\
   $\sconstr$ & $\deff$ & $\atomexp \cfresh \term
   \bnfor \term \ceq \term
   \bnfor \shape \csheq \shape
-  \bnfor \shape \cshlt \shape$
+  \bnfor \shape \cshlt \shape
+  \bnfor \csymb \term$
       & (solver constraints) \\
   $\shape$      & $\deff$ & $\shatom
                  \bnfor  \termv
@@ -438,6 +439,9 @@ Irreducible constraints are:
   } \\
   \term    \cshlt  \termv   & \text{---} & \text{
     term $\term$ strictly subshapes variable $\termv$
+  } \\
+  \csymb  \termv   & \text{---} & \text{
+    variable $\termv$ is some functional symbol
   } \\
 \end{eqnarray*}
 \newcommand{\solverRule}{\vdash}
@@ -699,6 +703,20 @@ $$\inferrule{
   \cEnv ; \icEnv \solverRule \shape_2 \cshlt \termv
 }{
   \cEnv ; \icEnv \solverRule \shape_1 \cshlt \termv
+}
+$$
+Symbol constraints are really simple to check, either the term is already
+a symbol, or it is a variable that we already assumed to be a symbol:
+$$
+\inferrule{
+}{
+  \cEnv ; \icEnv \solverRule \csymb \symb
+}
+\qquad
+\inferrule{
+  \csymb \termv \in \icEnv
+}{
+  \cEnv ; \icEnv \solverRule \csymb \termv
 }
 $$
 
@@ -1003,6 +1021,23 @@ $$
   \term \cshlt \symb, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
+Assumptions about being a symbol are straightforward:
+$$
+\inferrule{
+  \cEnv ; \icEnv \solverRule \sconstr
+}{
+  \csymb \symb, \cEnv ; \icEnv \solverRule \sconstr
+}
+\qquad
+\inferrule{
+  \cEnv ; \{\csymb \termv\} \cup \icEnv \solverRule \sconstr
+}{
+  \csymb \termv, \cEnv ; \icEnv \solverRule \sconstr
+}
+\qquad
+\text{Other term constructors trivial}
+$$
+
 In the next section we will explaining the semantics of environment extension $(\{\sconstr\} \cup \icEnv)$,
 which can fail by arriving at contradictory environment $\lightning$, which
 short-cuircuts the procedure:
@@ -1073,8 +1108,6 @@ $\shenv{\termv} :=$
 \begin{minipage}{0.5\textwidth}
 \begin{lstlisting}[mathescape, language=OCaml]
 
-
-
 $\shenv{\shatom}          $ $\;$  $:=$ $\shatom $
 $\shenv{\shbind \shape}   $ $$ $:=$ $\shbind \shenv{\shape} $
 $\shenv{\shape_1 \shape_2}$ $:=$ $\shenv{\shape_1} \shenv{\shape_2}$
@@ -1113,6 +1146,10 @@ Incorporating constraints into $\icEnv$ proceeds as follows:
 freshness of an atom in a in a variables is simply acknowledged in the $\Fresh$ mapping.
 Inequality of two atoms simply adds to the set $\NeqAtoms$,
 unless invoked with identical atoms, in which case we report a contradiction.
+We are using OCaml's pipelining notation of \lstinline[mathescape, language=OCaml]{x |> f1 |> ... |> fn}
+for \lstinline[mathescape, language=OCaml]{fn (... (f1 x))}
+and treat expressions like \lstinline[mathescape, language=OCaml]{fresh += x}
+as functions, meaning \lstinline[mathescape, language=OCaml]{fun $\icEnv$ -> $\{$ $\icEnv$ with fresh = x :: $\icEnv$.fresh $\}$} and alike. TODO: put it in a box.
 \\
 \begin{minipage}{0.4\textwidth}
 \begin{lstlisting}[mathescape, language=OCaml]
