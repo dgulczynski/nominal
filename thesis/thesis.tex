@@ -110,6 +110,7 @@ the syntactical constructions under consideration. In Nominal Logic these sorts 
 names, the ones that may be bound and hence that may be subjected to swapping
 without changing the validity of predicates involving them, will be called atoms.
 \end{mdframed}
+TODO: frame below is rather awkward
 \begin{mdframed}[frametitle={Pitts, 2003\cite{pitts2003}}]
 Why the emphasis on the operation of swapping two names, rather than on the
 apparently more primitive notion of renaming one name by another? The answer
@@ -310,7 +311,7 @@ Constraints are given by the following grammar and informal semantics:
 \section{Model}
 To build the mathematical model of terms and constraints,
 we introduce \it{semantic terms} and \it{semantic shapes} that will inhabit it.
-We will use metavariable $\sematom$ for \it{semantic names} drawn from an arbitrary
+We will use metavariable $\sematom$ for \it{semantic names} drawn from an
 infinite set of names, representing the free variables.
 Binders in semantic terms will be achieved by De Bruijn indices\cite{deBruijn} and consequently
 the bound names will be represented by natural numbers, denoted by $n$,
@@ -399,8 +400,6 @@ on its own internal representation of constraints, that slightly differs from
 constraints described in the previous section,
 as it uses \it{shapes} instead of terms to to construct shape constraints.
 
-TODO: add symbol constraints and its rules
-
 Solver constraints and shapes are defined by the following grammar: \\
 \begin{tabular}{rclr}
   $\sconstr$ & $\deff$ & $\atomexp \cfresh \term
@@ -468,6 +467,7 @@ $$
 $$
 
 \section{Goal-reducing rules}
+TODO: put some figures around rules or smthng
 And now for the solving procedure we start with the most simple equality check:
 $$\inferrule{
 }{
@@ -591,6 +591,7 @@ $$\inferrule{
   \cEnv ; \icEnv \solverRule \atomv \cfresh \term_1 \term_2
 }
 $$
+TODO: Put boring rules in appendix or something
 Again when faced with swap on the right side, we apply it on the left side:
 $$
 \inferrule{
@@ -727,7 +728,6 @@ but fortunately most of the assumption reducing rules are similar to the goal re
 
 For variables equal to some term,
 we first deal with permutation by inverting it and moving it to the right-hand side.
-TODO: describe notation of pseudocode.
 $$
 \inferrule{
    \termv = \pi^{-1} \term, \cEnv ; \icEnv \solverRule \sconstr
@@ -735,7 +735,7 @@ $$
    \pi \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
 }
 $$
-TODO: rewrite this
+TODO: rewrite this, put in figure
 $$
   \permid ^ {-1} \;\term = \permid\;\term
 $$
@@ -833,6 +833,7 @@ $$
 $$
 \\
 To save some ink, from now on we will simply write that other constructors are trivial and not consider all the contradictory possibilities in writing.
+TODO: "other term constructors trivial" doesnt sound good
 $$
 \inferrule{
    \atomexp_1 \cfresh \tbind{\atomexp_2} \term_2,\; \term_1 = \permswap{\atomexp_1}{\atomexp_2}\term_2 , \; \cEnv ; \icEnv \solverRule \sconstr
@@ -1297,6 +1298,7 @@ kinding of the fixpoint formulas, which we will explain in later sections.
 \section{Subkinding}
 Kinding relation is relaxed through the \it{subkinding},
 a relation that is naturally reflexive and transitive:
+TODO: put it in a figure
 $$
 \inference{
 }{
@@ -2095,6 +2097,7 @@ Analogously, the \tt{KindChecker} and \tt{KindCheckerEnv} modules serve similar 
 
 The proof theory described in previous chapter is distributed over modules
 \tt{Proof}, \tt{ProofEnv}, \tt{ProofEquiv} and is a direct implementation of the proof-theoretic rules.
+TODO: keep what's interesting, lose what's not
 \begin{lstlisting}[mathescape, language=OCaml]
 (* Module: Types *)
 type name_internal = int
@@ -2221,6 +2224,7 @@ val try_tactic : tactic $\rightarrow$ tactic
 We begin description of the Prover interface with \it{empty} proof constructor,
 using $\hole\ofkind\formphi$ to describe incomplete proofs,
 called \it{holes} or \it{goals}.
+TODO: put it in a figure I guess?
 \begin{eqnarray*}
   \text{\lstinline[columns=fixed]{intro}} & & \\
     \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fCImp{\constr}{\formphi}}} & \leadsto & \jgmnt[\Gamma, \constr; \Theta; \Sigma]{\hole\ofkind\formphi} \\
@@ -2362,6 +2366,7 @@ let fix PlusEq(n) : $\forall$ m k : term. * = fun m k : term $\rightarrow$
  succ: ($\exists$ n' k' :term. [n = S n'] $\wedge$ [k = S k'] $\wedge$ PlusEq n' m k')
 \end{lstlisting}
 And a short proof that 1 is a natural number:
+TODO: Use strings in pseudocode
 \begin{lstlisting}[mathescape, language=OCaml]
 let nat_1_thm = arith_thm
     Nat {S 0}
