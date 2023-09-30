@@ -13,6 +13,8 @@ val ( <$> ) : ('a -> 'b) -> 'a option -> 'b option
 
 val ( >>= ) : 'a option -> ('a -> 'b option) -> 'b option
 
+val ( =<< ) : ('a -> 'b option) -> 'a option -> 'b option
+
 val some : 'a -> 'a option
 
 val none : 'a option

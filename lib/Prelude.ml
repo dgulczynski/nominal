@@ -10,6 +10,8 @@ let ( <$> ) = Option.map
 
 let ( >>= ) = Option.bind
 
+let ( =<< ) f x = x >>= f
+
 let some = Option.some
 
 let none = Option.none

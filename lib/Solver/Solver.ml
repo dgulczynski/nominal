@@ -8,10 +8,10 @@ let fresh {perm= pi; symb= a} t = a #: (permute_term (reverse pi) t)
 let reduce env =
   let update (env, assms) = function
     | SC_Fresh (a, T_Atom {perm= []; symb= b}) | SC_AtomNeq (a, {perm= []; symb= b}) ->
-      (*                                Γ, (a =/= b) ∪ Δ |- c  *)
-      (* ------------------------     ------------------------ *)
-      (*  (a =/= a) :: Γ, Δ |- c       (a =/= b) :: Γ, Δ |- c  *)
-      (env >>= SolverEnv.add_neq a b, assms)
+      (*   Γ, (a =/= b) ∪ Δ |- c  *)
+      (* ------------------------ *)
+      (*  (a =/= b) :: Γ, Δ |- c  *)
+      (SolverEnv.add_neq a b =<< env, assms)
     | SC_Fresh (a, T_Var {perm= []; symb= x}) ->
       (*   Γ, (a # x) ∪ Δ |- c  *)
       (* ---------------------- *)
