@@ -37,6 +37,7 @@
 \usepackage{makecell}
 \usepackage{mdframed}
 \usepackage{hyperref}
+\usepackage{subcaption}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -66,6 +67,8 @@
 \setlist{nolistsep}
 \renewcommand{\tt}[1]{\texttt{\small{#1}}}
 \renewcommand{\it}[1]{\textit{#1}}
+\newcommand{\aequiv}{\ensuremath{=_\alpha}}
+\newcommand{\solverRule}{\vdash}
 
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{references.bib}
@@ -140,91 +143,118 @@ A crucial takeaway from Pitts' work is that switching from substitutions to perm
 allows for all necessary concepts, including alpha-equivalence, freshness, and variable-binding,
 to be defined solely in terms of the operation of swapping pairs of names.
 As an example, consider the abstract syntax tree of untyped lambda calculus,
-given by the grammar:
-$$
- t \deff a \mid \lambda a . t \mid t\;t
-$$
-Where $a$ ranges over an infinite set of names --- or rather \it{atoms}.
-Now, let's define what it means to swap atoms $a$ and $b$ in some tree $t$,
-written $\permswap{a}{b}{t}$:
-\begin{align*}
-\permswap{a}{b}{c} \;=&\;
-\begin{cases}
-    a & \text{if } c = b \\
-    b & \text{if } c = a \\
-    c & \text{otherwise}
-\end{cases} \\
-\permswap{a}{b}{(\lambda c . t)} \;=&\; \lambda (\permswap{a}{b}{c}) . (\permswap{a}{b}{t}) \\
-\permswap{a}{b}{(t_1\; t_2)} \;=&\; (\permswap{a}{b}{t_1}) \; (\permswap{a}{b}{t_2}) \\
-\end{align*}
-\newcommand{\aequiv}{\ensuremath{=_\alpha}}
-Notice how straightforward is operation of swapping --- simpler than the substitution,
-as it doesn't distinct betwen free and bound names, but simply changes them all the same exact way.
+given by the grammar below, where $a$ ranges over an infinite set of names --- or rather \it{atoms}.
+\begin{figure}[htbp]
+  \centering
+  \framebox{
+\begin{tabular}{lr}
+  $ t \deff a \mid \lambda a . t \mid t\;t $
+  & (lambda terms)
+\end{tabular}
+  }
+  \caption{Terms of untyped lambda calculus}
+  \label{fig:lambda-calculus}
+\end{figure}
+\begin{figure}[htbp]
+  \centering
+  \framebox{
+    \begin{tabular}{rcl}
+      $\permswap{a}{b}{c}$ & $:=$
+      & $\begin{cases}
+          a & \text{if } c = b \\
+          b & \text{if } c = a \\
+          c & \text{otherwise}
+        \end{cases}$ \\
+      $\permswap{a}{b}{(\lambda c . t)} $ & $:=$
+      & $ \lambda (\permswap{a}{b}{c}) . (\permswap{a}{b}{t})$ \\
+      $\permswap{a}{b}{(t_1\; t_2)} $ & $:=$
+      & $ (\permswap{a}{b}{t_1}) \; (\permswap{a}{b}{t_2}) $\\
+\end{tabular}
+  }
+  \caption{Swapping procedure}
+  \label{fig:swap}
+\end{figure}
+\\
+The definition of swapping atoms $a$ and $b$ in some tree $t$,
+written $\permswap{a}{b}{\:t}$, is rather straightforward.
+It naturally follows the tree structure, touching only the affected atoms,
+and doesn't need to distinct betwen free and bound names (like substitutions do),
+but simply changes them all the same exact way.
 
-Freshness of atom $a$ in tree $t$, written $a \cfresh t$, can be similarly
-simple to define.\footnote{Pitts defines it as
+\begin{figure}[htbp]
+  \centering
+  \framebox{
+    \begin{tabular}{ccccc}
+      $
+      \inference{
+        a \cneq b
+      }{
+        a \cfresh b
+      }
+      $ & $
+      \inference{
+        a \cfresh t_1 & a \cfresh t_2
+      }{
+        a \cfresh t_1\;t_2
+      }
+      $ & $
+      \inference{
+      }{
+        a \cfresh \lambda a . t
+      }
+      $ & $
+      \inference{
+        a \cfresh t
+      }{
+        a \cfresh \lambda b . t
+      }
+      $
+    \end{tabular}
+  }
+  \caption{Freshness relation}
+  \label{fig:fresh}
+\end{figure}
+Relation of \it{freshness} of atom $a$ in tree $t$, written $a \cfresh t$,
+is similarly simple to define.\footnote{Pitts defines it as
 $a$ not being a member of the \it{support set} of $t$ ---
-but for our purposes, the simple inductive definition will suffice.}
-$$
-\inference{
-  a \cneq b
-}{
-  a \cfresh b
-}
-\qquad
-\inference{
-  a \cfresh t_1
-  &
-  a \cfresh t_2
-}{
-  a \cfresh t_1\;t_2
-}
-\qquad
-\inference{
- \;
-}{
-  a \cfresh \lambda a . t
-}
-\qquad
-\inference{
-  a \cfresh t
-}{
-  a \cfresh \lambda b . t
-}
-$$
-Note that \it{freshness} assumes only the comparability of atoms
+but for our purposes, the simple inductive definition will suffice.}\
+Note that it only assumes the comparability of atoms
 and is an \it{equivariant} relation, meaning that
 it's validity is invariant under swapping atoms
 --- which can be shown by simplest induction.
-Then with \it{swapping} and \it{freshness},
-we can define the alpha-equivalence of terms, written $t_1 \aequiv t_2$.
-$$
-\inference{
-  \text{}
-}{
-  a \aequiv a
-}
-\qquad
-\inference{
-  t_1 \aequiv t_1'
-  &
-  t_2 \aequiv t_2'
-}{
-  t_1\;t_2 \aequiv t_1'\;t_2'
-}
-\qquad
-\inference{
-  \permswap{a}{b}{t} \aequiv \permswap{a'}{b}{t'}
-  &
-  b \cfresh t
-  &
-  b \cfresh t'
-}{
-  \lambda a . t \aequiv \lambda a' . t'
-}
-$$
-As we built this definition of alpa-equivalence using only induction,
-swapping, and freshness, then as Pitts argues, it's also equivariant.
+
+\begin{figure}[htbp]
+  \centering
+  \framebox{
+    \begin{tabular}{ccc}
+    $
+    \inference{
+      \text{}
+    }{
+      a \aequiv a
+    }
+    $ & $
+    \inference{
+      t_1 \aequiv t_1' & t_2 \aequiv t_2'
+    }{
+      t_1\;t_2 \aequiv t_1'\;t_2'
+    }
+    $ & $
+    \inference{
+      \permswap{a}{b}{t} \aequiv \permswap{a'}{b}{t'} & b \cfresh t & b \cfresh t'
+    }{
+      \lambda a . t \aequiv \lambda a' . t'
+    }
+    $
+    \end{tabular}
+  }
+  \caption{Alpha-equivalence relation}
+  \label{fig:fresh}
+\end{figure}
+With \it{swapping} and \it{freshness} already established,
+we define the alpha-equivalence of terms, written $t_1 \aequiv t_2$.
+As we built this definition of alpha-equivalence using only induction,
+swapping, and freshness then, as Pitts argues, it is equivariant as well.
 \begin{mdframed}[frametitle={Pitts, 2003}]
 The fundamental assumption underlying Nominal Logic is that \textit{the only predicates we ever deal with} (when describing properties of syntax) \textit{are equivariant ones, in the sense that their validity is invariant under swapping} (i.e., transposing, or interchanging) \textit{names}.
 \end{mdframed}
@@ -246,8 +276,8 @@ TODO: add related work
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Terms and constraints}
-To properly describe our framework we must start with the simplest elements:
-\it{names} and \it{terms}.
+To properly describe our framework and constraints sublogic,
+we must start with the simplest elements: \it{names}, \it{terms}, and \it{constraints}.
 
 The names are drawn from an infinite set of \it{atoms} (represented by lowercase letters)
 and correspond to the bound variables in terms, analogous to the variables in the lambda calculus.
@@ -258,119 +288,164 @@ The terms are constructed to mimic the structure of abstract syntax trees of the
 extending it with notion of permutations (of atoms) and functional symbols,
 denoted by metavariable $\symb$,
 that are drawn from yet another set disjoint with atoms and variables.
-Terms are defined by the following grammar:
-\\ \\
-\begin{tabular}{rclr}
-    $\perm$    & $\deff$ & $\permid \mid \permswap{\atomexp}{\atomexp}{\perm}$  & (permutations) \\
-    $\atomexp$ & $\deff$ & $\perm \apperm \atomv$  & (atom expressions) \\
-    $\term$    & $\deff$ & $\atomexp \mid \perm \apperm \termv \mid \tbind{\atomexp} \term \mid \term \tapp \term \mid \symb$  & (terms)
-\end{tabular}
-\\ \\
+
+The constraints are precise descriptions of syntactical properties,
+describing the relationship between their arguments --- atoms and terms.
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
+      $\perm$    & $\deff$ & $\permid
+                          \mid \permswap{\atomexp}{\atomexp}{\perm}$
+      & (permutations) \\
+      $\atomexp$ & $\deff$ & $\perm \apperm \atomv$
+      & (atom expressions) \\
+      $\term$    & $\deff$ & $\atomexp
+                         \mid \perm \apperm \termv
+                         \mid \tbind{\atomexp} \term
+                         \mid \term \tapp \term
+                         \mid \symb$
+      & (terms) \\
+      $\constr$  & $\deff$ & $\atomexp \cfresh \term
+                         \mid \term \ceq \term
+                         \mid \term \csheq \term
+                         \mid \term \cshlt \term
+                         \mid \csymb \term$
+      & (constraints)
+    \end{tabularx}
+  }
+  \caption{Syntax of constraint sublogic}
+  \label{fig:terms-constraints-syntax}
+\end{figure}
+
 Construction $\tbind{\atomexp} \term$ represents a \it{binder} ---
 informally, we think of it as binding the occurences of $\atomexp$ in $\term$,
 similarly to a lambda abstraction --- yet it \it{isn't} a binder,
 but a simple syntactical construction glueing together an atom with another term.
 The semantics of binding will apply only after we interpret this syntactical term in the model.
+
 Also note that we do not restrict this construction to the form of $\tbind{\atomv} \term$,
-but allow permuted atoms to appear in bind-like terms.
-Additionaly, when dealing with atom expressions with identity permutation $\permid \atomv$
-we will skip the permutation and simply write $\atomv$ and sometimes call such
-atoms \it{pure}. The same rule applies to permuted variabless
+but allow permuted atoms to appear under binders.
+Additionaly, when dealing with atom expressions with identity permutation $\permid \;\atomv$
+we will skip the permutation and simply write $\atomv$,
+and sometimes call such atom expressions \it{pure}.
+The same rules apply to permuted variables.
 
-It's important to note that these terms are merely a data structure
+\begin{figure}[htbp]
+  \centering
+  \begin{tabularx}{\linewidth}{|l|X|}
+    \hline
+    $\atomexp \cfresh \term$ & Atom $\atomexp$ is fresh in term $\term$, meaning it does not occur in $\term$ as a free variable. \\
+    \hline
+    $\term_1 \ceq \term_2$ & Terms $\term_1$ and $\term_2$ are alpha-equivalent. \\
+    \hline
+    $\term_1 \csheq \term_2$ & Terms $\term_1$ and $\term_2$ possess an identical shape, i.e., after erasing all atoms, terms $\term_1$ and $\term_2$ would be equal. \\
+    \hline
+    $\term_1 \cshlt \term_2$ & The shape of term $\term_1$ is structurally smaller than the shape of term $\term_2$, i.e., after erasing all atoms, $\term_1$ would be equal to some subterm of $\term_2$. \\
+    \hline
+    $\csymb \term$ & term $\term$ is equal to some functional symbol. \\
+    \hline
+  \end{tabularx}
+  \caption{Informal semantics of constraints}
+  \label{fig:informal-constraints-semantics}
+\end{figure}
+
+It's important to note that these terms and constraints are merely a data structure
 and do not incorporate notions of computation, reduction, or binding by themselves.
-Their practical application is observed in the sublogic of constraints defined on top of them,
-used to reason about concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order, as well as their logical model.
-
-\pagebreak
-Constraints are given by the following grammar and informal semantics:
-\\
-\begin{tabular}{rclr}
-    $\constr$  & $\deff$ & $\atomexp \cfresh \term
-                   \mid \term \ceq \term
-                   \mid \term \csheq \term
-                   \mid \term \cshlt \term
-                   \mid \csymb \term$
-        & (constraints)
-\end{tabular}
-\\
-\begin{tabularx}{\linewidth}{|l|X|}
-  \hline
-  $\atomexp \cfresh \term$ & Atom $\atomexp$ is fresh in term $\term$, meaning it does not occur in $\term$ as a free variable. \\
-  \hline
-  $\term_1 \ceq \term_2$ & Terms $\term_1$ and $\term_2$ are alpha-equivalent. \\
-  \hline
-  $\term_1 \csheq \term_2$ & Terms $\term_1$ and $\term_2$ possess an identical shape, i.e., after erasing all atoms, terms $\term_1$ and $\term_2$ would be equal. \\
-  \hline
-  $\term_1 \cshlt \term_2$ & The shape of term $\term_1$ is structurally smaller than the shape of term $\term_2$, i.e., after erasing all atoms, $\term_1$ would be equal to some subterm of $\term_2$. \\
-  \hline
-  $\csymb \term$ & term $\term$ is equal to some functional symbol. \\
-  \hline
-\end{tabularx}
+These properties only appear in the sublogic of constraints after we interpret
+constraints within the logical model, which allows us to then reason about
+concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order.
 
 \section{Model}
 To build the mathematical model of terms and constraints,
 we introduce \it{semantic terms} and \it{semantic shapes} that will inhabit it.
 We will use metavariable $\sematom$ for \it{semantic names} drawn from an
 infinite set of names, representing the free variables.
-Binders in semantic terms will be achieved by De Bruijn indices\cite{deBruijn} and consequently
-the bound names will be represented by natural numbers, denoted by $n$,
-and the binding construction will have no explicit argument, denoted by $\stbind$.
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
+      $\semterm$ & $\deff$ & $\sematom
+                        \bnfor n
+                        \bnfor \stbind \semterm
+                        \bnfor \semterm \stapp \semterm
+                        \bnfor \symb$
+      & (semantic terms) \\
+      $\semshape$ & $\deff$ & $\shatom
+                        \bnfor \stbind \semshape
+                        \bnfor \semshape \stapp \semshape
+                        \bnfor \symb$
+      & (semantic shapes)
+    \end{tabularx}
+  }
+  \caption{Semantic representation of terms and shapes}
+  \label{fig:semantic-terms-shapes}
+\end{figure}
+\\
+Binders in semantic terms are achieved by De Bruijn indices\cite{deBruijn} and consequently
+the bound names are represented by natural numbers, denoted by $n$,
+and the binding construction has no explicit argument, denoted by $\stbind$.
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \begin{subfigure}{0.45\textwidth}
+      \begin{eqnarray*}
+        \termMdl{\perm \apperm \atomv}{\tmEnv} & = &
+          \permMdl{\perm}{\tmEnv}(\tmEnv(\atomv)) \\
+        \termMdl{\perm \apperm \termv}{\tmEnv} & = &
+          \permMdl{\perm}{\tmEnv}(\tmEnv(\termv)) \\
+        \termMdl{\tbind{\atomexp} \term}{\tmEnv} & = &
+          \stbind (\termMdl{\term}{\tmEnv} \shiftIdx)
+            \subst{\termMdl{\atomexp}{\tmEnv}}{0} \\
+        \termMdl{\term_1 \tapp \term_2}{\tmEnv} & = &
+          \termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv} \\
+        \termMdl{\symb}{\tmEnv} & = & \symb \\
+      \end{eqnarray*}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+      \begin{eqnarray*}
+        \shapeof{\sematom}                     & = & \shatom \\
+        \shapeof{n}                            & = & \shatom \\
+        \shapeof{\stbind \semterm}             & = & \stbind \shapeof{\semterm} \\
+        \shapeof{\semterm_1 \stapp \semterm_2} & = &
+          \shapeof{\semterm_1} \shapp \shapeof{\semterm_2} \\
+      \end{eqnarray*}
+    \end{subfigure}
+  }
+  \caption{Interpretation of terms and shapes in the model}
+  \label{fig:terms-shapes-interpretation}
+\end{figure}
+\\
+The term interpretation function, denoted $\termMdl{\cdot}{\tmEnv}$,
+maps syntactic terms to semantic terms,
+utilizing the standard shifting of De Bruijn indices (denoted by { }$\shiftIdx$).
+It is parametrized by function $\tmEnv$ that maps atoms and variables to
+semantic shapes.\\
+The shape interpretation function, denoted $\shapeof{\cdot}$,
+maps semantic terms to semantic shapes by erasing names.
 
-\begin{tabular}{rclr}
-$\semterm$ & $\deff$ & $\sematom
-               \bnfor n
-               \bnfor \stbind \semterm
-               \bnfor \semterm \stapp \semterm
-               \bnfor \symb$
-    & (semantic terms) \\
-$\semshape$   & $\deff$ & $\shatom
-               \bnfor \stbind \semshape
-               \bnfor \semshape \stapp \semshape
-               \bnfor \symb$
-    & (semantic shapes)
-\end{tabular}
-\\ \\
-The term interpretation function, mapping syntactic terms to semantic terms
-utilizes the standard shifting of De Bruijn indices (denoted by { }$\shiftIdx$).
-It is parametrized by function $\rho$ from atoms and variables into
-semantic shapes.
-\begin{eqnarray*}
-  \termMdl{\perm \apperm \atomv}{\tmEnv} & = &
-    \permMdl{\perm}{\tmEnv}(\tmEnv(\atomv)) \\
-  \termMdl{\perm \apperm \termv}{\tmEnv} & = &
-    \permMdl{\perm}{\tmEnv}(\tmEnv(\termv)) \\
-  \termMdl{\tbind{\atomexp} \term}{\tmEnv} & = &
-    \stbind (\termMdl{\term}{\tmEnv} \shiftIdx)
-      \subst{\termMdl{\atomexp}{\tmEnv}}{0} \\
-  \termMdl{\term_1 \tapp \term_2}{\tmEnv} & = &
-    \termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv} \\
-  \termMdl{\symb}{\tmEnv} & = & \symb
-\end{eqnarray*}
-The shape interpretation function is a mapping from semantic terms to semantic
-shapes by erasing names.
-\begin{eqnarray*}
-  \shapeof{\sematom}                     & = & \shatom \\
-  \shapeof{n}                            & = & \shatom \\
-  \shapeof{\stbind \semterm}             & = & \stbind \shapeof{\semterm} \\
-  \shapeof{\semterm_1 \stapp \semterm_2} & = &
-    \shapeof{\semterm_1} \shapp \shapeof{\semterm_2}
-\end{eqnarray*}
-With above machinery, we can establish how to \it{interpret} the constraints
-in our model: \\ \\
-\begin{tabular}{lclr}
-  $\tmEnv \vDash \term_1 \ceq \term_2 $  & \textrm{iff} &
-    $\termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv}$ \\
-  $\tmEnv \vDash \atomexp \cfresh \term$ & \textrm{iff} &
-    $\termMdl{\atomexp}{\tmEnv} \notin
-      \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv})$ \\
-  $\tmEnv \vDash \term_1 \csheq \term_2$ & \textrm{iff} &
-    $\shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\
-  $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
-    $\shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
-      \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\
-\end{tabular}
-\\ \\
+With above machinery, we can establish relation $\tmEnv \vDash \constr$
+that interprets the constraints in our model, using some mapping $\tmEnv$.
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \begin{tabular}{lclr}
+      $\tmEnv \vDash \term_1 \ceq \term_2 $  & \textrm{iff} &
+        $\termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv}$ \\
+      $\tmEnv \vDash \atomexp \cfresh \term$ & \textrm{iff} &
+        $\termMdl{\atomexp}{\tmEnv} \notin
+          \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv})$ \\
+      $\tmEnv \vDash \term_1 \csheq \term_2$ & \textrm{iff} &
+        $\shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\
+      $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
+        $\shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
+          \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\
+    \end{tabular}
+  }
+  \caption{Constraint interpretation in the model}
+  \label{fig:constraint-interpretation}
+\end{figure}
+\\
 Note that the freshness can be expressed through membership check of $\mathsf{FreeAtoms}$ set,
 which is trivial to compute as a consequence of using of De Bruijn indices.
 Note that  it's possible for terms of form $\tbind{a}{X}$ and $\tbind{b}{Y}$
@@ -397,59 +472,66 @@ such that $\constr_1, \dots, \constr_n$ are satisfied, will also satisfy $\const
 
 For the sake of convenience and implementation efficiency, the Solver operates
 on its own internal representation of constraints, that slightly differs from
-constraints described in the previous section,
-as it uses \it{shapes} instead of terms to to construct shape constraints.
-
-Solver constraints and shapes are defined by the following grammar: \\
-\begin{tabular}{rclr}
-  $\sconstr$ & $\deff$ & $\atomexp \cfresh \term
-  \bnfor \term \ceq \term
-  \bnfor \shape \csheq \shape
-  \bnfor \shape \cshlt \shape
-  \bnfor \csymb \term$
+constraints described in the previous section.
+It erases atoms in terms under shape constraints,
+effectively transforming them into \it{shapes}.
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
+      $\sconstr$ & $\deff$ & $\atomexp \cfresh \term
+                       \bnfor \term \ceq \term
+                       \bnfor \shape \csheq \shape
+                       \bnfor \shape \cshlt \shape
+                       \bnfor \csymb \term$
       & (solver constraints) \\
-  $\shape$      & $\deff$ & $\shatom
-                 \bnfor  \termv
-                 \bnfor \shbind \shape
-                 \bnfor \shape \tapp \shape
-                 \bnfor \symb$
-      & (shapes)
-\end{tabular}\\
-Solver erases atoms from terms in shape constraints,
-effectively transforming them from \it{constraints} to \it{solver constraints}.
+      $\shape$ & $\deff$ & $\shatom
+                     \bnfor \termv
+                     \bnfor \shbind \shape
+                     \bnfor \shape \tapp \shape
+                     \bnfor \symb$
+      & (shapes) \\
+    \end{tabularx}
+  }
+  \caption{Solver internal representation of terms and shapes}
+  \label{fig:solver-internal-representation-terms-shapes}
+\end{figure}
 
 We add another environment $\icEnv$ to distinguish between the potentially-reducible assumptions in $\cEnv$.
 For convenience, we will write $\atomv \cneq \atomexp$ instead of $\atomv \cfresh \atomexp$ as it gives a clear intuition of atom freshness implying inequality.
 Additionally, when $\atomexp = \pi \atomv$, we will denote $\atomexp \cfresh \term$ to mean $\atomv \cfresh \pi^{-1} \term$.
-
-Irreducible constraints are:
-\begin{eqnarray*}
-  \atomv_1 \cneq \atomv_2 & \text{---} & \text{
-    atoms $\atomv_1$ and $\atomv_2$ are different
-  } \\
-  \atomv   \cfresh \termv   & \text{---} & \text{
-    atom $\atomv$ is {Fresh} in variable $\termv$
-  } \\
-  \termv_1 \csheq  \termv_2 & \text{---} & \text{
-    variables $\termv_1$ and $\termv_2$ posses the same shape
-  } \\
-  \termv   \csheq  \term    & \text{---} & \text{
-    variable $\termv$ has a shape of term $\term$
-  } \\
-  \term    \cshlt  \termv   & \text{---} & \text{
-    term $\term$ strictly subshapes variable $\termv$
-  } \\
-  \csymb  \termv   & \text{---} & \text{
-    variable $\termv$ is some functional symbol
-  } \\
-\end{eqnarray*}
-\newcommand{\solverRule}{\vdash}
-
+\begin{figure}
+  \centering
+  \begin{tabularx}{\textwidth}{|l|X|}
+    \hline
+    $\atomv_1 \cneq \atomv_2$
+    & Atoms $\atomv_1$ and $\atomv_2$ are different.
+    \\ \hline
+    $\atomv   \cfresh \termv$
+    & Atom $\atomv$ is {Fresh} in variable $\termv$.
+    \\ \hline
+    $\termv_1 \csheq  \termv_2$
+    & Variables $\termv_1$ and $\termv_2$ posses the same shape.
+    \\ \hline
+    $\termv   \csheq  \term$
+    & Variable $\termv$ has a shape of term $\term$.
+    \\ \hline
+    $\term    \cshlt  \termv$
+    & Term $\term$ strictly subshapes variable $\termv$.
+    \\ \hline
+    $\csymb \termv$
+    & Variable $\termv$ is some functional symbol.
+    \\ \hline
+  \end{tabularx}
+  \caption{Irreducible constraints}
+  \label{fig:irreducible-constraints}
+\end{figure}
 After all the constraints are reduced to such simple constraints
 we reduce the goal-constraint and repeat the reduction procedure on
 new assumptions and goal. We either arrive at a contradictory environment or
 all the assumptions and goal itself are reduced to irreducible constraints, which
 is as simple as checking if the goal occurs on the left side of the turnstile:
+\\
 $$
 \inferrule{
   \inferrule{
@@ -467,43 +549,64 @@ $$
 $$
 
 \section{Goal-reducing rules}
-TODO: put some figures around rules or smthng
+TODO: put some figures around rules or smthn.\\
 And now for the solving procedure we start with the most simple equality check:
-$$\inferrule{
-}{
-  \cEnv ; \icEnv \solverRule \atomv = \atomv
-}
-\qquad
-\inferrule{
-}{
-  \cEnv ; \icEnv \solverRule \termv = \termv
-}
-\qquad
-\inferrule{
-}{
-  \cEnv ; \icEnv \solverRule \symb = \symb
-}
-\qquad
-\inferrule{
-  \cEnv ; \icEnv \solverRule \term_1 = \term_2
-  \\
-  \cEnv ; \icEnv \solverRule \term_1' = \term_2'
-}{
-  \cEnv ; \icEnv \solverRule \term_1 \term_1' = \term_2 \term_2'
-}
-$$
+\begin{figure}[htbp]
+  \framebox[\textwidth]{
+    % TODO: make this box nicer
+    \centering
+    \begin{tabular}{ccc}
+      \\ $
+      \inference{
+      }{
+        \cEnv ; \icEnv \solverRule \atomv = \atomv
+      }
+      $ & $
+      \inference{
+      }{
+        \cEnv ; \icEnv \solverRule \termv = \termv
+      }
+      $ & $
+      \inference{
+      }{
+        \cEnv ; \icEnv \solverRule \symb = \symb
+      }
+      $ \\ \\
+      \multicolumn{3}{c}{ $
+      \inference{
+        \cEnv ; \icEnv \solverRule \term_1 = \term_2
+        &
+        \cEnv ; \icEnv \solverRule \term_1' = \term_2'
+      }{
+        \cEnv ; \icEnv \solverRule \term_1 \term_1' = \term_2 \term_2'
+      }
+      $ } \\ \\
+      \multicolumn{3}{c}{ $
+      \inference{
+        \cEnv ; \icEnv \solverRule \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
+        &
+        \cEnv ; \icEnv \solverRule \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
+      }{
+        \cEnv ; \icEnv \solverRule \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
+      }
+      $ } \\ \\
+      \multicolumn{3}{c}{ $
+      \inference{
+        \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomv     = \atomexp \\
+        \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_2 = \atomexp \\
+        \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_1 = \atomexp
+      }{
+        \cEnv ; \icEnv \solverRule \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
+      }
+      $ } \\ \\
+      \end{tabular}
+  }
+  \caption{Equality-reduction rules}
+  \label{fig:equality-reduction-rules}
+\end{figure}
 Checking equality of abstraction terms requires that the left side's argument is
 fresh in the whole right side's term (either arguments are the same or left's argument doesn't occur in right's body)
 and that left body is equal to the right body with right argument swapped for the left one:
-$$
-\inferrule{
-  \cEnv ; \icEnv \solverRule \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
-  \\
-  \cEnv ; \icEnv \solverRule \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
-}{
-  \cEnv ; \icEnv \solverRule \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
-}
-$$
 
 To compare a \it{pure} atom with permuted one, we employ the decidability of
 atom equality to reduce the right hand-side's permutation by
@@ -518,47 +621,54 @@ so the swap substitutes it for $\atomexp_1$.
 \end{enumerate}
 Notice that it is impossible for any two of these assumption to be valid at the same time ---
 the contradictory branches will resolve through absurd environment.
-$$
-\inferrule{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomv     = \atomexp \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_2 = \atomexp \\
-  \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_1 = \atomexp
-}{
-  \cEnv ; \icEnv \solverRule \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
-}
-$$
 
+\begin{figure}[htbp]
+  \framebox[\textwidth]{
+    % TODO: make this box nicer
+    \centering
+    \begin{tabular}{cc}
+      \\ $
+      \inference{
+        \cEnv ; \icEnv \solverRule \atomv = \perm^{-1} \atomexp
+      }{
+        \cEnv ; \icEnv \solverRule \perm \atomv = \atomexp
+      }
+      $ & $
+      \inference{
+        \cEnv ; \icEnv \solverRule \termv_1 = \pi_1^{-1} \pi_2 \termv_2
+      }{
+        \cEnv ; \icEnv \solverRule \pi_1 \termv_1 = \pi_2 \termv_2
+      }
+      $ \\ \\
+      $
+      \inference{
+        \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
+      }{
+        \cEnv ; \icEnv \solverRule \termv = \pi \termv
+      }
+      $ & $
+      \inference{
+        \forall \atomv \in \pi.\;
+          \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
+          \cEnv ; \icEnv \solverRule \atomv \cfresh \termv
+        }{
+        \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
+      }
+      $ \\ \\
+      $
+      \permid ^ {-1} \;\term := \permid\;\term
+      $ & $
+      (\permswap{\atomexp_1}{\atomexp_2} \perm) ^ {-1} \;\term
+        := \perm^{-1}(\permswap{\atomexp_1}{\atomexp_2} \;\term)
+      $ \\ \\
+      \end{tabular}
+  }
+  \caption{Permutation-reduction rules}
+  \label{fig:permutation-reduction-rules}
+\end{figure}
 If the left-hand side's term is permuted we simply move the permutation to the right-hand side:
-$$
-\inferrule{
-  \cEnv ; \icEnv \solverRule \atomv = \perm^{-1} \atomexp
-}{
-  \cEnv ; \icEnv \solverRule \perm \atomv = \atomexp
-}
-\qquad
-\inferrule{
-  \cEnv ; \icEnv \solverRule \termv_1 = \pi_1^{-1} \pi_2 \termv_2
-}{
-  \cEnv ; \icEnv \solverRule \pi_1 \termv_1 = \pi_2 \termv_2
-}
-$$
 Variables can be equal to their permuted selves if that permutation is idempotent:
-$$
-\inferrule{
-  \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
-}{
-  \cEnv ; \icEnv \solverRule \termv = \pi \termv
-}
-\qquad
-\inferrule{
-  \forall \atomv \in \pi.\;
-    \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
-    \cEnv ; \icEnv \solverRule \atomv \cfresh \termv
-  }{
-  \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
-}
-$$
-\\
+
 Freshness is checked through the $\icEnv$ environment and freshness in symbols is trivial:
 $$\inferrule{
   \atomv_1 \cneq \atomv_2 \in \icEnv
@@ -726,63 +836,105 @@ But before the Solver can reduce the goal-constraint, it must first reduce all a
 We will now present the rules for reducing the left side of the turnstile,
 but fortunately most of the assumption reducing rules are similar to the goal reducing analogues.
 
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \setlength{\extrarowheight}{20pt} % Adjust the space between lines
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X>{\centering\arraybackslash}Xr}
+      $\inferrule{
+        \termv = \pi^{-1} \term, \cEnv ; \icEnv \solverRule \sconstr
+      }{
+        \pi \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
+      }$
+      & &
+      PermMove \\
+    \end{tabularx}
+  }
+  \caption{Permutatation inversion rule}
+  \label{fig:perm-move}
+\end{figure}
+
 For variables equal to some term,
 we first deal with permutation by inverting it and moving it to the right-hand side.
-$$
-\inferrule{
-   \termv = \pi^{-1} \term, \cEnv ; \icEnv \solverRule \sconstr
-}{
-   \pi \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
-}
-$$
-TODO: rewrite this, put in figure
-$$
-  \permid ^ {-1} \;\term = \permid\;\term
-$$
-$$
-  (\permswap{\atomexp_1}{\atomexp_2} \perm) ^ {-1} \;\term = \perm^{-1}\permswap{\atomexp_1}{\atomexp_2} \;\term
-$$
+
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \setlength{\extrarowheight}{20pt} % Adjust the space between lines
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}Xr}
+      $\inferrule{
+        \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
+      }{
+        \termv = \pi \termv, \cEnv ; \icEnv \solverRule \sconstr
+      }$
+      &
+      EqIdempotence
+      \\
+      $\inferrule{
+        \solverRule \text{ idempotent on } \termv \\
+        \cEnv ; \icEnv \solverRule \sconstr
+      }{
+        \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
+      }$
+      &
+      PermShortCircuit
+      \\
+      $\inferrule{
+        (\forall \atomv \in \pi.\;
+          \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
+          \cEnv ; \icEnv \solverRule \atomv \cfresh \termv), \cEnv ; \icEnv \solverRule \sconstr
+      }{
+        \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
+      }$
+      &
+      ExplodePerm
+      \\
+    \end{tabularx}
+  }
+  \caption{Permutation idempotence rules}
+  \label{fig:perm-idempotence}
+\end{figure}
 Once again, we consider the special case where a variable is equal to itself when permuted.
 While the assumption of the permutation being idempotent might appear to multiply the number of assumptions exponentially based on the number of atoms in the given permutation,
 it's worth noting that this number is unlikely to be very high, as permutations rarely consist of more than a few swaps.
 
 In practice, the solver implementation will initially check whether the permutation is idempotent with an empty set of assumptions.
-Only if this initial check fails, will it proceed to examine the permutation atom by atom:
-$$
-\inferrule{
-  \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
-}{
-   \termv = \pi \termv, \cEnv ; \icEnv \solverRule \sconstr
-}
-\qquad
-\inferrule{
-  \solverRule \text{ idempotent on } \termv \\
-  \cEnv ; \icEnv \solverRule \sconstr
-}{
-   \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
-}
-$$
-$$
-\inferrule{
-  (\forall \atomv \in \pi.\;
-    \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
-    \cEnv ; \icEnv \solverRule \atomv \cfresh \termv), \cEnv ; \icEnv \solverRule \sconstr
-}{
-\pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
-}
-$$
-\\
-Otherwise we just substitute the variable for the equal term,
-and while substitution over the environment $\cEnv$ and goal $\sconstr$ is indeed a simple term substitution, substituting in $\icEnv$ environment is a more involved process that we will describe in the section on implementation.
-$$
-\inferrule{
-   \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term} \solverRule \sconstr\subst{\termv}{\term}
-}{
-   \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
-}
-$$
+Only if this initial check fails, will it proceed to examine the permutation atom by atom.
+
+Otherwise we can just substitute the variable for the equal term,
+and while substitution over the environment $\cEnv$ and goal $\sconstr$ is indeed a simple term substitution, substituting in $\icEnv$ environment is a more involved process
+that we will describe in the section on implementation,
+which can arrive at a contradiction that would short-circuit the Solver procedure.
 With atom equality, we either arrive at a contradiction with $\icEnv$ or update the environment accordingly
 --- merging the now equal atoms into one through substitution:
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \setlength{\extrarowheight}{20pt} % Adjust the space between lines
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}Xr}
+      $ \inferrule{
+          \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term}
+            \solverRule \sconstr\subst{\termv}{\term}
+        }{
+          \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
+        }$
+      &
+      SubstTerm
+      \\
+      $ \inferrule{
+        \cEnv \subst{\atomv_1}{\atomv_2}; \icEnv\subst{\atomv_1}{\atomv_2}
+          \solverRule \sconstr\subst{\atomv_1}{\atomv_2}
+        }{
+          \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \solverRule \sconstr
+        }$
+      &
+      SubstAtom
+      \\
+    \end{tabularx}
+  }
+  \caption{Substitution rules}
+  \label{fig:substitution}
+\end{figure}
 $$
 \inferrule{
   \atomv_1 \cneq \atomv_2 \in \icEnv
@@ -1125,24 +1277,38 @@ Then, verifying whether a constraint is included in $\icEnv$ can be accomplished
   (\termv \csheq \shape) \in \icEnv &:=& \shape = \Shape_{\icEnv}(\shrep{\termv})\\
   (\shape \cshlt \termv) \in \icEnv &:=& \shape \in \Subshape_{\icEnv}(\shrep{\termv})
 \end{eqnarray*}
-And establish rules for a special 'occurs check' mechanism,
-which safeguards against handling circular references.
-$$
+And establish rules for a special occurs check procedure,
+which safeguards against handling circular references,
+and does so while considering all occurences in the assumptions of $\icEnv$.
+
+\begin{figure}[htbp]
+  \centering
+  \setlength{\extrarowheight}{20pt} % Adjust the space between lines
+  \framebox[\textwidth]{
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X}
+$
 \inferrule{
   \stxoccurs{\shrep{\termv}}{\shenv{\shape}}
 }{
   \icEnv \solverRule \occurs{\termv}{\shape}
 }
-$$
-$$
+$
+\\
+$
 \inferrule{
-  \stxoccurs{\shrep{\termv'}}{\shenv{\shape}} \\
+  \stxoccurs{\termv'}{\shenv{\shape}} \\
   (\shape' \cshlt \termv') \in \icEnv  \\
   \icEnv \solverRule \occurs{\termv}{\shape'}
 }{
   \icEnv \solverRule \occurs{\termv}{\shape}
 }
-$$
+$
+    \end{tabularx}
+  }
+  \caption{Occurs check rules}
+  \label{fig:subkinding-rules}
+\end{figure}
+
 Incorporating constraints into $\icEnv$ proceeds as follows:
 freshness of an atom in a in a variables is simply acknowledged in the $\Fresh$ mapping.
 Inequality of two atoms simply adds to the set $\NeqAtoms$,
@@ -1150,7 +1316,9 @@ unless invoked with identical atoms, in which case we report a contradiction.
 We are using OCaml's pipelining notation of \lstinline[mathescape, language=OCaml]{x |> f1 |> ... |> fn}
 for \lstinline[mathescape, language=OCaml]{fn (... (f1 x))}
 and treat expressions like \lstinline[mathescape, language=OCaml]{fresh += x}
-as functions, meaning \lstinline[mathescape, language=OCaml]{fun $\icEnv$ -> $\{$ $\icEnv$ with fresh = x :: $\icEnv$.fresh $\}$} and alike. TODO: put it in a box.
+as functions, meaning
+\lstinline[mathescape, language=OCaml] {fun $\icEnv$ -> $\{$ $\icEnv$ with fresh = x :: $\icEnv$.fresh $\}$}
+and alike. TODO: put it in a box.
 \\
 \begin{minipage}{0.4\textwidth}
 \begin{lstlisting}[mathescape, language=OCaml]
@@ -1261,19 +1429,31 @@ to $\cEnv \vDash \constr$ as defined in the model.
 On top of the sublogic of constraints, we build a higher-order logic.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Kinds}
-Due to the multiple ways atoms, terms, binders, and constraints can occur in
-formulas, we introduce kinds to ensure that the formulas we will deal with \it{make sense},
-given by the following grammar and semantics:
-
-\begin{tabular}{rclr}
+We introduce kinds to ensure that the formulas we will deal with
+are \it{making sense},
+due to the multiple ways atoms, terms, binders, and constraints can occur in them.
+\begin{figure}[htbp]
+  \framebox[\textwidth]{
+\begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
 $\kind$ & $::=$ & $\kProp
             \bnfor \kind \karrow \kind
             \bnfor \kForallAtom{\atomv} \kind
             \bnfor \kForallTerm{\termv} \kind
             \bnfor \kGuard{\constr} \kind$
-    & (kinds)
-\end{tabular}
-\\ \\
+    & (kinds) \\
+\end{tabularx}
+  }
+  \caption{Kinds grammar}
+  \label{fig:kinds-grammar}
+\end{figure}
+\\
+Notice that as constraints occur in kinds, we cannot simply give functions
+from atoms some kind ${Atom}\karrow\kind$, but we must know \it{which} atom
+is bound there, to substitute for it in $\kind$ the same way we substitute
+that atom for an atom expression in the function body when applying it to the formula.
+The \it{guarded kind} $\kGuard{\constr} \kind$ is most importantly used in
+kinding of the fixpoint formulas, which we will explain in later sections.
+\begin{figure}[htbp]
 \begin{tabularx}{\textwidth}{|l|X|}
 \hline
 $\formphi \ofkind \kProp$ & $\formphi$ is a propositional formula.
@@ -1287,70 +1467,65 @@ $\formphi \ofkind \kForallTerm{\termv} \kind$ & \makecell[l]{$\formphi$ is a fun
 $\formphi \ofkind \kGuard{\constr} \kind$ & \makecell[l]{$\formphi$ is a formula of kind $\kind$ as long as $\constr$ is satisfied.}
 \\ \hline
 \end{tabularx}
-
-Notice that as constraints occur in kinds, we cannot simply give functions
-from atoms some kind ${Atom}\karrow\kind$, but we must know \it{which} atom
-is bound there, to substitute for it in $\kind$ the same way we substitute
-that atom for an atom expression in the function body when applying it to the formula.
-The \it{guarded kind} $\kGuard{\constr} \kind$ is most importantly used in
-kinding of the fixpoint formulas, which we will explain in later sections.
+  \caption{Kinds semantics}
+  \label{fig:kinds-semantics}
+\end{figure}
 
 \section{Subkinding}
-Kinding relation is relaxed through the \it{subkinding},
-a relation that is naturally reflexive and transitive:
-TODO: put it in a figure
-$$
-\inference{
-}{
-  \cEnv \vdash \kind \subkind \kind
-}
-\qquad
-\inference{
-  \cEnv \vdash \kind_1 \subkind \kind_2 &
-  \cEnv \vdash \kind_2 \subkind \kind_3
-}{
-  \cEnv \vdash \kind_1 \subkind \kind_3
-}
-$$
-Universally quantified kinds only subkind if they are quantified over the same name:
-$$
-\inference{
-  \cEnv \vdash \kind_1 \subkind \kind_2
-}{
-  \cEnv \vdash \kForallAtom{\atomv} \kind_1 \subkind \kForallAtom{\atomv} \kind_2
-}
-\qquad
-\inference{
-  \cEnv \vdash \kind_1 \subkind \kind_2
-}{
-  \cEnv \vdash \kForallTerm{\termv} \kind_1 \subkind \kForallTerm{\termv} \kind_2
-}
-$$
+We relax kinding rules are through the \it{subkinding} relation.
+\begin{figure}[htbp]
+  \centering
+  \framebox[\textwidth]{
+    \setlength{\extrarowheight}{20pt} % Adjust the space between lines
+    \begin{tabularx}{\textwidth}{>{\centering\arraybackslash}X}
+        $\inference[\textsc{SubkindRefl}]{
+        }{
+          \cEnv \vdash \kind \subkind \kind
+        }
+        \qquad
+        \inference[\textsc{SubkindTrans}]{
+          \cEnv \vdash \kind_1 \subkind \kind_2 &
+          \cEnv \vdash \kind_2 \subkind \kind_3
+        }{
+          \cEnv \vdash \kind_1 \subkind \kind_3
+        }$ \\
+        $\inference[\textsc{SubkindForallAtom}]{
+          \cEnv \vdash \kind_1 \subkind \kind_2
+        }{
+          \cEnv \vdash \kForallAtom{\atomv} \kind_1 \subkind \kForallAtom{\atomv} \kind_2
+        }$ \\
+        $\inference[\textsc{SubkindForallTerm}]{
+          \cEnv \vdash \kind_1 \subkind \kind_2
+        }{
+          \cEnv \vdash \kForallTerm{\termv} \kind_1 \subkind \kForallTerm{\termv} \kind_2
+        }$ \\
+        $\inference[\textsc{SubkindFunction}]{
+          \cEnv \vdash \kind_1' \subkind \kind_1 &
+          \cEnv \vdash \kind_2 \subkind \kind_2'
+        }{
+          \cEnv \vdash \kind_1 \karrow \kind_2 \subkind \kind_1' \karrow \kind_2'
+        }$ \\
+        $\inference[\textsc{SubkindReduce}]{
+          \cEnv \vDash \constr
+        }{
+          \cEnv \vdash \kGuard{\constr}\kind \subkind \kind
+        }
+        \qquad
+        \inference[\textsc{SubkindGuard}]{
+          \cEnv, \constr \vdash \kind_1 \subkind \kind_2
+        }{
+          \cEnv \vdash \kind_1 \subkind \kGuard{\constr}\kind_2
+        }$
+    \end{tabularx}
+  }
+  \caption{Subkinding Rules}
+  \label{fig:subkinding-rules}
+\end{figure}
+
 Function kind is contravariant to the subkinding relation on the left argument:
-$$
-\inference{
-  \cEnv \vdash \kind_1' \subkind \kind_1 &
-  \cEnv \vdash \kind_2 \subkind \kind_2'
-}{
-  \cEnv \vdash \kind_1 \karrow \kind_2 \subkind \kind_1' \karrow \kind_2'
-}
-$$
+Universally quantified kinds only subkind if they are quantified over the same name:
 Constraints that are solved through $\vDash$ relation can be dropped:
-$$
-\inference{
-  \cEnv \vDash \constr
-}{
-  \cEnv \vdash \kGuard{\constr}\kind \subkind \kind
-}
-$$
 And constraints can be moved to the enviroment from the right-hand side:
-$$
-\inference{
-  \cEnv, \constr \vdash \kind_1 \subkind \kind_2
-}{
-  \cEnv \vdash \kind_1 \subkind \kGuard{\constr}\kind_2
-}
-$$
 Note that there is no structural subkinding rule for guarded kinds like
 $$
 \inference{\cEnv \vdash \kind_1 \subkind \kind_2}{
