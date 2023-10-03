@@ -3,7 +3,7 @@ open Nominal.Parser
 open Nominal.ProverGoal
 open Nominal.ProofEnv
 
-let lambda_symbols = funcs_env ["lam"; "app"; "base"; "arrow"; "nil"; "cons"]
+let lambda_symbols = symbols ["lam"; "app"; "base"; "arrow"; "nil"; "cons"]
 
 let type_formula =
   unwords

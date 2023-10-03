@@ -173,10 +173,10 @@ let run_judgement penv s =
   let env, goal = parse (judgement constr constr) s in
   Solver.solve_with_assumptions (List.map (pconstr_to_constr penv) env) (pconstr_to_constr penv goal)
 
-let atoms_env xs = List.map (fun a -> Bind (a, K_Atom (fresh ()))) xs
+let atoms xs = List.map (fun a -> Bind (a, K_Atom (fresh ()))) xs
 
-let vars_env xs = List.map (fun x -> Bind (x, K_Var (fresh ()))) xs
+let vars xs = List.map (fun x -> Bind (x, K_Var (fresh ()))) xs
 
-let funcs_env xs = List.map (fun x -> Bind (x, K_Func)) xs
+let symbols xs = List.map (fun x -> Bind (x, K_Func)) xs
 
-let fvars_env xs = List.map (fun (x, k) -> Bind (x, K_FVar (fresh (), k))) xs
+let fvars xs = List.map (fun (x, k) -> Bind (x, K_FVar (fresh (), k))) xs

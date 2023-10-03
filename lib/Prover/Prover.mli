@@ -14,13 +14,13 @@ val apply : formula -> tactic
 
 val apply_thm : proof -> tactic
 
-val apply_thm_specialized : proof -> string list -> tactic
+val apply_thm_spec : proof -> string list -> tactic
 
 val apply_assm : string -> tactic
 
-val apply_assm_specialized : string -> string list -> tactic
+val apply_assm_spec : string -> string list -> tactic
 
-val by_solver : tactic
+val solve : tactic
 
 val ex_falso : tactic
 
@@ -52,7 +52,7 @@ val intros' : string list -> tactic
 
 val add_assumption_thm : string -> proof -> tactic
 
-val add_assumption_thm_specialized : string -> proof -> string list -> tactic
+val add_assumption_thm_spec : string -> proof -> string list -> tactic
 
 val specialize_assm : string -> string -> string list -> tactic
 

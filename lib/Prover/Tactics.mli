@@ -30,7 +30,7 @@ val compute : tactic
 
 val discriminate : tactic
 
-val destr_intro : tactic
+val intro' : tactic
 
 val compare_atoms : string -> string -> tactic
 

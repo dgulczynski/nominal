@@ -18,36 +18,36 @@ let progress_thm = lambda_thm "forall e t :term. (Typing e nil t) => (Progressiv
 (*     i.e. (Value v) and (Term e) implies ∃ e' : term. (Sub e a v e')                  *)
 let progress =
   proof' progress_thm
-  |> by_induction "e0" "IH" %> intro %> destr_intro
+  |> by_induction "e0" "IH" %> intro %> intro'
   |> intros' ["Ha"; "a"; ""] (* e is a var in empty env - contradiction *)
      %> ex_falso
-     %> apply_thm_specialized LambdaCalculusEnv.empty_contradiction ["a"; "t"]
+     %> apply_thm_spec LambdaCalculusEnv.empty_contradiction ["a"; "t"]
      %> assumption
   |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""] (* e is a lambda - value *)
      %> case "value"
      %> case "lam"
      %> exists' ["a"; "e_a"]
-     %> by_solver
+     %> solve
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      (* e is an application - steps *) %> case "steps"
-     %> (add_assumption_parse "He1" "Progressive e1" %> apply_assm_specialized "IH" ["e1"; "arrow t2 t"] %> by_solver)
-     %> (add_assumption_parse "He2" "Progressive e2" %> apply_assm_specialized "IH" ["e2"; "t2"] %> by_solver)
+     %> (add_assumption_parse "He1" "Progressive e1" %> apply_assm_spec "IH" ["e1"; "arrow t2 t"] %> solve)
+     %> (add_assumption_parse "He2" "Progressive e2" %> apply_assm_spec "IH" ["e2"; "t2"] %> solve)
   |> destruct_assm "He1"
      %> intros ["Hv1"]
      %> destruct_assm "He2"
      %> intros ["Hv2"] (* Value e1, Value e2 *)
-     %> ( add_assumption_thm_specialized "He1lam" LambdaCalculusUtils.canonical_form ["e1"; "arrow t2 t"]
+     %> ( add_assumption_thm_spec "He1lam" LambdaCalculusUtils.canonical_form ["e1"; "arrow t2 t"]
         %> apply_in_assm "He1lam" "Hv1"
         %> apply_in_assm "He1lam" "Happ_1"
         %> destruct_assm' "He1lam" ["a"; "e_a"; ""] (* He1lam: [e1 = lam (a.e_a)] ∧ (Term e_a) *) )
-     %> ( add_assumption_thm_specialized "He_a" LambdaCalculusSub.subst_exists ["a"; "e2"; "e_a"]
+     %> ( add_assumption_thm_spec "He_a" LambdaCalculusSub.subst_exists ["a"; "e2"; "e_a"]
         %> apply_in_assm "He_a" "Hv2"
         %> apply_in_assm "He_a" "He1lam"
         %> destruct_assm' "He_a" ["e_a'"] (* He_a: Sub e_a a e2 e_a' *) )
      %> exists "e_a'"
      %> case "app"
      %> exists' ["a"; "e_a"; "e2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
      %> apply_assm "Hv2"
      %> apply_assm "He_a"
@@ -55,7 +55,7 @@ let progress =
      %> exists "app e1 e2'"
      %> case "app_r"
      %> exists' ["e1"; "e2"; "e2'"]
-     %> repeat by_solver
+     %> repeat solve
      %> destruct_goal
      %> apply_assm "Hv1"
      %> apply_assm "Hs2"
@@ -63,7 +63,7 @@ let progress =
      %> exists "app e1' e2"
      %> case "app_l"
      %> exists' ["e1"; "e1'"; "e2"]
-     %> repeat by_solver
+     %> repeat solve
      %> apply_assm "Hs1"
   |> apply_assm "Happ_2" %> apply_assm "Happ_1"
   |> qed
@@ -93,11 +93,11 @@ let preservation =
      %> deduce_app_typing
      %> case "app"
      %> exists' ["e1'"; "e2"; "t2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
      (* Typing e1 env {arrow t2 t} => Steps e1 e1' => Typing e1' env {arrow t2 t}*)
-     %> apply_assm_specialized "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
-     %> by_solver
+     %> apply_assm_spec "IH" ["e1"; "e1'"; "env"; "arrow t2 t"]
+     %> solve
      %> apply_assm "Happ_1"
      %> apply_assm "He1"
      (* Typing e2 env t2 *)
@@ -106,21 +106,21 @@ let preservation =
      %> deduce_app_typing
      %> case "app"
      %> exists' ["v1"; "e2'"; "t2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
      (* Typing e1 env {arrow t2 t} *)
      %> apply_assm "Happ_1"
      (* Typing e2 env t2 => Steps e2 e2' => Typing e2' env t2*)
-     %> apply_assm_specialized "IH" ["e2"; "e2'"; "env"; "t2"]
-     %> by_solver
+     %> apply_assm_spec "IH" ["e2"; "e2'"; "env"; "t2"]
+     %> solve
      %> apply_assm "Happ_2"
      %> apply_assm "He2_2"
   |> intros' ["Hbeta"; "a"; "e_a"; "v"; ""; ""] (* e = app (lam (a.e_a)) v, Value v *)
      %> deduce_app_typing
-     %> apply_thm_specialized LambdaCalculusSub.sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
+     %> apply_thm_spec LambdaCalculusSub.sub_lemma ["e_a"; "env"; "t"; "a"; "t2"; "v"; "e'"]
         (* Typing v env t2 => Typing e_a {cons a t2 env} t => Sub e_a a v e' => Typing e' env t *)
      %> apply_assm "Happ_2"
-     %> apply_thm_specialized LambdaCalculusUtils.lambda_typing_inversion ["a"; "e_a"; "env"; "t2"; "t"]
+     %> apply_thm_spec LambdaCalculusUtils.lambda_typing_inversion ["a"; "e_a"; "env"; "t2"; "t"]
         (* Typing {lam (a.e_a)} env {arrow t2 t} => Typing e_a {cons a t2 env} t *)
      %> apply_assm "Happ_1"
      %> apply_assm "Hbeta_2"

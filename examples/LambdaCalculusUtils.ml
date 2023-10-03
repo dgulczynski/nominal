@@ -10,23 +10,18 @@ let typing_terms =
   |> by_induction "e0" "IH"
   |> intro %> intro
   |> intros' ["He"; ""]
-  |> intros' ["Ha"; "a"; ""] %> case "var" %> exists "a" %> by_solver
+  |> intros' ["Ha"; "a"; ""] %> case "var" %> exists "a" %> solve
   |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""; ""; ""]
      %> case "lam"
      %> exists "a"
      %> exists "e_a"
-     %> by_solver
-     %> apply_assm_specialized "IH" ["e_a"; "cons a t1 env"; "t2"]
-     %> by_solver
+     %> solve
+     %> apply_assm_spec "IH" ["e_a"; "cons a t1 env"; "t2"]
+     %> solve
      %> assumption
-  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
-     %> case "app"
-     %> exists "e1"
-     %> exists "e2"
-     %> by_solver
-     %> destruct_goal
-  |> apply_assm_specialized "IH" ["e1"; "env"; "arrow t2 t"] %> by_solver %> apply_assm "Happ_1"
-  |> apply_assm_specialized "IH" ["e2"; "env"; "t2"] %> by_solver %> apply_assm "Happ_2"
+  |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""] %> case "app" %> exists "e1" %> exists "e2" %> solve %> destruct_goal
+  |> apply_assm_spec "IH" ["e1"; "env"; "arrow t2 t"] %> solve %> apply_assm "Happ_1"
+  |> apply_assm_spec "IH" ["e2"; "env"; "t2"] %> solve %> apply_assm "Happ_2"
   |> qed
 
 let canonical_form'_thm =
@@ -41,15 +36,12 @@ let canonical_form'_thm =
 let canonical_form' =
   proof' canonical_form'_thm
   |> intros ["v"; "t"; "Hv"]
-  |> destr_intro
+  |> intro'
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
-     %> apply_thm_specialized LambdaCalculusEnv.empty_contradiction ["a"; "t"]
+     %> apply_thm_spec LambdaCalculusEnv.empty_contradiction ["a"; "t"]
      %> apply_assm "contra"
-  |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""]
-     %> exists' ["a"; "e"; "t1"; "t2"]
-     %> repeat by_solver
-     %> assumption
+  |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""] %> exists' ["a"; "e"; "t1"; "t2"] %> repeat solve %> assumption
   |> intros' ["contra"; "e1"; "e2"; "t2"; ""]
      %> destruct_assm "Hv"
      %> (intros' ["contra_var"; "a"] %> discriminate)
@@ -70,12 +62,12 @@ let canonical_form =
   |> destruct_assm "Ht"
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
-     %> apply_thm_specialized LambdaCalculusEnv.empty_contradiction ["a"; "t"]
+     %> apply_thm_spec LambdaCalculusEnv.empty_contradiction ["a"; "t"]
      %> apply_assm "contra"
   |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""]
      %> exists' ["a"; "e"]
-     %> by_solver
-     %> apply_thm_specialized typing_terms ["e"; "cons a t1 nil"; "t2"]
+     %> solve
+     %> apply_thm_spec typing_terms ["e"; "cons a t1 nil"; "t2"]
      %> assumption
   |> intros' ["contra"; "e1"; "e2"; "t2"; ""]
      %> ex_falso
@@ -93,12 +85,12 @@ let lambda_typing_inversion_thm =
 
 let lambda_typing_inversion =
   proof' lambda_typing_inversion_thm
-  |> repeat intro %> destr_intro
+  |> repeat intro %> intro'
   |> intros' ["contra"; "_"; ""] %> discriminate (* lam (a.e) is not a var *)
   |> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""]
-     %> apply_thm_specialized LambdaCalculusEnv.swap_lambda_typing ["b"; "e_b"; "a"; "e"; "env"; "t1"; "t2"]
+     %> apply_thm_spec LambdaCalculusEnv.swap_lambda_typing ["b"; "e_b"; "a"; "e"; "env"; "t1"; "t2"]
      (* [b.e_b = a.e] => Typing e_b {cons b t1 env} t2 => Typing e {cons a t1 env} t2 *)
-     %> by_solver
+     %> solve
      %> assumption
   |> intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate (* lam (a.e) is not an app *)
   |> qed

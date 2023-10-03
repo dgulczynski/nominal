@@ -16,13 +16,13 @@ let env_inclusion_cons_both =
   |> repeat intro
   |> intros ["Hinclusion"]
   |> compute %> intro %> intro %> intros' ["Hinenv"; ""]
-  |> intros' ["Hcurrent"; "env3"] %> case "current" %> exists "env2" %> by_solver
+  |> intros' ["Hcurrent"; "env3"] %> case "current" %> exists "env2" %> solve
   |> intros' ["Hnext"; "c"; "tc"; "env3"; ""; ""]
      %> case "next"
      %> exists' ["c"; "tc"; "env2"]
-     %> by_solver
-     %> by_solver
-     %> apply_assm_specialized "Hinclusion" ["a"; "t"]
+     %> solve
+     %> solve
+     %> apply_assm_spec "Hinclusion" ["a"; "t"]
      %> apply_assm "Hnext"
   |> qed
 
@@ -34,35 +34,30 @@ let weakening_lemma =
   |> by_induction "e0" "IH"
   |> repeat intro
   |> intros ["Htyp"; "Hinc"] %> destruct_assm "Htyp"
-  |> intros' ["Hb"; "b"; ""]
-     %> case "var"
-     %> exists "b"
-     %> by_solver
-     %> apply_assm_specialized "Hinc" ["b"; "t"]
-     %> assumption
+  |> intros' ["Hb"; "b"; ""] %> case "var" %> exists "b" %> solve %> apply_assm_spec "Hinc" ["b"; "t"] %> assumption
   |> intros' ["Hlam"; "b"; "e_b"; "t1"; "t2"; ""; ""; ""]
      %> case "lam"
      %> exists' ["b"; "e_b"; "t1"; "t2"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> destruct_goal
      %> assumption
-     %> apply_assm_specialized "IH" ["e_b"; "cons b t1 env1"; "t2"; "cons b t1 env2"]
-     %> by_solver
+     %> apply_assm_spec "IH" ["e_b"; "cons b t1 env1"; "t2"; "cons b t1 env2"]
+     %> solve
      %> assumption
-     %> apply_thm_specialized env_inclusion_cons_both ["env1"; "env2"; "b"; "t1"]
+     %> apply_thm_spec env_inclusion_cons_both ["env1"; "env2"; "b"; "t1"]
      %> assumption
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      %> case "app"
      %> exists' ["e1"; "e2"; "t2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
-     %> apply_assm_specialized "IH" ["e1"; "env1"; "arrow t2 t"; "env2"]
-     %> by_solver
+     %> apply_assm_spec "IH" ["e1"; "env1"; "arrow t2 t"; "env2"]
+     %> solve
      %> assumption
      %> assumption
-     %> apply_assm_specialized "IH" ["e2"; "env1"; "t2"; "env2"]
-     %> by_solver
+     %> apply_assm_spec "IH" ["e2"; "env1"; "t2"; "env2"]
+     %> solve
      %> assumption
      %> assumption
   |> qed
@@ -78,15 +73,15 @@ let shadow_thm =
 let shadow =
   proof' shadow_thm
   |> repeat intro
-  |> compute %> intros ["b"; "tb"] %> destr_intro
-  |> intros' ["Hcurrent"; "env'"; ""] %> case "current" %> exists "env" %> by_solver
+  |> compute %> intros ["b"; "tb"] %> intro'
+  |> intros' ["Hcurrent"; "env'"; ""] %> case "current" %> exists "env" %> solve
   |> intros' ["Hnext"; "c"; "tc"; "envc"; ""; ""; ""]
   |> intros' ["contra"; "envc'"] %> discriminate
   |> intros' ["Hnext"; "d"; "td"; "envd"; ""; ""]
      %> case "next"
      %> exists' ["a"; "t1"; "env"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> assumption
   |> qed
 
@@ -100,17 +95,17 @@ let shadow'_thm =
 
 let shadow' =
   proof' shadow'_thm
-  |> repeat intro %> compute %> intros ["b"; "tb"] %> destr_intro
-  |> intros' ["Hcurrent"; "env'"; ""] %> case "current" %> exists "(cons a t2 env)" %> by_solver
+  |> repeat intro %> compute %> intros ["b"; "tb"] %> intro'
+  |> intros' ["Hcurrent"; "env'"; ""] %> case "current" %> exists "(cons a t2 env)" %> solve
   |> intros' ["Hnext"; "c"; "tc"; "envc"; ""; ""]
      %> case "next"
      %> exists' ["a"; "t1"; "cons a t2 envc"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> case "next"
      %> exists' ["a"; "t2"; "envc"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> assumption
   |> qed
 
@@ -125,26 +120,26 @@ let env_inclusion_shuffle_thm =
 
 let env_inclusion_shuffle =
   proof' env_inclusion_shuffle_thm
-  |> repeat intro %> compute %> intros ["c"; "tc"] %> destr_intro
+  |> repeat intro %> compute %> intros ["c"; "tc"] %> intro'
   |> intros' ["Hcurrent"; "envc"; ""]
      %> case "next"
      %> exists' ["b"; "tb"; "cons a ta env"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> case "current"
      %> exists "env"
-     %> by_solver
+     %> solve
   |> intros' ["Hnext"; "d"; "td"; "envd"; ""; ""; ""]
-  |> intros' ["H"; "envc"; ""] %> case "current" %> exists "cons a ta env" %> by_solver
+  |> intros' ["H"; "envc"; ""] %> case "current" %> exists "cons a ta env" %> solve
   |> intros' ["H"; "e"; "te"; "enve"; ""; ""]
      %> case "next"
      %> exists' ["b"; "tb"; "cons a ta env"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> case "next"
      %> exists' ["a"; "ta"; "enve"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
   |> assumption
   |> qed
 
@@ -162,10 +157,10 @@ let typing_env_shuffle =
   proof' typing_env_shuffle_thm
   |> repeat intro
   |> intros ["H"]
-     %> apply_thm_specialized weakening_lemma ["e"; "cons a ta (cons b tb env)"; "t"; "cons b tb (cons a ta env)"]
+     %> apply_thm_spec weakening_lemma ["e"; "cons a ta (cons b tb env)"; "t"; "cons b tb (cons a ta env)"]
      %> apply_assm "H"
-     %> apply_thm_specialized env_inclusion_shuffle ["a"; "ta"; "b"; "tb"; "env"]
-     %> by_solver
+     %> apply_thm_spec env_inclusion_shuffle ["a"; "ta"; "b"; "tb"; "env"]
+     %> solve
   |> qed
 
 let cons_fresh_typing_thm =
@@ -179,53 +174,53 @@ let cons_fresh_typing_thm =
 
 let cons_fresh_typing =
   proof' cons_fresh_typing_thm
-  |> by_induction "e0" "IH" %> repeat intro %> destr_intro
+  |> by_induction "e0" "IH" %> repeat intro %> intro'
   |> intros' ["Hb"; "b"; ""]
      %> case "var"
      %> exists "b"
-     %> by_solver
+     %> solve
      %> case "next"
      %> exists' ["a"; "ta"; "env"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> apply_assm "Hb"
   |> intros' ["Hlam"; "b"; "e_b"; "t1"; "t2"; ""; ""; ""]
      %> case "lam"
      %> compare_atoms "a" "b"
-     %> destr_intro
+     %> intro'
      %> exists' ["b"; "e_b"; "t1"; "t2"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> destruct_goal
      %> apply_assm "Hlam_1"
-     %> apply_thm_specialized weakening_lemma ["e_b"; "cons b t1 env"; "t2"; "cons b t1 (cons a ta env)"]
+     %> apply_thm_spec weakening_lemma ["e_b"; "cons b t1 env"; "t2"; "cons b t1 (cons a ta env)"]
      %> apply_assm "Hlam_2"
-     %> apply_thm_specialized shadow' ["b"; "t1"; "ta"; "env"]
-     %> destr_intro
+     %> apply_thm_spec shadow' ["b"; "t1"; "ta"; "env"]
+     %> intro'
      %> exists' ["b"; "e_b"; "t1"; "t2"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> destruct_goal
      %> apply_assm "Hlam_1"
-     %> apply_thm_specialized weakening_lemma ["e_b"; "cons a ta (cons b t1 env)"; "t2"; "cons b t1 (cons a ta env)"]
-     %> apply_assm_specialized "IH" ["e_b"; "cons b t1 env"; "t2"; "a"; "ta"]
-     %> by_solver
-     %> by_solver
+     %> apply_thm_spec weakening_lemma ["e_b"; "cons a ta (cons b t1 env)"; "t2"; "cons b t1 (cons a ta env)"]
+     %> apply_assm_spec "IH" ["e_b"; "cons b t1 env"; "t2"; "a"; "ta"]
+     %> solve
+     %> solve
      %> apply_assm "Hlam_2"
-     %> apply_thm_specialized env_inclusion_shuffle ["a"; "ta"; "b"; "t1"; "env"]
-     %> by_solver
+     %> apply_thm_spec env_inclusion_shuffle ["a"; "ta"; "b"; "t1"; "env"]
+     %> solve
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      %> case "app"
      %> exists' ["e1"; "e2"; "t2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
-     %> apply_assm_specialized "IH" ["e1"; "env"; "arrow t2 t"; "a"; "ta"]
-     %> by_solver
-     %> by_solver
+     %> apply_assm_spec "IH" ["e1"; "env"; "arrow t2 t"; "a"; "ta"]
+     %> solve
+     %> solve
      %> apply_assm "Happ_1"
-     %> apply_assm_specialized "IH" ["e2"; "env"; "t2"; "a"; "ta"]
-     %> by_solver
-     %> by_solver
+     %> apply_assm_spec "IH" ["e2"; "env"; "t2"; "a"; "ta"]
+     %> solve
+     %> solve
      %> apply_assm "Happ_2"
   |> qed
 
@@ -240,16 +235,16 @@ let swap_inenv_lemma_thm =
 
 let swap_inenv_lemma =
   proof' swap_inenv_lemma_thm
-  |> intros ["a"; "b"; "c"] %> by_induction "e0" "IH" %> intro %> intro %> destr_intro
-  |> intros' ["Hcurrent"; "env'"; ""] %> case "current" %> exists "[a b]env'" %> by_solver
+  |> intros ["a"; "b"; "c"] %> by_induction "e0" "IH" %> intro %> intro %> intro'
+  |> intros' ["Hcurrent"; "env'"; ""] %> case "current" %> exists "[a b]env'" %> solve
   |> intros' ["Hnext"; "d"; "td"; "env'"; ""; ""]
      %> case "next"
      %> exists' ["[a b]d"; "[a b]td"; "[a b]env'"]
-     %> by_solver
-     %> by_solver
-     %> apply_assm_specialized "IH" ["env'"; "t"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
+     %> apply_assm_spec "IH" ["env'"; "t"]
+     %> solve
+     %> solve
      %> assumption
   |> qed
 
@@ -259,13 +254,13 @@ let atom_fresh_in_type =
   proof' atom_fresh_in_type_thm
   |> intros ["a"]
      %> by_induction "t0" "IH"
-     %> destr_intro
+     %> intro'
      %> intros ["Hbase"]
-     %> by_solver
+     %> solve
      %> intros' ["Harrow"; "t1"; "t2"; ""; ""]
-     %> (add_assumption_parse "Ht1" "a # t1" %> apply_assm_specialized "IH" ["t1"] %> by_solver)
-     %> (add_assumption_parse "Ht2" "a # t2" %> apply_assm_specialized "IH" ["t2"] %> by_solver)
-     %> by_solver
+     %> (add_assumption_parse "Ht1" "a # t1" %> apply_assm_spec "IH" ["t1"] %> solve)
+     %> (add_assumption_parse "Ht2" "a # t2" %> apply_assm_spec "IH" ["t2"] %> solve)
+     %> solve
      %> assumption
      %> assumption
   |> qed
@@ -289,38 +284,38 @@ let env_inclusion_double_skip_thm =
 let env_inclusion_double_skip =
   proof' env_inclusion_double_skip_thm
   |> repeat intro
-  |> intros ["H"] %> compute %> intros ["d"; "td"] %> destr_intro
+  |> intros ["H"] %> compute %> intros ["d"; "td"] %> intro'
   |> intros' ["Hdc"; "envc"]
      %> case "next"
      %> exists' ["a"; "ta"; "cons b tb (cons c tc env2)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["b"; "tb"; "cons c tc env2"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "current"
      %> exists "env2"
-     %> by_solver
+     %> solve
   |> intros' ["Hnext"; "c'"; "tc'"; "envc'"; ""; ""; ""]
-  |> intros' ["Hda"; "enva"] %> case "current" %> exists "cons b tb (cons c tc env2)" %> by_solver
+  |> intros' ["Hda"; "enva"] %> case "current" %> exists "cons b tb (cons c tc env2)" %> solve
   |> intros' ["Hnext"; "a'"; "ta'"; "enva'"; ""; ""; ""]
   |> intros' ["Hdb"; "envb"]
      %> case "next"
      %> exists' ["a"; "ta"; "cons b tb (cons c tc env2)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "current"
      %> exists "cons c tc env2"
-     %> by_solver
+     %> solve
   |> intros' ["Hd"; "b'"; "tb'"; "env1'"; ""; ""]
      %> case "next"
      %> exists' ["a"; "ta"; "cons b tb (cons c tc env2)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["b"; "tb"; "cons c tc env2"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["c"; "tc"; "env2"]
-     %> repeat by_solver
-     %> apply_assm_specialized "H" ["d"; "td"]
+     %> repeat solve
+     %> apply_assm_spec "H" ["d"; "td"]
      %> apply_assm "Hd"
   |> qed
 
@@ -339,38 +334,38 @@ let env_inclusion_double_skip_thm' =
 let env_inclusion_double_skip' =
   proof' env_inclusion_double_skip_thm'
   |> repeat intro
-  |> intros ["H"] %> compute %> intros ["d"; "td"] %> destr_intro
+  |> intros ["H"] %> compute %> intros ["d"; "td"] %> intro'
   |> intros' ["Hda"; "enva"]
      %> case "next"
      %> exists' ["c"; "tc"; "cons a ta (cons b tb env2)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "current"
      %> exists "cons b tb env2"
-     %> by_solver
+     %> solve
   |> intros' ["Hnext"; "a'"; "ta'"; "enva'"; ""; ""; ""]
   |> intros' ["Hdb"; "envb"]
      %> case "next"
      %> exists' ["c"; "tc"; "cons a ta (cons b tb env2)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["a"; "ta"; "cons d td env2"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "current"
      %> exists "env2"
-     %> by_solver
+     %> solve
   |> intros' ["Hd"; "b'"; "tb'"; "envb'"; ""; ""; ""]
-  |> intros' ["Hdc"; "envc"] %> case "current" %> exists "cons a ta (cons b tb env2)" %> by_solver
+  |> intros' ["Hdc"; "envc"] %> case "current" %> exists "cons a ta (cons b tb env2)" %> solve
   |> intros' ["Hd"; "c'"; "tc'"; "env1'"; ""; ""]
      %> case "next"
      %> exists' ["c"; "tc"; "cons a ta (cons b tb env2)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["a"; "ta"; "cons b tb env2"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["b"; "tb"; "env2"]
-     %> repeat by_solver
-     %> apply_assm_specialized "H" ["d"; "td"]
+     %> repeat solve
+     %> apply_assm_spec "H" ["d"; "td"]
      %> apply_assm "Hd"
   |> qed
 
@@ -385,128 +380,128 @@ let swap_lambda_typing_lemma_thm =
 
 let swap_lambda_typing_lemma =
   proof' swap_lambda_typing_lemma_thm
-  |> by_induction "e0" "IH" %> repeat intro %> destr_intro
+  |> by_induction "e0" "IH" %> repeat intro %> intro'
   |> intros' ["Hc"; "c"; ""; ""]
      %> intros' ["Hcurr"; "env'"]
      %> case "var"
      %> exists "b"
-     %> by_solver
+     %> solve
      %> case "current"
      %> exists "cons a tb env"
-     %> by_solver
+     %> solve
      %> intros' ["Hdiff"; "d"; "td"; "env'"; ""; ""; ""]
      %> intros' ["Hcurr"; "env''"]
      %> case "var"
      %> exists "a"
-     %> by_solver
+     %> solve
      %> case "next"
      %> exists' ["b"; "ta"; "cons a tb env"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> case "current"
      %> exists "env"
-     %> by_solver
+     %> solve
      %> intros' ["Hdiff"; "f"; "tf"; "env''"; ""; ""]
      %> case "var"
      %> exists "c"
-     %> by_solver
+     %> solve
      %> case "next"
      %> exists' ["b"; "ta"; "cons a tb env"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["a"; "tb"; "env''"]
-     %> repeat by_solver
+     %> repeat solve
      %> assumption
   |> intros' ["Hlam"; "c"; "e_c"; "t1"; "t2"; ""; ""; ""] %> compare_atoms "c" "a"
-  |> destr_intro
+  |> intro'
      %> case "lam"
      %> exists' ["b"; "[b a]e_c"; "t1"; "t2"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> destruct_goal
      %> assumption
-     %> apply_thm_specialized weakening_lemma
+     %> apply_thm_spec weakening_lemma
           ["[b a]e_c"; "cons b t1 (cons a tb env)"; "t2"; "cons b t1 (cons b ta (cons a tb env))"]
-     %> apply_assm_specialized "IH" ["e_c"; "env"; "t2"; "a"; "t1"; "b"; "tb"]
-     %> by_solver
-     %> apply_thm_specialized weakening_lemma
+     %> apply_assm_spec "IH" ["e_c"; "env"; "t2"; "a"; "t1"; "b"; "tb"]
+     %> solve
+     %> apply_thm_spec weakening_lemma
           ["e_c"; "cons c t1 (cons a ta (cons b tb env))"; "t2"; "cons a t1 (cons b tb env)"]
      %> apply_assm "Hlam_2"
-     %> apply_thm_specialized shadow ["a"; "t1"; "ta"; "cons b tb env"]
-     %> apply_thm_specialized shadow' ["b"; "t1"; "ta"; "cons a tb env"]
-  |> destr_intro %> compare_atoms "c" "b"
-  |> destr_intro
+     %> apply_thm_spec shadow ["a"; "t1"; "ta"; "cons b tb env"]
+     %> apply_thm_spec shadow' ["b"; "t1"; "ta"; "cons a tb env"]
+  |> intro' %> compare_atoms "c" "b"
+  |> intro'
      %> case "lam"
      %> exists' ["a"; "[a b]e_c"; "t1"; "t2"]
-     %> repeat by_solver
+     %> repeat solve
      %> destruct_goal
      %> apply_assm "Hlam_1"
-     %> apply_assm_specialized "IH" ["e_c"; "cons a tb env"; "t2"; "b"; "t1"; "a"; "ta"]
-     %> by_solver
-     %> apply_thm_specialized weakening_lemma
+     %> apply_assm_spec "IH" ["e_c"; "cons a tb env"; "t2"; "b"; "t1"; "a"; "ta"]
+     %> solve
+     %> apply_thm_spec weakening_lemma
           ["e_c"; "cons c t1 (cons a ta (cons b tb env))"; "t2"; "cons b t1 (cons a ta (cons a tb env))"]
      %> apply_assm "Hlam_2"
      %> compute
      %> intros ["d"; "td"]
-     %> destr_intro
+     %> intro'
      %> intros' ["Hcurr"; "envd"]
      %> case "current"
      %> exists "cons a ta (cons a tb env)"
-     %> by_solver
+     %> solve
      %> intros' ["Hnext"; "f"; "tf"; "envf"; ""; ""; ""]
      %> intros' ["Hcurr"; "envd"]
      %> case "next"
      %> exists' ["b"; "t1"; "cons a ta (cons a tb env)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "current"
      %> exists "cons a tb env"
-     %> by_solver
+     %> solve
      %> intros' ["Hnext"; "g"; "tg"; "envg"; ""; ""]
      %> case "next"
      %> exists' ["b"; "t1"; "cons a ta (cons a tb env)"]
-     %> repeat by_solver
+     %> repeat solve
      %> case "next"
      %> exists' ["a"; "ta"; "cons a tb env"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> destruct_assm "Hnext"
      %> intros' ["contra"; "_env"]
      %> discriminate
      %> intros' ["Hcurr"; "h"; "th"; "envh"; ""; ""]
      %> case "next"
      %> exists' ["a"; "tb"; "envh"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> apply_assm "Hcurr"
-  |> destr_intro
+  |> intro'
      %> case "lam"
      %> exists' ["c"; "[a b]e_c"; "t1"; "t2"]
-     %> repeat by_solver
+     %> repeat solve
      %> destruct_goal
      %> assumption
-     %> apply_thm_specialized weakening_lemma
+     %> apply_thm_spec weakening_lemma
           ["[a b]e_c"; "cons b ta (cons a tb (cons c t1 env))"; "t2"; "cons c t1 (cons b ta (cons a tb env))"]
-     %> apply_assm_specialized "IH" ["e_c"; "cons c t1 env"; "t2"; "a"; "ta"; "b"; "tb"]
-     %> by_solver
-     %> apply_thm_specialized weakening_lemma
+     %> apply_assm_spec "IH" ["e_c"; "cons c t1 env"; "t2"; "a"; "ta"; "b"; "tb"]
+     %> solve
+     %> apply_thm_spec weakening_lemma
           ["e_c"; "cons c t1 (cons a ta (cons b tb env))"; "t2"; "cons a ta (cons b tb (cons c t1 env))"]
      %> assumption
-     %> ( apply_thm_specialized env_inclusion_double_skip ["a"; "ta"; "b"; "tb"; "c"; "t1"; "env"; "env"]
-        %> by_solver
-        %> apply_thm_specialized env_inclusion_refl ["env"] )
-     %> ( apply_thm_specialized env_inclusion_double_skip' ["b"; "ta"; "a"; "tb"; "c"; "t1"; "env"; "env"]
-        %> by_solver
-        %> apply_thm_specialized env_inclusion_refl ["env"] )
+     %> ( apply_thm_spec env_inclusion_double_skip ["a"; "ta"; "b"; "tb"; "c"; "t1"; "env"; "env"]
+        %> solve
+        %> apply_thm_spec env_inclusion_refl ["env"] )
+     %> ( apply_thm_spec env_inclusion_double_skip' ["b"; "ta"; "a"; "tb"; "c"; "t1"; "env"; "env"]
+        %> solve
+        %> apply_thm_spec env_inclusion_refl ["env"] )
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      %> case "app"
      %> exists' ["[a b]e1"; "[a b]e2"; "t2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
-     %> apply_assm_specialized "IH" ["e1"; "env"; "arrow t2 t"; "a"; "ta"; "b"; "tb"]
-     %> by_solver
+     %> apply_assm_spec "IH" ["e1"; "env"; "arrow t2 t"; "a"; "ta"; "b"; "tb"]
+     %> solve
      %> apply_assm "Happ_1"
-     %> apply_assm_specialized "IH" ["e2"; "env"; "t2"; "a"; "ta"; "b"; "tb"]
-     %> by_solver
+     %> apply_assm_spec "IH" ["e2"; "env"; "t2"; "a"; "ta"; "b"; "tb"]
+     %> solve
      %> apply_assm "Happ_2"
   |> qed
 
@@ -522,66 +517,61 @@ let swap_lambda_typing'_thm =
 let swap_lambda_typing' =
   proof' swap_lambda_typing'_thm
   |> by_induction "e0" "IH" %> repeat intro
-  |> compare_atoms "a" "b" %> destr_intro %> trivial %> destr_intro
-  |> destr_intro
+  |> compare_atoms "a" "b" %> intro' %> trivial %> intro'
+  |> intro'
   |> intros' ["Hc"; "c"; ""; ""]
      %> intros' ["Heq"; "env'"]
      %> case "var"
      %> exists "b"
-     %> by_solver
+     %> solve
      %> case "current"
      %> exists "env"
-     %> by_solver
+     %> solve
      %> intros' ["Hdiff"; "d"; "td"; "env'"; ""; ""]
      %> case "var"
      %> exists "c"
-     %> by_solver
+     %> solve
      %> case "next"
      %> exists' ["b"; "t'"; "env'"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> apply_assm "Hdiff"
   |> intros' ["Hlam"; "c"; "e_c"; "t1"; "t2"; ""; ""; ""] %> compare_atoms "a" "c"
-  |> destr_intro
+  |> intro'
      %> case "lam"
      %> exists' ["b"; "[a b]e_c"; "t1"; "t2"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> destruct_goal
      %> assumption
-     %> apply_thm_specialized weakening_lemma ["[a b]e_c"; "cons b t1 env"; "t2"; "cons b t1 (cons b t' env)"]
-     %> apply_assm_specialized "IH" ["e_c"; "env"; "t2"; "a"; "b"; "t1"]
-     %> by_solver
-     %> by_solver
-     %> apply_thm_specialized weakening_lemma ["e_c"; "cons c t1 (cons a t' env)"; "t2"; "cons a t1 env"]
+     %> apply_thm_spec weakening_lemma ["[a b]e_c"; "cons b t1 env"; "t2"; "cons b t1 (cons b t' env)"]
+     %> apply_assm_spec "IH" ["e_c"; "env"; "t2"; "a"; "b"; "t1"]
+     %> solve
+     %> solve
+     %> apply_thm_spec weakening_lemma ["e_c"; "cons c t1 (cons a t' env)"; "t2"; "cons a t1 env"]
      %> assumption
-     %> apply_thm_specialized shadow ["a"; "t1"; "t'"; "env"]
-     %> apply_thm_specialized shadow' ["b"; "t1"; "t'"; "env"]
-  |> destr_intro %> compare_atoms "b" "c" %> destr_intro
-  |> case "lam" %> exists' ["a"; "[a b]e_c"; "t1"; "t2"] %> repeat by_solver %> destruct_goal %> assumption
-  |> apply_thm_specialized swap_lambda_typing_lemma ["e_c"; "env"; "t2"; "c"; "t1"; "a"; "t'"] %> assumption
-  |> destr_intro
-     %> case "lam"
-     %> exists' ["c"; "[a b]e_c"; "t1"; "t2"]
-     %> repeat by_solver
-     %> destruct_goal
-     %> assumption
-  |> apply_thm_specialized weakening_lemma ["[a b]e_c"; "cons b t' (cons c t1 env)"; "t2"; "cons c t1 (cons b t' env)"]
-  |> apply_assm_specialized "IH" ["e_c"; "cons c t1 env"; "t2"; "a"; "b"; "t'"] %> repeat by_solver
-  |> apply_thm_specialized weakening_lemma ["e_c"; "cons c t1 (cons a t' env)"; "t2"; "cons a t' (cons c t1 env)"]
+     %> apply_thm_spec shadow ["a"; "t1"; "t'"; "env"]
+     %> apply_thm_spec shadow' ["b"; "t1"; "t'"; "env"]
+  |> intro' %> compare_atoms "b" "c" %> intro'
+  |> case "lam" %> exists' ["a"; "[a b]e_c"; "t1"; "t2"] %> repeat solve %> destruct_goal %> assumption
+  |> apply_thm_spec swap_lambda_typing_lemma ["e_c"; "env"; "t2"; "c"; "t1"; "a"; "t'"] %> assumption
+  |> intro' %> case "lam" %> exists' ["c"; "[a b]e_c"; "t1"; "t2"] %> repeat solve %> destruct_goal %> assumption
+  |> apply_thm_spec weakening_lemma ["[a b]e_c"; "cons b t' (cons c t1 env)"; "t2"; "cons c t1 (cons b t' env)"]
+  |> apply_assm_spec "IH" ["e_c"; "cons c t1 env"; "t2"; "a"; "b"; "t'"] %> repeat solve
+  |> apply_thm_spec weakening_lemma ["e_c"; "cons c t1 (cons a t' env)"; "t2"; "cons a t' (cons c t1 env)"]
      %> apply_assm "Hlam_2"
-  |> apply_thm_specialized env_inclusion_shuffle ["c"; "t1"; "a"; "t'"; "env"] %> by_solver
-  |> apply_thm_specialized env_inclusion_shuffle ["b"; "t'"; "c"; "t1"; "env"] %> by_solver
+  |> apply_thm_spec env_inclusion_shuffle ["c"; "t1"; "a"; "t'"; "env"] %> solve
+  |> apply_thm_spec env_inclusion_shuffle ["b"; "t'"; "c"; "t1"; "env"] %> solve
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      %> case "app"
      %> exists' ["[a b]e1"; "[a b]e2"; "t2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
-     %> apply_assm_specialized "IH" ["e1"; "env"; "arrow t2 t"; "a"; "b"; "t'"]
-     %> repeat by_solver
+     %> apply_assm_spec "IH" ["e1"; "env"; "arrow t2 t"; "a"; "b"; "t'"]
+     %> repeat solve
      %> apply_assm "Happ_1"
-     %> apply_assm_specialized "IH" ["e2"; "env"; "t2"; "a"; "b"; "t'"]
-     %> repeat by_solver
+     %> apply_assm_spec "IH" ["e2"; "env"; "t2"; "a"; "b"; "t'"]
+     %> repeat solve
      %> apply_assm "Happ_2"
   |> qed
 
@@ -598,11 +588,8 @@ let swap_lambda_typing_thm =
 let swap_lambda_typing =
   proof' swap_lambda_typing_thm
   |> repeat intro %> intros ["Ha"] %> compare_atoms "a" "b"
-  |> destr_intro %> trivial
-  |> destr_intro
-     %> apply_thm_specialized swap_lambda_typing' ["e_a"; "env"; "t2"; "a"; "b"; "t1"]
-     %> by_solver
-     %> assumption
+  |> intro' %> trivial
+  |> intro' %> apply_thm_spec swap_lambda_typing' ["e_a"; "env"; "t2"; "a"; "b"; "t1"] %> solve %> assumption
   |> qed
 
 let typing_cons_fresh_thm =
@@ -623,38 +610,37 @@ let typing_cons_fresh =
   |> intros' ["Hb"; "b"; ""]
      %> case "var"
      %> exists "b"
-     %> by_solver
+     %> solve
      %> case "next"
      %> exists' ["a"; "ta"; "env"]
-     %> by_solver
-     %> by_solver
+     %> solve
+     %> solve
      %> assumption
   |> intros' ["Hlam"; "b"; "e_b"; "t1"; "t2"; ""; ""; ""]
      %> get_fresh_atom "c" "a b e_b t1 t2 env"
      %> case "lam"
      %> exists' ["c"; "[c b]e_b"; "t1"; "t2"]
-     %> repeat by_solver
+     %> repeat solve
      %> destruct_goal
      %> assumption
-     %> apply_thm_specialized weakening_lemma
-          ["[c b]e_b"; "cons a ta (cons c t1 env)"; "t2"; "cons c t1 (cons a ta env)"]
-     %> apply_assm_specialized "IH" ["[c b]e_b"; "t2"; "cons c t1 env"; "a"; "ta"]
-     %> repeat by_solver
-     %> apply_thm_specialized swap_lambda_typing' ["e_b"; "env"; "t2"; "b"; "c"; "t1"]
-     %> by_solver
+     %> apply_thm_spec weakening_lemma ["[c b]e_b"; "cons a ta (cons c t1 env)"; "t2"; "cons c t1 (cons a ta env)"]
+     %> apply_assm_spec "IH" ["[c b]e_b"; "t2"; "cons c t1 env"; "a"; "ta"]
+     %> repeat solve
+     %> apply_thm_spec swap_lambda_typing' ["e_b"; "env"; "t2"; "b"; "c"; "t1"]
+     %> solve
      %> apply_assm "Hlam_2"
-     %> apply_thm_specialized env_inclusion_shuffle ["a"; "ta"; "c"; "t1"; "env"]
-     %> by_solver
+     %> apply_thm_spec env_inclusion_shuffle ["a"; "ta"; "c"; "t1"; "env"]
+     %> solve
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      %> case "app"
      %> exists' ["e1"; "e2"; "t2"]
-     %> by_solver
+     %> solve
      %> destruct_goal
-     %> apply_assm_specialized "IH" ["e1"; "arrow t2 t"; "env"; "a"; "ta"]
-     %> repeat by_solver
+     %> apply_assm_spec "IH" ["e1"; "arrow t2 t"; "env"; "a"; "ta"]
+     %> repeat solve
      %> apply_assm "Happ_1"
-     %> apply_assm_specialized "IH" ["e2"; "t2"; "env"; "a"; "ta"]
-     %> repeat by_solver
+     %> apply_assm_spec "IH" ["e2"; "t2"; "env"; "a"; "ta"]
+     %> repeat solve
      %> apply_assm "Happ_2"
   |> qed
 
@@ -663,6 +649,6 @@ let empty_contradiction_thm = lambda_thm "forall a :atom. forall t :term. (InEnv
 let empty_contradiction =
   proof' empty_contradiction_thm
   |> intro %> intro %> intros ["H"] %> destruct_assm "H"
-  |> intros' ["contra"; "env'"] %> by_solver
-  |> intros' ["contra"; "b"; "s"; "env'"; ""] %> by_solver
+  |> intros' ["contra"; "env'"] %> solve
+  |> intros' ["contra"; "b"; "s"; "env'"; ""] %> solve
   |> qed

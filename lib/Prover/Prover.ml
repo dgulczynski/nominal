@@ -61,24 +61,24 @@ let specialize_proof proof specs env =
     let env, h = judgement' proof in
     let on_forall_atom (A_Bind (_, a)) f =
       let b = parse_atom_in_env identifiers_env spec in
-      SpecializedAtom (b, (a |-> b) f)
+      SpecAtom (b, (a |-> b) f)
     in
     let on_forall_term (V_Bind (_, x)) f =
       let t = parse_term_in_env identifiers_env spec in
-      SpecializedTerm (t, (x |=> t) f)
+      SpecTerm (t, (x |=> t) f)
     in
     match specialize on_forall_atom on_forall_term h with
-    | SpecializedAtom (a, f) -> proof_specialize_atom (env, f) a proof
-    | SpecializedTerm (t, f) -> proof_specialize_term (env, f) t proof
+    | SpecAtom (a, f) -> proof_specialize_atom (env, f) a proof
+    | SpecTerm (t, f) -> proof_specialize_term (env, f) t proof
   in
   List.fold_left specialize (proof_step 5 proof) specs
 
-let apply_assm_specialized h_name specs state =
+let apply_assm_spec h_name specs state =
   let env = goal_env state in
   let h_proof = assm_proof h_name env in
   apply_internal ~h_name (specialize_proof h_proof specs env) state
 
-let apply_thm_specialized thm specs state =
+let apply_thm_spec thm specs state =
   let thm_proof = proven thm and env = goal_env state in
   apply_internal (specialize_proof thm_proof specs env) state
 
@@ -87,7 +87,7 @@ let ex_falso state =
   let goal = (goal_env state, F_Bot) in
   unfinished goal context
 
-let by_solver state =
+let solve state =
   let env, f = goal state in
   let ctx = context state in
   let proof_env = ProofEnv.map_assumptions snd id env in
@@ -310,10 +310,10 @@ let add_assumption_thm' h_name h_proof state =
 
 let add_assumption_thm h_name = add_assumption_thm' h_name % proven
 
-let add_assumption_thm_specialized h_name h_proof specs state =
+let add_assumption_thm_spec h_name h_proof specs state =
   let env, _ = goal state in
-  let h_specialized_proof = specialize_proof (proven h_proof) specs env in
-  add_assumption_thm' h_name h_specialized_proof state
+  let h_spec_proof = specialize_proof (proven h_proof) specs env in
+  add_assumption_thm' h_name h_spec_proof state
 
 let specialize_assm h_name h_spec_name specs state =
   let env = goal_env state in

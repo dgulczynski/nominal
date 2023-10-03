@@ -144,11 +144,11 @@ let forall_atom_i (A_Bind (a_name, A a) as a_bind) p =
 
 let forall_atom_e b p =
   let env, f = judgement p in
-  let on_forall_atom (A_Bind (_, a)) f = SpecializedAtom (b, (a |-> b) f) in
+  let on_forall_atom (A_Bind (_, a)) f = SpecAtom (b, (a |-> b) f) in
   let on_forall_term _ = raise_in_env env % not_a_forall_atom in
   match specialize on_forall_atom on_forall_term f with
-  | SpecializedAtom (b, f) -> P_SpecializeAtom ((env, f), b, p)
-  | SpecializedTerm (_, f) -> raise_in_env env $ not_a_forall_atom f
+  | SpecAtom (b, f) -> P_SpecializeAtom ((env, f), b, p)
+  | SpecTerm (_, f) -> raise_in_env env $ not_a_forall_atom f
 
 let forall_term_i (V_Bind (x_name, V x) as x_bind) p =
   let env, f = judgement p in
@@ -159,10 +159,10 @@ let forall_term_i (V_Bind (x_name, V x) as x_bind) p =
 let forall_term_e t p =
   let env, f = judgement p in
   let on_forall_atom _ = raise_in_env env % not_a_forall_term in
-  let on_forall_term (V_Bind (_, x)) f = SpecializedTerm (t, (x |=> t) f) in
+  let on_forall_term (V_Bind (_, x)) f = SpecTerm (t, (x |=> t) f) in
   match specialize on_forall_atom on_forall_term f with
-  | SpecializedAtom (_, f) -> raise_in_env env $ not_a_forall_term f
-  | SpecializedTerm (t, f) -> P_SpecializeTerm ((env, f), t, p)
+  | SpecAtom (_, f) -> raise_in_env env $ not_a_forall_term f
+  | SpecTerm (t, f) -> P_SpecializeTerm ((env, f), t, p)
 
 let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
   let f = (A a |-> b) f_a in

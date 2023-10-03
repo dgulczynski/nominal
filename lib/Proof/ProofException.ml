@@ -101,5 +101,5 @@ let unknown_case case f =
   proof_exception_from_printer exn
 
 let cannot_specialize f =
-  let exn = sequence [str "Only implications and foralls can be specialized, not"; pretty_formula f] in
+  let exn = sequence [str "Only implications and foralls can be spec, not"; pretty_formula f] in
   proof_exception_from_printer exn
