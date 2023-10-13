@@ -317,9 +317,21 @@ unification under the presence of binders.
 Authors utilize the binding construct of the implementation language to represent the binding in the language being formalized.
 \\
 
+\item \textbf{Beluga} is a programming framework designed for reasoning about formal systems.
+Based on the LF logical framework, it encodes HOAS approach using dependent types
+and provides support for reasoning with context and contextual objects.
+It's developed at the Complogic group at McGill University, led by Professor Brigitte Pientka\cite{beluga}.
+\\
+
+\item \textbf{Twelf} is a framework used to specify, implement, and prove properties of deductive systems and logics.
+It's based on the LF logical framework, and uses Elf constraint logic programming langauge.
+The principal authors of Twelf are Frank Pfenning, and Carsten Schürmann\cite{twelf}.
+Multiple reasearch projects were developed using Twelf, including a type safety proof for Standard ML\cite{twelf-ml}.
+\\
+
 \item \textbf{Parametric Higher-Order Abstract Syntax} (PHOAS) improves
 on the idea of HOAS, by utilizing dependently-typed abstract syntax trees to
-formalize HOAS in general-purpose type theories, like Coq's Calculus of Inductive Constructions.
+formalize it in general-purpose type theories, like Coq's Calculus of Inductive Constructions.
 Introduced by Adam Chlipala\cite{phoas}, it has been used to develop certified, executable program transformations over several formalizations of statically-typed functional programming languages.
 \\
 
@@ -339,6 +351,7 @@ to automatically derive the substitution operation and proofs of substitution le
 They introduce an automation tactic that solves equations involving terms and substitutions,
 based on their work on the decision procedure of equational theory of
 an extension of the sigma-calculus by Abadi et al\cite{sigma-calculus}.
+\\
 
 \end{itemize}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -3135,12 +3148,13 @@ We must also acknowledge that our framework is still in its infancy,
 requiring substantial refinement to ensure a user-friendly experience, as the
 awkardness and low-level nature of the current tooling obscures the benefits
 of underlying constraint-based sublogic.
-Consequently, it cannot be directly compared to other theorem-proving frameworks like Coq or Agda.
+Consequently, it cannot be directly compared to other theorem-proving frameworks
+like Coq or Twelf.
 
 Nonetheless, we are confident that with enough refinement,
 our framework can prove to be a valuable resource for the specific use cases and
 remain enthusiastic about the framework's potential to
-contribute to the field of formal methods and logic-based reasoning.
+contribute to the field of formal methods and reasoning based on Nominal Logic.
 
 %%%%% BIBLIOGRAFIA
 
