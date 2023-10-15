@@ -65,10 +65,11 @@
 \newcommand\kGuard[1]{[#1]}
 
 % Formulas
-\def\fImp{\to}
+\newcommand*{\ScaledImplies}{\mathrel{\raisebox{0.2ex}{\scalebox{0.75}{\ensuremath{\Longrightarrow}}}}}
+\def\fImp{\ScaledImplies}
 \newcommand\fConstr[1]{#1}
 \newcommand\fCAnd[1]{[#1]\wedge}
-\newcommand\fCImp[1]{[#1]\to}
+\newcommand\fCImp[1]{[#1]\fImp}
 \newcommand\fForallAtom[1]{\forall_A #1 .\:}
 \newcommand\fForallTerm[1]{\forall_T #1 .\:}
 \newcommand\fExistsAtom[1]{\exists_A #1 .\:}

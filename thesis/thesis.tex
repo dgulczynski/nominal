@@ -41,6 +41,8 @@
 \usepackage[toc,page]{appendix}
 \usepackage{multicol}
 \usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{pgf}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -71,6 +73,7 @@
 }
 \setlist{nolistsep}
 \renewcommand{\tt}[1]{\texttt{\small{#1}}}
+\newcommand{\lstt}[1]{{\text{\lstinline[columns=fixed,mathescape]{#1}}}}
 \renewcommand{\it}[1]{\textit{#1}}
 \newcommand{\aequiv}{\ensuremath{=_\alpha}}
 \newcommand{\solverRule}{\vdash}
@@ -88,7 +91,8 @@
 \newcommand{\minuseq}{\mathrel{-}=}
 \newcommand{\shrep}[2][\icEnv]{\ensuremath{ #2_{#1}}}
 \newcommand{\shenv}[2][\icEnv]{\ensuremath{ |#2|_{#1}}}
-\newcommand{\fix}[3]{\ensuremath{\text{fix }#1(#2)\ofkind#3=}}
+\newcommand{\fix}[3]{\ensuremath{\text{fix }#1(#2)\ofkind#3=}}\newcommand{\myatop}[2]{\ensuremath{\genfrac{}{}{0pt}{}{#1\hfill}{#2\hfill}}}
+\newcommand{\scbrk}[2]{\myatop{\textsc{#1}}{\textsc{#2}}}
 \newcolumntype{L}{X}
 \newcolumntype{C}{>{\centering\arraybackslash}X}
 \newcolumntype{R}{>{\raggedleft\arraybackslash}X}
@@ -648,11 +652,10 @@ occurs on the left side of the turnstile.
 
 \section{Goal-reducing rules}
 \begin{figure}[htbp]
-  \framebox[\textwidth]{
-    % TODO: make this box nicer
     \centering
-    \begin{tabular}{ccc}
-      \\ $
+    \begin{tabular}{|c|}
+      \hline \\
+      \begin{tabularx}{\textwidth}{CCC} $
       \inference{
       }{
         \cEnv ; \icEnv \solverRule \atomv = \atomv
@@ -667,8 +670,9 @@ occurs on the left side of the turnstile.
       }{
         \cEnv ; \icEnv \solverRule \symb = \symb
       }
-      $ \\ \\
-      \multicolumn{3}{c}{ $
+      $
+      \end{tabularx}
+      \\ \\ $
       \inference{
         \cEnv ; \icEnv \solverRule \term_1 = \term_2
         &
@@ -676,8 +680,7 @@ occurs on the left side of the turnstile.
       }{
         \cEnv ; \icEnv \solverRule \term_1 \term_1' = \term_2 \term_2'
       }
-      $ } \\ \\
-      \multicolumn{3}{c}{ $
+      $ \\ \\ $
       \inference{
         \cEnv ; \icEnv \solverRule \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
         &
@@ -685,9 +688,8 @@ occurs on the left side of the turnstile.
       }{
         \cEnv ; \icEnv \solverRule \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
       }
-      $ } \\ \\
+      $ \\ \\ \hline
       \end{tabular}
-  }
   \caption{Equality-reduction rules}
   \label{fig:equality-reduction-rules}
 \end{figure}
@@ -949,14 +951,14 @@ but fortunately most of the assumption reducing rules are similar to the goal re
       }{
         \pi \atomv \ceq \atomexp, \cEnv ; \icEnv \solverRule \sconstr
       } $
-      & \textsc{PermReduce} \\ \\
+      & \scbrk{Perm}{Reduce} \\ \\
       $
       \inference{
         \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
       }{
         \termv = \pi \termv, \cEnv ; \icEnv \solverRule \sconstr
       } $
-      & \textsc{PermIdempotent} \\ \\
+      & \scbrk{Perm}{Idempotent} \\ \\
       $
       \inference{
         \varnothing \solverRule \text{ idempotent on } \termv
@@ -965,7 +967,7 @@ but fortunately most of the assumption reducing rules are similar to the goal re
       }{
         \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
       } $
-      & \textsc{PermShortcircuit} \\ \\
+      & \scbrk{Perm}{Shortcircuit} \\ \\
       $
       \inference{
         (\forall \atomv \in \pi.\;
@@ -974,7 +976,7 @@ but fortunately most of the assumption reducing rules are similar to the goal re
       }{
         \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
       } $
-      & \textsc{PermExplode} \\ \\
+      & \scbrk{Perm}{Explode} \\ \\
     \end{tabularx}
   }
   \caption{Permutation-reducing rules}
@@ -1024,21 +1026,21 @@ the special environment $\icEnv$ enviroment.
 \begin{figure}[htpb]
   \centering
   \framebox[\textwidth]{
-    \begin{tabularx}{\textwidth}{Cr}
+    \begin{tabularx}{\textwidth}{C}
       \\ $
       \inference{
         \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term}
           \solverRule \sconstr\subst{\termv}{\term}
       }{
         \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
-      }$ & \textsc{SubstTerm} \\ \\
+      }\:\scbrk{Subst}{Term}$ \\ \\
       $
       \inference{
         \cEnv \subst{\atomv_1}{\atomv_2}; \icEnv\subst{\atomv_1}{\atomv_2}
           \solverRule \sconstr\subst{\atomv_1}{\atomv_2}
       }{
         \atomv_1 \ceq \atomv_2, \cEnv ; \icEnv \solverRule \sconstr
-      } $ & \textsc{SubstAtom} \\ \\
+      }\:\scbrk{Subst}{Atom}$ \\ \\
     \end{tabularx}
   }
   \caption{Substitution rules}
@@ -1386,53 +1388,53 @@ $\formphi \ofkind \kGuard{\constr} \kind$ & \makecell[l]{$\formphi$ is a formula
 We relax kinding rules are through the \it{subkinding} relation.
 \begin{figure}[htbp]
   \centering
-  \framebox[\textwidth]{
-    \setlength{\extrarowheight}{20pt} % Adjust the space between lines
-    \begin{tabularx}{\textwidth}{C}
-        $\inference[\textsc{SubkindRefl}]{
+    \begin{tabular}{|c|}
+        \hline \\
+        \begin{tabularx}{\textwidth}{ccC} { } &
+        $\inference{
         }{
           \cEnv \vdash \kind \subkind \kind
-        }
-        \qquad
-        \inference[\textsc{SubkindTrans}]{
+        }\:\scbrk{Subkind}{Refl}
+        $ & $
+        \inference{
           \cEnv \vdash \kind_1 \subkind \kind_2 &
           \cEnv \vdash \kind_2 \subkind \kind_3
         }{
           \cEnv \vdash \kind_1 \subkind \kind_3
-        }$ \\
-        $\inference[\textsc{SubkindForallAtom}]{
+        }\:\scbrk{Subkind}{Trans} $ \\
+        \end{tabularx} \\ \\
+        $\inference{
           \cEnv \vdash \kind_1 \subkind \kind_2
         }{
           \cEnv \vdash \kForallAtom{\atomv} \kind_1 \subkind \kForallAtom{\atomv} \kind_2
-        }$ \\
-        $\inference[\textsc{SubkindForallTerm}]{
+        }$\:\scbrk{Subkind}{ForallAtom} \\ \\
+        $\inference{
           \cEnv \vdash \kind_1 \subkind \kind_2
         }{
           \cEnv \vdash \kForallTerm{\termv} \kind_1 \subkind \kForallTerm{\termv} \kind_2
-        }$ \\
-        $\inference[\textsc{SubkindFunction}]{
+        }$\:\scbrk{Subkind}{ForallTerm} \\ \\
+        $\inference{
           \cEnv \vdash \kind_1' \subkind \kind_1 &
           \cEnv \vdash \kind_2 \subkind \kind_2'
         }{
           \cEnv \vdash \kind_1 \karrow \kind_2 \subkind \kind_1' \karrow \kind_2'
-        }$ \\
-        $\inference[\textsc{SubkindReduce}]{
+        }\:\scbrk{Subkind}{Function}$ \\ \\
+        $\inference{
           \cEnv \vDash \constr
         }{
           \cEnv \vdash \kGuard{\constr}\kind \subkind \kind
-        }
+        }\:\scbrk{Subkind}{Reduce}
         \qquad
-        \inference[\textsc{SubkindGuard}]{
+        \inference{
           \cEnv, \constr \vdash \kind_1 \subkind \kind_2
         }{
           \cEnv \vdash \kind_1 \subkind \kGuard{\constr}\kind_2
-        }$
-    \end{tabularx}
-  }
+        }\:\scbrk{Subkind}{Guard}$ \\ \\
+        \hline
+    \end{tabular}
   \caption{Subkinding Rules}
   \label{fig:subkinding-rules}
 \end{figure}
-
 Function kind is contravariant to the subkinding relation on the left argument:
 Universally quantified kinds only subkind if they are quantified over the same name.
 Constraints from the left side that are solved through $\vDash$ relation can be dropped,
@@ -1470,54 +1472,7 @@ $\formphi$ & $::=$ & $\ldots
     & (formulas)
 \end{tabular}
 \\ \\
-Constraints and guards:
-
-\begin{tabular}{rrlr}
-$\formphi$ & $::=$ & $\ldots
-               \bnfor \fConstr{\constr}
-               \bnfor \fCAnd{\constr} \formphi
-               \bnfor \fCImp{\constr} \formphi
-               \bnfor \ldots$  (formulas)
-\end{tabular}
-
-\begin{figure}[htbp]
-  \centering
-\begin{tabularx}{\textwidth}{|CCC|}
-\hline & & \\ $
-  \inference{
-  }{
-    \cEnv; \kEnv \vdash \fConstr{\constr} \ofkind \kProp
-  }
-  $ & $
-  \inference{
-    \cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp
-  }{
-    \cEnv; \kEnv \vdash \fCAnd{\constr} \formphi \ofkind \kProp
-  }
-  $ & $
-  \inference{
-    \cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp
-  }{
-    \cEnv; \kEnv \vdash \fCImp{\constr} \formphi \ofkind \kProp
-  } $ \\ & & \\
-\hline
-\end{tabularx}
-  \caption{Constraint kinding rules}
-  \label{fig:constraint-kinding}
-\end{figure}
-
-Naturally, constraints can act as propositions, as we can reason about their
-validity, and thus they are of kind $\kProp$.
-Constructions $\fCImp{\constr} \formphi$ and $\fCAnd{\constr} \formphi$
-are called \it{guards} and make assumptions about the environment in which
-one shall interpret the guarded formula.
-The former states that the formula $\formphi$ holds if the constraint $\constr$ is valid,
-analogously to a propositional implication.
-The latter additionaly requires that $\constr$ already holds.
-
-TODO: Write why not simply use propositional implication and conjunction (kinding example?)
-
-Next: propositional variables, functions and applications:
+Propositional variables, functions and applications:
 
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\ldots
@@ -1530,53 +1485,96 @@ $\formphi$ & $::=$ & $\ldots
                \bnfor \formphi \fApp \formphi
                \bnfor \ldots$
     & (formulas)
-\end{tabular}\\
+\end{tabular}
+\\ \\
+Constraints and guards:
+
+\begin{tabular}{rrlr}
+$\formphi$ & $::=$ & $\ldots
+               \bnfor \fConstr{\constr}
+               \bnfor \fCAnd{\constr} \formphi
+               \bnfor \fCImp{\constr} \formphi
+               \bnfor \ldots$  (formulas)
+\end{tabular}
+
 \begin{figure}[htpb]
   \begin{tabularx}{\textwidth}{|CC|}
     \hline & \\
+     $\inference{
+      (\propv \ofkind \kind) \in  \kEnv
+  }{
+    \cEnv; \kEnv \vdash \propv \ofkind \kind
+  }\:\scbrk{Kind}{Var}
+  $ &
+     $\inference{
+  }{
+    \cEnv; \kEnv \vdash \fConstr{\constr} \ofkind \kProp
+  }\:\scbrk{Kind}{Constr}
+  $ \\ & \\ $
+  \inference{
+    \cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp
+  }{
+    \cEnv; \kEnv \vdash \fCAnd{\constr} \formphi \ofkind \kProp
+  }\:\scbrk{Kind}{ConstrAnd}
+  $ & $
+  \inference{
+    \cEnv,\constr; \kEnv \vdash \formphi \ofkind \kProp
+  }{
+    \cEnv; \kEnv \vdash \fCImp{\constr} \formphi \ofkind \kProp
+  }\:\scbrk{Kind}{ConstrImp}$ \\ & \\
     $\inference{
       \cEnv; \kEnv \vdash \formphi \ofkind \kind
     }{
       \cEnv; \kEnv \vdash \fLamAtom{\atomv} \formphi \ofkind \kForallAtom{\atomv}\kind
-    }$
+    }\:\scbrk{Kind}{FunAtom}$
     &
     $\inference{
       \cEnv;\kEnv\vdash \formphi \ofkind \kForallAtom{\atomv}\kind
     }{
       \cEnv;\kEnv\vdash \formphi \fAppAtom{\atomexp} \ofkind \kind \subst{\atomv}{\atomexp}
-    }$
+    }\:\scbrk{Kind}{AppAtom}$
     \\ & \\
     $\inference{
       \cEnv; \kEnv \vdash \formphi \ofkind \kind
     }{
       \cEnv; \kEnv \vdash \fLamTerm{\termv} \formphi \ofkind \kForallTerm{\termv}\kind
-    }$
+    }\:\scbrk{Kind}{FunTerm}$
     &
     $\inference{
       \cEnv;\kEnv\vdash \formphi \ofkind \kForallTerm{\termv}\kind
     }{
       \cEnv;\kEnv\vdash \formphi \fAppTerm{\term} \ofkind \kind\subst{\termv}{\term}
-    }$
+    }\:\scbrk{Kind}{FunAtom}$
     \\ & \\
     $\inference{
       \cEnv; \kEnv, \propv \ofkind \kind_1 \vdash \formphi \ofkind \kind_2
     }{
       \cEnv; \kEnv \vdash \fLamForm{\propv}{\kind_1} \formphi \ofkind \kind_1 \karrow \kind_2
-    }$
+    }\:\scbrk{Kind}{FunForm}$
     &
     $\inference{
-      \cEnv; \kEnv \vdash \formphi_1 \ofkind \kind' \karrow \kind
+      \quad \cEnv; \kEnv \vdash \formphi_1 \ofkind \kind' \karrow \kind
       \\
-      \cEnv; \kEnv \vdash \formphi_2 \ofkind \kind'
+      \quad \cEnv; \kEnv \vdash \formphi_2 \ofkind \kind' \hfill
     }{
       \cEnv;\kEnv\vdash \formphi_1 \fApp \formphi_2 \ofkind \kind
-    }$
+    }\:\scbrk{Kind}{AppForm}$
     \\ & \\
     \hline
 \end{tabularx}
-  \caption{Function kinding rules}
-  \label{fig:function-kinding}
+  \caption{Kinding rules}
+  \label{fig:kinding}
 \end{figure}
+Naturally, constraints can act as propositions, as we can reason about their
+validity, and thus they are of kind $\kProp$.
+Constructions $\fCImp{\constr} \formphi$ and $\fCAnd{\constr} \formphi$
+are called \it{guards} and make assumptions about the environment in which
+one shall interpret the guarded formula.
+The former states that the formula $\formphi$ holds if the constraint $\constr$ is valid,
+analogously to a propositional implication.
+The latter additionaly requires that $\constr$ already holds.
+
+TODO: Write why not simply use propositional implication and conjunction (kinding example?)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
@@ -1595,13 +1593,13 @@ $\formphi$ & $::=$ & $\ldots
   \cEnv;\kEnv, (\propv \ofkind \kForallTerm{Y} \kGuard{Y \cshlt \termv}{\kind\subst{\termv}{Y}})\vdash \formphi \ofkind \kind
 }{
   \cEnv;\kEnv\vdash (\fix{\propv}{\termv}{\kind}{\formphi}) \ofkind \kForallTerm{\termv}{\kind}
-}
+}\:\scbrk{Kind}{Fixpoint}
   $ \\ \\
   $
 (\fix{\propv}{\termv}{\kind}{\formphi})\fApp\term
 \;\equiv\;
 \formphi\subst{\termv}{\term}\subst{\propv}{(\fix{\propv}{\termv}{\kind}{\formphi})}
-$
+\quad\:\scbrk{Fixpoint}{Unwrap}$
   \\ \\ \hline
 \end{tabularx}
   \caption{Fixpoint kinding rule}
@@ -1639,14 +1637,14 @@ $ \\ \\
 $
   \\ \\ \hline
 \end{tabularx}
-  \caption{Peano arithmetic expressed with fixpoint}
+  \caption{Peano arithmetic predicates expressed with fixpoint}
   \label{fig:peano-fixpoint}
 \end{figure}
 
 Notice how the constraint $(N \ceq {S \tapp M})$ guards the recursive call to $Nat$,
 ensuring that constraint $(M \cshlt N)$ will be satisfied during kind checking of
 $({{Nat}\fAppTerm{M}})$ in the kind derivation of the whole formula
-$({Nat} \ofkind \kForallTerm{N}{\kProp})$, analosly in $PlusEq$.
+$({Nat} \ofkind \kForallTerm{N}{\kProp})$, analogously in $PlusEq$.
 
 TODO: Write how $N$ is treated differently from $M$ and $K$?
 \\
@@ -1693,124 +1691,121 @@ without that $\constr$ guard.
 
 \begin{figure}[htbp]
   \centering
-  \begin{tabular}{|c|}
+  \begin{tabularx}{\textwidth}{|C|}
   \hline \\
   $
   \inference{
     \formphi \in \Theta
   }{
     \jgmnt[\cEnv;\Theta]{\formphi}
-  }[(\ensuremath{Assumption})]
+  }\scbrk{}{Assumption}
   \qquad
-  \inference{
-    \cjgmnt[\cEnv]{\constr}
-  }{
-    \jgmnt[\cEnv;\Theta]{\constr}
-  }[(\ensuremath{constr^i})]
-  $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\bot}
   }{
     \jgmnt[\cEnv;\Theta]{\formphi}
-  }[(\ensuremath{\bot^e})]
+  }\scbrk{}{ExFalso}
+  $ \\ \\ $
+  \inference{
+    \cjgmnt[\cEnv]{\constr}
+  }{
+    \jgmnt[\cEnv;\Theta]{\constr}
+  }\scbrk{}{ConstrI}
   \qquad
   \inference{
     \cjgmnt[\cEnv]{\bot_\constr}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi}
-  }[(\ensuremath{constr^e})]
+  }\scbrk{}{ConstrE}
   $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta,\formphi_1]{\formphi_2}
   }{
     \jgmnt[\cEnv;\Theta]{\formphi_1 \fImp \formphi_2}
-  }[(\ensuremath{\fImp^i})]
+  }\scbrk{}{ImpI}
   \qquad
   \inference{
     \jgmnt[\cEnv_1;\Theta_1]{\formphi_1} &
     \jgmnt[\cEnv_2;\Theta_2]{\formphi_1 \fImp \formphi_2}
     }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi_2}
-  }[(\ensuremath{\fImp^e})]
+  }\scbrk{}{ImpE}
   $ \\ \\ $
   \inference{
     \jgmnt[\cEnv, \constr;\Theta]{\formphi}
   }{
     \jgmnt[\cEnv;\Theta]{\fCImp{\constr}\formphi}
-  }[(\ensuremath{\fCImp{\cdot}^i})]
+  }\scbrk{Constr}{ImpI}
   \qquad
   \inference{
     \jgmnt[\cEnv_1;\Theta_1]{\constr} &
     \jgmnt[\cEnv_2;\Theta_2]{\fCImp{\constr}\formphi}
     }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi}
-  }[(\ensuremath{\fCImp{\cdot}^e})]
+  }\scbrk{Constr}{ImpE}
   $ \\ \\ $
   \inference{
     \jgmnt[\cEnv_1;\Theta_1]{\formphi_1} &
     \jgmnt[\cEnv_2;\Theta_2]{\formphi_2}
   }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\formphi_1 \wedge \formphi_2}
-  }[(\ensuremath{\wedge^i})]
+  }\scbrk{}{AndI}
+  $ \\ \\ $
   \qquad
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi_1 \wedge \formphi_2}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi_1}
-  }[(\ensuremath{\wedge^e_1})]\qquad
+  }\scbrk{}{AndE1}\qquad
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi_1 \wedge \formphi_2}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi_2}
-  }[(\ensuremath{\wedge^e_2})]
+  }\scbrk{}{AndE2}
   $ \\ \\ $
   \inference{
-    \cjgmnt[\cEnv]{\constr} &
-    \jgmnt[\cEnv, \constr;\Theta]{\formphi}
+    \jgmnt[\cEnv_1;\Theta_1]{\constr} &
+    \jgmnt[\cEnv_2;\Theta_2]{\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\formphi}
-  }[(\ensuremath{\fCAnd{\cdot}^i})]
-  \qquad
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\fCAnd{\constr}\formphi}
+  }\scbrk{Constr}{AndI}
+  $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\formphi}
     }{
     \jgmnt[\cEnv;\Theta]{\constr}
-  }[(\ensuremath{\fCAnd{\cdot}^e_1})]\qquad
+  }\scbrk{Constr}{AndE1}\qquad
   \inference{
     \jgmnt[\cEnv]{\fCAnd{\constr}\formphi} &
     \jgmnt[\cEnv;\Theta]{\formphi: \kProp}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi}
-  }[(\ensuremath{\fCAnd{\cdot}^e_2})]
+  }\scbrk{Constr}{AndE2}
   $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi_1}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
-  }[(\ensuremath{\vee^i_1})]
+  }\scbrk{}{OrI1}
   \qquad
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi_2}
   }{
     \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
-  }[(\ensuremath{\vee^i_2})]
-  \qquad
+  }\scbrk{}{OrI2}
+  $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2} \\
     \jgmnt[\cEnv;\Theta,\formphi_1]{\psi} &
     \jgmnt[\cEnv;\Theta,\formphi_2]{\psi}
   }{
     \jgmnt[\cEnv;\Theta]{\psi}
-  }[(\ensuremath{\vee^e})]
+  }\scbrk{}{OrE}
   $ \\ \\ \hline
-  \end{tabular}
+  \end{tabularx}
   \caption{Natural deduction}
   \label{fig:deduction}
 \end{figure}
-
-Inference rules for quantifiers are rather straightforward,
-with the only novelty being that we differtiate between atom and term
-quantification, and restrict the quantified name to be \it{fresh} in the environment (it may not occur in any of the assumptions).
 
 \begin{figure}[htbp]
   \centering
@@ -1821,65 +1816,96 @@ quantification, and restrict the quantified name to be \it{fresh} in the environ
     \jgmnt[\cEnv;\Theta]{\formphi}
   }{
     \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\formphi}
-  }[(\ensuremath{{\fForallAtom{}}^i})]
+  }\:\scbrk{Forall}{AtomI}
   \qquad
   \inference{
     \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\formphi}
   }{
     \jgmnt[\cEnv;\Theta]{\formphi \{\atomv \mapsto \atomv'\}}
-  }[(\ensuremath{{\fForallAtom{}}^e})]
+  }\:\scbrk{Forall}{AtomE}
   $ \\ \\ $
   \inference{
     \termv \notin \fv[\cEnv;\Theta] &
     \jgmnt[\cEnv;\Theta]{\formphi}
   }{
     \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\formphi}
-  }[(\ensuremath{{\fForallTerm{}}^i})]
+  }\:\scbrk{Forall}{TermI}
   \qquad
   \inference{
     \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\formphi}
   }{
     \jgmnt[\cEnv;\Theta]{\formphi \{\termv \mapsto \termv'\}}
-  }[(\ensuremath{{\fForallTerm{}}^e})]
+  }\:\scbrk{Forall}{TermE}
   $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi \{\atomv \mapsto \atomv'\}}
     }{
     \jgmnt[\cEnv;\Theta]{\fExistsAtom{\atomv}\formphi}
-  }[\textsc{ExistsAtomI}]
+  }\:\scbrk{Exists}{AtomI}
   \qquad
   \inference{
-    \jgmnt[\cEnv_1;\Theta_1]{\fExistsAtom{\atomv}\formphi} \\
-    \jgmnt[\cEnv_2;\Theta_2,\formphi \{\atomv \mapsto \atomv'\}]{\psi} \\
+    \qquad \jgmnt[\cEnv_1;\Theta_1]{\fExistsAtom{\atomv}\formphi} \hfill \\
+    \qquad \jgmnt[\cEnv_2;\Theta_2,\formphi \{\atomv \mapsto \atomv'\}]{\psi} \hfill \\
     \atomv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]
     }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
-  }[\textsc{ExistsAtomE}]
+  }\:\scbrk{Exists}{AtomE}
   $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi \{\termv \mapsto \termv'\}}
     }{
     \jgmnt[\cEnv;\Theta]{\fExistsTerm{\termv}\formphi}
-  }[\textsc{ExistsTermI}]
+  }\:\scbrk{Exists}{TermI}
   \qquad
   \inference{
-    \jgmnt[\cEnv_1;\Theta_1]{\fExistsTerm{\termv}\formphi} \\
-    \jgmnt[\cEnv_2;\Theta_2,\formphi \{\termv \mapsto \termv'\}]{\psi} \\
+    \qquad \jgmnt[\cEnv_1;\Theta_1]{\fExistsTerm{\termv}\formphi} \hfill \\
+    \qquad \jgmnt[\cEnv_2;\Theta_2,\formphi \{\termv \mapsto \termv'\}]{\psi} \hfill \\
     \termv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]
     }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
-  }[\textsc{ExistsTermE}]
-  $ \\ \\ $
-  \inference{
-    \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \formphi(\termv'))]{\formphi(\termv)}
-    }{
-    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \formphi(\termv)}
-  }[\textsc{Induction}]
+  }\:\scbrk{Exists}{TermE}
   $ \\ \\ \hline
   \end{tabularx}
   \caption{Quantifiers}
   \label{fig:quantifiers}
 \end{figure}
+Inference rules for quantifiers are rather straightforward,
+with the only novelty being that we differtiate between atom and term
+quantification, and restrict the quantified name to be \it{fresh} in the environment (it may not occur in any of the assumptions).
+
+\begin{figure}[htpb]
+  \centering
+  \begin{tabularx}{\textwidth}{|C|}
+  \hline
+  \\ $
+  \inference{
+  }{
+    \jgmnt[]{\fForallAtom{\:\atomv,\:\atomv'} (\atomv \ceq \atomv') \vee (\atomv \cneq \atomv')}
+  }\:\scbrk{Axiom}{Compare}
+  $ \\ \\ $
+  \inference{
+  }{
+    \jgmnt[]{\fForallTerm{\termv} \:\fExistsAtom{\atomv} (\atomv \cfresh \termv)}
+  }\:\scbrk{Axiom}{Fresh}
+  $ \\ \\ $
+  \inference{
+  }{
+    \jgmnt[]{\fForallTerm{\termv} (\fExistsAtom{\atomv}\: \termv = \atomv) \vee (\fExistsAtom{\atomv}\:\fExistsTerm{\termv'}\: \termv = \tbind{\atomv}{\termv'}) }
+  }\:\scbrk{Axiom}{Inversion} $ \\
+  $\vee \: (\fExistsTerm{\termv_1,\:\termv_2}\: \termv = \tbind{\atomv}{\termv'}) \vee ({symbol}\: \termv) \qquad\qquad$ \\
+  \\
+  \hline
+  \end{tabularx}
+  \caption{Axioms}
+  \label{fig:axioms}
+\end{figure}
+
+The only axioms of our logic are strictly related to constraints:
+\begin{enumerate}
+\item We can deterministically compare any two atoms,
+\item There always exists a fresh atom,
+\item We can always deduce the structure of a term.
+\end{enumerate}
 
 \begin{figure}[htbp]
 \centering
@@ -1891,65 +1917,37 @@ $
     \jgmnt[\cEnv;\Theta]{\formphi}
     }{
     \jgmnt[\cEnv\{\atomv \mapsto \atomexp\};\Theta\{\atomv \mapsto \atomexp\}]{\formphi\{\atomv \mapsto \atomexp\}}
-  }[\textsc{SubAtom}]
+  }\:\scbrk{Sub}{Atom}
 $ \\ \\ $
   \inference{
     \cjgmnt[\cEnv]{\termv \ceq \term} &
     \jgmnt[\cEnv;\Theta]{\formphi}
     }{
     \jgmnt[\cEnv\{\termv \mapsto \term\};\Theta\{\termv \mapsto \term\}]{\formphi\{\termv \mapsto \term\}}
-  }[\textsc{SubTerm}]
+  }\:\scbrk{Sub}{Term}
 $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\psi} &
     \jgmnt[\cEnv;\Theta]{\psi \equiv \formphi}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi}
-  }[\textsc{Equiv}]
-$ \\ \\ \hline
+  }\:\scbrk{Equiv}{}
+$ \\ \\ $
+  \inference{
+    \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \formphi(\termv'))]{\formphi(\termv)}
+    }{
+    \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \formphi(\termv)}
+  }\:\scbrk{Induction}{}
+  $ \\ \\ \hline
 \end{tabularx}
 \caption{Flexibility rules}
 \label{fig:flexibility}
 \end{figure}
-
 To make the framework more flexible we introduce a way for using equivalent formulas:
 And a way to substitute atoms for atomic expression and variables for terms, if the solver can prove their equality:
 Finally, we define induction over term structure,
 and thanks to the constraints sublogic we can easily define the notion of
-\it{smaller terms} needed for the inductive hypothesis:
-
-\begin{figure}[htpb]
-  \centering
-  \begin{tabularx}{\textwidth}{|C|}
-  \hline
-  \\ $
-  \inference{
-  }{
-    \jgmnt[]{\fForallAtom{\:\atomv,\:\atomv'} (\atomv \ceq \atomv') \vee (\atomv \cneq \atomv')}
-  }[\textsc{AxiomCompare}]
-  $ \\ \\ $
-  \inference{
-  }{
-    \jgmnt[]{\fForallTerm{\termv} \:\fExistsAtom{\atomv} (\atomv \cfresh \termv)}
-  }[\textsc{AxiomFresh}]
-  $ \\ \\ $
-  \inference{
-  }{
-    \jgmnt[]{\fForallTerm{\termv} (\fExistsAtom{\atomv}\: \termv = \atomv) \vee (\fExistsAtom{\atomv}\:\fExistsTerm{\termv'}\: \termv = \tbind{\atomv}{\termv'}) }
-  }[\textsc{AxiomInversion}] $ \\
-  $\vee \: (\fExistsTerm{\termv_1,\:\termv_2}\: \termv = \tbind{\atomv}{\termv'}) \vee ({symbol}\: \termv) \qquad\qquad$ \\
-  \\
-  \hline
-  \end{tabularx}
-  \caption{Axioms}
-  \label{fig:axioms}
-\end{figure}
-The only axioms of our logic are strictly related to constraints:
-\begin{enumerate}
-\item We can deterministically compare any two atoms,
-\item There always exists a fresh atom,
-\item We can always deduce the structure of a term.
-\end{enumerate}
+\it{smaller terms} needed for the inductive hypothesis.
 
 The equivalence relation ($\formphi_1 \equiv \formphi_2$) is a bit complicated
 due to subkinding, existence of formulas
@@ -2214,19 +2212,19 @@ All the concepts discussed in previous chapters have been implementation in OCam
 Atoms and variables are represented internally by integers (yet remain disjoint sets)
 --- and their string \it{names} are kept within the environment and binders
 (quantifiers and functions).
-Terms, constraints, kinds, and formulas are defined in \tt{Types} module,
+Terms, constraints, kinds, and formulas are defined in \lstt{Types} module,
 mirroring their previusly described grammars.
 The only difference is that we allow conjunction and disjunction to be used with
 more than two arguments, with the added feature of arguments being labeled by names.
 This naming approach lets the user to easily select desired branches while composing proofs
 or to give meaningful names within the definition of properties.
 
-The \it{Solver} ihabits its own dedicated \tt{Solver} module along with \tt{SolverEnv}
+The \it{Solver} ihabits its own dedicated \lstt{Solver} module along with \lstt{SolverEnv}
 responsible for implementing the specialized environment $\icEnv$ handling the \hyperref[sec:solverenv]{irreducible assumptions}.
-Analogously, the \tt{KindChecker} and \tt{KindCheckerEnv} modules serve similar roles.
+Analogously, the \lstt{KindChecker} and \lstt{KindCheckerEnv} modules serve similar roles.
 
 The proof theory described in previous chapter is distributed over modules
-\tt{Proof}, \tt{ProofEnv}, \tt{ProofEquiv} and is a direct implementation of the proof-theoretic rules.
+\lstt{Proof}, \lstt{ProofEnv}, \lstt{ProofEquiv} and is a direct implementation of the proof-theoretic rules.
 TODO: keep what's interesting, lose what's not
 \begin{lstlisting}[mathescape, language=OCaml, escapebegin=\color{codegreen}]
 (* Module: SolverEnv *)
@@ -2264,19 +2262,19 @@ val bot_e : formula -> proof -> proof
 (*  $\Gamma$; $\Theta$ $\vdash$ c  *)
 val constr_i : proof_env -> constr -> proof
 \end{lstlisting}
-Note that the \tt{Proof} modules provide methods for constructing forward proofs, i.e., those in which more complex conclusions are built from simpler, already proven facts.
+Note that the \lstt{Proof} modules provide methods for constructing forward proofs, i.e., those in which more complex conclusions are built from simpler, already proven facts.
 Unfortunately, this \it{bottom-up} way is not the most convenient method for conducting proofs in intuitionistic logic --- it is significantly easier to construct proofs in \it{top-down}, backwards fashion through simplifying the goal to be proven until we reach trivial matters.
 As such proofs are incomplete by nature, they must have \it{holes},
-and live within some \it{proof context}, as defined in modules \tt{IncProof}.
+and live within some \it{proof context}, as defined in modules \lstt{IncProof}.
 
 TODO: write it better:\\
 Naturally that makes the implementation much more complex, so the appropriate level of confidence in proven propositions will be achieved through other means:
-we delegate the responsibility for the correctness of the proofs to the \tt{Proof} module, and the \tt{IncProof} module serves as a kind of facade for it.
+we delegate the responsibility for the correctness of the proofs to the \lstt{Proof} module, and the \lstt{IncProof} module serves as a kind of facade for it.
 
 \section{Proof assistant}
 To facilitate user interaction with this framework, we provide a practical \it{proof assistant}.
 While simple, it is also powerful and easy to use.
-The interface defined in modules \tt{Prover}, \tt{ProverInternals}, and \tt{Tactics} provides multiple \it{tactics}
+The interface defined in modules \lstt{Prover}, \lstt{ProverInternals}, and \lstt{Tactics} provides multiple \it{tactics}
 (functions that manipulate \it{prover state}) and ways to combine them.
 
 
@@ -2334,11 +2332,11 @@ TODO: put it in a figure I guess?
 Now, some typical tactics: introduction of names and assumptions and applying of
 propositions and theorems.
 Note that propositions can be applied not only on the goal, but also on other
-assumptions via \tt{apply\_in\_assumption} tactic.
-One can also add introduce assumptions to the proof context from theorems via \tt{add\_assumption\_thm}
-(specialized if needed via \tt{add\_assumption\_thm\_spec}) --
+assumptions via\lstt{apply\_in\_assumption} tactic.
+One can also add introduce assumptions to the proof context from theorems via \lstt{add\_assumption\_thm}
+(specialized if needed via \lstt{add\_assumption\_thm\_spec}) --
 or simply add any assumption to the current context together with a new goal (of proving that assumption)
-via \tt{add\_assumption}.
+via \lstt{add\_assumption}.
 \begin{eqnarray*}  \text{\lstinline[columns=fixed]{apply_assm H}} & & \\
     \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\formphi} \\
    & \text{when} & (\tt{H} \ofkind {\formphi }) \in \Theta \\
@@ -2352,7 +2350,7 @@ via \tt{add\_assumption}.
    & \text{when} & \cjgmnt[\Gamma]{\bot}
   \end{eqnarray*}
 Above tactics finish the proofs, either by finding the goal in assumptions
-(which can be made automatically via tactical\tt{assumption}),
+(which can be made automatically via tactical \lstt{assumption}),
 or by running Solver on constraint-assumption and the goal.
 Technical detail is that all formulas in $\Theta$ that are actually constraints
 will also be included in calls to Solver.
@@ -2386,7 +2384,7 @@ Tactics above reduce the current goal.
    & \text{when} & \tt{x} \notin \fv[\Gamma; \Theta; \Sigma]
   \end{eqnarray*}
 Tactics above reduce formulas in assumptions.
-Note that the user provides \tt{destr\_assm'} with a \it{name} that will be bound
+Note that the user provides\lstt{destr\_assm'} with a \it{name} that will be bound
 with existential variable, but the binding is done \it{behind the scenes} and
 actually any string can be given and an unique internal identifier is generated.
 \begin{eqnarray*}
@@ -2412,25 +2410,25 @@ Finally we can prove goals through generalization, induction on terms, and throu
 \end{eqnarray*}
 We also provide shorthand formuals for using the axioms of our logic, described
 in previous chapter.
-Again argument \tt{a} to \tt{get\_fresh\_atom} is given by name and is bound by
+Again argument\lstt{a} to\lstt{get\_fresh\_atom} is given by name and is bound by
 a fresh internal identifier automatically.
 
 Additional we provide the user with some auxiliary tactics:
 \begin{itemize}
-\item \tt{subst} --- substitutes atoms for atom expreesions
+\item \lstt{subst} --- substitutes atoms for atom expreesions
   and variables for terms in goal and environment
   --- as long as Solver proves their equality,
-\item \tt{compute} --- computes WHNF of the current goal,
-\item \tt{try} --- applies a tactic and returns unchanged state if the tactic fails
-\item \tt{repeat} --- applies given tactic (until failure),
-\item \tt{trivial} ---  tries applying some simple tactics
+\item \lstt{compute} --- computes WHNF of the current goal,
+\item \lstt{try} --- applies a tactic and returns unchanged state if the tactic fails
+\item \lstt{repeat} --- applies given tactic (until failure),
+\item \lstt{trivial} ---  tries applying some simple tactics
 \end{itemize}
-Finally, the function \texttt{qed} accepts a prover state and finalizes it.
+Finally, the function \lstt{qed} accepts a prover state and finalizes it.
 If the proof state is indeed finished, the function transforms it into a forward proof.
-This transformation guarantees correctness through the utilization of straightforward rules embedded within the \tt{proof} smart constructors.
+This transformation guarantees correctness through the utilization of straightforward rules embedded within the \lstt{proof} smart constructors.
 
-Naturally, we also provide a pretty-printer, created using the \texttt{EasyFormat} library,
-along with a parser developed using the \texttt{Angstrom} parser combinator library,
+Naturally, we also provide a pretty-printer, created using the \lstt{EasyFormat} library,
+along with a parser developed using the \lstt{Angstrom} parser combinator library,
 designed to handle terms, constraints, kinds, and formulas.
 See how predicates such as ${Nat}$ and ${PlusEq}$ can be expressed using
 programmer-friendly syntax:
@@ -2469,7 +2467,7 @@ let plus_symm_thm = arith_thm
   "$\forall$ x y z :term. (IsNum x) $\implies$ (IsNum y) $\implies$
     (PlusEq x y z) $\implies$ (PlusEq y x z)"
 \end{lstlisting}
-The proof of which is included in the \tt{examples} subdirectory of the project,
+The proof of which is included in the \lstt{examples} subdirectory of the project,
 together with the case study from the next chapter.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Case study: Progress and Preservation of STLC}
@@ -2517,15 +2515,7 @@ let typing_relation = (* Typing e env t *)
             [e = app e1 e2]
               $\wedge$ (Typing e1 env {arrow t2 t}) $\wedge$ (Typing e2 env t2))"
 \end{lstlisting}
-To state the theorem of \it{progress}, we will naturally need the predicate
-that a term is \it{progressive}:
 \begin{lstlisting}[mathescape,language=OCaml, escapebegin=\color{codepurple}]
-let value_predicate = (* Value v *)
-  "fun e :term $\rightarrow$
-     var: ($\exists$ a :atom. [e = a])
-     $\vee$
-     lam: ($\exists$ a :atom. $\exists$ e' : term. [e = lam (a.e')] $\wedge$ (Term e'))"
-
  let sub_relation = (* Sub e a v e' *)
    "fix Sub(e): $\forall$ a :atom. $\forall$ v e':term.* = fun (a :atom) (v e' :term) $\rightarrow$
       var_same: ([e = a] $\wedge$ [e' = v])
@@ -2539,11 +2529,22 @@ let value_predicate = (* Value v *)
       app: ($\exists$ e1 e2 e1' e2' :term.
              [e = app e1 e2] $\wedge$ [e' = app e1' e2']
                $\wedge$ (Sub e1 a v e1') $\wedge$ (Sub e2 a v e2') )"
-     (* TODO: describe why [lam] case is so cool *)
+\end{lstlisting}
+Notice that in the definition of \lstt{Sub}, in the case for abstracion we only consider the case where the substituted name is different than the abstraction's argument ($\tt{a} \cneq \tt{b}$).
+If we wanted to substitute $\tt{a}$ for $\tt{v}$ in term $\tbind{\tt{a}}\tt{e}$, then we could swap the argument's name for a different atom $b$ that is fresh in $\tt{e}$, as then know that $\tbind{\tt{a}}\tt{e} \ceq \tbind{\tt{b}}\permswap{\tt{a}}{\tt{b}}\tt{e}$ and can substitute in that term.
+In the end, as $\tt{b}$ was fresh in $\tt{e}$, then $\tt{a}$
+must be fresh in $\permswap{\tt{a}}{\tt{b}}\tt{e}$, so either way
+we arrive at identity --- but have one less case to consider
+while writing proofs.
 
-let env_inclusion_relation = (* EnvInclusion e1 *)
-  "fun env1 env2 : term $\rightarrow$
-     $\forall$ a : atom. $\forall$ t : term. (InEnv env1 a t) $\implies$ (InEnv env2 a t)"
+To state the theorem of \it{progress}, we will naturally need the predicate
+that a term is \it{progressive}:
+\begin{lstlisting}[mathescape,language=OCaml, escapebegin=\color{codepurple}]
+let value_predicate = (* Value v *)
+  "fun e :term $\rightarrow$
+     var: ($\exists$ a :atom. [e = a])
+     $\vee$
+     lam: ($\exists$ a :atom. $\exists$ e' : term. [e = lam (a.e')] $\wedge$ (Term e'))"
 
 let steps_relation = (* Steps e e' *)
   "fix Steps(e): $\forall$ e' :term.* = fun e' :term $\rightarrow$
@@ -2569,14 +2570,14 @@ let progress_thm = lambda_thm
 We will also require a lemma about \it{canonical forms},
 which states that all values in the empty environment
 are of \it{arrow} type and can be \it{inversed} into an abstraction term
-(since we did not consider any true base types like \tt{Bool} or \tt{Int}).
+(since we did not consider any true base types like \lstt{Bool} or \lstt{Int}).
 \begin{lstlisting}[mathescape,language=OCaml, escapebegin=\color{codepurple}]
 let canonical_form_thm = lambda_thm
   "$\forall$ v :term. (Value v) $\implies$
    $\forall$ t :term. (Typing v nil t) $\implies$
      ($\exists$ a :atom. $\exists$ e :term. [v = lam (a.e)] $\wedge$ (Term e))"
 \end{lstlisting}
-As well as some boilerplate lemmas:
+As well as some boilerplate lemmas and relations:
 \begin{lstlisting}[mathescape,language=OCaml, escapebegin=\color{codepurple}]
 let empty_contradiction_thm = lambda_thm
   "$\forall$ a :atom. $\forall$ t :term. (InEnv nil a t) $\implies$ false"
@@ -2589,6 +2590,10 @@ let subst_exists_thm = lambda_thm
    $\forall$ v :term. (Value v) $\implies$
    $\forall$ e :term. (Term e) $\implies$
      $\exists$ e' :term. (Sub e a v e')"
+
+let env_inclusion_relation = (* EnvInclusion e1 *)
+  "fun env1 env2 : term $\rightarrow$
+     $\forall$ a : atom. $\forall$ t : term. (InEnv env1 a t) $\implies$ (InEnv env2 a t)"
 \end{lstlisting}
 Lets begin with the proof of \it{canonical forms}:
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
@@ -2603,10 +2608,10 @@ let canonical_form =
 $\vdash$ $\exists$ a :atom. $\exists$ e :term. [v = lam (a.e)] $\wedge$ Term e
 *)
 \end{lstlisting}
-The proof will follow from case analysis of \tt{Typing} relation, so let's \it{destruct} assumption \tt{Ht}
-and consider the first case, where \tt{v} is some variable \tt{a}.
-This case is impossible in empty environment, so we named the assumption \tt{contra}
-and show it through the tactic \tt{ex\_falso}.
+The proof will follow from case analysis of \lstt{Typing} relation, so let's \it{destruct} assumption \lstt{Ht}
+and consider the first case, where \lstt{v} is some variable \lstt{a}.
+This case is impossible in empty environment, so we named the assumption \lstt{contra}
+and show it through the tactic \lstt{ex\_falso}.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> destruct_assm "Ht"
   |> intros' ["contra"; "a"; ""]
@@ -2622,7 +2627,7 @@ $\vdash$ $\bot$
         (* InEnv nil a t $\implies$ $\bot$ *)
      %> apply_assm "contra"
 \end{lstlisting}
-Next case is the only sensible one: that \tt{v} is some \tt{lam (a.e)} of type \tt{arrow t1 t2}.
+Next case is the only sensible one: that \lstt{v} is some \lstt{lam (a.e)} of type \lstt{arrow t1 t2}.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""]
      %> exists' ["a"; "e"]
@@ -2636,14 +2641,14 @@ $\vdash$ Term e
 *)
 \end{lstlisting}
 Now, obviously every term that \it{types} is indeed a proper \it{term},
-so we simply use the \tt{typing\_terms} lemma and we're done here.
+so we simply use the \lstt{typing\_terms} lemma and we're done here.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
      %> apply_thm_spec typing_terms ["e"; "cons a t1 nil"; "t2"]
         (* Typing e {cons a t1 nil} t2 $\implies$ Term e *)
      %> assumption
 \end{lstlisting}
-Final case is that \tt{e} is an application, but then it can't be a value,
-so we analyse the \tt{Hv} assumption, arriving at contradiction in either case:
+Final case is that \lstt{e} is an application, but then it can't be a value,
+so we analyse the \lstt{Hv} assumption, arriving at contradiction in either case:
 \begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["contra"; "e1"; "e2"; "t2"; ""]
      %> ex_falso
@@ -2676,12 +2681,12 @@ let progress =
 $\vdash$ (Typing e nil t) $\implies$ Progressive e
 *)
 \end{lstlisting}
-To analyze all the possible branches of the \tt{Typing} predicate,
-we simply use \tt{{intro'}} tactic to destruct the assumption into multiple branches.
+To analyze all the possible branches of the \lstt{Typing} predicate,
+we simply use \lstt{{intro'}} tactic to destruct the assumption into multiple branches.
 \begin{lstlisting}[language=OCaml]
   |> intro'
 \end{lstlisting}
-First one is that \tt{e} is a variable - which again contradicts with empty enviroment:
+First one is that \lstt{e} is a variable - which again contradicts with empty enviroment:
 \begin{lstlisting}[language=OCaml, mathescape]
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
@@ -2696,7 +2701,7 @@ $\vdash$ $\bot$
      %> apply_thm_spec empty_contradiction ["a"; "t"]
      %> assumption
 \end{lstlisting}
-Next, \tt{e} is a lambda abstraction - so a value.
+Next, \lstt{e} is a lambda abstraction - so a value.
 \begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""] %> case "value"
 (* Proof state:
@@ -2712,8 +2717,8 @@ $\vdash$ Value e
      %> exists' ["a"; "e_a"]
      %> solve
 \end{lstlisting}
-Then \tt{e} must be an application and thus must be reducing by taking steps,
-so we apply inductive hypothesis on its sub-expressions \tt{e1} and \tt{e2}
+Then \lstt{e} must be an application and thus must be reducing by taking steps,
+so we apply inductive hypothesis on its sub-expressions \lstt{e1} and \lstt{e2}
 and examine the possible cases.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""] %> case "steps"
@@ -2733,8 +2738,8 @@ and examine the possible cases.
 $\vdash$ $\exists$ e' : term. Steps {app e1 e2} e'
 *)
 \end{lstlisting}
-First we consider the case of both \tt{e1} and \tt{e2} being a value.
-From \tt{canonical\_form} theorem we know then \tt{e1} must be an abstraction
+First we consider the case of both \lstt{e1} and \lstt{e2} being a value.
+From \lstt{canonical\_form} theorem we know then \lstt{e1} must be an abstraction
 --- we just need to ensure the Prover that all preconditions are met.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> destruct_assm "He1" %> intros ["Hv1"]
@@ -2765,11 +2770,11 @@ $\vdash$ $\exists$ e' : term. Steps {app e1 e2} e'
 $\vdash$ $\exists$ e' : term. Steps {app (lam (a.e_a)) e2} e'
 *)
 \end{lstlisting}
-Then we need to find the \tt{e'} that \tt{app e1 e2} reduces to, and now
-that we know \tt{e1} is an abstraction, then we can use beta-reduction rule
-and find the term of abstracion body \tt{e\_a} with argument \tt{a}
-substituted with \tt{e2}. Again, we ensure the Prover that preconditions are met
-and destruct on the final assumption to extract the term that we searched for: \tt{e\_a'}.
+Then we need to find the \lstt{e'} that \lstt{app e1 e2} reduces to, and now
+that we know \lstt{e1} is an abstraction, then we can use beta-reduction rule
+and find the term of abstracion body \lstt{e\_a} with argument \lstt{a}
+substituted with \lstt{e2}. Again, we ensure the Prover that preconditions are met
+and destruct on the final assumption to extract the term that we searched for: \lstt{e\_a'}.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
     %> add_assumption_thm_spec "He_a"
          subst_exists ["a"; "e2"; "e_a"]
@@ -2801,7 +2806,7 @@ $\vdash$ Value e2 $\wedge$ Sub e_a a e2 e_a'
 *)
     %> destruct_goal %> apply_assm "Hv2" %> apply_assm "He_a"
 \end{lstlisting}
-Now what's left is to examine straightforward cases where either \tt{e1} or \tt{e2} steps.
+Now what's left is to examine straightforward cases where either \lstt{e1} or \lstt{e2} steps.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["Hs2"; "e2'"] (* Value e1, Steps e2 e2' *)
      %> exists "app e1 e2'"
@@ -2845,8 +2850,8 @@ $\vdash$ Steps {app e1 e2} {app e1' e2}
 Now, to prove \it{Preservation}, we will need some more lemmas:
 
 1. Substitution lemma:
-if term \tt{e} has a type \tt{t} in enviroment \tt{\{cons a ta env\}},
-then we can substitute \tt{a} for any value \tt{v} of type \tt{ta} in \tt{e} without breaking the typing.
+if term \lstt{e} has a type \lstt{t} in enviroment \lstt{\{cons a ta env\}},
+then we can substitute \lstt{a} for any value \lstt{v} of type \lstt{ta} in \lstt{e} without breaking the typing.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codepurple}]
 let sub_lemma_thm = lambda_thm
   "$\forall$ e env t :term.
@@ -2858,7 +2863,7 @@ let sub_lemma_thm = lambda_thm
        (Typing e' env t)"
 \end{lstlisting}
 
-2. Weakening lemma: for any enviroment \tt{env1}, we can use larger enviroment \tt{env2} without breaking the typing.
+2. Weakening lemma: for any enviroment \lstt{env1}, we can use larger enviroment \lstt{env2} without breaking the typing.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codepurple}]
 let weakening_lemma_thm = lambda_thm
   "$\forall$ e env1 t env2 : term.
@@ -2868,8 +2873,8 @@ let weakening_lemma_thm = lambda_thm
 \end{lstlisting}
 
 3. Lambda abstraction typing inversion:
-If term \tt{lam (a.e)} has a type \tt{\{arrow t1 t2\}} in environment \tt{env},
-then it must be that the body \tt{e} has a type \tt{t2} in enviroment extended with the argument \tt{\{cons a t1 env\}}.
+If term \lstt{lam (a.e)} has a type \lstt{\{arrow t1 t2\}} in environment \lstt{env},
+then it must be that the body \lstt{e} has a type \lstt{t2} in enviroment extended with the argument \lstt{\{cons a t1 env\}}.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codepurple}]
 let lambda_typing_inversion_thm = lambda_thm
   "$\forall$ a :atom. $\forall$ e env t1 t2 :term.
@@ -2901,8 +2906,8 @@ $\vdash$ Typing e' env t
 *)
 %> destruct_assm "He"
 \end{lstlisting}
-First case is that \tt{e} is some variable \tt{b}, with first subcases
-that it is equal to \tt{a} and substitutes to \tt{v}:
+First case is that \lstt{e} is some variable \lstt{b}, with first subcases
+that it is equal to \lstt{a} and substitutes to \lstt{v}:
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["Hb"; "b"; ""]
      %> destruct_assm "Hsub"
@@ -2917,9 +2922,9 @@ that it is equal to \tt{a} and substitutes to \tt{v}:
 $\vdash$ Typing e' env t
 *)
 \end{lstlisting}
-Now because in the goal \tt{e'} has type \tt{t}, but in assumption \tt{Hv} it
-has \tt{ta}, then we again case-analyse the assumption \tt{Hb}
-and get that either \tt{t = ta} or arrive at contradiction:
+Now because in the goal \lstt{e'} has type \lstt{t}, but in assumption \lstt{Hv} it
+has \lstt{ta}, then we again case-analyse the assumption \lstt{Hb}
+and get that either \lstt{t = ta} or arrive at contradiction:
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
         %> destruct_assm "Hb"
         %> ( intros' ["Heq"; "env'"; ""] (* t = ta *)
@@ -2927,9 +2932,9 @@ and get that either \tt{t = ta} or arrive at contradiction:
         %> ( intros' ["Hdiff"; "b'"; "t'"; "env'"; ""; ""] (* a $\cneq$ b *)
              %> discriminate )
         \end{lstlisting}
-Second subcase is that \tt{b} is be different than
+Second subcase is that \lstt{b} is be different than
 \tt{a} and thus is not be affected by the subistution.
-We will again case-analyse \tt{Hb} assumption to extract additional facts.
+We will again case-analyse \lstt{Hb} assumption to extract additional facts.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
      %> ( intros' ["Hdiff"; "b'"; ""; ""; ""] (* a $\cneq$ b *)
         %> destruct_assm "Hb"
@@ -2949,13 +2954,13 @@ $\vdash$ Typing e' env t
              %> solve
              %> assumption )
 \end{lstlisting}
-Second case is that \tt{e} is some abstraction \tt{lam (b.e\_b)}.
+Second case is that \lstt{e} is some abstraction \lstt{lam (b.e\_b)}.
 Because of the way we defined subsitution, abstraction argument must
 be different than the substituted variable and not occur in the substitutee value
 --- which is made possible by swapping atoms while maintaining alpha-equality.
-Consequence of that is when we destruct \tt{Hsub} we get that
-\tt{e = lam (c.e\_c)} and \tt{e' = lam (c.e\_c')}
---- while \tt{b.e\_b} and \tt{c.e\_c} are equal, \tt{b} and \tt{c} don't have to be.
+Consequence of that is when we destruct \lstt{Hsub} we get that
+\tt{e = lam (c.e\_c)} and \lstt{e' = lam (c.e\_c')}
+--- while \lstt{b.e\_b} and \lstt{c.e\_c} are equal, \lstt{b} and \lstt{c} don't have to be.
 Abstracting the mundane details to auxiliary lemmas allows us to present the
 derivation in a simple chain of applications and assumptions:
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
@@ -3006,7 +3011,7 @@ $\vdash$ Type t1 $\wedge$ Typing e_c' {cons c t1 env} t2
           %> apply_assm "Hlam_2" )
      %> apply_assm "Hsub"
 \end{lstlisting}
-Finally, we consider the case that \tt{e} is an application \tt{e1 e2},
+Finally, we consider the case that \lstt{e} is an application \lstt{e1 e2},
 which goes straightly from inductive hypothesis, so we omit this part here.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
@@ -3028,9 +3033,9 @@ $\vdash$ Typing e1' env {arrow t2 t} $\wedge$ Typing e2' env t2
      ...
   |> qed
 \end{lstlisting}
-Now that we've shown the \tt{sub\_lemma}, we can go on with the final proof
+Now that we've shown the \lstt{sub\_lemma}, we can go on with the final proof
 of \it{preservation}.
-The proof goes through induction on term \tt{e} the case analysis on assumption \tt{Steps e e'}.
+The proof goes through induction on term \lstt{e} the case analysis on assumption \lstt{Steps e e'}.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
 let preservation = proof' preservation_thm
   |> by_induction "e0" "IH"
@@ -3049,7 +3054,7 @@ $\vdash$ Typing e' env t
 *)
   |> destruct_assm "Hstep"
 \end{lstlisting}
-First two cases are rather simple: \tt{e} is \tt{app e1 e2} and either \tt{e1} or \tt{e2} take a step.
+First two cases are rather simple: \lstt{e} is \lstt{app e1 e2} and either \lstt{e1} or \lstt{e2} take a step.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["He1"; "e1"; "e1'"; "e2"; ""; ""]
      %> case "app"
@@ -3099,8 +3104,8 @@ $\vdash$ Typing e1 env {arrow t2 t} $\wedge$ Typing e2' env t2
             %> apply_assm "He2_2" )
 \end{lstlisting}
 The next, final case is where we will need the established lemmas:
-application \tt{app e1 e2} beta-reduces into some term \tt{e'} and we use the \tt{sub\_lemma} to show
-that \tt{e'} still types.
+application \lstt{app e1 e2} beta-reduces into some term \lstt{e'} and we use the \lstt{sub\_lemma} to show
+that \lstt{e'} still types.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["Hbeta"; "a"; "e_a"; "v"; ""; ""]
 (* Proof state:
