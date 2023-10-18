@@ -921,6 +921,8 @@ enabling transitivity.
 Symbol constraints are really simple to check, either the term is already
 a symbol, or it is a variable that we already assumed to be a symbol.
 
+\newpage
+
 \section{Assumptions-reducing rules}
 But before the Solver can reduce the goal-constraint, it must first reduce all assumptions in the $\cEnv$ environment.
 We will now present the rules for reducing the left side of the turnstile,
@@ -981,8 +983,8 @@ While the assumption of the permutation being idempotent might appear to multipl
 it's worth noting that this number is unlikely to be very high, as permutations rarely consist of more than a few swaps.
 In practice, the solver implementation will initially check whether the permutation is idempotent with an empty set of assumptions.
 Only if this initial check fails, will it proceed to examine the permutation atom by atom.
-
 Otherwise both equality and freshness assumptions follow from the term structure.
+
 \begin{figure}[htpb]
   \centering
   \begin{tabularx}{\textwidth}{|CC|}
@@ -1002,10 +1004,11 @@ Otherwise both equality and freshness assumptions follow from the term structure
     \atomv \cfresh \tbind{\atomexp} \term , \cEnv ; \icEnv \solverRule \sconstr
   } $ \\ & \\ \hline
   \end{tabularx}
-  \caption{Abstraction assumption rules}
+  \caption{Binding assumption rules}
   \label{fig:abstraction}
 \end{figure}
-Consider the abstraction: equality behaves the same as on the goal side, we simply
+Again, the binding term constructor is of most interest to use:
+equality behaves the same as on the goal side, we simply
 split up the assumption into two assumptions the same way we would split the goal.
 For freshness of an atom in an abstraction, we consider two cases:
 either the atom is equal to the argument,
@@ -1013,8 +1016,6 @@ or different from the argument but fresh in the body.
 In constrast to the goal-reducing rules where we would be satisifed with
 just one branch successing, here we expect both possibilities to be satisfiable.
 
-In the end, all assumptions reach the irreducible components that are handled through
-the special environment $\icEnv$ enviroment.
 \begin{figure}[htpb]
   \centering
   \framebox[\textwidth]{
@@ -1038,12 +1039,13 @@ the special environment $\icEnv$ enviroment.
   \caption{Substitution rules}
   \label{fig:substitution}
 \end{figure}
+
+In the end, all assumptions reach the irreducible components that are handled through
+the special environment $\icEnv$ enviroment.
 Equality assumptions reduce to substitution of the name for the expression,
 and while substitution over the environment $\cEnv$ and goal $\sconstr$ is indeed a simple substitution, substituting in $\icEnv$ environment is a more involved process
 that can can arrive at a contradiction.
-Otherwise assumption are simply moved to the environment of irreducible
-constraints via procedure that we describe in the next section.
-\begin{figure}[htpb]
+\begin{figure}[hbtp]
   \centering
     \begin{tabularx}{\textwidth}{|CC|}
     \hline & \\ $
@@ -1088,6 +1090,10 @@ constraints via procedure that we describe in the next section.
   \caption{Moving irreducible assumptions inside $\icEnv$}
   \label{fig:assumption-equality-rules}
 \end{figure}
+Otherwise assumption are simply moved to the environment of irreducible
+constraints via procedure that we describe in the next section.
+
+\newpage
 
 \section{Irreducible constraints} \label{sec:solverenv}
 Environment $\icEnv$ that containts all the irreducible assumptions is given by
@@ -1099,7 +1105,7 @@ $(\NeqAtoms_{\icEnv}
 , \Subshape_{\icEnv}
 , \Symbols{\icEnv}
 )$.
-\begin{figure}[htpb]
+\begin{figure}[h]
   \begin{tabularx}{\textwidth}{|l|X|}
   \hline
     $\NeqAtoms$ & Set of pairs of atoms that are known to be different. \\
@@ -1120,12 +1126,11 @@ $(\NeqAtoms_{\icEnv}
   \label{fig:assumption-equality-rules}
 \end{figure}
 
-We can now establish a method to compute the shape-representative variable and
-outline the procedure for reconstructing the shape within the environment $\icEnv$:\\
+\newpage
 
 \begin{figure}[htbp]
-    \begin{tabular}{|p{0.55\textwidth}p{0.39\textwidth}|}
-        \hline
+  \begin{mdframed}
+    \begin{tabular}{p{0.55\textwidth}p{0.39\textwidth}}
       \begin{lstlisting}[mathescape, language=OCaml]
     $\shrep{\termv} :=$
       | if $Y$ $\leftarrow\;$var_shape$_\icEnv$ $\termv$ then $\shrep{Y}$
@@ -1135,42 +1140,35 @@ outline the procedure for reconstructing the shape within the environment $\icEn
       | if $Y$ $\leftarrow\;$var_shape$_\icEnv$ $\termv$ then $\shenv{Y}$
       | if $\shape$ $\leftarrow\;$shape$_\icEnv$ $\termv$ then $\shape$
       | otherwise $\termv$
-        \end{lstlisting}
-        &
-        \begin{lstlisting}[mathescape, language=OCaml]
+      \end{lstlisting}
+      &
+      \begin{lstlisting}[mathescape, language=OCaml]
 
   $\shenv{\shatom}          $ $\;$  $:=$ $\shatom $
   $\shenv{\shbind \shape}   $ $$ $:=$ $\shbind \shenv{\shape} $
   $\shenv{\shape_1 \shape_2}$ $:=$ $\shenv{\shape_1} \shenv{\shape_2}$
   $\shenv{\symb}            $  $$  $:=$ $\symb $
   $\shenv{\term}            $ $$  $\;\:\: :=$ $\shenv{|\term|}$
-      \end{lstlisting} \\
-      \hline
+      \end{lstlisting}
     \end{tabular}
-  \caption{Shape interpretation in $\icEnv$}
-  \label{fig:shape-interpretation}
+    \centering
+    \begin{tabular}{rcl}
+      $(\atomv_1 \cneq \atomv_2)  \in \icEnv $ & $:=$ & $ (\atomv_1 \cneq \atomv_2) \in \NeqAtoms_{\icEnv} $ \\
+      $(\atomv \cfresh \termv)    \in \icEnv $ & $:=$ & $ \termv \in \Fresh_{\icEnv}(\atomv) $ \\
+      $(\termv_1 \csheq \termv_2) \in \icEnv $ & $:=$ & $ \shenv{\termv_1} \ceq \shenv{\termv_2} $ \\
+      $(\termv \csheq \shape)     \in \icEnv $ & $:=$ & $ \shape = \Shape_{\icEnv}(\shrep{\termv})$ \\
+      $(\shape \cshlt \termv)     \in \icEnv $ & $:=$ & $ \shape \in \Subshape_{\icEnv}(\shrep{\termv})$ \\ \\
+    \end{tabular}
+\end{mdframed}
+  \caption{Shape and assumptions interpretation in $\icEnv$}
+  \label{fig:interpretation}
 \end{figure}
+We can now establish a method to compute the shape-representative variable and
+outline the procedure for reconstructing the shape within the environment $\icEnv$,
+denoted \shenv{\shape}.
+With such environment structure, verifying whether a constraint is included in $\icEnv$ can be accomplished straightforwardly.
 
-Then, verifying whether a constraint is included in $\icEnv$ can be accomplished straightforwardly:
-\begin{figure}[htbp]
-  \centering
-  \begin{tabularx}{\textwidth}{|XrclX|}
-  \hline & & & & \\
-  & $(\atomv_1 \cneq \atomv_2) \in \icEnv $ & $:=$ & $ (\atomv_1 \cneq \atomv_2) \in \NeqAtoms_{\icEnv} $ & \\
-  & $(\atomv \cfresh \termv) \in \icEnv $ & $:=$ & $ \termv \in \Fresh_{\icEnv}(\atomv) $ & \\
-  & $(\termv_1 \csheq \termv_2) \in \icEnv $ & $:=$ & $ \shenv{\termv_1} \ceq \shenv{\termv_2} $ & \\
-  & $(\termv \csheq \shape) \in \icEnv $ & $:=$ & $ \shape = \Shape_{\icEnv}(\shrep{\termv})$ & \\
-  & $(\shape \cshlt \termv) \in \icEnv $ & $:=$ & $ \shape \in \Subshape_{\icEnv}(\shrep{\termv})$ & \\ & & & & \\
-  \hline
-\end{tabularx}
-  \caption{Assumptions interpretation in $\icEnv$}
-  \label{fig:assumptions-interpretation}
-\end{figure}
-And establish rules for a special occurs check procedure,
-which safeguards against handling circular references,
-and does so while considering all occurences in the assumptions of $\icEnv$.
-
-\begin{figure}[htbp]
+\begin{figure}[hbtp]
   \centering
   \framebox[\textwidth]{
     \begin{tabularx}{\textwidth}{C}
@@ -1198,17 +1196,18 @@ and does so while considering all occurences in the assumptions of $\icEnv$.
   \label{fig:subkinding-rules}
 \end{figure}
 
+Additionally, we establish rules for a~special occurs check procedure,
+which safeguards against handling circular references,
+and does so while considering all occurences in the assumptions of $\icEnv$.
+This is needed because of the shape assumptions we introduced,
+we must go with the occurence check through the ``shape-similar'' variables and shapes.
+
 Incorporating constraints into $\icEnv$ proceeds as follows:
 freshness of an atom in a in a variables is simply acknowledged in the $\Fresh$ mapping.
 Inequality of two atoms simply adds to the set $\NeqAtoms$,
 unless invoked with identical atoms, in which case we report a contradiction.
-We are using OCaml's pipelining notation of \lstinline[mathescape, language=OCaml]{x |> f1 |> ... |> fn}
-for \lstinline[mathescape, language=OCaml]{fn (... (f1 x))}
-and treat expressions like \lstinline[mathescape, language=OCaml]{fresh += x}
-as functions, meaning
-\lstinline[mathescape, language=OCaml] {fun $\icEnv$ -> $\{$ $\icEnv$ with fresh = x :: $\icEnv$.fresh $\}$}
-and alike.
-\begin{figure}[htbp]
+\\
+\begin{figure}[thbp]
     \begin{tabular}{|p{0.95\textwidth}|}
         \hline
       \begin{lstlisting}[mathescape, language=OCaml]
@@ -1243,6 +1242,30 @@ and alike.
   \caption{Adding constraints to $\icEnv$}
   \label{fig:adding-constraints}
 \end{figure}
+\\
+We are using OCaml's pipelining notation of \lstinline[mathescape, language=OCaml]{x |> f1 |> ... |> fn}
+for \lstinline[mathescape, language=OCaml]{fn (... (f1 x))}
+and treat expressions like \lstinline[mathescape, language=OCaml]{fresh += x}
+as functions, meaning
+\lstinline[mathescape, language=OCaml] {fun $\icEnv$ -> $\{$ $\icEnv$ with fresh = x :: $\icEnv$.fresh $\}$}
+and alike.
+
+To meld together two shape-variables, we first check whether they have already been merged.
+If they have, we return contradiction.
+\\
+Next, we conduct an occurs check to ensure that merging them won't create a circular reference. If this check fails, we again report a contradiction.
+\\
+Finally, we merge all the information pertaining to $\termv$ into $\termv'$ and
+remove any traces of $\termv$ from within $\icEnv$ environment.
+\\
+To maintain a high-level description, we delegate the detailed implementation aspects to auxiliary functions responsible for substituting shape-variables within the given field of $\icEnv$.
+
+To set variable shape, we first make sure to perform occurs check on the proposed shape
+and then substitute the shape-variable in all affected fields.
+
+Note that we are using the meta-field of $\Assumptions$ to indicate that some of the
+assumptions in $\icEnv$ are no longer "simple" and escape from $\icEnv$ back to
+$\cEnv$ to be broken up by the \it{Solver}.
 
 \begin{figure}[htbp]
     \begin{tabular}{|p{0.95\textwidth}|}
@@ -1264,23 +1287,10 @@ and alike.
   \caption{Substitution in $\icEnv$}
   \label{fig:substitution}
 \end{figure}
+Finally, we demonstrate how the substitution of variables and atoms is accomplished,
+thereby concluding the description of the \it{Solver} and its environment.
 
-To meld together two shape-variables, we first check whether they have already been merged.
-If they have, we return contradiction.
-\\
-Next, we conduct an occurs check to ensure that merging them won't create a circular reference. If this check fails, we again report a contradiction.
-\\
-Finally, we merge all the information pertaining to $\termv$ into $\termv'$ and
-remove any traces of $\termv$ from within $\icEnv$ environment.
-\\
-To maintain a high-level description, we delegate the detailed implementation aspects to auxiliary functions responsible for substituting shape-variables within the given field of $\icEnv$.
-
-To set variable shape, we first make sure to perform occurs check on the proposed shape
-and then substitute the shape-variable in all affected fields.
-
-Note that we are using the meta-field of $\Assumptions$ to indicate that some of the
-assumptions in $\icEnv$ are no longer "simple" and escape from $\icEnv$ back to
-$\cEnv$ to be broken up by the \it{Solver}.\begin{figure}[htbp]
+\begin{figure}[htbp]
     \begin{tabular}{|p{0.95\textwidth}|}
         \hline
       \begin{lstlisting}[mathescape, language=OCaml]
@@ -1305,8 +1315,8 @@ $\cEnv$ to be broken up by the \it{Solver}.\begin{figure}[htbp]
   \caption{Auxiliary functions in $\icEnv$}
   \label{fig:solverenv-auxiliary}
 \end{figure}
-Finally, we demonstrate how the substitution of variables and atoms is accomplished,
-thereby concluding the description of the \it{Solver} and its environment.
+
+\newpage
 
 And that finishes the Solver description.
 Now the curious reader should feel obliged to ask themselves an important question:
@@ -1642,6 +1652,7 @@ This is exactly the reason of introducing kinds --- to allow us to use recursive
 
 See more interesting examples of fixpoints usage in the chapter on STLC.
 
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Natural deduction}
 
@@ -1658,34 +1669,10 @@ See more interesting examples of fixpoints usage in the chapter on STLC.
 \newcommand{\cjgmnt[2]}[\cEnv]{\ensuremath{#1 \vDash #2}}
 \newcommand{\fv[1]}[\cEnv;\Theta]{\ensuremath{\operatorname{FV}(#1)}}
 
-Finally, we come to the definition of proof-theoretic rules.
-Starting with inference rules for assumption,
-we can see first an analogue between the worlds of propositional logic
-and constraint sublogic.
-And while the $\vdash$ relation we define is purely syntactic,
-we can still use semantic $\vDash$ because of its decidability and equivalence
-to our description from \hyperref[sec:solver]{the chapter about the Solver}.
-
-Again, for \it{ex falso}, we define an analogous proof constructor for dealing with a contradictory
-constraint environment.
-Note that there are many constraints that can be used as $\bot_\constr$, i.e.
-constraints that are always false, and the solver will only \it{prove} them
-if we supply it with contradictory assumptions.
-
-Inference rules for implication are standard, and the reason we present them here
-is not to bore the reader, but to point out the similarities to their constraint analogues.
-
-Notice that in the case of constraint-and-guard, the rule for elimination is restricted
-to only formulas of kind $\kProp$.
-This is due to the nature of the guard --- if we want to eliminate it,
-we can only do so with formulas that \it{make sense} on their own,
-without that $\constr$ guard.
-
 \begin{figure}[htbp]
   \centering
   \begin{tabularx}{\textwidth}{|C|}
-  \hline \\
-  $
+  \hline \\ $
   \inference{
     \formphi \in \Theta
   }{
@@ -1710,6 +1697,50 @@ without that $\constr$ guard.
     \jgmnt[\cEnv;\Theta]{\formphi}
   }\scbrk{}{ConstrE}
   $ \\ \\ $
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\formphi_1}
+    }{
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
+  }\scbrk{}{OrI1}
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\formphi_2}
+  }{
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
+  }\scbrk{}{OrI2}
+  $ \\ \\ $
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2} \\
+    \jgmnt[\cEnv;\Theta,\formphi_1]{\psi} &
+    \jgmnt[\cEnv;\Theta,\formphi_2]{\psi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\psi}
+  }\scbrk{}{OrE}
+  $ \\ \\ \hline
+  \end{tabularx}
+  \caption{Natural deduction}
+  \label{fig:deduction}
+\end{figure}
+Finally, we come to the definition of proof-theoretic rules.
+Starting with inference rules for assumption,
+we can see first an analogue between the worlds of propositional logic
+and constraint sublogic.
+And while the $\vdash$ relation we define is purely syntactic,
+we can still use semantic $\vDash$ because of its decidability and equivalence
+to our description from \hyperref[sec:solver]{the chapter about the Solver}.
+
+Again, for \it{ex falso}, we define an analogous proof constructor for dealing with a contradictory
+constraint environment.
+Note that there are many constraints that can be used as $\bot_\constr$, i.e.
+constraints that are always false, and the solver will only \it{prove} them
+if we supply it with contradictory assumptions.
+
+\newpage
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tabularx}{\textwidth}{|C|}
+  \hline \\ $
   \inference{
     \jgmnt[\cEnv;\Theta,\formphi_1]{\formphi_2}
   }{
@@ -1773,31 +1804,20 @@ without that $\constr$ guard.
     }{
     \jgmnt[\cEnv;\Theta]{\formphi}
   }\scbrk{Constr}{AndE2}
-  $ \\ \\ $
-  \inference{
-    \jgmnt[\cEnv;\Theta]{\formphi_1}
-    }{
-    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
-  }\scbrk{}{OrI1}
-  \qquad
-  \inference{
-    \jgmnt[\cEnv;\Theta]{\formphi_2}
-  }{
-    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2}
-  }\scbrk{}{OrI2}
-  $ \\ \\ $
-  \inference{
-    \jgmnt[\cEnv;\Theta]{\formphi_1 \vee \formphi_2} \\
-    \jgmnt[\cEnv;\Theta,\formphi_1]{\psi} &
-    \jgmnt[\cEnv;\Theta,\formphi_2]{\psi}
-  }{
-    \jgmnt[\cEnv;\Theta]{\psi}
-  }\scbrk{}{OrE}
   $ \\ \\ \hline
   \end{tabularx}
-  \caption{Natural deduction}
+  \caption{Natural deduction for guard formulas}
   \label{fig:deduction}
 \end{figure}
+Notice that in the case of constraint-and-guard, the rule for elimination is restricted
+to only formulas of kind $\kProp$.
+This is due to the nature of the guard --- if we want to eliminate it,
+we can only do so with formulas that \it{make sense} on their own,
+without that $\constr$ guard.
+Inference rules for implication are standard, and the reason we present them here
+is not to bore the reader, but to point out the similarities to their constraint analogues.
+
+\newpage
 
 \begin{figure}[htbp]
   \centering
@@ -1858,7 +1878,7 @@ without that $\constr$ guard.
   }\:\scbrk{Exists}{TermE}
   $ \\ \\ \hline
   \end{tabularx}
-  \caption{Quantifiers}
+  \caption{Natural deduction for quantifiers}
   \label{fig:quantifiers}
 \end{figure}
 Inference rules for quantifiers are rather straightforward,
@@ -1898,6 +1918,8 @@ The only axioms of our logic are strictly related to constraints:
 \item There always exists a fresh atom,
 \item We can always deduce the structure of a term.
 \end{enumerate}
+
+\newpage
 
 \begin{figure}[htbp]
 \centering
@@ -1980,64 +2002,17 @@ and & \lstt{compute} $\Sigma\tt{ }n_1\tt{ }{\formphi_2} \;\leadsto^{*}\; (n_2, \
 \end{figure}
 Equivalence checking procedure starts by computing weak head normal form (up to some \it{depth} denoted by $n$).
 If we have a WHNF computed or if we've reached the limit of computation (when $ n \leqslant 0$) then we try to progress with equivelnce by recursing on the structure of formulas:
-\\
-$$
+\begin{figure}[htbp]
+  \centering
+\begin{tabularx}{\textwidth}{|C|}
+\hline \\ $
   \inference{
     \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 } &
     \jgmnt[\Gamma; \Sigma]{\psi_1 \equiv \psi_2 }
     }{
     \jgmnt[\Gamma; \Sigma]{\formphi_1 \fImp \psi_1 \equiv \formphi_2 \fImp \psi_2 }
   }
-  \quad
-  \inference{
-    \cjgmnt[\Gamma]{\term_1 \ceq \term_2} &
-    \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 }
-    }{
-    \jgmnt[\Gamma; \Sigma]{\formphi_1 \fAppTerm \term_1 \equiv \formphi_2 \fAppTerm \term_2 }
-  }
-  \quad
-  \cdots
-$$
-\\
-Note that we allow \it{different terms} in equivalent formulas as long as
-constraints-enviroment $\cEnv$ ensures their equality is provable.
-For functions, we simply substitute the arguments of both left and right side
-to the same, fresh name.
-\\
-$$
-  \inference{
-    \termv \notin \fv[\Gamma; \Sigma] \\
-    \jgmnt[\Gamma; \Sigma]{\formphi_1[\termv_1 \mapsto \termv] \equiv \formphi_2[\termv_2 \mapsto \termv] }
-    }{
-    \jgmnt[\Gamma; \Sigma]{\fLamTerm{\termv_1}\formphi_1 \equiv \fLamTerm{\termv_2}\formphi_2 }
-  }
-$$
-
-$$
-  \inference{
-    \kind_1 \subkind \kind_2 \\
-    \jgmnt[\Gamma; \Sigma]{\formphi_1[P_1 \mapsto P] \equiv \formphi_2[P_2 \mapsto P] }
-    }{
-    \jgmnt[\Gamma; \Sigma]{\fLamForm{P_1}{\kind_1}{\formphi_1} \equiv \fLamForm{P_2}{\kind_2}{\formphi_2}}
-  }
-$$
-
-$$
-  \inference{
-    \kind_1 \subkind \kind_2 &
-    P \notin \fv[\Gamma; \Sigma] & \termv \notin \fv[\Gamma; \Sigma] \\
-    \jgmnt[\Gamma; \Sigma]{\formphi_1[P_1 \mapsto P, \termv_1 \mapsto \termv] \equiv \formphi_2[P_2 \mapsto P, \termv_2 \mapsto \termv] }
-    }{
-    \jgmnt[\Gamma; \Sigma]{\fix{P_1}{\termv_1}{\kind_1}\formphi_1 \equiv \fix{P_2}{\termv_2}{\kind_2}\formphi_2}
-  }
-$$
-Quantifiers are handled the same way as function above --- as they all are a form of bind.
-To handle formulas with constraints we introduce \it{constraint equivalence} relation,
-which does nothing more than use the Solver to check that the constructors
-of constraint are the same and that arguments are equal to each other in the Solver's sense,
-analogusly as with terms above.
-\\
-$$
+$ \\ \\ $
   \inference{
     \jgmnt[\Gamma]{\constr_1 \equiv \constr_2 } &
     \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 }
@@ -2050,9 +2025,45 @@ $$
   }{
     \jgmnt[\Gamma]{(\atomv_1 \cfresh \term_1) \equiv (\atomv_2 \cfresh \term_2) }
   }
-\qquad
-\cdots
-$$
+$ \\ \\ $
+  \inference{
+    \termv \notin \fv[\Gamma; \Sigma] \\
+    \jgmnt[\Gamma; \Sigma]{\formphi_1[\termv_1 \mapsto \termv] \equiv \formphi_2[\termv_2 \mapsto \termv] }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\fLamTerm{\termv_1}\formphi_1 \equiv \fLamTerm{\termv_2}\formphi_2 }
+  }
+  \quad
+  \inference{
+    \cjgmnt[\Gamma]{\term_1 \ceq \term_2} &
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \equiv \formphi_2 }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\formphi_1 \fAppTerm \term_1 \equiv \formphi_2 \fAppTerm \term_2 }
+  }
+$ \\ \\ $
+  \inference{
+    \kind_1 \subkind \kind_2 &
+    P \notin \fv[\Gamma; \Sigma] & \termv \notin \fv[\Gamma; \Sigma] \\
+    \jgmnt[\Gamma; \Sigma]{\formphi_1[P_1 \mapsto P, \termv_1 \mapsto \termv] \equiv \formphi_2[P_2 \mapsto P, \termv_2 \mapsto \termv] }
+    }{
+    \jgmnt[\Gamma; \Sigma]{\fix{P_1}{\termv_1}{\kind_1}\formphi_1 \equiv \fix{P_2}{\termv_2}{\kind_2}\formphi_2}
+  }
+$ \\ \\ \hline
+\end{tabularx}
+  \caption{Selected equivalence rules}
+  \label{fig:compute}
+\end{figure}
+
+Note that we allow \it{different terms} in equivalent formulas as long as
+constraints-enviroment $\cEnv$ ensures their equality is provable.
+For functions, we simply substitute the arguments of both left and right side
+to the same, fresh name.
+
+Quantifiers are handled the same way as function above --- as they all are a form of bind.
+To handle formulas with constraints we introduce \it{constraint equivalence} relation,
+which does nothing more than use the Solver to check that the constructors
+of constraint are the same and that arguments are equal to each other in the Solver's sense,
+analogusly as with terms above.
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \chapter{Model}
 
@@ -2246,14 +2257,18 @@ val constr_i : proof_env -> constr -> proof
 
 ...
 \end{lstlisting}
-Note that the \lstt{Proof} modules provide methods for constructing forward proofs, i.e., those in which more complex conclusions are built from simpler, already proven facts.
-Unfortunately, this \it{bottom-up} way is not the most convenient method for conducting proofs in intuitionistic logic --- it is significantly easier to construct proofs in \it{top-down}, backwards fashion through simplifying the goal to be proven until we reach trivial matters.
-As such proofs are incomplete by nature, they must have \it{holes},
-and live within some \it{proof context}, as defined in modules \lstt{IncProof}.
+Note that the \lstt{Proof} modules provide methods for constructing forward proofs,
+i.e. those in which more complex conclusions are built from simpler, already proven facts.
+Smart constructors of \lstt{proof} data type ensure correctness by implementing the descripted natural deduction
+and serve as the logical core for writing proofs.
 
-TODO: write it better:\\
-Naturally that makes the implementation much more complex, so the appropriate level of confidence in proven propositions will be achieved through other means:
-we delegate the responsibility for the correctness of the proofs to the \lstt{Proof} module, and the \lstt{IncProof} module serves as a kind of facade for it.
+Human provers, working within intuitionistic logic, generally prefer to conduct proofs not in this \it{bottom-up} fasion,
+but through simplifying the goal to be proven until we reach the trivial matters.
+To accomodate for that, we included the \it{top-down} proof structure in \lstt{incproof} data type.
+As such proofs have incomplete parts by nature, they must have \it{holes},
+and live within some \it{proof context}, as defined in modules \lstt{IncProof},
+which serves the role of being a convenient facade for writing proofs,
+while responsibility of keeping proofs correct is delegated to the \lstt{Proof} module.
 
 \section{Proof assistant}
 To facilitate user interaction with this framework, we provide a practical \it{proof assistant}.
@@ -2270,8 +2285,10 @@ type tactic = prover_state $\rightarrow$ prover_state
 \end{lstlisting}
 \end{mdframed}
 \caption{Basic interface of the Prover.}
-\label{fig:basic-proger}
+\label{fig:basic-prover}
 \end{figure}
+
+\newpage
 
 We begin description of the Prover interface with \it{empty} proof constructor,
 using $\hole\ofkind\formphi$ to describe incomplete proofs,
@@ -2304,7 +2321,7 @@ called \it{holes} or \it{goals}.
   & \text{when} & $\cjgmnt[\Gamma]{\constr}$\\
   & & \\ \hline
 \end{tabularx}
-\caption{Basic tactics.}
+\caption{Basic tactics}
 \label{fig:tactics}
 \end{figure}
 Now, some typical tactics: introduction of names and assumptions and applying of
@@ -2315,8 +2332,11 @@ One can also add introduce assumptions to the proof context from theorems via \l
 (specialized if needed via \lstt{add\_assumption\_thm\_spec}) --
 or simply add any assumption to the current context together with a new goal (of proving that assumption)
 via \lstt{add\_assumption}.
+
+\newpage
+
 \begin{figure}[htbp]
-\begin{tabularx}{\textwidth}{|RcL|}
+\begin{tabularx}{\textwidth}{|rcL|}
   \hline  & & \\
   \lstt{apply_thm} $\mathcal{T}$ & & \\
     $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi}$ \\
@@ -2364,17 +2384,20 @@ Tactics above reduce the current goal.
   \hline & & \\
   \lstt{destr_assm H}& & \\
   $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \fCAnd{\constr}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}   $ & $\leadsto$ & $\jgmnt[{\Gamma \cup \{\constr\}}; \Theta \cup {\{ \tt{H} \ofkind \formphi\}}; \Sigma]{\hole\ofkind{\formphi}}$ \\
-  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \formphi_1 \wedge \formphi_2 \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[{\Gamma; \Theta \cup {\{ \tt{H\_1}\ofkind \formphi_1, \tt{H\_2}\ofkind \formphi_2\}}; \Sigma}]{\hole\ofkind{\formphi}}$ \\
+  $\:\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \formphi_1 \wedge \formphi_2 \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[{\Gamma; \Theta \cup {\{ \tt{H\_1}\ofkind \formphi_1, \tt{H\_2}\ofkind \formphi_2\}}; \Sigma}]{\hole\ofkind{\formphi}}$ \\
   $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \formphi_1 \vee \formphi_2 \}; \Sigma]{\hole\ofkind{\formphi}}  $ & $\leadsto$ & $\jgmnt[\Gamma; \Theta  \cup \{\tt{H}\ofkind \formphi_1\}; \Sigma]{\hole\ofkind{\formphi}}$ \\
   & \text{and} & $\jgmnt[\Gamma; \Theta  \cup \{\tt{H}\ofkind \formphi_2\}; \Sigma]{\hole\ofkind{\formphi}}   $ \\
+  & & \\
   \lstt{destr_assm' H x}& &
   \\
-  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsAtom{\atomv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\atomv}{\tt{x}}\}}; \Sigma\cup {\{\tt{x} \ofkind {A}\}}]{\hole\ofkind{\formphi}}$ \\
-  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsTerm{\termv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\termv}{\tt{x}}\}}; \Sigma\cup {\{\tt{x} \ofkind {T}\}}]{\hole\ofkind{\formphi}}$ \\
-   & \text{when} & \tt{x } $\notin \fv[\Gamma; \Theta; \Sigma]$
+  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsAtom{\atomv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\atomv}{\tt{x}}\}}; \Sigma']{\hole\ofkind{\formphi}}$ \\
+  & \text{where} & $\Sigma' = \Sigma\cup \{\tt{x} \ofkind {A}\}$ \\
+  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsTerm{\termv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\termv}{\tt{x}}\}}; \Sigma']{\hole\ofkind{\formphi}}$ \\
+  & \text{where} & $\Sigma' = \Sigma\cup \{\tt{x} \ofkind {T}\}$ \\
+  & \text{when} & \tt{x} $\notin \fv[\Gamma; \Theta; \Sigma]$
   \\ & & \\\hline
   \end{tabularx}
-\caption{Tactics taht disect assumptions}
+\caption{Tactics that disect assumptions}
   \label{fig:tactics}
 \end{figure}
 Tactics above reduce formulas in assumptions.
@@ -2416,7 +2439,7 @@ Finally we can prove goals through generalization, induction on terms, and throu
   & & \\
   \tt{ } \lstt{get_fresh_atom a e}& & \\
   $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma \cup {\{\tt{a} \cfresh \tt{e}\}}; \Theta; \Sigma\cup {\{\tt{a} \ofkind {A}\}}]{\hole\ofkind{\formphi}}$ \\
-   & \text{where} & \tt{a} $\notin \fv[\Gamma; \Theta; \Sigma]$
+   & \text{when} & \tt{a} $\notin \fv[\Gamma; \Theta; \Sigma]$
   \\ & & \\
   \lstt{inverse_term e} & & \\
   $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\fExistsAtom{\tt{a}}{\tt{ e} \ceq \tt{a}})\fImp{\formphi}}}$ \\
@@ -2569,15 +2592,15 @@ let typing_relation = (* Typing e env t *)
              [e = app e1 e2] $\wedge$ [e' = app e1' e2']
                $\wedge$ (Sub e1 a v e1') $\wedge$ (Sub e2 a v e2') )"
 \end{lstlisting}
-Notice that in the definition of \lstt{Sub}, in the case for abstracion we only consider the case where the substituted name is different than the abstraction's argument ($\tt{a} \cneq \tt{b}$).
-If we wanted to substitute $\tt{a}$ for $\tt{v}$ in term $\tbind{\tt{a}}\tt{e}$, then we could swap the argument's name for a different atom $b$ that is fresh in $\tt{e}$, as then know that $\tbind{\tt{a}}\tt{e} \ceq \tbind{\tt{b}}\permswap{\tt{a}}{\tt{b}}\tt{e}$ and can substitute in that term.
+Notice that in the definition of \lstt{Sub}, in the case for abstracion we only consider the case where the substituted name is different than the abstraction's argument (\lstt{a}~$\cneq$~\lstt{b}).
+If we wanted to substitute $\tt{a}$ for $\tt{v}$ in term $\tbind{\tt{a}}\tt{e}$, then we could swap the argument's name for a~different atom $b$ that is fresh in $\tt{e}$, as then know that $\tbind{\tt{a}}\tt{e} \ceq \tbind{\tt{b}}\permswap{\tt{a}}{\tt{b}}\tt{e}$ and can substitute in that term.
 In the end, as $\tt{b}$ was fresh in $\tt{e}$, then $\tt{a}$
 must be fresh in $\permswap{\tt{a}}{\tt{b}}\tt{e}$, so either way
 we arrive at identity --- but have one less case to consider
 while writing proofs.
 
 To state the theorem of \it{progress}, we will naturally need the predicate
-that a term is \it{progressive}:
+that a~term is \it{progressive}:
 \begin{lstlisting}[mathescape,language=OCaml, escapebegin=\color{codepurple}]
 let value_predicate = (* Value v *)
   "fun e :term $\rightarrow$
@@ -2606,7 +2629,7 @@ let progressive_predicate = (* Progressive e *)
 let progress_thm = lambda_thm
   "$\forall$ e t :term. (Typing e nil t) $\implies$ (Progressive e)"
 \end{lstlisting}
-We will also require a lemma about \it{canonical forms},
+We will also require a~lemma about \it{canonical forms},
 which states that all values in the empty environment
 are of \it{arrow} type and can be \it{inversed} into an abstraction term
 (since we did not consider any true base types like \lstt{Bool} or \lstt{Int}).
@@ -2679,14 +2702,14 @@ Next case is the only sensible one: that \lstt{v} is some \lstt{lam (a.e)} of ty
 $\vdash$ Term e
 *)
 \end{lstlisting}
-Now, obviously every term that \it{types} is indeed a proper \it{term},
+Now, obviously every term that \it{types} is indee a~proper \it{term},
 so we simply use the \lstt{typing\_terms} lemma and we're done here.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
      %> apply_thm_spec typing_terms ["e"; "cons a t1 nil"; "t2"]
         (* Typing e {cons a t1 nil} t2 $\implies$ Term e *)
      %> assumption
 \end{lstlisting}
-Final case is that \lstt{e} is an application, but then it can't be a value,
+Final case is that \lstt{e} is an application, but then it can't be a~value,
 so we analyse the \lstt{Hv} assumption, arriving at contradiction in either case:
 \begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["contra"; "e1"; "e2"; "t2"; ""]
@@ -2708,7 +2731,7 @@ $\vdash$ ($\exists$ a : atom. $\exists$ e' : term. v = lam (a.e)) $\implies$ $\b
      %> discriminate
   |> qed
 \end{lstlisting}
-Now we can proceed with the proof of \it{progress}, a simple induction over $Typing$ derivation:
+Now we can proceed with the proof of \it{progress}, a~simple induction over $Typing$ derivation:
 \begin{lstlisting}[mathescape, language=OCaml]
 let progress =
   proof' progress_thm
@@ -2725,7 +2748,7 @@ we simply use \lstt{{intro'}} tactic to destruct the assumption into multiple br
 \begin{lstlisting}[language=OCaml]
   |> intro'
 \end{lstlisting}
-First one is that \lstt{e} is a variable - which again contradicts with empty enviroment:
+First one is that \lstt{e} is a~variable - which again contradicts with empty enviroment:
 \begin{lstlisting}[language=OCaml, mathescape]
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
@@ -2740,7 +2763,7 @@ $\vdash$ $\bot$
      %> apply_thm_spec empty_contradiction ["a"; "t"]
      %> assumption
 \end{lstlisting}
-Next, \lstt{e} is a lambda abstraction - so a value.
+Next, \lstt{e} is a~lambda abstraction - so a~value.
 \begin{lstlisting}[mathescape, language=OCaml]
   |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""] %> case "value"
 (* Proof state:
@@ -3221,7 +3244,8 @@ $$\inference{
 }{
   \cEnv ; \icEnv \vDash \symb = \symb
 }
-\qquad
+$$
+$$
 \inference{
   \cEnv ; \icEnv \vDash \term_1 = \term_2
   &
@@ -3275,6 +3299,8 @@ $$
   \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
 }
 $$
+\\
+\\
 Goal-reducing freshness rules:
 $$\inference{
   \atomv_1 \cneq \atomv_2 \in \icEnv
@@ -3323,6 +3349,8 @@ $$
   \cEnv ; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{\pi} \termv
 }
 $$
+\\
+\\
 Goal reducing shape rules:
 $$
 \inference{
@@ -3363,6 +3391,8 @@ $$\inference{
   \cEnv ; \icEnv \vDash \shape_1 \shape_1' \csheq \shape_2 \shape_2'
 }
 $$
+\\
+\\
 Goal-reducing subshape rules:
 $$\inference{
   \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
@@ -3416,6 +3446,8 @@ $$\inference{
   \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
 }
 $$
+\\
+\\
 Assumption-reducing equality rules:
 $$
 \inference{
@@ -3525,6 +3557,8 @@ $$
 \qquad
 \text{Other term constructors trivial}
 $$
+\\
+\\
 Assumption-reducing freshness rules:
 $$
 \inference{
@@ -3579,6 +3613,8 @@ $$
   \atomv \cfresh \symb, \cEnv ; \icEnv \vDash \sconstr
 }
 $$
+\\
+\\
 Assumption-reducing shape rules:
 $$
 \inference{
@@ -3636,7 +3672,9 @@ $$
 \qquad
 \text{Other term constructors trivial}
 $$
-Assumption-reducing subshape ruleS:
+\\
+\\
+Assumption-reducing subshape rules:
 $$
 \inference{
   \cEnv ; \{\term \cshlt \termv\} \cup \icEnv \vDash \sconstr
