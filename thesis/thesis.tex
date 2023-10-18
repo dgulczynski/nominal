@@ -72,8 +72,9 @@
     otherkeywords = {|>, \%>, +=, -=, ->, ::}
 }
 \setlist{nolistsep}
+\renewcommand{\sc}[1]{\textsc{\small{#1}}}
 \renewcommand{\tt}[1]{\texttt{\small{#1}}}
-\newcommand{\lstt}[1]{{\text{\lstinline[columns=fixed,mathescape]{#1}}}}
+\newcommand{\lstt}[1]{\text{{\lstinline[columns=fixed,mathescape]|#1|}}}
 \renewcommand{\it}[1]{\textit{#1}}
 \newcommand{\aequiv}{\ensuremath{=_\alpha}}
 \newcommand{\solverRule}{\vdash}
@@ -93,11 +94,15 @@
 \newcommand{\shenv}[2][\icEnv]{\ensuremath{ |#2|_{#1}}}
 \newcommand{\fix}[3]{\ensuremath{\text{fix }#1(#2)\ofkind#3=}}\newcommand{\myatop}[2]{\ensuremath{\genfrac{}{}{0pt}{}{#1\hfill}{#2\hfill}}}
 \newcommand{\scbrk}[2]{\myatop{\textsc{#1}}{\textsc{#2}}}
+\newcommand{\hole}{\ensuremath{\bullet}}
+
 \newcolumntype{L}{X}
 \newcolumntype{C}{>{\centering\arraybackslash}X}
 \newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+
 \usepackage[backend=bibtex]{biblatex}
 \addbibresource{references.bib}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
@@ -125,7 +130,7 @@ Justifiably, we skip over this detail --- however, the induction principle oblig
 % \section{Problem statement}
 Addressing this gap in formal reasoning requires careful considerations to come up with a resolution.
 Fortunately, there exist some solutions to that problem --- and one particular
-approach, coined \it{nominal logic} and introduced by Andrew M. Pitts\cite{pitts2003} is of most interest to this work.
+approach, coined \it{nominal logic} and introduced by Andrew M. Pitts\cite{nominal-logic} is of most interest to this work.
 
 \section{Nominal approach}
 Pitts' work introduces \it{nominal logic}, a first-order theory of names, swapping, and freshness,
@@ -133,42 +138,29 @@ that amongst other novelties, introduces the precise mathematical definition
 describing the concept of "sufficiently fresh names",
 which, as Pitts argues, bridges the gap between formal mathematical reasoning and the informal practices mentioned earlier.
 
-\begin{mdframed}[frametitle={Pitts, 2003\cite{pitts2003}}]
+\begin{mdframed}[frametitle={\textnormal{\footnotesize \textbf{\citeauthor{nominal-logic}}, \textit{\citetitle{nominal-logic}}\cite{nominal-logic}:}}]
 Names of what? Names of entities that may be subject to binding by some of
 the syntactical constructions under consideration. In Nominal Logic these sorts of
 names, the ones that may be bound and hence that may be subjected to swapping
 without changing the validity of predicates involving them, will be called atoms.
 \end{mdframed}
-TODO: frame below is rather awkward
-\begin{mdframed}[frametitle={Pitts, 2003\cite{pitts2003}}]
-Why the emphasis on the operation of swapping two names, rather than on the
-apparently more primitive notion of renaming one name by another? The answer
-to this question lies in the combination of the following two facts.
 
-\begin{enumerate}
-  \item First, even though swapping seems less general than renaming (since after all,
-  the act of swapping \(a\) and \(b\) can be expressed as the simultaneous renaming
-  of \(b\) by \(a\) and \(a\) by \(b\)), it is possible to found a theory of syntax modulo
-  \(\alpha\)-equivalence, free and bound variables, substitution, etc., upon this notion—
-  this is the import of the work in \cite{subnbinders}.
-  \item Secondly, swapping is an involutive operation: a swap followed by the same
-  swap is equivalent to doing nothing. This means that the class of equivariant
-  predicates, i.e., those whose validity is invariant under atom-swapping, has
-  excellent logical properties. It contains the equality predicate and is closed
-  under negation, conjunction, disjunction, existential and universal quantification,
-  formation of least and greatest fixed points of monotone operators, etc., etc.
-  The same is not true for renaming. For example, the validity of a
-  negated equality between atoms is not necessarily preserved under renaming.
-\end{enumerate}
+Pitts chose to found his theory around the notion of swapping names
+as opposed to the classical renaming.
+In the author's previous work\cite{abstract-syntax-variable-binding}, written together with Murdoch J. Gabbay,
+it was shown that a theory based on this operation allows for all necessary concepts,
+including alpha-equivalence, freshness, and variable-binding,
+to be defined solely in terms of swapping pairs of names.
 
-In other words, we can found a theory of variable-binding upon swapping, and it
-is convenient to do so because of its good logical properties.
-\end{mdframed}
+Additionaly, swapping has one other useful logical properties - it is involutive
+(i.e. a swap gets nullified by applying the same swap again, while substitutions cannot always be reversed),
+which, as Pitts argues, means that \it{equivariant} predicates (i.e. those whose validity is invariant under atom-swapping)
+have excellent logical properties.
+This class of equivariant predicates includes equality, alpha-equivalence and is
+closed under standard logical connectives, universal and existential quantification,
+and formation of least and greatest fixpoint.
 
-A crucial takeaway from Pitts' work is that switching from substitutions to permutations of names
-allows for all necessary concepts, including alpha-equivalence, freshness, and variable-binding,
-to be defined solely in terms of the operation of swapping pairs of names.
-As an example, consider the abstract syntax tree of untyped lambda calculus,
+As an example of Nominal Logic at work, consider the abstract syntax tree of untyped lambda calculus,
 given by the grammar below, where $a$ ranges over an infinite set of names --- or rather \it{atoms}.
 \begin{figure}[htbp]
   \centering
@@ -181,6 +173,9 @@ given by the grammar below, where $a$ ranges over an infinite set of names --- o
   \caption{Terms of untyped lambda calculus}
   \label{fig:lambda-calculus}
 \end{figure}
+\\
+The definition of swapping atoms $a$ and $b$ in some tree $t$,
+written $\permswap{a}{b}{\:t}$, is rather straightforward.
 \begin{figure}[htbp]
   \centering
   \begin{tabularx}{\textwidth}{|XX|}
@@ -203,9 +198,6 @@ given by the grammar below, where $a$ ranges over an infinite set of names --- o
   \caption{Swapping procedure}
   \label{fig:swap}
 \end{figure}
-\\
-The definition of swapping atoms $a$ and $b$ in some tree $t$,
-written $\permswap{a}{b}{\:t}$, is rather straightforward.
 It naturally follows the tree structure, touching only the affected atoms,
 and doesn't need to distinct betwen free and bound names (like substitutions do),
 but simply changes them all the same exact way.
@@ -247,10 +239,10 @@ is similarly simple to define.\footnote{Pitts defines it as
 $a$ not being a member of the \it{support set} of $t$ ---
 but for our purposes, the simple inductive definition will suffice.}\
 Note that it only assumes the comparability of atoms
-and is an \it{equivariant} relation, meaning that
-it's validity is invariant under swapping atoms
---- which can be shown by simplest induction.
+and is an \it{equivariant} relation, which can be shown by simplest induction.
 
+With \it{swapping} and \it{freshness} already established,
+we define the alpha-equivalence of terms, written $t_1 \aequiv t_2$.
 \begin{figure}[htbp]
   \centering
     \begin{tabularx}{\textwidth}{|ccCcc|}
@@ -278,11 +270,11 @@ it's validity is invariant under swapping atoms
   \caption{Alpha-equivalence relation}
   \label{fig:fresh}
 \end{figure}
-With \it{swapping} and \it{freshness} already established,
-we define the alpha-equivalence of terms, written $t_1 \aequiv t_2$.
-As we built this definition of alpha-equivalence using only induction,
+\\
+We built this definition of alpha-equivalence using only induction,
 swapping, and freshness then, as Pitts argues, it is equivariant as well.
-\begin{mdframed}[frametitle={Pitts, 2003}]
+\\
+\begin{mdframed}[frametitle={\textnormal{\footnotesize \textbf{\citeauthor{nominal-logic}}, \textit{\citetitle{nominal-logic}}\cite{nominal-logic}:}}]
 The fundamental assumption underlying Nominal Logic is that \textit{the only predicates we ever deal with} (when describing properties of syntax) \textit{are equivariant ones, in the sense that their validity is invariant under swapping} (i.e., transposing, or interchanging) \textit{names}.
 \end{mdframed}
 
@@ -1445,7 +1437,7 @@ $$
   }
   $$
 Note that there is no structural subkinding rule for guarded kinds like
-the one above, but such a rule can be derived from \textsc{SubkindReduce}, \textsc{SubkindGuard}, transitivity, and weakening.
+the one above, but such a rule can be derived from \sc{SubkindReduce}, \sc{SubkindGuard}, transitivity, and weakening.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Formulas}
@@ -1573,12 +1565,12 @@ one shall interpret the guarded formula.
 The former states that the formula $\formphi$ holds if the constraint $\constr$ is valid,
 analogously to a propositional implication.
 The latter additionaly requires that $\constr$ already holds.
-
-TODO: Write why not simply use propositional implication and conjunction (kinding example?)
+We can see how guards interact with kinding rules after we define fixpoint.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
-And finish the definition of formulas with \it{fixpoint} function:
+We finish the definition of formulas with \it{fixpoint} function
+that allows us to write recursive predicates over terms:
 \\
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\ldots
@@ -1605,14 +1597,15 @@ $\formphi$ & $::=$ & $\ldots
   \caption{Fixpoint kinding rule}
   \label{fig:fixpoint-kinding}
 \end{figure}
-The fixpoint constructor allows us to express \it{recursive} predicates over terms,
-but only such that the recursive applications of it are on structurally smaller terms,
-which we express in it's kinding rule, through the kinding $(\propv \ofkind \kForallTerm{Y} \kGuard{Y \cshlt \termv}{\;\kind\subst{\termv}{Y}})$.
+By the kinding rules, the fixpoint can only be recursively applied on structurally smaller terms,
+which is expressed through the kinding $(\propv \ofkind \kForallTerm{Y} \kGuard{Y \cshlt \termv}{\;\kind\subst{\termv}{Y}})$.
 To evaluate a fixpoint function applied to a term, simply substitute the bound
 variable with the given term and replace recursive calls inside the fixpoint's body with the fixpoint itself.
+This way we enable the kind-checker to verify the soundness of fixpoint formulas
+and enforce usage of special guard formulas resembling implications and conjunctions.
 Because the applied term is finite
 and we always recurse on structurally smaller terms,
-the final formula after all substitutions must also be finite
+the final formula after all substitutions must also be finite and safe
 --— thanks to the semantics of constraints and kinds.
 
 To familiarize the reader with the fixpoint formulas,
@@ -1645,9 +1638,8 @@ Notice how the constraint $(N \ceq {S \tapp M})$ guards the recursive call to $N
 ensuring that constraint $(M \cshlt N)$ will be satisfied during kind checking of
 $({{Nat}\fAppTerm{M}})$ in the kind derivation of the whole formula
 $({Nat} \ofkind \kForallTerm{N}{\kProp})$, analogously in $PlusEq$.
+This is exactly the reason of introducing kinds --- to allow us to use recursive predicates in a safe and sound fashion.
 
-TODO: Write how $N$ is treated differently from $M$ and $K$?
-\\
 See more interesting examples of fixpoints usage in the chapter on STLC.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1960,27 +1952,27 @@ behaves as expected. We will only highlight the interesting parts.
   \centering
 \begin{tabularx}{\textwidth}{|rL|}
 \hline & \\
-$\tt{compute }\Sigma\tt{ }n\tt{ }P \;\:\leadsto$ &
-$\tt{compute }\Sigma\tt{ }n\tt{ }\formphi$
+\lstt{compute} $\Sigma\tt{ }n\tt{ }P \;\:\leadsto$ &
+\lstt{compute} $\Sigma\tt{ }n\tt{ }\formphi$
 \\
 when & $\Sigma(P) = \formphi$
 \\ & \\
-$\tt{compute }\Sigma\tt{ }n\tt{ }{(\formphi \fAppAtom \atomexp )} \;\:\leadsto$ &
-$\tt{compute }\Sigma\tt{ }(n' - 1)\tt{ }{\formphi'\subst{\atomv}{\atomexp}}$ \\
-when & $\tt{compute }\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fLamAtom{\atomv}\formphi')$
+\lstt{compute} $\Sigma\tt{ }n\tt{ }{(\formphi \fAppAtom \atomexp )} \;\:\leadsto$ &
+\lstt{compute} $\Sigma\tt{ }(n' - 1)\tt{ }{\formphi'\subst{\atomv}{\atomexp}}$ \\
+when & \lstt{compute} $\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fLamAtom{\atomv}\formphi')$
 \\ & \\
-$\tt{compute }\Sigma\tt{ }n\tt{ }{(\formphi \fAppTerm \term )}\;\:\leadsto$ &
-$\tt{compute }\Sigma\tt{ }(n' - 1)\tt{ }\formphi'\subst{\termv}{\term}$ \\
-when & $\tt{compute }\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fLamTerm{\termv}\formphi')$
+\lstt{compute} $\Sigma\tt{ }n\tt{ }{(\formphi \fAppTerm \term )}\;\:\leadsto$ &
+\lstt{compute} $\Sigma\tt{ }(n' - 1)\tt{ }\formphi'\subst{\termv}{\term}$ \\
+when & \lstt{compute} $\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fLamTerm{\termv}\formphi')$
 \\ & \\
-$\tt{compute }\Sigma\tt{ }n\tt{ }{(\formphi \fAppTerm \term )}\;\:\leadsto$ &
-$\tt{compute }\Sigma\subst{P}{\phi'}\tt{ }(n' - 1)\tt{ }{\formphi'\subst{\termv}{\term}}$\\
-when & $\tt{compute }\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fix{P}{\termv}{\kind}\formphi')$
+\lstt{compute} $\Sigma\tt{ }n\tt{ }{(\formphi \fAppTerm \term )}\;\:\leadsto$ &
+\lstt{compute} $\Sigma\subst{P}{\phi'}\tt{ }(n' - 1)\tt{ }{\formphi'\subst{\termv}{\term}}$\\
+when & \lstt{compute} $\Sigma\tt{ }n\tt{ }{\formphi} \;\leadsto^{*}\; (n',\fix{P}{\termv}{\kind}\formphi')$
 \\ & \\
 $\quad\tt{ compute }\Sigma\tt{ }n\tt{ }{(\formphi_1 \fApp \formphi_2 )}\;\:\leadsto$ &
-$\tt{compute }\Sigma\tt{ }(n_2 - 1)\tt{ }{\psi_1\subst{\propv}{\psi_2}}$\\
-when & $\tt{compute }\Sigma\tt{ }n\tt{ }{\formphi_1} \;\leadsto^{*}\; (n_1, \fLamForm{\propv}{\kind}{\psi_1})$\\
-and & $\tt{compute }\Sigma\tt{ }n_1\tt{ }{\formphi_2} \;\leadsto^{*}\; (n_2, \psi_2)$
+\lstt{compute} $\Sigma\tt{ }(n_2 - 1)\tt{ }{\psi_1\subst{\propv}{\psi_2}}$\\
+when & \lstt{compute} $\Sigma\tt{ }n\tt{ }{\formphi_1} \;\leadsto^{*}\; (n_1, \fLamForm{\propv}{\kind}{\psi_1})$\\
+and & \lstt{compute} $\Sigma\tt{ }n_1\tt{ }{\formphi_2} \;\leadsto^{*}\; (n_2, \psi_2)$
 \\ & \\ \hline
 \end{tabularx}
   \caption{Computing weak head normal form}
@@ -2127,7 +2119,7 @@ $$
 %         \inference{D : \types{\formphi}{\kProp}
 %     }{
 %         \types{\fForallAtom{\atomv}\formphi}{\kProp}}
-%     } & = & \underset{A \in Atom}{\bigwedge} {\interp[{\tmEnv [\atomv \mapsto A]}]{D}} \\
+%     } & = & \underset{A \in Atom}{\bigwedge} {\interp[{\tmEnv [\atomv \mapsto A]}]{D}}$ \\
 %     \interp{
 %         \inference{D : \types{\formphi}{\kProp}
 %     }{
@@ -2210,32 +2202,22 @@ $$
 \chapter{Implementation}
 All the concepts discussed in previous chapters have been implementation in OCaml.
 Atoms and variables are represented internally by integers (yet remain disjoint sets)
---- and their string \it{names} are kept within the environment and binders
-(quantifiers and functions).
+--- and their string \it{names} are kept within the environment and
+stored in binders themselves (quantifiers and functions).
 Terms, constraints, kinds, and formulas are defined in \lstt{Types} module,
 mirroring their previusly described grammars.
 The only difference is that we allow conjunction and disjunction to be used with
-more than two arguments, with the added feature of arguments being labeled by names.
+more than two arguments, with the added feature of arguments being labeled by string names.
 This naming approach lets the user to easily select desired branches while composing proofs
 or to give meaningful names within the definition of properties.
 
 The \it{Solver} ihabits its own dedicated \lstt{Solver} module along with \lstt{SolverEnv}
-responsible for implementing the specialized environment $\icEnv$ handling the \hyperref[sec:solverenv]{irreducible assumptions}.
+responsible for implementing the \hyperref[sec:solverenv]{specialized environment $\icEnv$} handling the irreducible assumptions.
 Analogously, the \lstt{KindChecker} and \lstt{KindCheckerEnv} modules serve similar roles.
 
-The proof theory described in previous chapter is distributed over modules
-\lstt{Proof}, \lstt{ProofEnv}, \lstt{ProofEquiv} and is a direct implementation of the proof-theoretic rules.
-TODO: keep what's interesting, lose what's not
+The natural deduction from previous chapter is distributed over modules
+\lstt{Proof}, \lstt{ProofEnv}, \lstt{ProofEquiv} and is a direct implementation of the described rules.
 \begin{lstlisting}[mathescape, language=OCaml, escapebegin=\color{codegreen}]
-(* Module: SolverEnv *)
-type SolverEnv.t
-
-val add_fresh : atom -> var -> SolverEnv.t -> SolverEnv.t
-
-...
-
-val occurs_check : SolverEnv.t -> var -> shape -> bool
-
 (* Module: Proof *)
 
 (* ----------- *)
@@ -2261,6 +2243,8 @@ val bot_e : formula -> proof -> proof
 (* ---------- *)
 (*  $\Gamma$; $\Theta$ $\vdash$ c  *)
 val constr_i : proof_env -> constr -> proof
+
+...
 \end{lstlisting}
 Note that the \lstt{Proof} modules provide methods for constructing forward proofs, i.e., those in which more complex conclusions are built from simpler, already proven facts.
 Unfortunately, this \it{bottom-up} way is not the most convenient method for conducting proofs in intuitionistic logic --- it is significantly easier to construct proofs in \it{top-down}, backwards fashion through simplifying the goal to be proven until we reach trivial matters.
@@ -2276,59 +2260,53 @@ To facilitate user interaction with this framework, we provide a practical \it{p
 While simple, it is also powerful and easy to use.
 The interface defined in modules \lstt{Prover}, \lstt{ProverInternals}, and \lstt{Tactics} provides multiple \it{tactics}
 (functions that manipulate \it{prover state}) and ways to combine them.
-
-
+\begin{figure}[htbp]
+\begin{mdframed}
 \begin{lstlisting}[mathescape, language=OCaml]
 type prover_state = S_Unfinished of (goal * proof_context)
                   | S_Finished of proof
 
 type tactic = prover_state $\rightarrow$ prover_state
-
-val proof : goal_env $\rightarrow$ formula $\rightarrow$ prover_state
-
-val qed : prover_state $\rightarrow$ proof
-
-val (|>) : prover_state $\rightarrow$ tactic $\rightarrow$ prover_state
-
-val (%>) : tactic $\rightarrow$ tactic $\rightarrow$ tactic
-
-val repeat : tactic $\rightarrow$ tactic
-
-val try_tactic : tactic $\rightarrow$ tactic
 \end{lstlisting}
-\newcommand{\hole}{\ensuremath{\bullet}}
-\begin{eqnarray*}
-  \text{\lstinline[columns=fixed]{proof}}\;(\Gamma,\Theta,\Sigma)\;\formphi &  \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\formphi}
-  \end{eqnarray*}
+\end{mdframed}
+\caption{Basic interface of the Prover.}
+\label{fig:basic-proger}
+\end{figure}
+
 We begin description of the Prover interface with \it{empty} proof constructor,
 using $\hole\ofkind\formphi$ to describe incomplete proofs,
 called \it{holes} or \it{goals}.
-TODO: put it in a figure I guess?
-\begin{eqnarray*}
-  \text{\lstinline[columns=fixed]{intro}} & & \\
-    \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fCImp{\constr}{\formphi}}} & \leadsto & \jgmnt[\Gamma, \constr; \Theta; \Sigma]{\hole\ofkind\formphi} \\
+\begin{figure}[htbp]
+\begin{tabularx}{\textwidth}{|RcX|}
+  \hline & & \\
+  \lstt{proof}$\;(\Gamma;\Theta;\Sigma)\;\formphi$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\formphi}$
+  \\ & & \\
+  \lstt{intro} & & \\
+    $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fCImp{\constr}{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma, \constr; \Theta; \Sigma]{\hole\ofkind\formphi}$
+  \\ & & \\
+  \lstt{intro' x} & & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\psi\fImp\formphi}}                $&$ \leadsto $& $\jgmnt[\Gamma; \Theta, \tt{x} \ofkind\psi ; \Sigma]{\hole\ofkind\formphi} $\\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\:\fForallAtom{\atomv}{\formphi}}} $&$ \leadsto $& $\jgmnt[\Gamma; \Theta; \Sigma, \tt{x} \ofkind\atomv]{\hole\ofkind\formphi}$ \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fForallTerm{\termv}{\formphi}}}   $&$ \leadsto $& $\jgmnt[\Gamma; \Theta; \Sigma, \tt{x} \ofkind\termv]{\hole\ofkind\formphi}$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{intro' x}} & & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\psi\fImp\formphi}} & \leadsto & \jgmnt[\Gamma; \Theta, \tt{x} \ofkind\psi ; \Sigma]{\hole\ofkind\formphi} \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fForallAtom{\atomv}{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma, \tt{x} \ofkind\atomv]{\hole\ofkind\formphi} \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fForallTerm{\termv}{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma, \tt{x} \ofkind\termv]{\hole\ofkind\formphi} \\
+  \lstt{apply} $(\psi \fImp \formphi)$& & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi}$ \\
+  & \text{and} & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi \fImp \formphi}$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{apply} } (\psi \fImp \formphi)& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi} \\
-  &   \text{and} & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi \fImp \formphi} \\
+  \lstt{apply_assm H} & & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\formphi}$ \\
+  & \text{when} & $(\tt{H} \ofkind {\formphi }) \in \Theta$ \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi}$ \\
+  & \text{when} & $(\tt{H} \ofkind {\psi\fImp\formphi }) \in \Theta$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{apply_thm} }  \mathcal{T} & & \\
-    \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi} \\
-   & \text{where} & \mathcal{T} \;\text{is a proof of }\; {\psi \fImp \formphi } \\
-  & & \\
-  \text{\lstinline[columns=fixed]{apply_assm H}} & & \\
-    \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi} \\
-   & \text{when} & (\tt{H} \ofkind {\psi\fImp\formphi }) \in \Theta \\
-  & & \\
-  \text{\lstinline[columns=fixed]{apply_assm_spec H [e; a]}} & & \\
-    \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi(\tt{e}, \tt{a})}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi(\tt{e}, \tt{a})} \\
-   & \text{when} & (\tt{H} \ofkind {\kForallTerm{X}\kForallAtom{a} \psi(X, a)\fImp\formphi(X, a) }) \in \Theta
-  \end{eqnarray*}
+  \lstt{solve} & & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\constr}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\constr}$ \\
+  & \text{when} & $\cjgmnt[\Gamma]{\constr}$\\
+  & & \\ \hline
+\end{tabularx}
+\caption{Basic tactics.}
+\label{fig:tactics}
+\end{figure}
 Now, some typical tactics: introduction of names and assumptions and applying of
 propositions and theorems.
 Note that propositions can be applied not only on the goal, but also on other
@@ -2337,117 +2315,178 @@ One can also add introduce assumptions to the proof context from theorems via \l
 (specialized if needed via \lstt{add\_assumption\_thm\_spec}) --
 or simply add any assumption to the current context together with a new goal (of proving that assumption)
 via \lstt{add\_assumption}.
-\begin{eqnarray*}  \text{\lstinline[columns=fixed]{apply_assm H}} & & \\
-    \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\formphi} \\
-   & \text{when} & (\tt{H} \ofkind {\formphi }) \in \Theta \\
+\begin{figure}[htbp]
+\begin{tabularx}{\textwidth}{|RcL|}
+  \hline  & & \\
+  \lstt{apply_thm} $\mathcal{T}$ & & \\
+    $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi}$ \\
+  & \text{where} & $\mathcal{T}$ is a proof of ${\psi \fImp \formphi }$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{solve} }& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\constr}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\constr} \\
-   & \text{when} & \cjgmnt[\Gamma]{\constr}\\
+  { } \lstt{apply_assm_spec H [e; a]} & & \\
+    $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi(\tt{e}, \tt{a})}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi(\tt{e}, \tt{a})}$ \\
+  & \text{when} & $(\tt{H} \ofkind {\kForallTerm{X}\kForallAtom{a} \psi(X, a)\fImp\formphi(X, a) }) \in \Theta$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{discriminate} }& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\formphi} \\
-   & \text{when} & \cjgmnt[\Gamma]{\bot}
-  \end{eqnarray*}
+  { } \lstt{apply_in_assm H1 H2} & & \\
+    $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\psi}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma']{\hole\ofkind\psi}$ \\
+  & \text{when} & $\Sigma = \{\tt{H1} \ofkind \psi_2\fImp\psi_1, \tt{H2} \ofkind \psi_2 \} \cup \Sigma''$ \\
+  & \text{ and} & $\Sigma' = \{\tt{H1} \ofkind \psi_1, \tt{H2} \ofkind \psi_2 \} \cup \Sigma''$ \\
+  & & \\ \hline
+  \end{tabularx}
+\caption{More ways to use \lstt{apply} tactic}
+\label{fig:more-tactics}
+\end{figure}
 Above tactics finish the proofs, either by finding the goal in assumptions
 (which can be made automatically via tactical \lstt{assumption}),
 or by running Solver on constraint-assumption and the goal.
 Technical detail is that all formulas in $\Theta$ that are actually constraints
 will also be included in calls to Solver.
-\begin{eqnarray*}
-  \text{\lstinline[columns=fixed]{exists e} }& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fExistsAtom{\atomv}{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\formphi\subst{\atomv}{\tt{e}}}} \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fExistsTerm{\termv}{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\formphi\subst{\termv}{\tt{e}}}} \\
+\begin{figure}[htbp]
+\begin{tabularx}{\textwidth}{|RcL|}
+  \hline & & \\
+  \lstt{destr_goal}& & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fCAnd{\constr}\formphi}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\constr}}$ \\
+  & \text{and} & $\jgmnt[\Gamma, \constr; \Theta;\Sigma]{\hole\ofkind{\formphi}}$ \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\formphi_1 \wedge \formphi_2}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_1}}$ \\
+  & \text{and} & $\jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_2}}$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{destr_goal} }& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fCAnd{\constr}\formphi}} & \leadsto & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\constr}} \\
-  & \text{and} & \jgmnt[\Gamma, \constr; \Theta;\Sigma]{\hole\ofkind{\formphi}} \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\formphi_1 \wedge \formphi_2}} & \leadsto & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_1}} \\
-  & \text{and} & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_2}} \\
-  & & \\
-  \text{\lstinline[columns=fixed]{left} } & \equiv &  \text{\lstinline[columns=fixed]{case l} } \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\tt{l:}\:\formphi_1) \vee (\tt{r:}\:\formphi_2)}} & \leadsto & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_1}} \\
-  \text{\lstinline[columns=fixed]{right} } & \equiv &  \text{\lstinline[columns=fixed]{case r} } \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\tt{l:}\:\formphi_1) \vee (\tt{r:}\:\formphi_2)}} & \leadsto & \jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_2}} \\
-  \end{eqnarray*}
+  \lstt{left} & $\equiv$ &  \lstt{case l} \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\tt{l:}\:\formphi_1) \vee (\tt{r:}\:\formphi_2)}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_1}}$ \\
+  \lstt{right} & $\equiv$ &  \lstt{case r} \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\tt{l:}\:\formphi_1) \vee (\tt{r:}\:\formphi_2)}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_2}}$
+  \\ & & \\\hline
+  \end{tabularx}
+\caption{Tactis that disect the goal}
+  \label{fig:tactics}
+\end{figure}
 Tactics above reduce the current goal.
-\begin{eqnarray*}
-  \text{\lstinline[columns=fixed]{destr_assm H} }& & \\
-  \jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \fCAnd{\constr}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}} & \leadsto & \jgmnt[{\Gamma \cup \{\constr\}}; \Theta \cup {\{ \tt{H} \ofkind \formphi\}}; \Sigma]{\hole\ofkind{\formphi}} \\
-  \jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \formphi_1 \wedge \formphi_2 \}; \Sigma]{\hole\ofkind{\formphi}} & \leadsto & \jgmnt[{\Gamma; \Theta \cup {\{ \tt{H\_1}\ofkind \formphi_1, \tt{H\_2}\ofkind \formphi_2\}}; \Sigma}]{\hole\ofkind{\formphi}} \\
-  \jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \formphi_1 \vee \formphi_2 \}; \Sigma]{\hole\ofkind{\formphi}} & \leadsto & \jgmnt[\Gamma; \Theta  \cup \{\tt{H}\ofkind \formphi_1\}; \Sigma]{\hole\ofkind{\formphi}} \\
-  & \text{and} & \jgmnt[\Gamma; \Theta  \cup \{\tt{H}\ofkind \formphi_2\}; \Sigma]{\hole\ofkind{\formphi}} \\
-  \text{\lstinline[columns=fixed]{destr_assm' H x} }& &
+\begin{figure}[htbp]
+\begin{tabularx}{\textwidth}{|rcL|}
+  \hline & & \\
+  \lstt{destr_assm H}& & \\
+  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \fCAnd{\constr}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}   $ & $\leadsto$ & $\jgmnt[{\Gamma \cup \{\constr\}}; \Theta \cup {\{ \tt{H} \ofkind \formphi\}}; \Sigma]{\hole\ofkind{\formphi}}$ \\
+  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \formphi_1 \wedge \formphi_2 \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[{\Gamma; \Theta \cup {\{ \tt{H\_1}\ofkind \formphi_1, \tt{H\_2}\ofkind \formphi_2\}}; \Sigma}]{\hole\ofkind{\formphi}}$ \\
+  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind \formphi_1 \vee \formphi_2 \}; \Sigma]{\hole\ofkind{\formphi}}  $ & $\leadsto$ & $\jgmnt[\Gamma; \Theta  \cup \{\tt{H}\ofkind \formphi_1\}; \Sigma]{\hole\ofkind{\formphi}}$ \\
+  & \text{and} & $\jgmnt[\Gamma; \Theta  \cup \{\tt{H}\ofkind \formphi_2\}; \Sigma]{\hole\ofkind{\formphi}}   $ \\
+  \lstt{destr_assm' H x}& &
   \\
-  \jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsAtom{\atomv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}} & \leadsto & \jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\atomv}{\tt{x}}\}}; \Sigma\cup {\{\tt{x} \ofkind {A}\}}]{\hole\ofkind{\formphi}} \\
-  \jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsTerm{\termv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}} & \leadsto & \jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\termv}{\tt{x}}\}}; \Sigma\cup {\{\tt{x} \ofkind {T}\}}]{\hole\ofkind{\formphi}} \\
-   & \text{when} & \tt{x} \notin \fv[\Gamma; \Theta; \Sigma]
-  \end{eqnarray*}
+  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsAtom{\atomv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\atomv}{\tt{x}}\}}; \Sigma\cup {\{\tt{x} \ofkind {A}\}}]{\hole\ofkind{\formphi}}$ \\
+  $\jgmnt[\Gamma; \Theta \cup \{\tt{H}\ofkind\fExistsTerm{\termv}{\formphi} \}; \Sigma]{\hole\ofkind{\formphi}}$ & $\leadsto$ & $\jgmnt[\Gamma ; \Theta \cup {\{\tt{H}\ofkind\formphi\subst{\termv}{\tt{x}}\}}; \Sigma\cup {\{\tt{x} \ofkind {T}\}}]{\hole\ofkind{\formphi}}$ \\
+   & \text{when} & \tt{x } $\notin \fv[\Gamma; \Theta; \Sigma]$
+  \\ & & \\\hline
+  \end{tabularx}
+\caption{Tactics taht disect assumptions}
+  \label{fig:tactics}
+\end{figure}
 Tactics above reduce formulas in assumptions.
 Note that the user provides\lstt{destr\_assm'} with a \it{name} that will be bound
 with existential variable, but the binding is done \it{behind the scenes} and
 actually any string can be given and an unique internal identifier is generated.
-\begin{eqnarray*}
-  \text{\lstinline[columns=fixed]{ex_falso} } & & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\bot} \\
+\begin{figure}[htbp]
+\begin{tabularx}{\textwidth}{|RcL|}
+  \hline & & \\
+  \lstt{ex_falso} & & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\bot}$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{generalize x} }& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma']{\hole\ofkind{\kForallTerm{\tt{x}}{\formphi}}} \\
-  & \text{when} & \Sigma = \Sigma' \cup \{\tt{x}\} \text{ and } \tt{x} \notin \fv[\Gamma] \\
+  \lstt{discriminate} & & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\formphi}$ \\
+  & \text{when} & $\cjgmnt[\Gamma]{\bot_{\constr}}$
+  \\ & & \\
+  \lstt{exists e}& & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fExistsAtom{\atomv}{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\formphi\subst{\atomv}{\tt{e}}}}$ \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\fExistsTerm{\termv}{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{\formphi\subst{\termv}{\tt{e}}}}$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{by_induction x IH} } & & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\fForallTerm{\termv}\formphi(\termv))}} & \leadsto & \jgmnt[\Gamma; \Theta \cup \{\tt{IH} \ofkind \psi \};\Sigma\cup \{\tt{x} \ofkind {T}\}]{\hole\ofkind{\formphi(\termv)}} \\
-   & \text{where} & {\psi := \fForallTerm{\tt{x}}\fCImp{\tt{x} \cshlt \termv}{\formphi(\tt{x})}}
-  \end{eqnarray*}
+  \lstt{generalize x}& & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma']{\hole\ofkind{\kForallTerm{\tt{x}}{\formphi}}}$ \\
+  & \text{when} & $\Sigma = \Sigma' \cup \{\tt{x}\} \text{ and } \tt{x} \notin \fv[\Gamma]$ \\
+  & & \\
+  \lstt{by_induction x IH} & & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\fForallTerm{\termv}\formphi(\termv))}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta \cup \{\tt{IH} \ofkind \psi \};\Sigma\cup \{\tt{x} \ofkind {T}\}]{\hole\ofkind{\formphi(\termv)}}$ \\
+   & \text{where} & ${\psi = \fForallTerm{\tt{x}}\fCImp{\tt{x} \cshlt \termv}{\formphi(\tt{x})}}$
+  \\ & & \\\hline
+  \end{tabularx}
+\caption{More tactics and operators.}
+  \label{fig:tactics}
+\end{figure}
 Finally we can prove goals through generalization, induction on terms, and through reduction to absurd.
-\begin{eqnarray*}
-  \text{\lstinline[columns=fixed]{compare_atoms a b} }& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\tt{a} \ceq \tt{b} \vee \tt{a}\cneq \tt{b})\fImp{\formphi}}} \\
+\begin{figure}[htbp]
+\begin{tabularx}{\textwidth}{|rcL|}
+  \hline & & \\
+  \lstt{compare_atoms a b}& & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\tt{a} \ceq \tt{b} \vee \tt{a}\cneq \tt{b})\fImp{\formphi}}}$ \\
   & & \\
-  \text{\lstinline[columns=fixed]{get_fresh_atom a e} }& & \\
-  \jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}} & \leadsto & \jgmnt[\Gamma \cup {\{\tt{a} \cfresh \tt{e}\}}; \Theta; \Sigma\cup {\{\tt{a} \ofkind {A}\}}]{\hole\ofkind{\formphi}} \\
-   & \text{where} & \tt{a} \notin \fv[\Gamma; \Theta; \Sigma] \\
-\end{eqnarray*}
-We also provide shorthand formuals for using the axioms of our logic, described
+  \tt{ } \lstt{get_fresh_atom a e}& & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma \cup {\{\tt{a} \cfresh \tt{e}\}}; \Theta; \Sigma\cup {\{\tt{a} \ofkind {A}\}}]{\hole\ofkind{\formphi}}$ \\
+   & \text{where} & \tt{a} $\notin \fv[\Gamma; \Theta; \Sigma]$
+  \\ & & \\
+  \lstt{inverse_term e} & & \\
+  $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{{\formphi}}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\fExistsAtom{\tt{a}}{\tt{ e} \ceq \tt{a}})\fImp{\formphi}}}$ \\
+   & \text{and} & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\fExistsAtom{\tt{a}}\fExistsTerm{\tt{e'}}{\tt{ e} \ceq \tt{a.e'}})\fImp{\formphi}}}$ \\
+   & \text{and} & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\fExistsTerm{\tt{e1}, \tt{e2}}{\tt{ e} \ceq \tt{e1 e2}})\fImp{\formphi}}}$ \\
+   & \text{and} & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\csymb {\tt{e}})\fImp{\formphi}}}$ \\
+  & & \\\hline
+\end{tabularx}
+\caption{Axiomatic tactics.}
+  \label{fig:tactics}
+\end{figure}
+We also provide shorthand formulas for using the axioms of our logic, described
 in previous chapter.
-Again argument\lstt{a} to\lstt{get\_fresh\_atom} is given by name and is bound by
+Again argument \lstt{a} of \lstt{get\_fresh\_atom} is given by name and is bound by
 a fresh internal identifier automatically.
 
-Additional we provide the user with some auxiliary tactics:
-\begin{itemize}
-\item \lstt{subst} --- substitutes atoms for atom expreesions
-  and variables for terms in goal and environment
-  --- as long as Solver proves their equality,
-\item \lstt{compute} --- computes WHNF of the current goal,
-\item \lstt{try} --- applies a tactic and returns unchanged state if the tactic fails
-\item \lstt{repeat} --- applies given tactic (until failure),
-\item \lstt{trivial} ---  tries applying some simple tactics
-\end{itemize}
-Finally, the function \lstt{qed} accepts a prover state and finalizes it.
-If the proof state is indeed finished, the function transforms it into a forward proof.
-This transformation guarantees correctness through the utilization of straightforward rules embedded within the \lstt{proof} smart constructors.
+Proof are written as OCaml programs,
+but can be similiarly easy to read as the ones written with dedicated domain-specific languages,
+as provide the users with some helper functions and tacticals.
+\newcolumntype{M}[1]{>{\raggedright\arraybackslash\vspace{2ex}}m{#1}}
+
+\begin{figure}
+\begin{tabularx}{\textwidth}{|l|L|}
+  \hline
+  operator \tt{(|>)}  & Applies a tactic on the prover state.
+  \\[1.5ex] \hline
+  operator \tt{(\%>)} & Combines two tactics together.
+  \\[1.5ex] \hline
+  \lstt{subst}        & Substitutes atoms for atom expressions and variables for terms in goal and environment --- as long as Solver proves their equality.
+  \\[5ex] \hline
+  \lstt{compute}      & Computes WHNF of the current goal.
+  \\[1.5ex] \hline
+  \lstt{try\_tactic}  & Tries applying a tactic and returns unchanged state if it fails.
+  \\[1.5ex] \hline
+  \lstt{repeat}       & Applies given tactic mutliple times (until failure).
+  \\[1.5ex] \hline
+  \lstt{trivial}      & Tries applying some simple tactics to progress the proof.
+  \\[1.5ex] \hline
+  \lstt{qed}          & Turns prover state of a finished proof into a forwards proof.
+  Correctness of proof transformations is guaranteed through the usage of \lstt{proof} smart constructors
+  that implement the natural deduction rules.
+  \\[12.5ex] \hline
+\end{tabularx}
+\caption{More tactics and operators.}
+  \label{fig:tactics}
+\end{figure}
 
 Naturally, we also provide a pretty-printer, created using the \lstt{EasyFormat} library,
 along with a parser developed using the \lstt{Angstrom} parser combinator library,
 designed to handle terms, constraints, kinds, and formulas.
+
 See how predicates such as ${Nat}$ and ${PlusEq}$ can be expressed using
 programmer-friendly syntax:
 \begin{lstlisting}[mathescape, language=OCaml, escapebegin=\color{codepurple}]
 (* define symbols used in arithmetical theorems *)
 let arith_symbols = symbols ["0"; "S"]
 
-let nat = (* Nat n *)
+let nat_predicate = (* Nat n *)
  "fix Nat(n) : * =
     zero: (n = 0)
     $\vee$
     succ: ($\exists$ m :term. [n = S m] $\wedge$ Nat m)"
 
-let plus_eq = (* PlusEq n m k *)
+let plus_eq_relation = (* PlusEq n m k *)
   "fix PlusEq(n) : $\forall$ m k : term. * = fun m k : term $\rightarrow$
      zero: ([n = 0] $\wedge$ [m = k])
      $\vee$
      succ: ($\exists$ n' k' :term. [n = S n'] $\wedge$ [k = S k'] $\wedge$ PlusEq n' m k')"
 \end{lstlisting}
+
 And a short proof that 1 is a natural number:
 \begin{lstlisting}[mathescape, language=OCaml, escapebegin=\color{codegreen}]
 let nat_1_thm = arith_thm "Nat {S 0}"
