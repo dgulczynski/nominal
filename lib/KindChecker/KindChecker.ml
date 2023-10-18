@@ -1,12 +1,13 @@
 open Types
 open Substitution
 open KindCheckerEnv
+open Solver
 open Prelude
 open Permutation
 open Utils
 
 (** [solve env c] returns [[]; env |- c] *)
-let solve env c = mem_constr env c || Solver.solve_with_assumptions (constraints_of env) c
+let solve env c = constraints_of env |-: c
 
 let add_constr_to_kind constrs k = List.fold_left (fun k c -> K_Constr (c, k)) k constrs
 

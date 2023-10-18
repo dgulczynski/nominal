@@ -21,7 +21,7 @@ let reduce env =
   in
   on_snd List.rev (* Keep original order of assumptions not reduced *) % List.fold_left update (Some env, [])
 
-let rec solve_ env assms goal =
+let rec solve env assms goal =
   match reduce env assms with
   | None, _ -> true
   | Some env, [] -> solve_by_case env [] goal
@@ -87,7 +87,7 @@ and solve_eq env assms e1 e2 =
     (*  Γ, Δ |- e1 = [a1 a2] e2  *)
     (* ------------------------- *)
     (*   Γ, Δ |- a1.e1 = a2.e2   *)
-    solve_ env assms $ fresh a1 e2 && solve_eq env assms t1 $ permute_term [(a1, a2)] t2
+    solve env assms $ fresh a1 e2 && solve_eq env assms t1 $ permute_term [(a1, a2)] t2
   | T_Lam _, _ -> false
   | T_App (t1, t2), T_App (t1', t2') ->
     (*      Γ, Δ |- e1 = e2      *)
@@ -147,7 +147,7 @@ and solve_fresh env assms a e =
     (*  (a # b) :: Γ, Δ |- a # e  *)
     (* -------------------------- *)
     (*      Γ, Δ |- a # b.e       *)
-    solve_ env ((a =/=: alpha) :: assms) $ a #: t
+    solve env ((a =/=: alpha) :: assms) $ a #: t
   | T_App (t1, t2) ->
     (*    Γ, Δ |- a # e1    *)
     (*    Γ, Δ |- a # e2    *)
@@ -259,17 +259,17 @@ and solve_assm_fresh env assms goal a = function
     (*  (a # b) :: (a # e) :: Γ, Δ |- c  *)
     (* --------------------------------- *)
     (*           (a # b.e) :: Γ, Δ |- c  *)
-    solve_ env ((a ==: alpha) :: assms) goal && solve_ env ((a =/=: alpha) :: (a #: t) :: assms) goal
+    solve env ((a ==: alpha) :: assms) goal && solve env ((a =/=: alpha) :: (a #: t) :: assms) goal
   | T_App (t1, t2) ->
     (*  (a # e1) :: (a # e2) :: Γ, Δ |- c  *)
     (* ----------------------------------- *)
     (*       (a # e1 e2) :: Γ, Δ |- c      *)
-    solve_ env ((a #: t1) :: (a #: t2) :: assms) goal
+    solve env ((a #: t1) :: (a #: t2) :: assms) goal
   | T_Fun _ ->
     (*       Γ, Δ |- c        *)
     (* ---------------------- *)
     (*  (a # f) :: Γ, Δ |- c  *)
-    solve_ env assms goal
+    solve env assms goal
 
 and solve_assm_eq env assms goal t1 t2 =
   match (t1, t2) with
@@ -278,12 +278,12 @@ and solve_assm_eq env assms goal t1 t2 =
     (*         Γ, Δ |- c        *)
     (* ------------------------ *)
     (*  (x = π x) :: Γ, Δ |- c  *)
-    solve_ env assms goal
+    solve env assms goal
   | T_Var {perm= []; symb= x}, T_Var {perm= pi; symb= x'} when x = x' ->
     (*  (π idempotent on x) :: Γ, Δ |- c  *)
     (* ---------------------------------- *)
     (*            (x = π x) :: Γ, Δ |- c  *)
-    let solve_with_assms assms = solve_ env assms goal in
+    let solve_with_assms assms = solve env assms goal in
     List.for_all solve_with_assms $ build_permutation_idempotent_assms pi x assms
   | T_Var {perm= _ :: _; symb= x}, T_Var {perm= []; symb= x'} when x = x' -> solve_assm_eq env assms goal t2 t1
   | T_Var {perm= []; symb= x}, t | t, T_Var {perm= []; symb= x} ->
@@ -311,7 +311,7 @@ and solve_assm_eq env assms goal t1 t2 =
         (* -------------------------------------- *)
         (*         (a = b) :: Γ, Δ |- c           *)
         let subst = subst_atom_in_solver_constr a $ pure b in
-        solve_ env (List.map subst assms) (subst goal) )
+        solve env (List.map subst assms) (subst goal) )
     | Some (swap, pi) ->
       (*  (a # a1) :: (a # a2) :: ( a = π b) :: Γ, Δ |- c  *)
       (*  (a = a1) :: (a # a2) :: (a2 = π b) :: Γ, Δ |- c  *)
@@ -329,19 +329,19 @@ and solve_assm_eq env assms goal t1 t2 =
     (*  (a1 # a2.e2) :: (e1 = [a1 a2] e2) :: Γ, Δ |- c  *)
     (* ------------------------------------------------ *)
     (*           (a1.e1 = a2.e2) :: Γ, Δ |- c           *)
-    solve_ env (fresh a1 (lam a2 t2) :: (t1 =: permute_term [(a1, a2)] t2) :: assms) goal
+    solve env (fresh a1 (lam a2 t2) :: (t1 =: permute_term [(a1, a2)] t2) :: assms) goal
   | T_Lam _, _ -> true
   | T_App (t1, t2), T_App (t1', t2') ->
     (*  (e1 = e2) :: (e1' = e2') :: Γ, Δ |- c  *)
     (* ------------------------------------------------ *)
     (*           e1 e1' = e2 e2' :: Γ, Δ |- c           *)
-    solve_ env ((t1 =: t1') :: (t2 =: t2') :: assms) goal
+    solve env ((t1 =: t1') :: (t2 =: t2') :: assms) goal
   | T_App _, _ -> true
   | T_Fun f, T_Fun f' ->
     (*       f1 =/= f2                   Γ, Δ |- c       *)
     (* ------------------------   ---------------------- *)
     (*  (f1 = f2) :: Γ, Δ |- c     (f = f) :: Γ, Δ |- c  *)
-    f <> f' || solve_ env assms goal
+    f <> f' || solve env assms goal
   | T_Fun _, _ -> true
 
 (** Builds a list of assumption-lists that exhaust all possibilities that ensuring [x =: π x] *)
@@ -355,9 +355,9 @@ and build_permutation_idempotent_assms pi x assms =
   List.fold_left add_atom_assumptions [assms] (free_vars_of pi)
 
 and solve_swap_cases env a (alpha1, alpha2) assm_gen goal_gen =
-  solve_ env ((a =/=: alpha1) :: (a =/=: alpha2) :: assm_gen (pure a)) (goal_gen (pure a))
-  && solve_ env ((a ==: alpha1) :: (a =/=: alpha2) :: assm_gen alpha2) (goal_gen alpha2)
-  && solve_ env ((a ==: alpha2) :: assm_gen alpha1) (goal_gen alpha1)
+  solve env ((a =/=: alpha1) :: (a =/=: alpha2) :: assm_gen (pure a)) (goal_gen (pure a))
+  && solve env ((a ==: alpha1) :: (a =/=: alpha2) :: assm_gen alpha2) (goal_gen alpha2)
+  && solve env ((a ==: alpha2) :: assm_gen alpha1) (goal_gen alpha1)
 
 and solve_assm_shape env assms goal t1 t2 =
   match (t1, t2) with
@@ -376,25 +376,25 @@ and solve_assm_shape env assms goal t1 t2 =
     (*         Γ, Δ |- c        *)
     (* ------------------------ *)
     (*  (a1 ~ a2) :: Γ, Δ |- c  *)
-    solve_ env assms goal
+    solve env assms goal
   | S_Atom, _ -> true
   | S_Lam t1, S_Lam t2 ->
     (*      (e1 ~ e2) :: Γ, Δ |- c    *)
     (* --------------------------------- *)
     (*  (a1.e1 ~ a2.e2) :: Γ, Δ |- c  *)
-    solve_ env ((t1 =~: t2) :: assms) goal
+    solve env ((t1 =~: t2) :: assms) goal
   | S_Lam _, _ -> true
   | S_App (t1, t1'), S_App (t2, t2') ->
     (*  (e1 ~ e2) :: (e1' ~ e2') :: Γ, Δ |- c  *)
     (* --------------------------------------------- *)
     (*      (e1 e1' ~ e2 e2') :: Γ, Δ |- c     *)
-    solve_ env ((t1 =~: t2) :: (t1' =~: t2') :: assms) goal
+    solve env ((t1 =~: t2) :: (t1' =~: t2') :: assms) goal
   | S_App _, _ -> true
   | S_Fun f1, S_Fun f2 ->
     (*      f1 =/= f2                    Γ, Δ |- c       *)
     (* ------------------------   ---------------------- *)
     (*  (f1 ~ f2) :: Γ, Δ |- c     (f ~ f) :: Γ, Δ |- c  *)
-    f1 <> f2 || solve_ env assms goal
+    f1 <> f2 || solve env assms goal
   | S_Fun _, _ -> true
 
 and solve_assm_subshape env assms goal t1 = function
@@ -430,7 +430,7 @@ and solve_assm_symbol env assms goal t =
     (*          Γ, Δ |- c         *)
     (* -------------------------- *)
     (*  (symbol f) :: Γ, Δ |- c  *)
-    solve_ env assms goal
+    solve env assms goal
   | S_Var x -> solve_assm_in_modified_env (SolverEnv.add_symbol x) env assms goal
   | S_Atom | S_Lam _ | S_App _ ->
     (* absurd *)
@@ -439,16 +439,16 @@ and solve_assm_symbol env assms goal t =
 and solve_assm_in_modified_env add_assm_to_env env assms goal =
   match add_assm_to_env env with
   | None -> true
-  | Some (env, env_assms) -> solve_ env (env_assms @ assms) goal
+  | Some (env, env_assms) -> solve env (env_assms @ assms) goal
 
 let solve_with_assumptions assms goal =
   let solver_assms = List.map from_constr assms in
   let solver_goal = from_constr goal in
-  solve_ SolverEnv.empty solver_assms solver_goal
-
-let solve = solve_with_assumptions []
+  solve SolverEnv.empty solver_assms solver_goal
 
 let ( |-: ) = solve_with_assumptions
+
+let ( ||-: ) = solve_with_assumptions []
 
 let absurd =
   let t = symb "absurd" in

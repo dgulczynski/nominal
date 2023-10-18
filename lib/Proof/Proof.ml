@@ -84,7 +84,7 @@ let solver_proof (env, f) solver_goal on_solved =
   let assumptions = List.map (fun c -> F_Constr c) constr_assumptions in
   let env = ProofEnv.env (identifiers env) (constraints env) assumptions (mapping env) id in
   let solver_assumptions = constr_assumptions @ constraints env in
-  match Solver.solve_with_assumptions solver_assumptions solver_goal with
+  match solver_assumptions |-: solver_goal with
   | true -> on_solved (env, f)
   | false -> raise_in_env env $ solver_failure solver_assumptions f
 

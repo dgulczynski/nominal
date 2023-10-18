@@ -1,5 +1,6 @@
 open Angstrom
 open Types
+open Solver
 open Prelude
 open Permutation
 open ParserTypes
@@ -171,7 +172,7 @@ let judgement assm goal =
 
 let run_judgement penv s =
   let env, goal = parse (judgement constr constr) s in
-  Solver.solve_with_assumptions (List.map (pconstr_to_constr penv) env) (pconstr_to_constr penv goal)
+  List.map (pconstr_to_constr penv) env |-: pconstr_to_constr penv goal
 
 let atoms xs = List.map (fun a -> Bind (a, K_Atom (fresh ()))) xs
 
