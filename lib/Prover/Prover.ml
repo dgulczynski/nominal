@@ -49,7 +49,7 @@ let apply h state =
 
 let apply_thm proof state = apply_internal (proven proof) state
 
-let assm_proof h_name env = proof_assumption env (lookup env h_name)
+let assm_proof h_name env = proof_assm env (lookup env h_name)
 
 let apply_assm h_name state =
   let env = goal_env state in
@@ -90,7 +90,7 @@ let ex_falso state =
 let solve state =
   let env, f = goal state in
   let ctx = context state in
-  let proof_env = ProofEnv.map_assumptions snd id env in
+  let proof_env = ProofEnv.map_assms snd id env in
   match f with
   | F_Constr c ->
     let c_proof = proof_constr proof_env c in
@@ -100,7 +100,7 @@ let solve state =
     let f_proof = proof_hole (env |> add_constr c) f' in
     let jgmt = to_judgement (env, f) in
     find_goal_in_proof ctx $ proof_constr_and jgmt c_proof f_proof
-  | F_Bot -> find_goal_in_proof ctx % proven $ Proof.constr_e (map_assumptions snd id env)
+  | F_Bot -> find_goal_in_proof ctx % proven $ Proof.constr_e (map_assms snd id env)
   | f -> raise_in_env env $ not_a_constraint f
 
 let qed = finish
@@ -133,9 +133,9 @@ let exists witness state =
 
 let exists' witnesses state = List.fold_left (flip exists) state witnesses
 
-let remove_assm h_name = remove_assumptions (( = ) h_name % fst)
+let remove_assm h_name = remove_assms (( = ) h_name % fst)
 
-let update_assm h_name h = remove_assm h_name %> add_assumption (h_name, h)
+let update_assm h_name h = remove_assm h_name %> add_assm (h_name, h)
 
 let destruct_assm_witness env f h_name h_proof h witness_bind ctx =
   let ctx = PC_WitnessUsage (to_judgement (env, f), h_proof, binder_name witness_bind, ctx) in
@@ -250,7 +250,7 @@ let by_induction y_name ind_hyp_name state =
     let f_y = (x |=> var y) f_x in
     let ctx = PC_Induction (to_judgement (env, f_x), x_bind, y_bind, context state) in
     let ind_hyp = F_ForallTerm (y_bind, F_ConstrImpl (var y <: var x, f_y)) in
-    unfinished (env |> add_var x_bind |> add_assumption (ind_hyp_name, ind_hyp), f_x) ctx
+    unfinished (env |> add_var x_bind |> add_assm (ind_hyp_name, ind_hyp), f_x) ctx
   | env, f -> raise_in_env env $ not_a_forall_term f
 
 let step n state =
@@ -270,7 +270,7 @@ let case name state =
 
 let assert_constr env constr =
   let void = const () in
-  let proof_env = ProofEnv.map_assumptions snd id env in
+  let proof_env = ProofEnv.map_assms snd id env in
   void $ IncProof.proof_constr proof_env constr
 
 let subst x_name y_source state =
@@ -291,7 +291,7 @@ let subst x_name y_source state =
     let ctx = PC_SubstVar (to_judgement (env, f), V x, t, context state) in
     unfinished (ProofEnv.subst_var (fun x t -> on_snd (x |=> t)) (V x) t env, (V x |=> t) f) ctx
 
-let add_assumption h_name h_proof state =
+let add_assm h_name h_proof state =
   let h = label' h_proof in
   let env, f = goal state in
   let f_state =
@@ -302,24 +302,24 @@ let add_assumption h_name h_proof state =
   let f_ctx = PC_ApplyRight (to_judgement (env, f), f_incproof, context state) in
   find_goal_in_proof f_ctx h_proof
 
-let add_assumption_thm' h_name h_proof state =
+let add_assm_thm' h_name h_proof state =
   let h = label' h_proof in
   let env, f = goal state in
   let ctx = PC_ApplyLeft (to_judgement (env, f), context state, h_proof) in
   unfinished (env, F_Impl (h, f)) ctx |> intro_named h_name
 
-let add_assumption_thm h_name = add_assumption_thm' h_name % proven
+let add_assm_thm h_name = add_assm_thm' h_name % proven
 
-let add_assumption_thm_spec h_name h_proof specs state =
+let add_assm_thm_spec h_name h_proof specs state =
   let env, _ = goal state in
   let h_spec_proof = specialize_proof (proven h_proof) specs env in
-  add_assumption_thm' h_name h_spec_proof state
+  add_assm_thm' h_name h_spec_proof state
 
 let specialize_assm h_name h_spec_name specs state =
   let env = goal_env state in
   let h_proof = assm_proof h_name env in
   let h_spec_proof = specialize_proof h_proof specs env in
-  state |> add_assumption h_spec_name h_spec_proof
+  state |> add_assm h_spec_name h_spec_proof
 
 let apply_in_assm h_name h_premise_name state =
   let env, _ = goal state in
@@ -329,5 +329,5 @@ let apply_in_assm h_name h_premise_name state =
   match computeWHNF h_env 5 h with
   | h_env, _, F_Impl (_, h_conclusion) ->
     let h_conclusion_proof = proof_apply (h_env, h_conclusion) h_proof h_premise_proof in
-    add_assumption h_name h_conclusion_proof state
+    add_assm h_name h_conclusion_proof state
   | _ -> raise_in_env env % not_an_implication $ label' h_premise_proof

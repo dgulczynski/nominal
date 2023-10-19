@@ -62,13 +62,13 @@ let judgement proof = (env proof, label proof)
 
 let assumption env f = P_Ax (ProofEnv.env (identifiers env) (constraints env) [f] (mapping env) id, f)
 
-let remove_assumptions_equiv_to to_formula f env = remove_assumptions (fun g -> f === to_formula g <| env) env
+let remove_assms_equiv_to to_formula f env = remove_assms (fun g -> f === to_formula g <| env) env
 
-let remove_assumption = remove_assumptions_equiv_to id
+let remove_assm = remove_assms_equiv_to id
 
 let imp_i f p =
   let f' = label p in
-  let env = env p |> remove_assumption f in
+  let env = env p |> remove_assm f in
   P_Intro ((env, F_Impl (f, f')), p)
 
 let raise_in_env env exn = raise % exn $ all_identifiers env
@@ -80,13 +80,13 @@ let imp_e p1 p2 =
   | f1, f2 -> raise_in_env env $ premise_mismatch f1 f2
 
 let solver_proof (env, f) solver_goal on_solved =
-  let constr_assumptions = List.filter_map to_constr_op $ assumptions env in
-  let assumptions = List.map (fun c -> F_Constr c) constr_assumptions in
+  let constr_assms = List.filter_map to_constr_op $ assumptions env in
+  let assumptions = List.map (fun c -> F_Constr c) constr_assms in
   let env = ProofEnv.env (identifiers env) (constraints env) assumptions (mapping env) id in
-  let solver_assumptions = constr_assumptions @ constraints env in
-  match solver_assumptions |-: solver_goal with
+  let solver_assms = constr_assms @ constraints env in
+  match solver_assms |-: solver_goal with
   | true -> on_solved (env, f)
-  | false -> raise_in_env env $ solver_failure solver_assumptions f
+  | false -> raise_in_env env $ solver_failure solver_assms f
 
 let constr_i env constr =
   let judgement = (env, F_Constr constr) in
@@ -98,7 +98,7 @@ let constr_e env =
 
 let constr_imp_i c p =
   let f = label p in
-  let env = env p |> remove_constraints (( = ) c) |> remove_assumption (F_Constr c) in
+  let env = env p |> remove_constraints (( = ) c) |> remove_assm (F_Constr c) in
   P_Intro ((env, F_ConstrImpl (c, f)), p)
 
 let constr_imp_e c_proof c_imp_proof =
@@ -168,7 +168,7 @@ let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
   let f = (A a |-> b) f_a in
   let env, f' = judgement p in
   if f === f' <| env then
-    let env = env |> remove_identifier a |> remove_assumption f_a in
+    let env = env |> remove_identifier a |> remove_assm f_a in
     P_Intro ((env, F_ExistsAtom (a_bind, f_a)), p)
   else
     raise_in_env env $ formula_mismatch f f'
@@ -177,7 +177,7 @@ let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   let f = (V x |=> t) f_x in
   let env, f' = judgement p in
   if f === f' <| env then
-    let env = env |> remove_identifier x |> remove_assumption f_x in
+    let env = env |> remove_identifier x |> remove_assm f_x in
     P_Intro ((env, F_ExistsTerm (x_bind, f_x)), p)
   else
     raise_in_env env $ formula_mismatch f f'
@@ -187,11 +187,11 @@ let exist_e p_exists witness p =
   let remove_witness = function
     | F_ExistsTerm (V_Bind (_, x), f_x) -> (
       match Utils.bind_by_name witness (identifiers env) with
-      | Some (Bind (_, K_Var w)) -> remove_identifier w %> remove_assumption ((x |=> var (V w)) f_x)
+      | Some (Bind (_, K_Var w)) -> remove_identifier w %> remove_assm ((x |=> var (V w)) f_x)
       | _ -> failwith ("not a var " ^ witness) )
     | F_ExistsAtom (A_Bind (_, a), f_a) -> (
       match Utils.bind_by_name witness (identifiers env) with
-      | Some (Bind (_, K_Atom w)) -> remove_identifier w %> remove_assumption ((a |-> pure (A w)) f_a)
+      | Some (Bind (_, K_Atom w)) -> remove_identifier w %> remove_assm ((a |-> pure (A w)) f_a)
       | _ -> failwith ("not an atom " ^ witness) )
     | g -> raise_in_env env $ not_an_exists g
   in
@@ -242,7 +242,7 @@ let induction_e (V_Bind (x_name, V x) as x_bind) (V_Bind (y_name, V y)) p =
   let f_x = label p in
   let f_y = (V x |=> var (V y)) f_x in
   let ind_hyp = F_ForallTerm (V_Bind (y_name, V y), F_ConstrImpl (var (V y) <: var (V x), f_y)) in
-  let env = env p |> remove_assumption ind_hyp in
+  let env = env p |> remove_assm ind_hyp in
   match List.filter_map (fun v -> find_bind v env) [x_name; y_name] with
   | [] -> P_Intro ((env |> remove_identifier x, F_ForallTerm (x_bind, f_x)), p)
   | f :: _ ->
@@ -267,7 +267,7 @@ let sub_constr sub constr =
   | F_Constr constr' -> constr'
   | f -> raise $ not_a_constraint f []
 
-let sub_env sub = map_assumptions sub id % map_constraints (sub_constr sub)
+let sub_env sub = map_assms sub id % map_constraints (sub_constr sub)
 
 let subst env f sub constr p =
   let ( <= ) = env_inclusion env in

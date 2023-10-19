@@ -105,7 +105,7 @@ let proof11 th11 =
   proof' th11
   |> intros ["H"]
   |> intro
-  |> add_assumption_parse "Hc" "exists c:atom. a =/= c" %> apply_assm_spec "H" ["a"]
+  |> add_assm_parse "Hc" "exists c:atom. a =/= c" %> apply_assm_spec "H" ["a"]
   |> destruct_assm "Hc"
   |> exists "c"
   |> solve

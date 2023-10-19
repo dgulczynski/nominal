@@ -22,10 +22,10 @@ let try_many on_fail tactics state =
   | Some success -> success
   | None -> on_fail ()
 
-let add_assumption_parse h_name h_string state =
+let add_assm_parse h_name h_string state =
   let env, _ = goal state in
   let h = parse_formula_in_env (ProofEnv.all_identifiers env) h_string in
-  state |> add_assumption h_name (proof_hole env h)
+  state |> add_assm h_name (proof_hole env h)
 
 let add_constr c state =
   let _, f = goal state in
@@ -42,7 +42,7 @@ let assumption state =
     let exn = unwords [str "No assumption matching goal"; backticked_formula f] in
     raise $ proof_exception_from_printer exn (ProofEnv.all_identifiers env)
   in
-  match ProofEnv.lookup_assumption (fun (_, g) -> (f === g) env) env with
+  match ProofEnv.lookup_assm (fun (_, g) -> (f === g) env) env with
   | Some (h_name, _) -> apply_assm h_name state
   | None ->
     let to_tactic = apply_assm % fst in
@@ -82,12 +82,12 @@ let intro' state =
 
 let compare_atoms a b =
   let h_name = fresh_assm_name () in
-  add_assumption_thm_spec h_name Proof.Axiom.compare_atoms [a; b] %> destruct_assm h_name
+  add_assm_thm_spec h_name Proof.Axiom.compare_atoms [a; b] %> destruct_assm h_name
 
 let get_fresh_atom a fresh_in =
   let h_name = fresh_assm_name () in
-  add_assumption_thm_spec h_name Proof.Axiom.exists_fresh [fresh_in] %> destruct_assm' h_name [a; ""]
+  add_assm_thm_spec h_name Proof.Axiom.exists_fresh [fresh_in] %> destruct_assm' h_name [a; ""]
 
 let inverse_term e =
   let h_name = fresh_assm_name () in
-  add_assumption_thm_spec h_name Proof.Axiom.term_inversion [e] %> destruct_assm h_name
+  add_assm_thm_spec h_name Proof.Axiom.term_inversion [e] %> destruct_assm h_name

@@ -1,13 +1,13 @@
 open Types
 open Prelude
 
-type kind_assumption =
+type kind_assm =
   | Constr of constr
   | BoundVar of var * var
   | BoundAtom of atom * atom
   | BoundFVar of string * fvar * kind
 
-type t = kind_assumption list
+type t = kind_assm list
 
 let empty = []
 

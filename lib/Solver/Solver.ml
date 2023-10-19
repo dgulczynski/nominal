@@ -349,10 +349,10 @@ and build_permutation_idempotent_assms pi x assms =
   (*  (∀ a ∈ π. a = π a  ∨  a # x) :: Γ, Δ |- c  *)
   (* ------------------------------------------- *)
   (*           (π idempotent on x) :: Γ, Δ |- c  *)
-  let add_atom_assumptions assmss a =
+  let add_atom_assms assmss a =
     List.map (List.cons (fresh a (var x))) assmss @ List.map (List.cons (atom' a =: atom' (permute pi a))) assmss
   in
-  List.fold_left add_atom_assumptions [assms] (free_vars_of pi)
+  List.fold_left add_atom_assms [assms] (free_vars_of pi)
 
 and solve_swap_cases env a (alpha1, alpha2) assm_gen goal_gen =
   solve env ((a =/=: alpha1) :: (a =/=: alpha2) :: assm_gen (pure a)) (goal_gen (pure a))
@@ -441,14 +441,14 @@ and solve_assm_in_modified_env add_assm_to_env env assms goal =
   | None -> true
   | Some (env, env_assms) -> solve env (env_assms @ assms) goal
 
-let solve_with_assumptions assms goal =
+let solve_with_assms assms goal =
   let solver_assms = List.map from_constr assms in
   let solver_goal = from_constr goal in
   solve SolverEnv.empty solver_assms solver_goal
 
-let ( |-: ) = solve_with_assumptions
+let ( |-: ) = solve_with_assms
 
-let ( ||-: ) = solve_with_assumptions []
+let ( ||-: ) = solve_with_assms []
 
 let absurd =
   let t = symb "absurd" in

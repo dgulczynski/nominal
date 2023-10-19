@@ -30,17 +30,17 @@ let progress =
      %> solve
   |> intros' ["Happ"; "e1"; "e2"; "t2"; ""; ""]
      (* e is an application - steps *) %> case "steps"
-     %> (add_assumption_parse "He1" "Progressive e1" %> apply_assm_spec "IH" ["e1"; "arrow t2 t"] %> solve)
-     %> (add_assumption_parse "He2" "Progressive e2" %> apply_assm_spec "IH" ["e2"; "t2"] %> solve)
+     %> (add_assm_parse "He1" "Progressive e1" %> apply_assm_spec "IH" ["e1"; "arrow t2 t"] %> solve)
+     %> (add_assm_parse "He2" "Progressive e2" %> apply_assm_spec "IH" ["e2"; "t2"] %> solve)
   |> destruct_assm "He1"
      %> intros ["Hv1"]
      %> destruct_assm "He2"
      %> intros ["Hv2"] (* Value e1, Value e2 *)
-     %> ( add_assumption_thm_spec "He1lam" LambdaCalculusUtils.canonical_form ["e1"; "arrow t2 t"]
+     %> ( add_assm_thm_spec "He1lam" LambdaCalculusUtils.canonical_form ["e1"; "arrow t2 t"]
         %> apply_in_assm "He1lam" "Hv1"
         %> apply_in_assm "He1lam" "Happ_1"
         %> destruct_assm' "He1lam" ["a"; "e_a"; ""] (* He1lam: [e1 = lam (a.e_a)] ∧ (Term e_a) *) )
-     %> ( add_assumption_thm_spec "He_a" LambdaCalculusSub.subst_exists ["a"; "e2"; "e_a"]
+     %> ( add_assm_thm_spec "He_a" LambdaCalculusSub.subst_exists ["a"; "e2"; "e_a"]
         %> apply_in_assm "He_a" "Hv2"
         %> apply_in_assm "He_a" "He1lam"
         %> destruct_assm' "He_a" ["e_a'"] (* He_a: Sub e_a a e2 e_a' *) )

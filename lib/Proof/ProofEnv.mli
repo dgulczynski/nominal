@@ -34,17 +34,17 @@ val remove_identifier : name_internal -> 'a env -> 'a env
 
 val add_constr : constr -> 'a env -> 'a env
 
-val add_assumption : 'a -> 'a env -> 'a env
+val add_assm : 'a -> 'a env -> 'a env
 
-val map_assumptions : ('a -> 'b) -> ('b -> formula) -> 'a env -> 'b env
+val map_assms : ('a -> 'b) -> ('b -> formula) -> 'a env -> 'b env
 
-val lookup_assumption : ('a -> bool) -> 'a env -> 'a option
+val lookup_assm : ('a -> bool) -> 'a env -> 'a option
 
 val lookup_identifier : string -> 'a env -> binder option
 
 val map_constraints : (constr -> constr) -> 'a env -> 'a env
 
-val remove_assumptions : ('a -> bool) -> 'a env -> 'a env
+val remove_assms : ('a -> bool) -> 'a env -> 'a env
 
 val remove_constraints : (constr -> bool) -> 'a env -> 'a env
 

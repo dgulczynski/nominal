@@ -31,7 +31,7 @@ let unproven ((env, _) as goal) (_, f) =
   let exn = unwords [str "In the proof of"; backticked_formula f; str "You haven't yet proven"; pretty_goal goal] in
   proof_exception_from_printer exn (all_identifiers env)
 
-(** Helper function that traverses [incproof] and returns [S_Unfinished {goal; context}] of a first found hole 
+(** Helper function that traverses [incproof] and returns [S_Unfinished {goal; context}] of a first found hole
     (where [context] is its context in [incproof]) or [S_Finished incproof] if [incproof] has no holes *)
 let rec find_goal_in_proof context incproof =
   match find_hole_in_proof context incproof with
@@ -100,7 +100,7 @@ let goal_formula = formula_of % goal
 
 let lookup env h_name =
   let test (name, _) = h_name = name in
-  match lookup_assumption test env with
+  match lookup_assm test env with
   | None -> raise $ unknown_hypothesis h_name
   | Some (_, h) -> h
 
@@ -119,7 +119,7 @@ let intro_named name state =
   match f with
   | F_Impl (f1, f2) ->
     let ctx = PC_Intro (to_judgement (env, f), context state) in
-    unfinished (env |> add_assumption (name, f1), f2) ctx
+    unfinished (env |> add_assm (name, f1), f2) ctx
   | F_ForallAtom _ as f ->
     let A_Bind (_, a), f = instantiate_atom f in
     let a_bind = A_Bind (name, a) in
