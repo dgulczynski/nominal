@@ -132,10 +132,10 @@ and solve_fresh env assms a e =
   | T_Var {perm; symb= x} -> (
     match outer_swap perm with
     | None ->
-      SolverEnv.is_fresh env a x
-      (*   (a # x) ∈ Δ   *)
-      (* --------------- *)
-      (*  Γ, Δ |- a # x  *)
+      SolverEnv.is_fresh env a x || SolverEnv.is_symbol env x
+      (*   (a # x) ∈ Δ        (symbol x) ∈ Δ  *)
+      (* ---------------    ----------------- *)
+      (*  Γ, Δ |- a # x       Γ, Δ |- a # x   *)
     | Some (swap, pi) ->
       (*  (a # a1) :: (a # a2) :: Γ, Δ |-  a # π x  *)
       (*  (a = a1) :: (a # a2) :: Γ, Δ |- a2 # π x  *)
