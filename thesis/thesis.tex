@@ -279,10 +279,28 @@ swapping, and freshness then, as Pitts argues, it is equivariant as well.
 \begin{mdframed}[frametitle={\textnormal{\footnotesize \textbf{\citeauthor{nominal-logic}}, \textit{\citetitle{nominal-logic}}\cite{nominal-logic}:}}]
 The fundamental assumption underlying Nominal Logic is that \textit{the only predicates we ever deal with} (when describing properties of syntax) \textit{are equivariant ones, in the sense that their validity is invariant under swapping} (i.e., transposing, or interchanging) \textit{names}.
 \end{mdframed}
+\section{Problem statement / motivation}
+Nominal logic opens avenues for expressing alpha-equivalence, freshness and
+other fundamental syntactic properties with elegance.
+Formalizing theories within such system calls for
+a robust framework, ideally accompanied by a proof assistant.
+To achieve the bigger goal of abstracting away the mundane hanlding of these
+properties, which are so obvious to the human eye,
+yet non-trivial from the point of view of rigorous computer accuracy,
+we strive for automatic deductive process.
 
-\section{Problem statement}
-TODO:
-Why isn't above enough? Why did we decide to write this work? \dots
+\pagebreak
+
+There's two fundamental observations paved the way to empowering such
+framework towards automatic handling of syntactical properties:
+\begin{itemize}
+\item The structural nature of these predicates and relations allows the deduce of additional assumptions based on existing or assumed ones.
+It can also go the other way: one can break down and analyse the assumptions
+up until the simplest parts.
+\item These properties are intertwined together.
+For example, if atom $a$ is fresh in term $t$ and terms $t$ and $t'$ are alpha-equivalent,
+then it must hold that $a$ is fresh in $t'$.
+\end{itemize}
 
 \section{Contributions}
 We categorize the fundamental properties of terms with variable binding,
