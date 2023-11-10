@@ -1396,14 +1396,22 @@ so make it easier to read by providing some examples.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
-On top of the sublogic of constraints, we build a higher-order logic.
+By constructing the Solver, we have built the sound logical system designed for handling and resolving constraints.
+We extend its utility and accesibility
+by introducing a higher-order logic layered atop the sublogic of constraints.
+This logical framework includes all essential elements necessary for
+formalizing theories, such as traditional connectives and quantifiers,
+functions and relations, and special formulae that have constraints embedded inside them,
+providing a versatile platform for expressing and reasoning about syntactic properties.
 
-TODO: why do we have HOL? Motivation.
+In subsequent chapters, our focus will shift towards constructing a dedicated proof system for this higher-order logic and a proof assistant.
+Binding together all these components creates a cohesive framework
+for precise articulation and reasoning of complex syntactic properties.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Kinds}
-We introduce kinds to ensure that the formulas we will deal with
-are \it{making sense},
-due to the multiple ways atoms, terms, binders, and constraints can occur in them.
+To organize the different types of formulas within this logic, we introduce the concept of \it{kinds}.
+The kind checker ensures that the formulas under consideration are coherent, given the multiple ways atoms, terms, binders, and constraints may appear within them. This step is essential for maintaining the logical integrity and meaningful interpretation of the formulas.
 \begin{figure}[htbp]
   \framebox[\textwidth]{
 \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
