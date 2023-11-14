@@ -32,8 +32,10 @@ type pformula =
   | PF_And of (string * pformula) list
   | PF_Or of (string * pformula) list
   | PF_Impl of pformula * pformula
+  | PF_ForallForm of string * pkind * pformula
   | PF_ForallTerm of string * pformula
   | PF_ForallAtom of string * pformula
+  | PF_ExistsForm of string * pkind * pformula
   | PF_ExistsTerm of string * pformula
   | PF_ExistsAtom of string * pformula
   | PF_ConstrAnd of pconstr * pformula

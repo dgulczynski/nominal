@@ -94,8 +94,10 @@ type formula =
   | F_And of (string * formula) list
   | F_Or of (string * formula) list
   | F_Impl of formula * formula
+  | F_ForallForm of fvar_binder * formula
   | F_ForallTerm of var_binder * formula
   | F_ForallAtom of atom_binder * formula
+  | F_ExistsForm of fvar_binder * formula
   | F_ExistsTerm of var_binder * formula
   | F_ExistsAtom of atom_binder * formula
   | F_ConstrAnd of constr * formula

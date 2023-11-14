@@ -43,8 +43,10 @@ let rec computeWHNF env n f =
     | F_Constr _
     | F_ConstrAnd _
     | F_ConstrImpl _
+    | F_ForallForm _
     | F_ForallTerm _
     | F_ForallAtom _
+    | F_ExistsForm _
     | F_ExistsTerm _
     | F_ExistsAtom _
     | F_Fun _
@@ -119,16 +121,18 @@ and equiv solver_env env1 env2 n1 n2 f1 f2 =
     (x1 |=> x) f1 === (x2 |=> x) f2
   | F_ForallAtom _, _ | F_ForallTerm _, _ | F_ExistsAtom _, _ | F_ExistsTerm _, _ | F_FunTerm _, _ | F_FunAtom _, _ ->
     false
-  | F_Fun (FV_Bind (_, x1, k1), f1), F_Fun (FV_Bind (_, x2, k2), f2) ->
+  | F_ForallForm (FV_Bind (_, p1, k1), f1), F_ForallForm (FV_Bind (_, p2, k2), f2)
+  | F_ExistsForm (FV_Bind (_, p1, k1), f1), F_ExistsForm (FV_Bind (_, p2, k2), f2)
+  | F_Fun (FV_Bind (_, p1, k1), f1), F_Fun (FV_Bind (_, p2, k2), f2) ->
     (k1 <=: k2) KindCheckerEnv.empty
     &&
     let x = fresh_fvar () in
-    (FV x1 |==> F_Var x) f1 === (FV x2 |==> F_Var x) f2
-  | F_Fun _, _ -> false
-  | ( F_Fix (FV_Bind (_, fix1, fix1_k), V_Bind (_, x1), x1_k, f1)
-    , F_Fix (FV_Bind (_, fix2, fix2_k), V_Bind (_, x2), x2_k, f2) ) ->
+    (FV p1 |==> F_Var x) f1 === (FV p2 |==> F_Var x) f2
+  | F_ForallForm _, _ | F_ExistsForm _, _ | F_Fun _, _ -> false
+  | ( F_Fix (FV_Bind (_, fix1, fix1_k), V_Bind (_, x1), f1_k, f1)
+    , F_Fix (FV_Bind (_, fix2, fix2_k), V_Bind (_, x2), f2_k, f2) ) ->
     (fix1_k <=: fix2_k) KindCheckerEnv.empty
-    && (x1_k <=: x2_k) KindCheckerEnv.empty
+    && (f1_k <=: f2_k) KindCheckerEnv.empty
     &&
     let x = fresh_var () and fix = fresh_fvar () in
     let sub1 = (x1 |=> var x) % (FV fix1 |==> F_Var fix) in
@@ -182,11 +186,14 @@ and equiv_syntactic env1 env2 n1 n2 f1 f2 =
   | F_FunTerm (V_Bind (_, x1), f1), F_FunTerm (V_Bind (_, x2), f2) ->
     let x = var $ fresh_var () in
     (x1 |=> x) f1 === (x2 |=> x) f2
-  | F_Fun (FV_Bind (_, x1, k1), f1), F_Fun (FV_Bind (_, x2, k2), f2) ->
+  | F_ForallForm (FV_Bind (_, p1, k1), f1), F_ForallForm (FV_Bind (_, p2, k2), f2)
+  | F_ExistsForm (FV_Bind (_, p1, k1), f1), F_ExistsForm (FV_Bind (_, p2, k2), f2)
+  | F_Fun (FV_Bind (_, p1, k1), f1), F_Fun (FV_Bind (_, p2, k2), f2) ->
     (k1 <=: k2) KindCheckerEnv.empty
     &&
     let x = fresh_fvar () in
-    (FV x1 |==> F_Var x) f1 === (FV x2 |==> F_Var x) f2
+    (FV p1 |==> F_Var x) f1 === (FV p2 |==> F_Var x) f2
+  | F_ForallForm _, _ | F_ExistsForm _, _ | F_Fun _, _ -> false
   | F_ForallAtom _, _ | F_ForallTerm _, _ | F_ExistsAtom _, _ | F_ExistsTerm _, _ | F_FunTerm _, _ | F_FunAtom _, _ ->
     false
   | F_App (f1, f1'), F_App (f2, f2') -> f1 === f2 && f1' === f2'
@@ -194,7 +201,6 @@ and equiv_syntactic env1 env2 n1 n2 f1 f2 =
   | F_AppAtom (f1, a1), F_AppAtom (f2, a2) -> a1 = a2 && f1 === f2
   | F_AppTerm (f1, t1), F_AppTerm (f2, t2) -> t1 = t2 && f1 === f2
   | F_AppAtom _, _ | F_AppTerm _, _ -> false
-  | F_Fun _, _ -> false
   | ( F_Fix (FV_Bind (_, fix1, fix1_k), V_Bind (_, x1), x1_k, f1)
     , F_Fix (FV_Bind (_, fix2, fix2_k), V_Bind (_, x2), x2_k, f2) ) ->
     (fix1_k <=: fix2_k) KindCheckerEnv.empty

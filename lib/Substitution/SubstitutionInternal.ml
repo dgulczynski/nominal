@@ -146,9 +146,17 @@ let rec subst_in_formula sub f =
   | F_FunTerm _ ->
     let x_binder, f_x = instantiate_var sub f in
     F_FunTerm (x_binder, f_x)
+  | F_ForallForm _ ->
+    let p_binder, f_p = instantiate_fvar sub f in
+    F_ForallForm (p_binder, f_p)
+  | F_ExistsForm _ ->
+    let p_binder, f_p = instantiate_fvar sub f in
+    F_ExistsForm (p_binder, f_p)
+  | F_Fun _ ->
+    let p_binder, f_p = instantiate_fvar sub f in
+    F_Fun (p_binder, f_p)
   | F_ConstrAnd (c, f) -> F_ConstrAnd (subst_c c, subst_f f)
   | F_ConstrImpl (c, f) -> F_ConstrImpl (subst_c c, subst_f f)
-  | F_Fun (FV_Bind (x_name, x, k), f) -> F_Fun (FV_Bind (x_name, x, k), subst_f f)
   | F_App (f1, f2) -> F_App (subst_f f1, subst_f f2)
   | F_AppTerm (f, t) -> F_AppTerm (subst_f f, subst_in_term sub t)
   | F_AppAtom (f, a) -> F_AppAtom (subst_f f, sub_perm_atom sub a)
@@ -170,3 +178,12 @@ and instantiate_var sub = function
     let sub' = add_var x (var x') sub in
     (V_Bind (x_name, x'), subst_in_formula sub' f)
   | _ -> raise $ SubstExn "Cannot instantiate var"
+
+and instantiate_fvar sub = function
+  | F_ForallForm (FV_Bind (p_name, p, k), f)
+  | F_ExistsForm (FV_Bind (p_name, p, k), f)
+  | F_Fun (FV_Bind (p_name, p, k), f) ->
+    let (FV x') = fresh_fvar () in
+    let sub' = add_fvar (FV p) (fvar x') sub in
+    (FV_Bind (p_name, x', k), subst_in_formula sub' f)
+  | _ -> raise $ SubstExn "Cannot instantiate fvar"

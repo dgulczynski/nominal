@@ -86,6 +86,18 @@ let rec pkind_to_kind env = function
     let x = fresh () in
     K_ForallTerm (V_Bind (x_name, V x), pkind_to_kind (Bind (x_name, K_Var x) :: env) k)
 
+let fresh_atom_binder a_name env =
+  let a_bind = A_Bind (a_name, fresh_atom ()) in
+  (a_bind, atom_binder_to_binder a_bind :: env)
+
+let fresh_var_binder x_name env =
+  let x_bind = V_Bind (x_name, fresh_var ()) in
+  (x_bind, var_binder_to_binder x_bind :: env)
+
+let fresh_fvar_binder p_name p_kind env =
+  let p_bind = FV_Bind (p_name, fresh (), pkind_to_kind env p_kind) in
+  (p_bind, fvar_binder_to_binder p_bind :: env)
+
 let rec pformula_to_formula env = function
   | PF_Top -> F_Top
   | PF_Bot -> F_Bot
@@ -93,18 +105,6 @@ let rec pformula_to_formula env = function
   | PF_Or fs -> F_Or (List.map (on_snd $ pformula_to_formula env) fs)
   | PF_And fs -> F_And (List.map (on_snd $ pformula_to_formula env) fs)
   | PF_Impl (f1, f2) -> F_Impl (pformula_to_formula env f1, pformula_to_formula env f2)
-  | PF_ForallTerm (x_name, f) ->
-    let x = fresh () in
-    F_ForallTerm (V_Bind (x_name, V x), pformula_to_formula (Bind (x_name, K_Var x) :: env) f)
-  | PF_ForallAtom (a_name, f) ->
-    let a = fresh () in
-    F_ForallAtom (A_Bind (a_name, A a), pformula_to_formula (Bind (a_name, K_Atom a) :: env) f)
-  | PF_ExistsTerm (x_name, f) ->
-    let x = fresh () in
-    F_ExistsTerm (V_Bind (x_name, V x), pformula_to_formula (Bind (x_name, K_Var x) :: env) f)
-  | PF_ExistsAtom (a_name, f) ->
-    let a = fresh () in
-    F_ExistsAtom (A_Bind (a_name, A a), pformula_to_formula (Bind (a_name, K_Atom a) :: env) f)
   | PF_ConstrAnd (c, f) -> F_ConstrAnd (pconstr_to_constr env c, pformula_to_formula env f)
   | PF_ConstrImpl (c, f) -> F_ConstrImpl (pconstr_to_constr env c, pformula_to_formula env f)
   | PF_Var x -> (
@@ -114,17 +114,33 @@ let rec pformula_to_formula env = function
     | Some K_Func -> raise $ wrong_use "Functional symbol" x "as a logical variable"
     | Some (K_FVar (i, _)) -> fvar i
     | None -> raise $ unbound_variable x )
-  | PF_Fun (x, k, f) ->
-    let i = fresh () in
-    let k = pkind_to_kind env k in
-    let env = Bind (x, K_FVar (i, k)) :: env in
-    F_Fun (FV_Bind (x, i, k), pformula_to_formula env f)
+  | PF_ForallForm (p, k, f) ->
+    let p_bind, env = fresh_fvar_binder p k env in
+    F_ForallForm (p_bind, pformula_to_formula env f)
+  | PF_ExistsForm (p, k, f) ->
+    let p_bind, env = fresh_fvar_binder p k env in
+    F_ExistsForm (p_bind, pformula_to_formula env f)
+  | PF_Fun (p, k, f) ->
+    let p_bind, env = fresh_fvar_binder p k env in
+    F_Fun (p_bind, pformula_to_formula env f)
+  | PF_ForallAtom (a_name, f) ->
+    let a_bind, env = fresh_atom_binder a_name env in
+    F_ForallAtom (a_bind, pformula_to_formula env f)
+  | PF_ExistsAtom (a_name, f) ->
+    let a_bind, env = fresh_atom_binder a_name env in
+    F_ExistsAtom (a_bind, pformula_to_formula env f)
   | PF_FunAtom (a_name, f) ->
-    let a = fresh () in
-    F_FunAtom (A_Bind (a_name, A a), pformula_to_formula (Bind (a_name, K_Atom a) :: env) f)
+    let a_bind, env = fresh_atom_binder a_name env in
+    F_FunAtom (a_bind, pformula_to_formula env f)
+  | PF_ForallTerm (x_name, f) ->
+    let x_bind, env = fresh_var_binder x_name env in
+    F_ForallTerm (x_bind, pformula_to_formula env f)
+  | PF_ExistsTerm (x_name, f) ->
+    let x_bind, env = fresh_var_binder x_name env in
+    F_ExistsTerm (x_bind, pformula_to_formula env f)
   | PF_FunTerm (x_name, f) ->
-    let x = fresh () in
-    F_FunTerm (V_Bind (x_name, V x), pformula_to_formula (Bind (x_name, K_Var x) :: env) f)
+    let x_bind, env = fresh_var_binder x_name env in
+    F_FunTerm (x_bind, pformula_to_formula env f)
   | PF_AppIdentfier (f, x) -> (
     match get_bind_opt x env with
     | Some (K_Atom a) -> F_AppAtom (pformula_to_formula env f, pure (A a))

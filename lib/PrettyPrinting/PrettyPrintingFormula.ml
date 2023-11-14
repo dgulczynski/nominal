@@ -15,11 +15,11 @@ let pretty_quantify quantifier x kind = with_prefix_suffix (quantifier ^ " ") ".
 
 let pretty_quantify_binders to_binder pretty_bind kind quantifier binds =
   with_binders (List.rev_map to_binder binds)
-  % pretty_label (pretty_quantify quantifier (unwords (List.rev_map pretty_bind binds)) (str kind))
+  % pretty_label (pretty_quantify quantifier (unwords (List.rev_map pretty_bind binds)) kind)
 
-let pretty_quantifier_atom = pretty_quantify_binders atom_binder_to_binder pretty_atom_bind "atom"
+let pretty_quantifier_atom = pretty_quantify_binders atom_binder_to_binder pretty_atom_bind $ str "atom"
 
-let pretty_quantifier_term = pretty_quantify_binders var_binder_to_binder pretty_var_bind "term"
+let pretty_quantifier_term = pretty_quantify_binders var_binder_to_binder pretty_var_bind $ str "term"
 
 let forall = "∀"
 
@@ -30,8 +30,6 @@ let pretty_arrow x1 x2 = pretty_binop x1 "->" x2
 let pretty_atom_bind (A_Bind (_, a)) = pretty_atom a
 
 let pretty_var_bind (V_Bind (_, x)) = pretty_var x
-
-let pretty_fvar (FV x) = pretty_identifier ~on_not_found:(str % Printf.sprintf "!p%d") x
 
 let rec pretty_kind = function
   | K_Prop -> str "*"
@@ -52,6 +50,12 @@ and pretty_kind_forall_term vars = function
   | K_ForallTerm (x, k) -> pretty_kind_forall_term (x :: vars) k
   | k -> pretty_quantifier_term forall vars (pretty_kind k)
 
+let pretty_fvar (FV x) = pretty_identifier ~on_not_found:(str % Printf.sprintf "!p%d") x
+
+let pretty_fvar_bind (FV_Bind (_, x, _)) = pretty_fvar $ FV x
+
+let pretty_quantifier_form kind = pretty_quantify_binders fvar_binder_to_binder pretty_fvar_bind $ pretty_kind kind
+
 let pretty_bold_arrow x1 x2 = pretty_binop x1 "=>" x2
 
 let pretty_and x1 x2 = pretty_binop x1 "∧" x2
@@ -67,6 +71,8 @@ let rec pretty_formula = function
   | F_ConstrAnd (c, f) -> pretty_and (bracketed $ pretty_constr c) (pretty_formula f)
   | F_ForallAtom _ as f -> pretty_formula_forall_atom [] f
   | F_ForallTerm _ as f -> pretty_formula_forall_term [] f
+  | F_ForallForm (FV_Bind (_, _, k), _) as f -> pretty_formula_forall_form [] k f
+  | F_ExistsForm (FV_Bind (_, _, k), _) as f -> pretty_formula_exists_form [] k f
   | F_ExistsAtom _ as f -> pretty_formula_exists_atom [] f
   | F_ExistsTerm _ as f -> pretty_formula_exists_term [] f
   | (F_FunAtom _ | F_FunTerm _ | F_Fun _) as f -> pretty_formula_fun [] f
@@ -93,7 +99,7 @@ and pretty_formula_impl f =
 
 and pretty_formula_app f =
   let rec squash_apps acc = function
-    | F_App (f1, f2) -> squash_apps (pretty_formula f2 :: acc) f1
+    | F_App (f1, f2) -> squash_apps (pretty_formula_simple f2 :: acc) f1
     | F_AppAtom (f, ({perm= []; _} as a)) -> squash_apps (pretty_atom_permuted a :: acc) f
     | F_AppAtom (f, a) -> squash_apps (parenthesized (pretty_atom_permuted a) :: acc) f
     | F_AppTerm (f, (T_Var {perm= []; _} as t)) | F_AppTerm (f, (T_Fun _ as t)) -> squash_apps (pretty_term t :: acc) f
@@ -101,7 +107,7 @@ and pretty_formula_app f =
     | f -> (f, acc)
   in
   let f, apps = squash_apps [] f in
-  pretty_label (pretty_formula f) (unwords apps)
+  pretty_label (pretty_formula_simple f) (unwords apps)
 
 and pretty_named_formula = function
   | "", f -> pretty_formula f
@@ -115,6 +121,10 @@ and pretty_formula_forall_term vars = function
   | F_ForallTerm (x, f) -> pretty_formula_forall_term (x :: vars) f
   | f -> pretty_quantifier_term forall vars (pretty_formula f)
 
+and pretty_formula_forall_form vars kind = function
+  | F_ForallForm ((FV_Bind (_, _, k) as p), f) when k = kind -> pretty_formula_forall_form (p :: vars) kind f
+  | f -> pretty_quantifier_form kind forall vars (pretty_formula f)
+
 and pretty_formula_exists_atom atoms = function
   | F_ExistsAtom (a, f) -> pretty_formula_exists_atom (a :: atoms) f
   | f -> pretty_quantifier_atom exists atoms (pretty_formula f)
@@ -122,6 +132,10 @@ and pretty_formula_exists_atom atoms = function
 and pretty_formula_exists_term vars = function
   | F_ExistsTerm (x, f) -> pretty_formula_exists_term (x :: vars) f
   | f -> pretty_quantifier_term exists vars (pretty_formula f)
+
+and pretty_formula_exists_form vars kind = function
+  | F_ExistsForm ((FV_Bind (_, _, k) as p), f) when k = kind -> pretty_formula_exists_form (p :: vars) kind f
+  | f -> pretty_quantifier_form kind exists vars (pretty_formula f)
 
 and pretty_formula_fun xs = function
   | F_FunAtom (a, f) -> pretty_formula_fun (atom_binder_to_binder a :: xs) f

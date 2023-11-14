@@ -62,6 +62,8 @@ and kind_infer env = function
   | F_Impl (f1, f2) -> to_option K_Prop (is_prop env f1 && is_prop env f2)
   | F_ForallTerm (_, f) | F_ForallAtom (_, f) | F_ExistsTerm (_, f) | F_ExistsAtom (_, f) ->
     to_option K_Prop (is_prop env f)
+  | F_ForallForm (FV_Bind (p, i, k), f) | F_ExistsForm (FV_Bind (p, i, k), f) ->
+    to_option K_Prop (is_prop (map_fvar env p (FV i) k) f)
   | F_ConstrAnd (c, f) | F_ConstrImpl (c, f) -> to_option K_Prop (is_prop (add_constr env c) f)
   | F_Fun (FV_Bind (x, i, k), f) -> (fun fk -> K_Arrow (k, fk)) <$> kind_infer (map_fvar env x (FV i) k) f
   | F_App (f1, f2) -> (
