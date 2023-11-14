@@ -4,7 +4,9 @@
 \def\atomv{a} % Atom variables
 \def\termv{X} % Term variables
 \def\propv{P} % Propositional variables
-\def\symb{s}  % Symbols
+\def\symb{f}  % Symbols
+\def\shape{s} % Shapes
+
 
 \def\perm{\pi}  % Permutations
 \def\atomexp{\alpha} % Atom expressions
@@ -12,8 +14,6 @@
 \def\constr{c}  % Constraints
 
 \def\sconstr{\mathcal{C}} % Solver constraints
-\def\shape{\mathcal{S}} % Solver shapes
-
 \def\sematom{A} % Semantic atoms
 \def\semterm{T} % Semantic terms
 \def\semshape{S} % Semantic shapes
@@ -27,15 +27,20 @@
 \def\formphi{\varphi} % formulas
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand\doubleplus{+\kern-1.3ex+\kern0.8ex}
+\newcommand\mdoubleplus{\ensuremath{\mathbin{+\mkern-10mu+}}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Syntax
 \def\deff{::=}
 \def\bnfor{\ |\ }
 
 % Permutations
 \def\permid{\mathsf{id}}
-\newcommand\permswap[3]{(#1\ #2) #3}
+\newcommand\swap[2]{(#1\ #2)}
+\newcommand\permswap[3]{\swap{#1}{#2} #3}
 \def\apperm{\;}
-
+\def\++{\mdoubleplus}
+\newcommand\normal[1]{\downarrow #1}
 % Terms
 \newcommand\tbind[1]{#1.}
 \def\tapp{\;}

@@ -13,7 +13,20 @@
 \englishtitle   {Domain-specific logic \fmlinebreak for terms with variable binding}
 \polishtitle    {Logika dziedzinowa do wnioskowania \fmlinebreak o termach z wiązaniem zmiennych}
 \polishabstract {Przedstawiamy logikę dziedzinową do wnioskowania o termach z wiązaniem zmiennych. }
-\englishabstract{We describe logic for reasoning about terms with variable bindings.}
+\englishabstract{In this work,
+we address a fundamental distinction between manual and computer-based proof systems, emphasizing the challenge of maintaining precision and transparency in handling variable binding. The common practice of making unspoken assumptions in pen-and-paper proofs, particularly the use of imprecise notion of „sufficiently fresh names”, introduces potential pitfalls when translating to formal and rigorous proof systems.
+
+Nominal Logic, as introduced by Andrew M. Pitts, emerges as a promising solution to bridge this gap, offering a first-order theory of names and binding. This approach allows for the definition of essential concepts, including alpha-equivalence, freshness, and variable binding, solely in terms of name swapping rather than classical renaming.
+
+Building upon Pitts' work, we introduce a specialized variant of Nominal Logic,
+where we define constraints\-precise descriptors of syntactical properties\-and use them to reason about terms with variable binding.
+We introduce The Solver, an algorithm of automated constraint resolution,
+which forms the logical core of the constraints sublogic, and acts as a middle ground between human and computer provers.
+Layered on top of the constraints, we define a higher order logic, with constraints embedded into propositional formulas and relations.
+
+Alongside this logic, we establish a proof system and a proof assistant implemented in OCaml and inspired by HOL theorem provers. The integration of these components forms a cohesive framework for precise articulation of and reasoning about complex syntactic properties.
+To demonstrate its potential for programming language reasoning, we conduct proofs of classical properties of simply typed lambda calculus using this framework.
+}
 \author         {Dominik Gulczyński}
 \advisor        {dr Piotr Polesiuk}
 \date           {\today}                     % Data zlozenia pracy
@@ -96,6 +109,7 @@
 \newcommand{\scbrk}[2]{\myatop{\textsc{#1}}{\textsc{#2}}}
 \newcommand{\hole}{\ensuremath{\bullet}}
 \newcommand{\mdash}{\,---\,}
+\def\-{{\mdash}}
 
 \newcolumntype{L}{X}
 \newcolumntype{C}{>{\centering\arraybackslash}X}
@@ -127,11 +141,11 @@ For instance, when dealing with lambda calculus, we often construct inductive pr
 over the structure of expression, where in the case for an abstracion we will implicitly only show
 the case where the variable bound in that abstraction is \it{sufficiently fresh}.
 Addressing the general case could introduce unnecessary complexities unrelated to the theorem at hand.
-Justifiably, we skip over this detail{\mdash}however, the induction principle obliges us to prove the case for arbitrary variable names.
+Justifiably, we skip over this detail\-however, the induction principle obliges us to prove the case for arbitrary variable names.
 
 % \section{Problem statement}
 Addressing this gap in formal reasoning requires careful considerations to come up with a resolution.
-Fortunately, there exist some solutions to that problem{\mdash}and one particular
+Fortunately, there exist some solutions to that problem\-and one particular
 approach, coined \it{nominal logic} and introduced by Andrew M. Pitts\cite{nominal-logic} is of most interest to this work.
 
 \section{Nominal approach}
@@ -154,7 +168,7 @@ it was shown that a theory based on this operation allows for all necessary conc
 including alpha-equivalence, freshness, and variable-binding,
 to be defined solely in terms of swapping pairs of names.
 
-Additionaly, swapping has one other useful logical properties{\mdash}it is involutive
+Additionaly, swapping has one other useful logical properties\-it is involutive
 (i.e. a swap gets nullified by applying the same swap again, while substitutions cannot always be reversed),
 which, as Pitts argues, means that \it{equivariant} predicates (i.e. those whose validity is invariant under atom-swapping)
 have excellent logical properties.
@@ -163,7 +177,7 @@ closed under standard logical connectives, universal and existential quantificat
 and formation of least and greatest fixpoint.
 
 As an example of Nominal Logic at work, consider the abstract syntax tree of untyped lambda calculus,
-given by the grammar below, where $a$ ranges over an infinite set of names{\mdash}or rather \it{atoms}.
+given by the grammar below, where $a$ ranges over an infinite set of names\-or rather \it{atoms}.
 \begin{figure}[htbp]
   \centering
   \begin{tabularx}{\textwidth}{|CXr|}
@@ -240,7 +254,7 @@ but simply changes them all the same exact way.
 \end{figure}
 Relation of \it{freshness} of atom $a$ in tree $t$, written $a \cfresh t$,
 is similarly simple to define.\footnote{Pitts defines it as
-$a$ not being a member of the \it{support set} of $t${\mdash}but for our purposes, the simple inductive definition will suffice.}\
+$a$ not being a member of the \it{support set} of $t$\-but for our purposes, the simple inductive definition will suffice.}\
 Note that it only assumes the comparability of atoms
 and is an \it{equivariant} relation, which can be shown by simplest induction.
 
@@ -279,7 +293,8 @@ swapping, and freshness then, as Pitts argues, it is equivariant as well.
 \begin{mdframed}[frametitle={\textnormal{\footnotesize \textbf{\citeauthor{nominal-logic}}, \textit{\citetitle{nominal-logic}}\cite{nominal-logic}:}}]
 The fundamental assumption underlying Nominal Logic is that \textit{the only predicates we ever deal with} (when describing properties of syntax) \textit{are equivariant ones, in the sense that their validity is invariant under swapping} (i.e., transposing, or interchanging) \textit{names}.
 \end{mdframed}
-\section{Problem statement / motivation}
+
+\section{Motivation and contributions}
 Nominal logic opens avenues for expressing alpha-equivalence, freshness and
 other fundamental syntactic properties with elegance.
 Formalizing theories within such system calls for
@@ -289,23 +304,10 @@ properties, which are so obvious to the human eye,
 yet non-trivial from the point of view of rigorous computer accuracy,
 we strive for automatic deductive process.
 
-\pagebreak
-
-There's two fundamental observations paved the way to empowering such
-framework towards automatic handling of syntactical properties:
-\begin{itemize}
-\item The structural nature of these predicates and relations allows the deduce of additional assumptions based on existing or assumed ones.
-It can also go the other way: one can break down and analyse the assumptions
-up until the simplest parts.
-\item These properties are intertwined together.
-For example, if atom $a$ is fresh in term $t$ and terms $t$ and $t'$ are alpha-equivalent,
-then it must hold that $a$ is fresh in $t'$.
-\end{itemize}
-
-\section{Contributions}
 We categorize the fundamental properties of terms with variable binding,
 such as alpha equivalence and freshness, as \textit{constraints}.
-We introduce \textit{the Solver}, an algorithm designed to automatically
+As a middle ground between human and computer provers,
+we introduce \textit{the Solver}, an algorithm designed to automatically
 resolve new constraints based on the pre-established ones.
 It serves as the logical core of the constraints sublogic,
 that together with the embedding of constraints into propositional formulas
@@ -399,7 +401,13 @@ we must start with the simplest elements: \it{names}, \it{terms}, and \it{constr
                          \mid \term \csheq \term
                          \mid \term \cshlt \term
                          \mid \csymb \term$
-      & (constraints)
+      & (constraints) \\
+      $\shape$ & $\deff$ & $\shatom
+                     \bnfor \termv
+                     \bnfor \shbind \shape
+                     \bnfor \shape \tapp \shape
+                     \bnfor \symb$
+      & (shapes) \\
     \end{tabularx}
   }
   \caption{Syntax of constraint sublogic}
@@ -415,8 +423,8 @@ extending it with notion of permutations (of atoms) and functional symbols,
 denoted by metavariable $\symb$,
 that are drawn from yet another set disjoint with atoms and variables.
 
-Construction $\tbind{\atomexp} \term$ represents a \it{binder}{\mdash}informally, we think of it as binding the occurences of $\atomexp$ in $\term$,
-similarly to a lambda abstraction{\mdash}yet it \it{isn't} a binder,
+Construction $\tbind{\atomexp} \term$ represents a \it{binder}\-informally, we think of it as binding the occurences of $\atomexp$ in $\term$,
+similarly to a lambda abstraction\-yet it \it{isn't} a binder,
 but a simple syntactical construction glueing together an atom with another term.
 The semantics of binding will apply only after we interpret this syntactical term in the model.
 
@@ -427,9 +435,77 @@ we will skip the permutation and simply write $\atomv$,
 and sometimes call such atom expressions \it{pure}.
 The same rules apply to permuted variables.
 
-The constraints are precise descriptions of syntactical properties,
-describing the relationship between their arguments{\mdash}atoms and terms.
+\begin{figure}[htbp]
+  \centering
+  \begin{tabularx}{\textwidth}{|C|}
+    \hline
+    \begin{subfigure}{0.45\textwidth}
+      \begin{eqnarray*}
+        \perm \apperm (\perm' \apperm \atomv)  & := & (\perm \++ \perm') \apperm \atomv \\
+        \perm \apperm (\perm' \apperm \termv)  & := & (\perm \++ \perm') \apperm \termv \\
+        \perm \apperm (\tbind{\atomexp} \term) & := & \tbind{(\perm \apperm \atomexp)} (\perm \apperm \term) \\
+        \perm \apperm (\term_1 \tapp \term_2)  & := & (\perm \apperm \term_1) \tapp (\perm \apperm \term_2) \\
+        \perm \apperm \symb                    & := & \symb \\
+      \end{eqnarray*}
+    \end{subfigure}
+    \begin{subfigure}{0.45\textwidth}
+      \begin{eqnarray*}
+        \shapeof{\perm \apperm \atomv}   & := & \shatom \\
+        \shapeof{\perm \apperm \termv}   & := & \termv  \\
+        \shapeof{\tbind{\atomexp} \term} & := & \shbind \shapeof{\term} \\
+        \shapeof{\term_1 \tapp \term_2}  & := & \shapeof{\term_1} \tapp \shapeof{\term_2} \\
+        \shapeof{\symb}                  & := & \symb \\
+      \end{eqnarray*}
+    \end{subfigure}
+    \\
+    \begin{subfigure}{0.42\textwidth}
+      \begin{eqnarray*}
+        \normal{\permid \apperm \atomv}  & := & \atomv \\
+        \normal{(\perm \++ \swap{\atomexp_1}{\atomexp_2}) \apperm \atomv}  & := & \normal{\perm \apperm \atomv'} \\
+        \text{where }\; \atomv' & := &  \normal {\permswap{\atomexp_1}{\atomexp_2}{\atomv}} \\
+        & & \\
+      \end{eqnarray*}
+    \end{subfigure}
+    \begin{subfigure}{0.47\textwidth}
+      \begin{eqnarray*}
+        \normal{\swap{\atomexp_1}{\atomexp_2} \apperm \atomv}  & := &
+          \begin{cases}
+            \atomv_2 & \text{if } \atomv = \atomv_1 \\
+            \atomv_1 & \text{if } \atomv = \atomv_2 \\
+            \atomv   & \text{otherwise}
+          \end{cases} \\
+        \text{where }\: \atomv_1 & := & \normal{\atomexp_1} \\
+        \text{  and }\: \atomv_2 & := & \normal{\atomexp_2} \\
+      \end{eqnarray*}
+    \end{subfigure}
+  \\ \hline
+  \end{tabularx}
+  \caption{Operations on atoms}
+  \label{fig:terms-shapes-interpretation}
+\end{figure}
+Although permutations only appear next to atoms and variables,
+we define the operation of applying a permutation to a whole term.
+We also define the shapes and how to compute the shape of term, which
+we will use to resolve contraints about shape.
+Permutations only affect atoms, they are stored at the variables too,
+for when the variable is substituted for a term, they would be used to permute the
+substituted term and present the ordering of applying
+swaps in that permutation.
 
+Additionally, we define the operation of normalizing atom expressions,
+denoted as $\normal{\atomexp}$,
+which essentially "computes" or "applies" the permutation on an atom.
+Technically, within our framework, this operation is never explicitly utilized;
+instead, permuted atoms are handled through the Solver rules.
+However, we include its definition here to offer the reader insight into interpreting atom expressions.
+
+The constraints are precise descriptions of syntactical properties,
+describing the relationship between their arguments\-atoms and terms.
+It's crucial to emphasize that these terms and constraints function
+solely as data structures do not incorporate notions of binding or reduction by themselves.
+These properties can only appear after we interpret
+constraints within the logical model, which allows us to then reason about
+concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order.
 \begin{figure}[htbp]
   \centering
   \begin{tabularx}{\linewidth}{|l|X|}
@@ -448,16 +524,6 @@ describing the relationship between their arguments{\mdash}atoms and terms.
   \caption{Informal semantics of constraints}
   \label{fig:informal-constraints-semantics}
 \end{figure}
-
-It's important to note that these terms and constraints are merely a data structure
-and do not incorporate notions of computation, reduction, or binding by themselves.
-These properties only appear in the sublogic of constraints after we interpret
-constraints within the logical model, which allows us to then reason about
-concepts such as \it{freshness}, \it{variable binding}, and \it{structural} order.
-
-TODO: write that terms and atoms can be permuted. and describe how permutation works.
-
-\newpage
 
 \section{Model}
 \begin{figure}[htbp]
@@ -493,25 +559,26 @@ and the binding construction has no explicit argument, denoted by $\stbind$.
   \framebox[\textwidth]{
     \begin{subfigure}{0.45\textwidth}
       \begin{eqnarray*}
-        \termMdl{\perm \apperm \atomv}{\tmEnv} & = &
+        \termMdl{\perm \apperm \atomv}{\tmEnv} & := &
           \permMdl{\perm}{\tmEnv}(\tmEnv(\atomv)) \\
-        \termMdl{\perm \apperm \termv}{\tmEnv} & = &
+        \termMdl{\perm \apperm \termv}{\tmEnv} & := &
           \permMdl{\perm}{\tmEnv}(\tmEnv(\termv)) \\
-        \termMdl{\tbind{\atomexp} \term}{\tmEnv} & = &
+        \termMdl{\tbind{\atomexp} \term}{\tmEnv} & := &
           \stbind (\termMdl{\term}{\tmEnv} \shiftIdx)
             \subst{\termMdl{\atomexp}{\tmEnv}}{0} \\
-        \termMdl{\term_1 \tapp \term_2}{\tmEnv} & = &
+        \termMdl{\term_1 \tapp \term_2}{\tmEnv} & := &
           \termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv} \\
-        \termMdl{\symb}{\tmEnv} & = & \symb \\
+        \termMdl{\symb}{\tmEnv} & := & \symb \\
       \end{eqnarray*}
     \end{subfigure}
     \begin{subfigure}{0.45\textwidth}
       \begin{eqnarray*}
-        \shapeof{\sematom}                     & = & \shatom \\
-        \shapeof{n}                            & = & \shatom \\
-        \shapeof{\stbind \semterm}             & = & \stbind \shapeof{\semterm} \\
-        \shapeof{\semterm_1 \stapp \semterm_2} & = &
+        \shapeof{\sematom}                     & := & \shatom \\
+        \shapeof{n}                            & := & \shatom \\
+        \shapeof{\stbind \semterm}             & := & \stbind \shapeof{\semterm} \\
+        \shapeof{\semterm_1 \stapp \semterm_2} & := &
           \shapeof{\semterm_1} \shapp \shapeof{\semterm_2} \\
+        \shapeof{\symb}                        & := & \symb \\
       \end{eqnarray*}
     \end{subfigure}
   }
@@ -577,24 +644,37 @@ such that $\constr_1, \dots, \constr_n$ are satisfied, would also satisfy $\cons
                        \bnfor \shape \csheq \shape
                        \bnfor \shape \cshlt \shape
                        \bnfor \csymb \term$
-      & (solver constraints) \\
-      $\shape$ & $\deff$ & $\shatom
-                     \bnfor \termv
-                     \bnfor \shbind \shape
-                     \bnfor \shape \tapp \shape
-                     \bnfor \symb$
-      & (shapes) \\
+      & (solver constraints)
     \end{tabularx}
   }
-  \caption{Solver internal representation of terms and shapes}
-  \label{fig:solver-internal-representation-terms-shapes}
+  \caption{Solver's internal representation of constraints}
+  \label{fig:solver-internal-representation}
 \end{figure}
 For the sake of convenience and implementation efficiency, the Solver operates
 on its own internal representation of constraints, that slightly differs from
 constraints described in the previous section.
 It erases atoms in terms under shape constraints,
 effectively transforming them into \it{shapes}.
-We will write $\atomv \cneq \atomexp$ instead of $\atomv \cfresh \atomexp$ as it gives a clear intuition of atom freshness implying inequality.
+Additionaly, we add some syntax sugar for convenience of notation.
+\begin{figure}[htbp]
+    \centering
+    \begin{tabularx}{\textwidth}{|CC|}
+      \hline & \\
+      \begin{tabular}{rcl}
+        $\atomv \cneq \atomexp $ & $:=$ & $\atomv \cfresh \atomexp$ \\
+        $(\perm \apperm \atomv) \cfresh \term $ & $:=$ & $\atomv \cfresh \perm^{-1} \apperm \term $ \\
+      \end{tabular}
+      &
+      \begin{tabular}{rcl}
+      $ \permid ^ {-1} $& $:=$ & $\permid $ \\
+      $ (\permswap{\atomexp_1}{\atomexp_2} \perm) ^ {-1} $ & $:=$ & $\perm^{-1} \++ \permswap{\atomexp_1}{\atomexp_2}
+      $\\
+      \end{tabular}
+      \\ & \\ \hline
+      \end{tabularx}
+  \caption{Constraints' syntax sugaring}
+  \label{fig:symbol-rules}
+\end{figure}
 
 A high level perspective of the Solver is that it works on judgments of form
 $\cEnv; \icEnv \solverRule \sconstr$, veryfying  whether a given goal-constrint $\sconstr$
@@ -722,10 +802,8 @@ and that left body must be equal to the right body with if its argument was swap
 TODO: change rules such that $\cEnv$ is empty and write why we show goal-reducing first
 while assumption-reducing are actually done beforehand.
 
-TODO: explain that if  $ \perm \atomv \equiv \atomexp$ then $ \atomexp \cfresh \term \equiv \atomv \cfresh \perm^{-1} \term$
-
 To compare a \it{pure} atom $\atomv$ with permuted one, we employ the decidability of atom equality
-to reduce the right hand-side's permutation by applying it's outermost swap $\permswap{\atomexp_1}{\atomexp_2}{}$ on the left side's atom.
+to reduce the right hand-side's permutation by applying it's outermost swap $\swap{\atomexp_1}{\atomexp_2}$ on the left side's atom.
 There's three possible cases: \begin{enumerate}[noitemsep]
     \item $\atomv$ is different from both $\atomexp_1$ and $\atomexp_2$,
 so the swap doesn't change the goal,
@@ -735,7 +813,7 @@ so the swap substitutes it for $\atomexp_2$,
 so the swap substitutes it for $\atomexp_1$.
 \end{enumerate}
 Notice that it is impossible for any two of these assumption to be valid at the same time
-{\mdash}the contradictory branches will resolve through absurd environment.
+\-the contradictory branches will resolve through absurd environment.
 \begin{figure}[htbp]
     \centering
     \begin{tabularx}{\textwidth}{|C|}
@@ -777,12 +855,6 @@ Notice that it is impossible for any two of these assumption to be valid at the 
         \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
       }
       $ \\ & \\
-      $
-      \permid ^ {-1} \;\term := \permid\;\term
-      $ & $
-      (\permswap{\atomexp_1}{\atomexp_2} \perm) ^ {-1} \;\term
-        := \perm^{-1}(\permswap{\atomexp_1}{\atomexp_2} \;\term)
-      $ \\ & \\
     \end{tabular} \\
     \hline
     \end{tabularx}
@@ -793,7 +865,7 @@ Notice that it is impossible for any two of these assumption to be valid at the 
 If the left-hand side's term is permuted we move the permutation
 to the right-hand side by inverting it.
 There's also special check for variables equal to their permuteded selves
-{\mdash}the only way they could be equal is that if that permutation is idempotent on them.
+\-the only way they could be equal is that if that permutation is idempotent on them.
 
 \begin{figure}[htbp]
     \centering
@@ -1197,7 +1269,6 @@ $(\NeqAtoms_{\icEnv}
   \caption{Shape interpretation in $\icEnv$}
   \label{fig:interpretation}
 \end{figure}
-TODO: describe $|t|$ (shape computation).\\
 We can now establish a method to compute the shape-representative variable and
 outline the procedure for reconstructing the shape within the environment $\icEnv$,
 denoted \shenv{\shape}.
@@ -1391,20 +1462,29 @@ but mean $\cEnv ; \varnothing\solverRule \sconstr$,
 as by the construction of $\solverRule$ we consider it equivalent
 to $\vDash$ defined in the model.
 
-TODO: This chapter is rather technical but the heart of our work,
-so make it easier to read by providing some examples.
+% TODO: This chapter is rather technical but the heart of our work, make it easier to read by providing some examples.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Higher Order Logic}
 By constructing the Solver, we have built the sound logical system designed for handling and resolving constraints.
-We extend its utility and accesibility
+We will now extend its utility and accesibility
 by introducing a higher-order logic layered atop the sublogic of constraints.
 This logical framework includes all essential elements necessary for
 formalizing theories, such as traditional connectives and quantifiers,
 functions and relations, and special formulae that have constraints embedded inside them,
 providing a versatile platform for expressing and reasoning about syntactic properties.
 
-In subsequent chapters, our focus will shift towards constructing a dedicated proof system for this higher-order logic and a proof assistant.
+The Solver's decidable procedure allows us to us to integrate
+it with the very core of our logic to ehance it's capabilites
+by reasoning about constraints.
+In the subsequent chapter we will see how the Solver lets us
+treat constraints as propositions,
+ensures that constraints guarding formulas are satisfied,
+and enables us to express safe recursive predicates through fixpoint operator.
+
+% TODO: Why higher order? not 1st, 2nd order
+
+Next, our focus will shift towards constructing a dedicated proof system for this higher-order logic, including a proof assistant.
 Binding together all these components creates a cohesive framework
 for precise articulation and reasoning of complex syntactic properties.
 
@@ -1640,11 +1720,16 @@ one shall interpret the guarded formula.
 The former states that the formula $\formphi$ holds if the constraint $\constr$ is valid,
 analogously to a propositional implication.
 The latter additionaly requires that $\constr$ already holds.
-We can see how guards interact with kinding rules after we define fixpoint.
+We will see how guards interact with kinding rules after we define the fixpoint operator.
+
+The binding constructs in functions and quantifiers follow the classical binder properties: we have the flexibility to perform alpha renaming on the bound names, and we can substitute the bound name with an expression within the body.
+This differs from the abstraction term $\tbind{\atomv}\term$, which
+does not function as a true binder.
+Instead the binding term is simply a piece of data\-an atom followed by a term\-lacking any inherent mathematical properties typically associated with binders.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Fixpoint}
-We finish the definition of formulas with \it{fixpoint} function
+We finish the definition of formulas with the \it{greatest fixpoint operator}
 that allows us to write recursive predicates over terms:
 \\
 \begin{tabular}{rrlr}
@@ -1713,7 +1798,7 @@ Notice how the constraint $(N \ceq {S \tapp M})$ guards the recursive call to $N
 ensuring that constraint $(M \cshlt N)$ will be satisfied during kind checking of
 $({{Nat}\fAppTerm{M}})$ in the kind derivation of the whole formula
 $({Nat} \ofkind \kForallTerm{N}{\kProp})$, analogously in $PlusEq$.
-This is exactly the reason of introducing kinds{\mdash}to allow us to use recursive predicates in a safe and sound fashion.
+This is exactly the reason of introducing kinds\-to allow us to use recursive predicates in a safe and sound fashion.
 
 See more interesting examples of fixpoints usage in the chapter on STLC.
 
@@ -1864,7 +1949,7 @@ if we supply it with contradictory assumptions.
     \jgmnt[\cEnv;\Theta]{\constr}
   }\scbrk{Constr}{AndE1}\qquad
   \inference{
-    \jgmnt[\cEnv]{\fCAnd{\constr}\formphi} &
+    \jgmnt[\cEnv;\Theta]{\fCAnd{\constr}\formphi} &
     \jgmnt[\cEnv;\Theta]{\formphi: \kProp}
     }{
     \jgmnt[\cEnv;\Theta]{\formphi}
@@ -1874,14 +1959,18 @@ if we supply it with contradictory assumptions.
   \caption{Natural deduction for guard formulas}
   \label{fig:deduction}
 \end{figure}
-TODO: rewrite this so its clear what we are saying here: \\
-Notice that in the case of constraint-and-guard, the rule for elimination is restricted
-to only formulas of kind $\kProp$.
-This is due to the nature of the guard{\mdash}if we want to eliminate it,
-we can only do so with formulas that \it{make sense} on their own,
-without that $\constr$ guard.
-Inference rules for implication are standard, and the reason we present them here
-is not to bore the reader, but to point out the similarities to their constraint analogues.
+
+We present constraint guard rules alongside implication and conjunction
+to direct the reader to the similarities between them.
+Despite these similiartiy,
+in the rule for eliminating constraint conjunction guard (\sc{ConstrAndE2}),
+we restrict the guarded formulas to be of kind $\kProp$.
+If one wants to eliminate the guard to use the inner formula,
+one can only do so with formulas that \it{make sense}
+(or rather: pass kind checking) on their own,
+without the constraint $\constr$ guarding them, as opposed to the kinding rule
+where $\constr$ was added to the kinding environment.
+% TODO: emphasise that formula needs to kind on its own, (prop is irelevent!) (c must hold in gamma)
 
 \newpage
 
@@ -1949,9 +2038,7 @@ is not to bore the reader, but to point out the similarities to their constraint
 \end{figure}
 Inference rules for quantifiers are rather straightforward,
 with the only novelty being that we differtiate between atom and term
-quantification, and restrict the quantified name to be \it{fresh} in the environment (it may not occur in any of the assumptions).
-
-TODO: describe how quantifiers are true binders (so we can alpha rename!), and remind reader that $\tbind{\atomv}\term$ is not a true binder! and maybe put it earlier.
+quantification, and restrict the quantified name to be \it{fresh} in the environment\-it should never occur in any of the assumptions.
 
 \begin{figure}[htpb]
   \centering
@@ -2037,7 +2124,7 @@ The equivalence relation ($\formphi_1 \equiv \formphi_2$) is a bit complicated
 due to subkinding, existence of formulas
 with fixpoints, functions, applications,
 and presence of an environment with variable mapping.
-Nonetheless, it's simply that{\mdash}\it{an equivalence relation}{\mdash}and it
+Nonetheless, it's simply that\-\it{an equivalence relation}\-and it
 behaves as expected. We will only highlight the interesting parts.
 
 \begin{figure}[htbp]
@@ -2133,7 +2220,7 @@ constraints-enviroment $\cEnv$ ensures their equality is provable.
 For functions, we simply substitute the arguments of both left and right side
 to the same, fresh name.
 
-Quantifiers are handled the same way as function above{\mdash}as they all are a form of bind.
+Quantifiers are handled the same way as function above\-as they all are a form of bind.
 To handle formulas with constraints we introduce \it{constraint equivalence} relation,
 which does nothing more than use the Solver to check that the constructors
 of constraint are the same and that arguments are equal to each other in the Solver's sense,
@@ -2288,7 +2375,7 @@ analogusly as with terms above.
 \chapter{Implementation}
 All the concepts discussed in previous chapters are acompanied by our code implementation in OCaml.
 Atoms and variables are represented internally by integers (yet remain disjoint sets)
-{\mdash}and their string \it{names} are kept within the environment and
+\-and their string \it{names} are kept within the environment and
 stored in binders themselves (quantifiers and functions).
 Along with terms, constraints, kinds, and formulas, they're defined in \lstt{Types} module,
 mirroring their previously described grammars.
@@ -2305,27 +2392,27 @@ The natural deduction from previous chapter is distributed over modules
 \begin{lstlisting}[mathescape, language=OCaml, escapebegin=\color{codegreen}]
 (* Module: Proof *)
 
-(* --------{\mdash}*)
+(* ----------- *)
 (*  $\Gamma$; f $\vdash$ f   *)
 val assumption : 'a env -> formula -> proof
 
 (*    $\Gamma$; $\Theta$, f1 $\vdash$ f2   *)
-(* ----------------{\mdash}*)
+(* ------------------- *)
 (*  $\Gamma$; $\Theta$ $\vdash$ f1 $\implies$ f2  *)
 val imp_i : formula -> proof -> proof
 
 (*  $\Gamma$1; $\Theta$1 $\vdash$ f1 $\implies$ f2    $\Gamma$2; $\Theta$2 $\vdash$ f2  *)
-(* ----------------------------------{\mdash}*)
+(* ------------------------------------- *)
 (*        $\Gamma$1 $\cup$ $\Gamma$2; $\Theta$1 $\cup$ $\Theta$2 $\vdash$ f2         *)
 val imp_e : proof -> proof -> proof
 
 (*  $\Gamma$; $\Theta$ $\vdash$ $\bot$  *)
-(* --------{\mdash}*)
+(* ----------- *)
 (*  $\Gamma$; $\Theta$ $\vdash$ f  *)
 val bot_e : formula -> proof -> proof
 
 (*   $\Gamma$ $\vDash$ c    *)
-(* -------{\mdash}*)
+(* ---------- *)
 (*  $\Gamma$; $\Theta$ $\vdash$ c  *)
 val constr_i : proof_env -> constr -> proof
 
@@ -2572,7 +2659,7 @@ as provide the users with some helper functions and tacticals.
   \\[1.5ex] \hline
   operator \tt{(\%>)} & Combines two tactics together.
   \\[1.5ex] \hline
-  \lstt{subst}        & Substitutes atoms for atom expressions and variables for terms in goal and environment{\mdash}as long as Solver proves their equality.
+  \lstt{subst}        & Substitutes atoms for atom expressions and variables for terms in goal and environment\-as long as Solver proves their equality.
   \\[5ex] \hline
   \lstt{compute}      & Computes WHNF of the current goal.
   \\[1.5ex] \hline
@@ -2709,7 +2796,7 @@ Notice that in the definition of \lstt{Sub}, in the case for abstracion we only 
 If we wanted to substitute $\tt{a}$ for $\tt{v}$ in term $\tbind{\tt{a}}\tt{e}$, then we could swap the argument's name for a~different atom $b$ that is fresh in $\tt{e}$, as then know that $\tbind{\tt{a}}\tt{e} \ceq \tbind{\tt{b}}\permswap{\tt{a}}{\tt{b}}\tt{e}$ and can substitute in that term.
 In the end, as $\tt{b}$ was fresh in $\tt{e}$, then $\tt{a}$
 must be fresh in $\permswap{\tt{a}}{\tt{b}}\tt{e}$, so either way
-we arrive at identity{\mdash}but have one less case to consider
+we arrive at identity\-but have one less case to consider
 while writing proofs.
 
 To state the theorem of \it{progress}, we will naturally need the predicate
@@ -2861,7 +2948,7 @@ we simply use \lstt{intro'} tactic to destruct the assumption into multiple bran
 \begin{lstlisting}[language=OCaml]
   |> intro'
 \end{lstlisting}
-First one is that \lstt{e} is a~variable {\mdash} which again contradicts with empty enviroment:
+First one is that \lstt{e} is a~variable \- which again contradicts with empty enviroment:
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
@@ -2876,7 +2963,7 @@ $\vdash$ $\bot$
      %> apply_thm_spec empty_contradiction ["a"; "t"]
      %> assumption
 \end{lstlisting}
-Next, \lstt{e} is a~lambda abstraction{\mdash}so a~value.
+Next, \lstt{e} is a~lambda abstraction\-so a~value.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> intros' ["Hlam"; "a"; "e_a"; "t1"; "t2"; ""] %> case "value"
 (* Proof state:
@@ -2915,7 +3002,7 @@ $\vdash$ $\exists$ e' : term. Steps {app e1 e2} e'
 \end{lstlisting}
 First we consider the case of both \lstt{e1} and \lstt{e2} being a value.
 From \lstt{canonical\_form} theorem we know then
-\lstt{e1} must be an abstraction{\mdash}we just need to ensure the Prover that all preconditions are met.
+\lstt{e1} must be an abstraction\-we just need to ensure the Prover that all preconditions are met.
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
   |> destruct_assm "He1" %> intros ["Hv1"]
     %> destruct_assm "He2" %> intros ["Hv2"]  (* Value e1, Value e2 *)
@@ -3132,10 +3219,10 @@ $\vdash$ Typing e' env t
 Second case is that \lstt{e} is some abstraction \lstt{lam (b.e\_b)}.
 Because of the way we defined subsitution, abstraction argument must
 be different than the substituted variable and not occur in the substitutee value
-{\mdash}which is made possible by swapping atoms while maintaining alpha-equality.
+\-which is made possible by swapping atoms while maintaining alpha-equality.
 Consequence of that is when we destruct \lstt{Hsub} we get that
 \tt{e = lam (c.e\_c)} and \lstt{e' = lam (c.e\_c')}
-{\mdash}while \lstt{b.e\_b} and \lstt{c.e\_c} are equal, \lstt{b} and \lstt{c} don't have to be.
+\-while \lstt{b.e\_b} and \lstt{c.e\_c} are equal, \lstt{b} and \lstt{c} don't have to be.
 Abstracting the mundane details to auxiliary lemmas allows us to present the
 derivation in a simple chain of applications and assumptions:
 \begin{lstlisting}[mathescape,language=OCaml,escapebegin=\color{codegreen}]
@@ -3452,7 +3539,7 @@ $$
   \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \atomexp \\
                           \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \atomexp
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{} \atomexp
+  \cEnv ; \icEnv \vDash \atomv \cfresh \swap{\atomexp_1}{\atomexp_2} \atomexp
 }
 \qquad
 \inference{
