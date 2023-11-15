@@ -13,6 +13,7 @@ type proof = private
   | P_ConstrAndElim of judgement * proof
   | P_SpecializeAtom of judgement * permuted_atom * proof
   | P_SpecializeTerm of judgement * term * proof
+  | P_SpecializeForm of judgement * formula * proof
   | P_Witness of judgement * proof * proof
   | P_AndIntro of judgement * proof list
   | P_AndElim of judgement * proof
@@ -101,6 +102,16 @@ val forall_term_i : var_binder -> proof -> proof
 (*    Γ; Θ |- f{x -> e}   *)
 val forall_term_e : term -> proof -> proof
 
+(*  p ∉ FV(Γ; Θ)    Γ; Θ |- f  *)
+(* --------------------------- *)
+(*       Γ; Θ |- ∀ p:k. f      *)
+val forall_form_i : fvar_binder -> proof -> proof
+
+(*  Γ; Θ |- ∀ p :k. f    Γ; Θ |- g : k  *)
+(* ------------------------------------ *)
+(*            Γ; Θ |- f{p -> g}         *)
+val forall_form_e : formula -> proof -> proof
+
 (*    Γ; Θ |- f{a -> b}   *)
 (* ---------------------- *)
 (*  Γ; Θ |- ∃ a :atom. f  *)
@@ -113,15 +124,30 @@ val exists_atom_i : atom_binder -> permuted_atom -> formula -> proof -> proof
 val exists_term_i : var_binder -> term -> formula -> proof -> proof
 (** [exists_term_i x t f p] is a proof of [exists x :term. f] where [t] is the witness and [p] is proof of [(x |=> t) f]*)
 
-(*  y ∉ FV(Γ; Θ)    Γ; Θ |- ∃ x :term. f  *)
-(*          Γ; Θ , f{x -> y} |- g         *)
-(* -------------------------------------- *)
-(*                 Γ; Θ |- g              *)
+(*  Γ; Θ |- f{x -> g}    Γ; Θ |- g : k  *)
+(* ------------------------------------ *)
+(*           Γ; Θ |- ∃ x :k. f          *)
+val exists_form_i : fvar_binder -> formula -> formula -> proof -> proof
+(** [exists_term_i x g f p] is a proof of [exists x :k. f] where [g] is the witness and [p] is proof of [(x |==> g) f]*)
 
-(*  b ∉ FV(Γ; Θ)    Γ; Θ |- ∃ a :term. f  *)
-(*           Γ, f{a -> b} |- g            *)
-(* -------------------------------------- *)
-(*                Γ; Θ |- g               *)
+(*  Γ_1; Θ_1 |- ∃ a :atom. f  *)
+(*  Γ_2; Θ_2, f{a -> b} |- g  *)
+(*  b ∉ FV(Γ1 ∪ Γ2; Θ1 ∪ Θ2)  *)
+(* -------------------------- *)
+(*   Γ1 ∪ Γ2; Θ1 ∪ Θ2 |- g    *)
+
+(*  Γ_1; Θ_1 |- ∃ x :term. f  *)
+(*  Γ_2; Θ_2, f{x -> y} |- g  *)
+(*  y ∉ FV(Γ1 ∪ Γ2; Θ1 ∪ Θ2)  *)
+(* -------------------------- *)
+(*   Γ1 ∪ Γ2; Θ1 ∪ Θ2 |- g    *)
+
+(*  Γ_1; Θ_1 |- ∃ x :k. f      *)
+(*  Γ_2; Θ_2, f{x -> y} |- g   *)
+(*  y ∉ FV(Γ1 ∪ Γ2; Θ1 ∪ Θ2)   *)
+(* Γ1 ∪ Γ2; Θ1 ∪ Θ2 |- k <: k' *)
+(* --------------------------- *)
+(*    Γ1 ∪ Γ2; Θ1 ∪ Θ2 |- g    *)
 val exist_e : proof -> string -> proof -> proof
 
 (*          Γ1; Θ1 |- f1  ...  Γn; Θn |- fn          *)
@@ -163,6 +189,8 @@ val subst_atom : atom -> permuted_atom -> judgement -> proof -> proof
 (* ----------------------------------- *)
 (*  Γ{x -> t}; Θ{x -> t} |- f{x -> t}  *)
 val subst_var : var -> term -> judgement -> proof -> proof
+
+val truth_i : proof
 
 module Axiom : sig
   (* --------------------------------------- *)

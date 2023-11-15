@@ -54,6 +54,9 @@ let not_a_forall_atom = not_what_expected (str "an universal quantification over
 
 let not_a_forall_term = not_what_expected (str "an universal quantification over terms") % backticked_formula
 
+let not_a_forall_form =
+  not_what_expected (str "an universal quantification over propositional variables") % backticked_formula
+
 let not_an_exists = not_what_expected (str "an existential quantification") % backticked_formula
 
 let not_a_disjunction = not_what_expected (str "a disjunction") % backticked_formula
@@ -78,10 +81,10 @@ let conclusion_mismatch hypothesis conclusion =
 
 let formula_mismatch expected actual = not_what_expected (backticked_formula expected) (backticked_formula actual)
 
-let formula_kind_mismatch f f_kind expected_kind =
+let formula_kind_mismatch f expected_kind actual_kind =
   let expected_kind = with_prefix "formula with kind " $ pretty_kind expected_kind in
   let none = str "None" in
-  let actual_kind = Option.fold ~none ~some:pretty_kind f_kind in
+  let actual_kind = Option.fold ~none ~some:pretty_kind actual_kind in
   not_what_expected expected_kind (sequence [backticked_formula f; str "of kind"; actual_kind])
 
 let solver_failure constraints goal =

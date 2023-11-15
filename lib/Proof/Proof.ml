@@ -21,6 +21,7 @@ type proof =
   | P_ConstrAndElim of judgement * proof
   | P_SpecializeAtom of judgement * permuted_atom * proof
   | P_SpecializeTerm of judgement * term * proof
+  | P_SpecializeForm of judgement * formula * proof
   | P_Witness of judgement * proof * proof
   | P_AndIntro of judgement * proof list
   | P_AndElim of judgement * proof
@@ -36,6 +37,7 @@ let label = function
   | P_ConstrAndElim ((_, f), _)
   | P_SpecializeAtom ((_, f), _, _)
   | P_SpecializeTerm ((_, f), _, _)
+  | P_SpecializeForm ((_, f), _, _)
   | P_Witness ((_, f), _, _)
   | P_AndIntro ((_, f), _)
   | P_AndElim ((_, f), _)
@@ -51,6 +53,7 @@ let env = function
   | P_ConstrAndElim ((e, _), _)
   | P_SpecializeAtom ((e, _), _, _)
   | P_SpecializeTerm ((e, _), _, _)
+  | P_SpecializeForm ((e, _), _, _)
   | P_Witness ((e, _), _, _)
   | P_AndIntro ((e, _), _)
   | P_AndElim ((e, _), _)
@@ -146,9 +149,10 @@ let forall_atom_e b p =
   let env, f = judgement p in
   let on_forall_atom (A_Bind (_, a)) f = SpecAtom (b, (a |-> b) f) in
   let on_forall_term _ = raise_in_env env % not_a_forall_atom in
-  match specialize on_forall_atom on_forall_term f with
+  let on_forall_form _ = raise_in_env env % not_a_forall_atom in
+  match specialize on_forall_atom on_forall_term on_forall_form f with
   | SpecAtom (b, f) -> P_SpecializeAtom ((env, f), b, p)
-  | SpecTerm (_, f) -> raise_in_env env $ not_a_forall_atom f
+  | SpecTerm (_, f) | SpecForm (_, f) -> raise_in_env env $ not_a_forall_atom f
 
 let forall_term_i (V_Bind (x_name, V x) as x_bind) p =
   let env, f = judgement p in
@@ -159,10 +163,26 @@ let forall_term_i (V_Bind (x_name, V x) as x_bind) p =
 let forall_term_e t p =
   let env, f = judgement p in
   let on_forall_atom _ = raise_in_env env % not_a_forall_term in
+  let on_forall_form _ = raise_in_env env % not_a_forall_term in
   let on_forall_term (V_Bind (_, x)) f = SpecTerm (t, (x |=> t) f) in
-  match specialize on_forall_atom on_forall_term f with
-  | SpecAtom (_, f) -> raise_in_env env $ not_a_forall_term f
+  match specialize on_forall_atom on_forall_term on_forall_form f with
   | SpecTerm (t, f) -> P_SpecializeTerm ((env, f), t, p)
+  | SpecAtom (_, f) | SpecForm (_, f) -> raise_in_env env $ not_a_forall_term f
+
+let forall_form_i (FV_Bind (x_name, x, _) as x_bind) p =
+  let env, f = judgement p in
+  match env |> find_bind x_name with
+  | None -> P_Intro ((env |> remove_identifier x, F_ForallForm (x_bind, f)), p)
+  | Some f -> raise_in_env env $ cannot_generalize x_name f
+
+let forall_form_e g p =
+  let env, f = judgement p in
+  let on_forall_atom _ = raise_in_env env % not_a_forall_form in
+  let on_forall_term _ = raise_in_env env % not_a_forall_form in
+  let on_forall_form (FV_Bind (_, x, _)) f = SpecForm (g, (FV x |==> g) f) in
+  match specialize on_forall_atom on_forall_term on_forall_form f with
+  | SpecForm (g, f) -> P_SpecializeForm ((env, f), g, p)
+  | SpecAtom (_, f) | SpecTerm (_, f) -> raise_in_env env $ not_a_forall_form f
 
 let exists_atom_i (A_Bind (_, A a) as a_bind) b f_a p =
   let f = (A a |-> b) f_a in
@@ -182,6 +202,14 @@ let exists_term_i (V_Bind (_, V x) as x_bind) t f_x p =
   else
     raise_in_env env $ formula_mismatch f f'
 
+let exists_form_i (FV_Bind (_, x, x_kind) as x_bind) g f_x p =
+  let f = (FV x |==> g) f_x in
+  let env, f' = judgement p in
+  kind_check_throw env x_kind g ;
+  equiv_check_throw env f f' ;
+  let env = env |> remove_identifier x |> remove_assm f_x in
+  P_Intro ((env, F_ExistsForm (x_bind, f_x)), p)
+
 let exist_e p_exists witness p =
   let env, f = judgement p in
   let remove_witness = function
@@ -193,6 +221,14 @@ let exist_e p_exists witness p =
       match Utils.bind_by_name witness (identifiers env) with
       | Some (Bind (_, K_Atom w)) -> remove_identifier w %> remove_assm ((a |-> pure (A w)) f_a)
       | _ -> failwith ("not an atom " ^ witness) )
+    | F_ExistsForm (FV_Bind (_, x, x_kind), f_x) -> (
+      match Utils.bind_by_name witness (identifiers env) with
+      | Some (Bind (_, K_FVar (w, w_kind))) ->
+        if x_kind <=: w_kind <| kind_checker_env env then
+          remove_identifier w %> remove_assm ((FV x |==> fvar w) f_x)
+        else
+          raise_in_env env % formula_kind_mismatch (fvar w) x_kind $ Some x_kind
+      | _ -> failwith ("not a fvar" ^ witness) )
     | g -> raise_in_env env $ not_an_exists g
   in
   let env_x, f_x = judgement p_exists in
@@ -284,6 +320,8 @@ let subst env f sub constr p =
 let subst_atom a b (env, f) = subst env f (a |-> b) (a ==: b)
 
 let subst_var x t (env, f) = subst env f (x |=> t) (var x =: t)
+
+let truth_i = P_Ax (empty id, F_Top)
 
 module Axiom = struct
   let axiom_env = empty id

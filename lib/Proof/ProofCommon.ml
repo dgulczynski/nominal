@@ -2,7 +2,7 @@ open Prelude
 open ProofException
 open Types
 
-type spec = SpecAtom of permuted_atom * formula | SpecTerm of term * formula
+type spec = SpecAtom of permuted_atom * formula | SpecTerm of term * formula | SpecForm of formula * formula
 
 type formula_mapping = {bind: fvar_binder; body: formula}
 
@@ -30,14 +30,16 @@ let disjuncts = function
   | F_Or fs -> fs
   | f -> raise $ not_a_disjunction f []
 
-let specialize on_forall_atom on_forall_term =
+let specialize on_forall_atom on_forall_term on_forall_form =
   let ( <$> ) g = function
     | SpecAtom (a, f) -> SpecAtom (a, g f)
     | SpecTerm (t, f) -> SpecTerm (t, g f)
+    | SpecForm (p, f) -> SpecForm (p, g f)
   in
   let rec specialize' = function
     | F_ForallAtom (a, f) -> on_forall_atom a f
     | F_ForallTerm (x, f) -> on_forall_term x f
+    | F_ForallForm (p, f) -> on_forall_form p f
     | F_Impl (premise, f) -> (fun f -> F_Impl (premise, f)) <$> specialize' f
     | F_ConstrImpl (c, f) -> (fun f -> F_ConstrImpl (c, f)) <$> specialize' f
     | f -> raise $ cannot_specialize f []

@@ -12,15 +12,7 @@ open IncProof
 open ProverGoal
 open ProverInternals
 
-let raise_in_env env exn = raise % exn $ all_identifiers env
-
-let check_props env formulas =
-  let check_prop f =
-    match kind_infer env f with
-    | Some K_Prop -> ()
-    | k -> raise_in_env env $ formula_kind_mismatch f k K_Prop
-  in
-  List.iter check_prop formulas
+let check_props env formulas = List.iter (kind_check_throw env K_Prop) formulas
 
 let check_input env goal =
   let assumptions = List.map snd $ assumptions env in
@@ -38,6 +30,7 @@ let intro state =
   | F_ConstrImpl (constr, f2) -> unfinished (env |> add_constr constr, f2) context
   | F_ForallAtom (a_bind, f') -> unfinished (env |> add_atom a_bind, f') context
   | F_ForallTerm (x_bind, f') -> unfinished (env |> add_var x_bind, f') context
+  | F_ForallForm (p_bind, f') -> unfinished (env |> add_fvar p_bind, f') context
   | _ -> raise_in_env env $ not_a_constr_implication f
 
 let intros = flip (List.fold_left (flip intro_named))
@@ -67,9 +60,14 @@ let specialize_proof proof specs env =
       let t = parse_term_in_env identifiers_env spec in
       SpecTerm (t, (x |=> t) f)
     in
-    match specialize on_forall_atom on_forall_term h with
+    let on_forall_form (FV_Bind (_, p, _)) f =
+      let g = parse_formula_in_env identifiers_env spec in
+      SpecForm (g, (FV p |==> g) f)
+    in
+    match specialize on_forall_atom on_forall_term on_forall_form h with
     | SpecAtom (a, f) -> proof_specialize_atom (env, f) a proof
     | SpecTerm (t, f) -> proof_specialize_term (env, f) t proof
+    | SpecForm (g, f) -> proof_specialize_form (env, f) g proof
   in
   List.fold_left specialize (proof_step 5 proof) specs
 
@@ -114,7 +112,9 @@ let generalize name state =
   | Some (Bind (x_name, K_Var x)) ->
     let ctx = PC_SpecializeTerm (to_judgement (env |> remove_identifier x, f), var (V x), context state) in
     unfinished (env |> remove_identifier x, F_ForallTerm (V_Bind (x_name, V x), f)) ctx
-  | Some (Bind (_x, K_FVar _)) -> raise $ ProofException "Logical variables cannot be generalized"
+  | Some (Bind (p_name, K_FVar (p, k))) ->
+    let ctx = PC_SpecializeForm (to_judgement (env |> remove_identifier p, f), fvar p, context state) in
+    unfinished (env |> remove_identifier p, F_ForallForm (FV_Bind (p_name, p, k), f)) ctx
   | Some (Bind (_x, K_Func)) -> raise $ ProofException "Functional symbols cannot be generalized"
   | None -> raise $ unbound_variable name
 
@@ -129,6 +129,11 @@ let exists witness state =
     let t = parse_term_in_env (identifiers env) witness in
     let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
     unfinished (env, (x |=> t) f_x) context
+  | F_ExistsForm (FV_Bind (_, x, x_kind), f_x) as f ->
+    let g = parse_formula_in_env (identifiers env) witness in
+    kind_check_throw env x_kind g ;
+    let context = PC_ExistsForm (to_judgement (env, f), g, context state) in
+    unfinished (env, (FV x |==> g) f_x) context
   | f -> raise_in_env env $ not_an_exists f
 
 let exists' witnesses state = List.fold_left (flip exists) state witnesses
@@ -331,3 +336,10 @@ let apply_in_assm h_name h_premise_name state =
     let h_conclusion_proof = proof_apply (h_env, h_conclusion) h_proof h_premise_proof in
     add_assm h_name h_conclusion_proof state
   | _ -> raise_in_env env % not_an_implication $ label' h_premise_proof
+
+let truth state =
+  match goal state with
+  | _, F_Top ->
+    let ctx = context state in
+    find_goal_in_ctx proof_truth ctx
+  | env, f -> raise_in_env env $ formula_mismatch F_Top f

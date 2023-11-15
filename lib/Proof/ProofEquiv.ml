@@ -1,6 +1,7 @@
 open Prelude
 open ProofCommon
 open ProofEnv
+open ProofException
 open Solver
 open Substitution
 open KindChecker
@@ -225,3 +226,9 @@ let ( =/= ) f1 f2 = not % (f1 === f2)
 
 (* [(f1 ==== f2) env] test syntactic equivalence of formulas [f1] and [f2] in [env] *)
 let ( ==== ) f1 f2 env = equiv_syntactic env env equiv_depth equiv_depth f1 f2
+
+let equiv_check_throw env f1 f2 =
+  if f1 === f2 <| env then
+    ()
+  else
+    raise_in_env env $ formula_mismatch f1 f2

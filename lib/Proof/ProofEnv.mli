@@ -56,6 +56,10 @@ val parse_mapping : bound_env -> constr list -> 'a list -> ('a -> formula) -> (s
 
 val kind_checker_env : 'a env -> KindCheckerEnv.t
 
+val kind_check : 'a env -> kind -> formula -> bool
+
+val kind_check_throw : 'a env -> kind -> formula -> unit
+
 val kind_infer : 'a env -> formula -> kind option
 
 val find_bind : string -> 'a env -> formula option
@@ -71,3 +75,5 @@ val subst_var : (var -> term -> 'a -> 'a) -> var -> term -> 'a env -> 'a env
 val subst_atom : (atom -> permuted_atom -> 'a -> 'a) -> atom -> permuted_atom -> 'a env -> 'a env
 
 val solver_env : 'a env -> constr list
+
+val raise_in_env : 'a env -> (bound_env -> exn) -> 'b

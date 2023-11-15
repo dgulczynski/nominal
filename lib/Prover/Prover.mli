@@ -59,3 +59,5 @@ val specialize_assm : string -> string -> string list -> tactic
 val apply_in_assm : string -> string -> tactic
 
 val add_assm : string -> incproof -> tactic
+
+val truth : tactic

@@ -1,6 +1,7 @@
 open Prelude
 open Types
 open Utils
+open KindChecker
 open ProofCommon
 open ProofException
 open Substitution
@@ -173,3 +174,17 @@ let subst_var subst_assm (V x_rep as x) t env =
 let solver_env env =
   let constr_assms = List.filter_map (to_constr_op % to_formula env) $ env.assumptions in
   constr_assms @ constraints env
+
+let raise_in_env env exn = raise % exn $ all_identifiers env
+
+let kind_check' env k f =
+  match kind_infer env f with
+  | Some k' when k' <=: k <| kind_checker_env env -> Result.Ok ()
+  | k' -> Result.Error k'
+
+let kind_check env = Result.is_ok %% kind_check' env
+
+let kind_check_throw env k f =
+  let ok = id in
+  let error = raise_in_env env % formula_kind_mismatch f k in
+  Result.fold ~ok ~error $ kind_check' env k f
