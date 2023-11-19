@@ -1103,8 +1103,8 @@ Only if this initial check fails, will it proceed to examine the permutation ato
 
 \begin{figure}[htpb]
   \centering
-  \begin{tabularx}{\textwidth}{|CC|}
-  \hline & \\ $
+  \begin{tabularx}{\textwidth}{|cCC|}
+  \hline & & \\ & $
   \inference{
     \atomexp_1 \cfresh \tbind{\atomexp_2} \term_2\:,\;
       \term_1 = \permswap{\atomexp_1}{\atomexp_2}\term_2 \:, \;
@@ -1118,7 +1118,7 @@ Only if this initial check fails, will it proceed to examine the permutation ato
     \atomv \cneq \atomexp, \; \atomv \cfresh \term,\;\cEnv ; \icEnv \solverRule \sconstr
   }{
     \atomv \cfresh \tbind{\atomexp} \term , \cEnv ; \icEnv \solverRule \sconstr
-  } $ \\ & \\ \hline
+  } $ \\ & & \\ \hline
   \end{tabularx}
   \caption{Binding assumption rules}
   \label{fig:abstraction}
@@ -1347,12 +1347,14 @@ unless invoked with identical atoms, in which case we report a contradiction.
   \label{fig:adding-constraints}
 \end{figure}
 
-We are using OCaml's pipelining notation of \lstinline[mathescape,language=OCaml]{x |> f1 |> ... |> fn}
-for \lstinline[mathescape,language=OCaml]{fn (... (f1 x))}
-and treat expressions like \lstinline[mathescape,language=OCaml]{fresh += x}
-as functions, meaning
+\pagebreak
+
+To describe the procedures handling environment $\icEnv$, we use OCaml's pipelining notation of << \lstinline[mathescape,language=OCaml]{x |> f1 |> ... |> fn} >>
+for  << \lstinline[mathescape,language=OCaml]{fn (... (f1 x))} >>
+and treat expressions like << \lstinline[mathescape,language=OCaml]{fresh += x} >>
+as functions, meaning <<
 \lstinline[mathescape,language=OCaml] {fun $\icEnv$ -> $\{$ $\icEnv$ with fresh = x :: $\icEnv$.fresh $\}$}
-and alike.
+>> and so on.
 
 \begin{figure}[thbp]
     \begin{tabular}{|p{0.95\textwidth}|}
@@ -1485,8 +1487,6 @@ treat constraints as propositions,
 ensures that constraints guarding formulas are satisfied,
 and enables us to express safe recursive predicates through fixpoint operator.
 
-% TODO: Why higher order? not 1st, 2nd order
-
 Next, our focus will shift towards constructing a dedicated proof system for this higher-order logic, including a proof assistant.
 Binding together all these components creates a cohesive framework
 for precise articulation and reasoning of complex syntactic properties.
@@ -1610,7 +1610,7 @@ $\formphi$ & $::=$ & $\bot
                \bnfor \ldots $ & (formulas)
 \end{tabular}
 \\ \\
-Quantification over atoms and terms (on formulas of kind $\kProp$):
+Quantification over atoms, terms, and logical variables of (on formulas of kind $\kProp$):
 \newcommand\fForallForm[2]{\forall_{#2} #1 .}
 \newcommand\fExistsForm[2]{\exists_{#2} #1 .}
 
@@ -1969,15 +1969,17 @@ if we supply it with contradictory assumptions.
 
 We present constraint guard rules alongside implication and conjunction
 to direct the reader to the similarities between them.
-Despite these similiartiy,
+Despite these similarities,
 in the rule for eliminating constraint conjunction guard (\sc{ConstrAndE2}),
-we restrict the guarded formulas to be of kind $\kProp$.
-If one wants to eliminate the guard to use the inner formula,
-one can only do so with formulas that \it{make sense}
-(or rather: pass kind checking) on their own,
+we restrict the guarded formulas $\varphi$ to pass the kinding check as $\kProp$.
+
+Technically, the formula $\varphi$ could pass the check as any kind
+(as we restricted the guarded formulas to only those of kind $\kProp$ in kinding rules),
+but it must do so without $\constr$ in the kinding environment.
+This check is done to ensure that if one wants to eliminate the guard to use the inner formula,
+one can only do so with formulas that already \it{make sense} on their own,
 without the constraint $\constr$ guarding them, as opposed to the kinding rule
-where $\constr$ was added to the kinding environment.
-% TODO: emphasise that formula needs to kind on its own, (prop is irelevent!) (c must hold in gamma)
+where we are adding $\constr$ to the kinding environment.
 
 \newpage
 
@@ -2065,7 +2067,6 @@ where $\constr$ was added to the kinding environment.
   }\:\scbrk{Exists}{FormI}
   \qquad
   \inference{
-    % TODO: write rule for ExistsFormE
     \qquad \jgmnt[\cEnv_1;\Theta_1]{\fExistsForm{\propv}{\kind}\formphi} \hfill \\
     \qquad \jgmnt[\cEnv_2;\Theta_2,\formphi \{\propv \mapsto \propv'\}, \propv' \ofkind \kind']{\psi} \hfill \\
     \propv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2] \\
