@@ -2462,17 +2462,25 @@ val constr_i : proof_env -> constr -> proof
 ...
 
 TODO: this is kinda interesting, that we have deduction rules impolemented as functions (or smart constructors), that's nice
-\end{lstlisting}
-Module \lstt{Proof} provides methods for constructing forward proofs,
-i.e. those in which more complex conclusions are built from simpler, already proven facts.
-Smart constructors of \lstt{proof} data type ensure correctness by implementing the descripted natural deduction
-and serve as the logical core for writing proofs.
 
-Human provers, working within intuitionistic logic, generally prefer to conduct proofs not in this \it{bottom-up} fasion,
+\end{lstlisting}
+
+As in HOL theorem provers\cite{HOL},
+we treat \tt{proof} like an abstract data type,
+which can only be manipulated through the functions provided by the \tt{Proof}.
+These functions act as smart constructors,
+and each and every rule of natural deduction described in previous chapter
+is implemented by a different function in \tt{Proof}.
+These functions can be used the the user directly to construct forward proofs,
+i.e. those in which more complex conclusions are built from simpler, already proven facts.
+By employing the smart constructors, we ensure that all values of type \tt{proof}
+are correct, and thus module \tt{Proof} ca serves as the logical core for writing proofs.
+
+Human provers, working within intuitionistic logic, generally prefer to conduct proofs not in this \it{bottom-up} fashion,
 but through simplifying the goal to be proven until we reach the trivial matters.
-To accomodate for that, we included the \it{top-down} proof structure in \lstt{incproof} data type.
+To accomodate for that, we included the \it{top-down} proof structure as the \lstt{incproof} data type.
 As such proofs have incomplete parts by nature, they must have \it{holes},
-and live within some \it{proof context}, as defined in modules \lstt{IncProof},
+and live within some \it{proof context}, as defined in module \lstt{IncProof},
 which serves the role of being a convenient facade for writing proofs,
 while responsibility of keeping proofs correct is delegated to the \lstt{Proof} module.
 
