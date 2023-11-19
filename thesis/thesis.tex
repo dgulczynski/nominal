@@ -756,35 +756,35 @@ occurs on the left side of the turnstile.
       \begin{tabularx}{\textwidth}{CCC} $
       \inference{
       }{
-        \cEnv ; \icEnv \solverRule \atomv = \atomv
+        \emptyenv ; \icEnv \solverRule \atomv = \atomv
       }
       $ & $
       \inference{
       }{
-        \cEnv ; \icEnv \solverRule \termv = \termv
+        \emptyenv ; \icEnv \solverRule \termv = \termv
       }
       $ & $
       \inference{
       }{
-        \cEnv ; \icEnv \solverRule \symb = \symb
+        \emptyenv ; \icEnv \solverRule \symb = \symb
       }
       $
       \end{tabularx}
       \\ \\ $
       \inference{
-        \cEnv ; \icEnv \solverRule \term_1 = \term_2
+        \emptyenv ; \icEnv \solverRule \term_1 = \term_2
         &
-        \cEnv ; \icEnv \solverRule \term_1' = \term_2'
+        \emptyenv ; \icEnv \solverRule \term_1' = \term_2'
       }{
-        \cEnv ; \icEnv \solverRule \term_1 \term_1' = \term_2 \term_2'
+        \emptyenv ; \icEnv \solverRule \term_1 \term_1' = \term_2 \term_2'
       }
       $ \\ \\ $
       \inference{
-        \cEnv ; \icEnv \solverRule \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
+        \emptyenv ; \icEnv \solverRule \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
         &
-        \cEnv ; \icEnv \solverRule \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
+        \emptyenv ; \icEnv \solverRule \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
       }{
-        \cEnv ; \icEnv \solverRule \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
+        \emptyenv ; \icEnv \solverRule \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
       }
       $ \\ \\ \hline
       \end{tabular}
@@ -799,8 +799,7 @@ the left side's argument must be fresh in the whole right side's term
 the left's argument doesn't occur at all in the right's body)
 and that left body must be equal to the right body with if its argument was swapped for the left one.
 
-TODO: change rules such that $\cEnv$ is empty and write why we show goal-reducing first
-while assumption-reducing are actually done beforehand.
+TODO: write why we show goal-reducing first while assumption-reducing are actually done beforehand.
 
 To compare a \it{pure} atom $\atomv$ with permuted one, we employ the decidability of atom equality
 to reduce the right hand-side's permutation by applying it's outermost swap $\swap{\atomexp_1}{\atomexp_2}$ on the left side's atom.
@@ -819,40 +818,40 @@ Notice that it is impossible for any two of these assumption to be valid at the 
     \begin{tabularx}{\textwidth}{|C|}
       \hline \\ $
       \inference{
-        \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomv     = \atomexp \\
-        \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_2 = \atomexp \\
-        \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \solverRule \atomexp_1 = \atomexp
+        \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2 ; \icEnv \solverRule \atomv     = \atomexp \\
+        \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2 ; \icEnv \solverRule \atomexp_2 = \atomexp \\
+        \atomv \ceq  \atomexp_2 ; \icEnv \solverRule \atomexp_1 = \atomexp
       }{
-        \cEnv ; \icEnv \solverRule \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
+        \emptyenv ; \icEnv \solverRule \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
       }
       $ \\ \\
     \begin{tabular}{cc}
       $
       \inference{
-        \cEnv ; \icEnv \solverRule \atomv = \perm^{-1} \atomexp
+        \emptyenv ; \icEnv \solverRule \atomv = \perm^{-1} \atomexp
       }{
-        \cEnv ; \icEnv \solverRule \perm \atomv = \atomexp
+        \emptyenv ; \icEnv \solverRule \perm \atomv = \atomexp
       }
       $ & $
       \inference{
-        \cEnv ; \icEnv \solverRule \termv_1 = \pi_1^{-1} \pi_2 \termv_2
+        \emptyenv ; \icEnv \solverRule \termv_1 = \pi_1^{-1} \pi_2 \termv_2
       }{
-        \cEnv ; \icEnv \solverRule \pi_1 \termv_1 = \pi_2 \termv_2
+        \emptyenv ; \icEnv \solverRule \pi_1 \termv_1 = \pi_2 \termv_2
       }
       $ \\ & \\
       $
       \inference{
-        \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
+        \emptyenv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
       }{
-        \cEnv ; \icEnv \solverRule \termv = \pi \termv
+        \emptyenv ; \icEnv \solverRule \termv = \pi \termv
       }
       $ & $
       \inference{
         \forall \atomv \in \pi.\;
-          \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
-          \cEnv ; \icEnv \solverRule \atomv \cfresh \termv
+          \emptyenv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
+          \emptyenv ; \icEnv \solverRule \atomv \cfresh \termv
         }{
-        \cEnv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
+        \emptyenv ; \icEnv \solverRule \pi \text{ idempotent on } \termv
       }
       $ \\ & \\
     \end{tabular} \\
@@ -876,18 +875,18 @@ There's also special check for variables equal to their permuteded selves
       \inference{
         \atomv_1 \cneq \atomv_2 \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \atomv_1 \cfresh \atomv_2
+        \emptyenv ; \icEnv \solverRule \atomv_1 \cfresh \atomv_2
       }
       $ & $
       \inference{
         \atomv \cfresh \termv \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \atomv \cfresh \termv
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \termv
       }
       $ & $
       \inference{
       }{
-        \cEnv ; \icEnv \solverRule \atomv \cfresh \symb
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \symb
       }
       $
       \end{tabular}
@@ -895,18 +894,18 @@ There's also special check for variables equal to their permuteded selves
       \begin{tabular}{cc}
       $
       \inference{
-        \atomv \cneq \atomexp, \cEnv ; \icEnv \solverRule \atomv \cfresh \term
+        \atomv \cneq \atomexp ; \icEnv \solverRule \atomv \cfresh \term
       }{
-        \cEnv ; \icEnv \solverRule \atomv \cfresh \tbind{\atomexp}{\term}
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \tbind{\atomexp}{\term}
       }
       $ &
       $
       \inference{
-        \cEnv ; \icEnv \solverRule \atomv \cfresh \term_1
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \term_1
         &
-        \cEnv ; \icEnv \solverRule \atomv \cfresh \term_2
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \term_2
       }{
-        \cEnv ; \icEnv \solverRule \atomv \cfresh \term_1 \term_2
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \term_1 \term_2
       }
       $
       \end{tabular}
@@ -928,41 +927,41 @@ then we continue the solver procedure with an additional assumption.
       \hline & \\ $
       \inference{
       }{
-        \cEnv ; \icEnv \solverRule \shatom \csheq \shatom
+        \emptyenv ; \icEnv \solverRule \shatom \csheq \shatom
       }
       $ & $
       \inference{
       }{
-        \cEnv ; \icEnv \solverRule \symb \csheq \symb
+        \emptyenv ; \icEnv \solverRule \symb \csheq \symb
       }
       $ \\ & \\
       $
       \inference{
         \termv_1 \csheq \termv_2 \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \termv_1 \csheq \termv_2
+        \emptyenv ; \icEnv \solverRule \termv_1 \csheq \termv_2
       }
       $ & $
       \inference{
         \termv  \csheq \shape' \in \icEnv
         &
-        \cEnv ; \icEnv \solverRule \shape'  \csheq \shape
+        \emptyenv ; \icEnv \solverRule \shape'  \csheq \shape
       }{
-        \cEnv ; \icEnv \solverRule \termv  \csheq \shape
+        \emptyenv ; \icEnv \solverRule \termv  \csheq \shape
       }
       $ \\ & \\
       $\inference{
-        \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2
+        \emptyenv ; \icEnv \solverRule \shape_1 \csheq \shape_2
       }{
-        \cEnv ; \icEnv \solverRule \shbind \shape_1 \csheq \shbind \shape_2
+        \emptyenv ; \icEnv \solverRule \shbind \shape_1 \csheq \shbind \shape_2
       }
       $ & $
       \inference{
-        \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2
+        \emptyenv ; \icEnv \solverRule \shape_1 \csheq \shape_2
         &
-        \cEnv ; \icEnv \solverRule \shape_1' \csheq \shape_2'
+        \emptyenv ; \icEnv \solverRule \shape_1' \csheq \shape_2'
       }{
-        \cEnv ; \icEnv \solverRule \shape_1 \shape_1' \csheq \shape_2 \shape_2'
+        \emptyenv ; \icEnv \solverRule \shape_1 \shape_1' \csheq \shape_2 \shape_2'
       }
       $ \\ & \\ \hline
       \end{tabularx}
@@ -980,19 +979,19 @@ which enables transitivity.
     \begin{tabularx}{\textwidth}{|CC|}
       \hline & \\ $
       \inference{
-        \cEnv ; \icEnv \solverRule \shape_1 \csheq \shape_2
+        \emptyenv ; \icEnv \solverRule \shape_1 \csheq \shape_2
         &
         \shape_2 \cshlt \termv \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \shape_1 \cshlt \termv
+        \emptyenv ; \icEnv \solverRule \shape_1 \cshlt \termv
       }
       $ & $
       \inference{
-        \cEnv ; \icEnv \solverRule \shape_1 \cshlt \shape_2
+        \emptyenv ; \icEnv \solverRule \shape_1 \cshlt \shape_2
         &
         \shape_2 \cshlt \termv \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \shape_1 \cshlt \termv
+        \emptyenv ; \icEnv \solverRule \shape_1 \cshlt \termv
       }
       $ \\ & \\ \hline
       \end{tabularx}
@@ -1009,19 +1008,19 @@ enabling transitivity.
       \hline & & \\ $
       \inference{
       }{
-        \cEnv ; \icEnv \solverRule \csymb \symb
+        \emptyenv ; \icEnv \solverRule \csymb \symb
       }
       $ & $
       \inference{
         \csymb \termv \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \csymb \termv
+        \emptyenv ; \icEnv \solverRule \csymb \termv
       }
       $ & $
       \inference{
         \csymb \termv \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \atomv \cfresh \termv
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \termv
       }
       $ \\ & & \\ \hline
       \end{tabularx}
@@ -1065,7 +1064,7 @@ which are mostly anologous to the goal reducing rules.
       & \scbrk{Perm}{Idempotent} \\ \\
       $
       \inference{
-        \varnothing \solverRule \text{ idempotent on } \termv
+        \emptyenv \solverRule \text{ idempotent on } \termv
         &
         \cEnv ; \icEnv \solverRule \sconstr
       }{
@@ -1509,7 +1508,7 @@ $\kind$ & $::=$ & $\kProp
 \\
 Notice that as constraints occur in kinds, we cannot simply give functions
 from atoms some kind ${Atom}\karrow\kind$, but we must know \it{which} atom
-is bound there, to substitute for it in $\kind$ the same way we substitute
+is bound there, to substitute for it in it's kind $\kind$\-the same way we substitute
 that atom for an atom expression in the function body when applying it to the formula.
 The \it{guarded kind} $\kGuard{\constr} \kind$ is most importantly used in
 kinding of the fixpoint formulas, which we will explain in later sections.
@@ -1608,13 +1607,17 @@ $\formphi$ & $::=$ & $\bot
 \end{tabular}
 \\ \\
 Quantification over atoms and terms (on formulas of kind $\kProp$):
+\newcommand\fForallForm[2]{\forall_{#2} #1 .}
+\newcommand\fExistsForm[2]{\exists_{#2} #1 .}
 
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\ldots
                \bnfor \fForallAtom{\atomv} \formphi
                \bnfor \fForallTerm{\termv} \formphi
+               \bnfor \fForallForm{\propv}{\kind} \formphi
                \bnfor \fExistsAtom{\atomv} \formphi
                \bnfor \fExistsTerm{\termv} \formphi
+               \bnfor \fExistsForm{\propv}{\kind} \formphi
                \bnfor \ldots$
     & (formulas)
 \end{tabular}
@@ -1988,7 +1991,7 @@ where $\constr$ was added to the kinding environment.
   \inference{
     \jgmnt[\cEnv;\Theta]{\fForallAtom{\atomv}\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\formphi \{\atomv \mapsto \atomv'\}}
+    \jgmnt[\cEnv;\Theta]{\formphi \{\atomv \mapsto \atomexp\}}
   }\:\scbrk{Forall}{AtomE}
   $ \\ \\ $
   \inference{
@@ -2001,8 +2004,25 @@ where $\constr$ was added to the kinding environment.
   \inference{
     \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv}\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\formphi \{\termv \mapsto \termv'\}}
+    \jgmnt[\cEnv;\Theta]{\formphi \{\termv \mapsto \term\}}
   }\:\scbrk{Forall}{TermE}
+  $ \\ \\ $
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\propv \ofkind \kind}
+    \\
+    \propv \notin \fv[\cEnv;\Theta] &
+    \jgmnt[\cEnv;\Theta]{\formphi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\fForallForm{\propv}{\kind}\formphi}
+  }\:\scbrk{Forall}{FormI}
+  \qquad
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\psi \ofkind \kind}
+    \\
+    \jgmnt[\cEnv;\Theta]{\fForallForm{\propv}{\kind}\formphi}
+  }{
+    \jgmnt[\cEnv;\Theta]{\formphi \{\propv \mapsto \psi\}}
+  }\:\scbrk{Forall}{FormE}
   $ \\ \\ $
   \inference{
     \jgmnt[\cEnv;\Theta]{\formphi \{\atomv \mapsto \atomv'\}}
@@ -2031,6 +2051,24 @@ where $\constr$ was added to the kinding environment.
     }{
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
   }\:\scbrk{Exists}{TermE}
+  $ \\ \\ $
+  \inference{
+    \jgmnt[\cEnv;\Theta]{\propv' \ofkind \kind}
+    \\
+    \jgmnt[\cEnv;\Theta]{\formphi \{\propv \mapsto \propv'\}}
+    }{
+    \jgmnt[\cEnv;\Theta]{\fExistsForm{\propv}{\kind}\formphi}
+  }\:\scbrk{Exists}{FormI}
+  \qquad
+  \inference{
+    % TODO: write rule for ExistsFormE
+    \qquad \jgmnt[\cEnv_1;\Theta_1]{\fExistsForm{\propv}{\kind}\formphi} \hfill \\
+    \qquad \jgmnt[\cEnv_2;\Theta_2,\formphi \{\propv \mapsto \propv'\}, \propv' \ofkind \kind']{\psi} \hfill \\
+    \propv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2] \\
+    \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\kind \subkind \kind'}
+  }{
+      \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
+  }\:\scbrk{Exists}{FormE}
   $ \\ \\ \hline
   \end{tabularx}
   \caption{Natural deduction for quantifiers}
