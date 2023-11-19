@@ -349,7 +349,10 @@ and build_permutation_idempotent_assms pi x assms =
   (* ------------------------------------------- *)
   (*           (π idempotent on x) :: Γ, Δ |- c  *)
   let add_atom_assms assmss a =
-    List.map (List.cons (fresh a (var x))) assmss @ List.map (List.cons (atom' a =: atom' (permute pi a))) assmss
+    let a_fresh = fresh a (var x) in
+    let a_idemp = atom' a =: atom' (permute pi a) in
+    let assmss_cons c = List.map (List.cons c) assmss in
+    assmss_cons a_fresh @ assmss_cons a_idemp
   in
   List.fold_left add_atom_assms [assms] (free_vars_of pi)
 

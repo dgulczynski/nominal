@@ -169,10 +169,12 @@ let forall_term_e t p =
   | SpecTerm (t, f) -> P_SpecializeTerm ((env, f), t, p)
   | SpecAtom (_, f) | SpecForm (_, f) -> raise_in_env env $ not_a_forall_term f
 
-let forall_form_i (FV_Bind (x_name, x, _) as x_bind) p =
+let forall_form_i (FV_Bind (x_name, x, x_kind) as x_bind) p =
   let env, f = judgement p in
   match env |> find_bind x_name with
-  | None -> P_Intro ((env |> remove_identifier x, F_ForallForm (x_bind, f)), p)
+  | None ->
+    kind_check_throw env x_kind $ fvar x ;
+    P_Intro ((env |> remove_identifier x, F_ForallForm (x_bind, f)), p)
   | Some f -> raise_in_env env $ cannot_generalize x_name f
 
 let forall_form_e g p =
