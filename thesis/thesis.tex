@@ -672,7 +672,7 @@ Additionaly, we add some syntax sugar for convenience of notation.
       \end{tabular}
       \\ & \\ \hline
       \end{tabularx}
-  \caption{Constraints' syntax sugaring}
+  \caption{Desugaring of constraints' syntax }
   \label{fig:symbol-rules}
 \end{figure}
 
@@ -707,14 +707,14 @@ irreducible components that are straightforward to handle.
   \caption{Irreducible constraints}
   \label{fig:irreducible-constraints}
 \end{figure}
-\\
+
+\pagebreak
+
 Environment $\cEnv$ keeps the yet unprocessed assumptions,
 while another environment $\icEnv$ keeps track of already analysed and irreducible assumptions.
 These assumptions usually flow from the former to the latter, but if we analyse
 a constraint that that affects other assumptions in $\icEnv$,
 they may flow back to $\cEnv$ to be further disected by the Solver.
-
-
 After all assumptions in $\cEnv$ are reduced to irreducible constraints,
 we break down the goal-constraint $\sconstr$ and repeat the reduction procedure on
 new assumptions and goal.
@@ -749,6 +749,14 @@ which is then as simple as checking if the goal is trivial or if it
 occurs on the left side of the turnstile.
 
 \section{Goal-reducing rules}
+We begin the description of Solver rules by the ones that break down the goal,
+as we find them more straightforward to follow.
+As stated previously, the actual procedure would start by reducing the assumptions
+and only work on the goal when the assumption environment $\cEnv$ is empty
+(all assumptions were reduced and live in environment $\icEnv$).
+These "rules" should be considered as a way to describe an algorithm
+rather than a description of some inductive relation.
+
 \begin{figure}[htbp]
     \centering
     \begin{tabular}{|c|}
@@ -798,8 +806,6 @@ the left side's argument must be fresh in the whole right side's term
 (which informally means that either arguments are the same or
 the left's argument doesn't occur at all in the right's body)
 and that left body must be equal to the right body with if its argument was swapped for the left one.
-
-TODO: write why we show goal-reducing first while assumption-reducing are actually done beforehand.
 
 To compare a \it{pure} atom $\atomv$ with permuted one, we employ the decidability of atom equality
 to reduce the right hand-side's permutation by applying it's outermost swap $\swap{\atomexp_1}{\atomexp_2}$ on the left side's atom.
@@ -1073,9 +1079,7 @@ which are mostly anologous to the goal reducing rules.
       & \scbrk{Perm}{Shortcircuit} \\ \\
       $
       \inference{
-        (\forall \atomv \in \pi.\;
-          \cEnv ; \icEnv \solverRule \atomv = \pi \atomv \;\vee\;
-          \cEnv ; \icEnv \solverRule \atomv \cfresh \termv), \cEnv ; \icEnv \solverRule \sconstr
+        (\forall \atomv \in \pi.\;\atomv = \pi \atomv \;\vee\;\atomv \cfresh \termv), \cEnv ; \icEnv \solverRule \sconstr
       }{
         \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
       } $
@@ -1085,17 +1089,17 @@ which are mostly anologous to the goal reducing rules.
   \caption{Permutation-reducing rules}
   \label{fig:perm-reduction}
 \end{figure}
-For variables equal to some term and atoms equal to some atom expressions,
-we first deal with permutation by inverting it and moving it to the right-hand side.
-Then we consider the special case where a variable is equal to itself when permuted.
+For variables equal to some terms and atoms equal to some atom expressions,
+we first deal with left-hand side's permutation by inverting it and moving it to the right-hand side.
+Otherwise both equality and freshness assumptions follow from the term structure\-we only consider the special case where a variable is assumed to be equal to itself with permutation applied, where we extend the environment $\cEnv$ by a meta-assumption denoted as
+$(\forall \atomv \in \perm.\;\atomv = \perm \apperm \atomv \;\vee\;\atomv \cfresh \termv)$.
+Solver handles this by creating multiple environments where each atom $\atomv$ occuring in permutation $\perm$ generates an assumption $\atomv = \pi \atomv \;\vee$ or $\atomv \cfresh \termv$, and every combination of these assumptions is used to create new environments by
+adding them to environment $\cEnv$, which are then used to run the Solver on the same goal.
+
 While the assumption of the permutation being idempotent might appear to multiply the number of assumptions exponentially based on the number of atoms in the given permutation,
 it's worth noting that this number is unlikely to be very high, as permutations rarely consist of more than a few swaps.
-
 In practice, the solver implementation will initially check whether the permutation is idempotent with an empty set of assumptions.
 Only if this initial check fails, will it proceed to examine the permutation atom by atom.
-Otherwise both equality and freshness assumptions follow from the term structure.
-
-TODO: describe the meta-assumption $\forall \atomv \in \pi. \dots$
 
 \begin{figure}[htpb]
   \centering
