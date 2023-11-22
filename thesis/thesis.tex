@@ -56,6 +56,7 @@ To demonstrate its potential for programming language reasoning, we conduct proo
 \usepackage{multirow}
 \usepackage{graphicx}
 \usepackage{pgf}
+\usepackage{tikz-qtree}
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -1042,6 +1043,90 @@ a symbol, or it is a variable that we already assumed to be a symbol.
 But before the Solver can reduce the goal-constraint, it must first reduce all assumptions in the $\cEnv$ environment.
 We will now present the rules for reducing the constraints on the left side of the turnstile,
 which are mostly anologous to the goal reducing rules.
+
+% $0.\quad a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \emptyenv \solverRule c \cfresh E $
+% $0'.\quad b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E $ \\
+% $1.\quad b \ceq a \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E $ \\
+% $1'.\quad (b \cneq a) \in \{a \cneq b,\: a \cneq c\}$
+% $2.\quad b \cneq a,\: b \cfresh \permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E $
+% $2'.\quad b \cfresh \permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E $ \\
+% $2.1 \quad b \cneq b,\: b \cneq c,\: b \cfresh E \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E $ \\
+% $2.1' \quad \{b \cneq b\} \cup \{a \cneq b,\: a \cneq c\} = \lightning $ \\
+% $2.2 \quad b \ceq b,\: b \cneq c,\: c \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E $ \\
+% $2.2' \quad b \cneq c,\: c \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E $ \\
+% $2.2'' \quad c \cfresh E \:;\; \{a \cneq b,\: a \cneq c,\: b \cneq c\} \solverRule c \cfresh E $ \\
+% $2.2''' \quad \emptyenv\:;\; \{a \cneq b,\: a \cneq c,\: b \cneq c,\: c \cfresh E \} \solverRule c \cfresh E $ \\
+% $2.2'''' \quad \{c \cfresh E\} \in \{a \cneq b,\: a \cneq c,\: b \cneq c,\: c \cfresh E \} $ \\
+% $2.3 \quad b \ceq c,\: b \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E $ \\
+% $2.3' \quad c \cfresh E \:;\; \{a \cneq c \} \solverRule c \cfresh E $ \\
+% $2.3'' \quad \emptyenv \:;\; \{a \cneq c,\: c \cfresh E \} \solverRule c \cfresh E $ \\
+% $2.3''' \quad \{c \cfresh E\} \in \{a \cneq c,\: c \cfresh E \} $ \\
+%
+\begin{figure}[htpb]
+\centering
+\rotatebox{90}{
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \emptyenv \solverRule c \cfresh E$}
+  \edge node    { };
+  [.{$b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \cneq a,\: b \cfresh \permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \cfresh \permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \ceq c,\: b \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$c \cfresh E \:;\; \{a \cneq c \} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\emptyenv \:;\; \{a \cneq c,\: c \cfresh E \} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$(c \cfresh E) \in \{a \cneq c,\: c \cfresh E \}$} ]
+    ]
+    ]
+    ]
+    ]
+    \edge node { };
+    [.{$b \ceq b,\: b \cneq c,\: c \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \cneq c,\: c \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$c \cfresh E \:;\; \{a \cneq b,\: a \cneq c,\: b \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\emptyenv\:;\; \{a \cneq b,\: a \cneq c,\: b \cneq c,\: c \cfresh E \} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$(c \cfresh E) \in \{a \cneq b,\: a \cneq c,\: b \cneq c,\: c \cfresh E \}$} ]
+    ]
+    ]
+    ]
+    ]
+    \edge node { };
+    [.{$b \cneq b,\: b \cneq c,\: b \cfresh E \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\{b \cneq b\} \cup \{a \cneq b,\: a \cneq c\} = \lightning$} ]
+    ]
+    ]
+    ]
+    \edge node { };
+    [.{$b \ceq a \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\{b \ceq a\} \cup \{a \cneq b,\: a \cneq c\} = \lightning$} ]
+    ]
+  ]
+]
+\end{tikzpicture}
+}
+\caption{Example of running Solver.}
+\label{fig:example}
+\end{figure}
 
 \begin{figure}[htpb]
   \centering
