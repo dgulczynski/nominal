@@ -12,7 +12,10 @@
 % polecenia \fmlinebreak.
 \englishtitle   {Domain-specific logic \fmlinebreak for terms with variable binding}
 \polishtitle    {Logika dziedzinowa do wnioskowania \fmlinebreak o termach z wiązaniem zmiennych}
-\polishabstract {Przedstawiamy logikę dziedzinową do wnioskowania o termach z wiązaniem zmiennych. }
+\polishabstract {Przedstawiamy logikę dziedzinową do wnioskowania o termach z wiązaniem zmiennych.
+\\
+TODO: translate abstract to polish
+}
 \englishabstract{In this work,
 we address a fundamental distinction between manual and computer-based proof systems, emphasizing the challenge of maintaining precision and transparency in handling variable binding. The common practice of making unspoken assumptions in pen-and-paper proofs, particularly the use of imprecise notion of „sufficiently fresh names”, introduces potential pitfalls when translating to formal and rigorous proof systems.
 
@@ -116,7 +119,7 @@ To demonstrate its potential for programming language reasoning, we conduct proo
 \newcolumntype{C}{>{\centering\arraybackslash}X}
 \newcolumntype{R}{>{\raggedleft\arraybackslash}X}
 
-\usepackage[backend=bibtex]{biblatex}
+\usepackage[backend=bibtex,sorting=ynt]{biblatex}
 \addbibresource{references.bib}
 \selectlanguage{english}
 
@@ -134,7 +137,7 @@ and may skip some unimportant boilerplate.
 Computers, on the other hand, are less forgiving
 and demand transparency and justification down to the smallest details.
 
-A common assumption we commonly make when writing pen-and-paper proofs pertains to
+An assumption we commonly make when writing pen-and-paper proofs pertains to
 working with abstract syntax trees,
 where we assume that the variables we choose are fresh enough
 or that substitutions avoid issues like variable capture.
@@ -332,7 +335,6 @@ syntactical properties of binders, as they are essential
 in formalizing properites of programming languages.
 
 \begin{itemize}
-  % TODO: make HOAS one point
 \item \textbf{Higher-Order Abstract Syntax} (HOAS) introduced by Frank Pfenning
 and Conal Elliott\cite{hoas}
 is a uniform and generic representation of terms, formulas, programs, and other
@@ -341,16 +343,18 @@ unification under the presence of binders.
 Authors utilize the binding construct of the implementation language to represent the binding in the language being formalized.
 \\
 
-\item \textbf{Beluga} is a programming framework designed for reasoning about formal systems.
-Based on the LF logical framework, it encodes HOAS approach using dependent types
-and provides support for reasoning with context and contextual objects.
-It's developed at the Complogic group at McGill University, led by Professor Brigitte Pientka\cite{beluga}.
+\item  \textbf{Twelf}\cite{twelf} is a framework used to specify, implement, and prove properties of deductive systems and logics, that encodes HOAS within the \textbf{LF} logical framework\cite{LF},
+by utilising it's own constraint logic programming langauge Elf.
+The principal authors of Twelf are Frank Pfenning, and Carsten Schürmann.
+Multiple reasearch projects were developed using it, including a type safety proof for Standard ML\cite{twelf-ml}.
 \\
 
-\item \textbf{Twelf} is a framework used to specify, implement, and prove properties of deductive systems and logics.
-It's based on the LF logical framework, and uses Elf constraint logic programming langauge.
-The principal authors of Twelf are Frank Pfenning, and Carsten Schürmann\cite{twelf}.
-Multiple reasearch projects were developed using Twelf, including a type safety proof for Standard ML\cite{twelf-ml}.
+\item  \textbf{Beluga}\cite{beluga} is a programming framework designed for reasoning about formal systems,
+that is also based on the LF logical framework.
+It encodes HOAS approach using dependent types and provides support for reasoning with context and contextual objects.
+It's developed at the Complogic group at McGill University, led by Professor Brigitte Pientka
+One of the case studies of using Beluga was mechanization of logical relations by
+contextual types\cite{beluga-relations}.
 \\
 
 \item \textbf{Parametric Higher-Order Abstract Syntax} (PHOAS) improves
@@ -611,7 +615,7 @@ maps semantic terms to semantic shapes by erasing names.
 With above machinery, establish the relation $\tmEnv \vDash \constr$
 that interprets the constraints in our model, using some mapping $\tmEnv$.
 As a consequence of using of De Bruijn indices, we can trivially compute the
-$\mathsf{FreeAtoms}(\semterm_1)$ set and use it to check freshness.
+$\mathsf{FreeAtoms}(\semterm)$ set and use it to check freshness.
 Note that  it's possible for terms of form $\tbind{a}{X}$ and $\tbind{b}{Y}$
 to be equal in this model.
 
