@@ -12,9 +12,36 @@
 % polecenia \fmlinebreak.
 \englishtitle   {Domain-specific logic \fmlinebreak for terms with variable binding}
 \polishtitle    {Logika dziedzinowa do wnioskowania \fmlinebreak o termach z wiązaniem zmiennych}
-\polishabstract {Przedstawiamy logikę dziedzinową do wnioskowania o termach z wiązaniem zmiennych.
-\\
-TODO: translate abstract to polish
+\polishabstract {W niniejszej pracy przyglądamy się fundamentalnej różnicy
+między ręcznymi, a komputerowymi systemami dowodowymi, zwracając uwagę na
+wyzwanie, jakim jest utrzymanie precyzji i przejrzystości podczas
+przeprowadzania matematycznego rozumowania w obecności wiązania zmiennych.
+W praktyce, przy przenoszeniu dowódów przeprowadzonych na papierze do formalnych
+i rygorystycznych komputerowych systemów dowodowych, potencjalne trudności
+pojawiają się przy stosowaniu niejawnych założeń, a w szczególności przy
+używaniu nieprecyzyjnego pojęcia ``wystarczająco świeżych'' nazw zmiennych.
+
+Logika nominalna, wprowadzona przez Andrew M. Pittsa i oferująca pierwszorzędową
+teorię nazw i wiązania zmiennych, jest jednym z rozwiązań na wypełnienie tej luki.
+Podejście to pozwala na zdefiniowanie podstawowych pojęć, w tym
+alfa-równoważności, świeżości i wiązania zmiennych,
+wyłącznie w kategoriach zamiany nazw,
+odchodząc od klasycznych metod opartych na podstawieniu.
+
+Bazując na pracy Pittsa, przedstawiamy wyspecjalizowaną odmianę logiki nominalnej,
+w której definiujemy więzy\-precyzyjne opisy własności syntaktycznych nazw i termów.
+Kluczowym elementem naszej pracy jest algorytm ``Solver''\-narzędzie do automatycznego rozwiązywania więzów, będące jądrem sublogiki więzów i kompromisem pomiędzy
+ludzkim i komputerowym stylem dowodzenia.
+Do przeprowadzania rozumowań o więzach i innych własnościach syntaktycznych,
+na fundamentach tej sublogiki zbudowaliśmy logikę wyższego rzędu,
+w której umieściliśmy więzy w formułach i relacjach.
+
+Dodatkowo zdefiniowaliśmy system i asystenta dowodzenia,
+zainspirowane systemami dowodzenia z rodziny HOL i zaimplementowane w języku programowania OCaml.
+Połączenie tych części składowych tworzy spójną strukturę służąca do precyzyjnego wyrażania
+i rozumowania o złożonych właściwościach syntaktycznych,
+której potencjał jako systemu do wnioskowania o językach programowania zademonstrowaliśmy
+poprzez przeprowadzenie dowodu klasycznych własności rachunku lambda z typami prostymi.
 }
 \englishabstract{In this work,
 we address a fundamental distinction between manual and computer-based proof systems, emphasizing the challenge of maintaining precision and transparency in handling variable binding. The common practice of making unspoken assumptions in pen-and-paper proofs, particularly the use of imprecise notion of „sufficiently fresh names”, introduces potential pitfalls when translating to formal and rigorous proof systems.
@@ -23,12 +50,12 @@ Nominal Logic, as introduced by Andrew M. Pitts, emerges as a promising solution
 
 Building upon Pitts' work, we introduce a specialized variant of Nominal Logic,
 where we define constraints\-precise descriptors of syntactical properties\-and use them to reason about terms with variable binding.
-We introduce The Solver, an algorithm of automated constraint resolution,
+We introduce ``The Solver''\-an algorithm of automated constraint resolution,
 which forms the logical core of the constraints sublogic, and acts as a middle ground between human and computer provers.
 Layered on top of the constraints, we define a higher order logic, with constraints embedded into propositional formulas and relations.
 
 Alongside this logic, we establish a proof system and a proof assistant implemented in OCaml and inspired by HOL theorem provers. The integration of these components forms a cohesive framework for precise articulation of and reasoning about complex syntactic properties.
-To demonstrate its potential for programming language reasoning, we conduct proofs of classical properties of simply typed lambda calculus using this framework.
+To demonstrate its potential for reasoning within the programming languages world, we conduct proofs of classical properties of simply typed lambda calculus using this framework.
 }
 \author         {Dominik Gulczyński}
 \advisor        {dr Piotr Polesiuk}
