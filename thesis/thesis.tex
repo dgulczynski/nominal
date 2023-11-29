@@ -1235,8 +1235,26 @@ that can can arrive at a contradiction or extract assumptions from $\icEnv$ back
 Otherwise assumption are simply moved to the environment of irreducible
 constraints via procedure that we describe in the next section.
 
-But before that, we present an example of the Solver at work.
-TODO: describe.
+Before delving into further details, we present an example showcasing the Solver in action
+We will see how it decides that
+constraints $(a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E})$
+collectively imply the satisfaction of goal constraint $(c \cfresh E)$
+by performing a procedure resembling an exhaustive search on atom comparison.
+It begins by taking the already irreducible assumptions $(a \cneq b,\: a \cneq c)$ and moving then to $\icEnv$.
+Then, it analyzes how $b \cfresh \tbind{a}\permswap{b}{c}{E}$
+can hold, branching into two possibilities.
+First case is that $b$ and $a$ are equal and quickly leads to contradiction.
+The second one is that $b$ is different than $a$ and fresh in $\permswap{b}{c}{E}$.
+To deal with freshness, the Solver must reduce the swap $\permswap{b}{c}$ on $E$,
+prompting further branching by comparing $b$ with the atoms in the swap.
+First case is that $b$ is neither $b$ or $c$, contradicting the reflexivity of equality.
+Second one is that $b$ is equal to $b$ but different than $c$, so it gets swapped for $c$
+in the freshness assumption, which then becomes $c \cfresh E$ and matches with the goal.
+Final case is that $b$ is equal to $c$, so the Solver merges these atoms together,
+subsituting $b$ to $c$ everywhere.
+The freshess assumption turns into $c \cfresh E$ by substitution, so it again matches the goal.
+As all branches resolved properly, the whole judgement is proved.
+
 
 
 % $0.\quad a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \emptyenv \solverRule c \cfresh E $
