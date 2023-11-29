@@ -11,37 +11,37 @@
 % zlamaniu wierszy w temacie pracy, zwlaszcza tego w jezyku pracy. Uzyj do tego
 % polecenia \fmlinebreak.
 \englishtitle   {Domain-specific logic \fmlinebreak for terms with variable binding}
-\polishtitle    {Logika dziedzinowa do wnioskowania \fmlinebreak o termach z wiązaniem zmiennych}
-\polishabstract {W niniejszej pracy przyglądamy się fundamentalnej różnicy
-między ręcznymi, a komputerowymi systemami dowodowymi, zwracając uwagę na
+\polishtitle    {Logika dziedzinowa do wnioskowania \fmlinebreak o termach z~wiązaniem zmiennych}
+\polishabstract {W~niniejszej pracy przyglądamy się fundamentalnej różnicy
+między ręcznymi, a~komputerowymi systemami dowodowymi, zwracając uwagę na
 wyzwanie, jakim jest utrzymanie precyzji i przejrzystości podczas
-przeprowadzania matematycznego rozumowania w obecności wiązania zmiennych.
-W praktyce, przy przenoszeniu dowódów przeprowadzonych na papierze do formalnych
+przeprowadzania matematycznego rozumowania w~obecności wiązania zmiennych.
+W~praktyce, przy przenoszeniu dowódów przeprowadzonych na papierze do formalnych
 i rygorystycznych komputerowych systemów dowodowych, potencjalne trudności
-pojawiają się przy stosowaniu niejawnych założeń, a w szczególności przy
+pojawiają się przy stosowaniu niejawnych założeń, a~w~szczególności przy
 używaniu nieprecyzyjnego pojęcia ``wystarczająco świeżych'' nazw zmiennych.
 
 Logika nominalna, wprowadzona przez Andrew M. Pittsa i oferująca pierwszorzędową
-teorię nazw i wiązania zmiennych, jest jednym z rozwiązań na wypełnienie tej luki.
-Podejście to pozwala na zdefiniowanie podstawowych pojęć, w tym
+teorię nazw i wiązania zmiennych, jest jednym z~rozwiązań na wypełnienie tej luki.
+Podejście to pozwala na zdefiniowanie podstawowych pojęć, w~tym
 alfa-równoważności, świeżości i wiązania zmiennych,
-wyłącznie w kategoriach zamiany nazw,
+wyłącznie w~kategoriach zamiany nazw,
 odchodząc od klasycznych metod opartych na podstawieniu.
 
 Bazując na pracy Pittsa, przedstawiamy wyspecjalizowaną odmianę logiki nominalnej,
-w której definiujemy więzy\-precyzyjne opisy własności syntaktycznych nazw i termów.
+w~której definiujemy więzy\-precyzyjne opisy własności syntaktycznych nazw i termów.
 Kluczowym elementem naszej pracy jest algorytm ``Solver''\-narzędzie do automatycznego rozwiązywania więzów, będące jądrem sublogiki więzów i kompromisem pomiędzy
 ludzkim i komputerowym stylem dowodzenia.
 Do przeprowadzania rozumowań o więzach i innych własnościach syntaktycznych,
 na fundamentach tej sublogiki zbudowaliśmy logikę wyższego rzędu,
-w której umieściliśmy więzy w formułach i relacjach.
+w~której umieściliśmy więzy w~formułach i relacjach.
 
 Dodatkowo zdefiniowaliśmy system i asystenta dowodzenia,
-zainspirowane systemami dowodzenia z rodziny HOL i zaimplementowane w języku programowania OCaml.
+zainspirowane systemami dowodzenia z~rodziny HOL i zaimplementowane w~języku programowania OCaml.
 Połączenie tych części składowych tworzy spójną strukturę służąca do precyzyjnego wyrażania
 i rozumowania o złożonych właściwościach syntaktycznych,
 której potencjał jako systemu do wnioskowania o językach programowania zademonstrowaliśmy
-poprzez przeprowadzenie dowodu klasycznych własności rachunku lambda z typami prostymi.
+poprzez przeprowadzenie dowodu klasycznych własności rachunku lambda z~typami prostymi.
 }
 \englishabstract{In this work,
 we address a fundamental distinction between manual and computer-based proof systems, emphasizing the challenge of maintaining precision and transparency in handling variable binding. The common practice of making unspoken assumptions in pen-and-paper proofs, particularly the use of imprecise notion of „sufficiently fresh names”, introduces potential pitfalls when translating to formal and rigorous proof systems.
@@ -211,7 +211,7 @@ and formation of least and greatest fixpoint.
   \centering
   \begin{tabularx}{\textwidth}{|CXr|}
       \hline & & \\
-  $ t \deff a \mid \lambda a . t \mid t\;t $
+  $ t \; \deff \; a \mid \lambda a . t \mid t\;t $
   & & (lambda terms)
   \\ & & \\ \hline
 \end{tabularx}
@@ -232,7 +232,7 @@ given by the grammar above, where $a$ ranges over an infinite set of names\-or r
       & $ (\permswap{a}{b}{t_1}) \; (\permswap{a}{b}{t_2}) $
       \end{tabular}
       &
-      $\permswap{a}{b}{c} := \begin{cases}
+      $\permswap{a}{b}{c} \;\: := \;\: \begin{cases}
           a & \text{if } c = b \\
           b & \text{if } c = a \\
           c & \text{otherwise}
@@ -452,16 +452,13 @@ This set is disjoint from the set of variables commonly used in first-order logi
 which we will refer to as \it{variables} (denoted by uppercase letters).
 
 The terms are constructed to mimic the structure of abstract syntax trees of the lambda calculus,
-extending it with notion of permutations (of atoms) and functional symbols,
-denoted by metavariable $\symb$,
-that are drawn from yet another set disjoint with atoms and variables.
-
+extending it with the notion of permutations (of atoms) and functional symbols,
+denoted by metavariable $\symb$, drawn from yet another set disjoint with atoms and variables.
 Construction $\tbind{\atomexp} \term$ represents a \it{binder}\-informally, we think of it as binding the occurences of $\atomexp$ in $\term$,
 similarly to a lambda abstraction\-yet it \it{isn't} a binder,
-but a simple syntactical construction glueing together an atom with another term.
-The semantics of binding will apply only after we interpret this syntactical term in the model.
-Note that we do not restrict this construction to the form of $\tbind{\atomv} \term$,
-but allow permuted atoms to appear under binders.
+but a simple syntactical construction glueing together an atom with a term.
+The semantics of binding will apply only in the interpretation of this syntactical term in the model.
+Note that we do not restrict this construction to the form of $\tbind{\atomv} \term$, but allow permuted atoms to appear on the left side of the binders.
 
 \begin{figure}[htbp]
   \centering
@@ -485,46 +482,24 @@ but allow permuted atoms to appear under binders.
         \shapeof{\symb}                  & := & \symb \\
       \end{eqnarray*}
     \end{subfigure}
-    \\
-    \begin{subfigure}{0.42\textwidth}
-      \begin{eqnarray*}
-        \normal{\permid \apperm \atomv}  & := & \atomv \\
-        \normal{(\perm \++ \swap{\atomexp_1}{\atomexp_2}) \apperm \atomv}  & := & \normal{\perm \apperm \atomv'} \\
-        \text{where }\; \atomv' & := &  \normal {\permswap{\atomexp_1}{\atomexp_2}{\atomv}} \\
-        & & \\
-      \end{eqnarray*}
-    \end{subfigure}
-    \begin{subfigure}{0.47\textwidth}
-      \begin{eqnarray*}
-        \normal{\swap{\atomexp_1}{\atomexp_2} \apperm \atomv}  & := &
-          \begin{cases}
-            \atomv_2 & \text{if } \atomv = \atomv_1 \\
-            \atomv_1 & \text{if } \atomv = \atomv_2 \\
-            \atomv   & \text{otherwise}
-          \end{cases} \\
-        \text{where }\: \atomv_1 & := & \normal{\atomexp_1} \\
-        \text{  and }\: \atomv_2 & := & \normal{\atomexp_2} \\
-      \end{eqnarray*}
-    \end{subfigure}
   \\ \hline
   \end{tabularx}
-  \caption{Operations on atoms}
-  \label{fig:terms-shapes-interpretation}
+  \caption{Intepretation of applying a permutation and taking shape.}
+  \label{fig:permutation-shapes-interpretation}
 \end{figure}
 Additionaly, when dealing with atom expressions with identity permutation $\permid \;\atomv$
 we will skip the permutation and simply write $\atomv$,
 and sometimes call such atom expressions \it{pure}.
 Although permutations only affect atoms, they are also stored within variables,
-for when the variable is substituted for a term, we would use that permutation
-on the substituted term, utilizing the term permutation operation described above.
+for when the variable is substituted for a term, we would apply that permutation
+on the substituted term.
 We also define the term shapes and how to compute them, which
-we will use to resolve contraints about shape.
-Additionally, we define the operation of normalizing atom expressions,
-denoted as $\normal{\atomexp}$,
-which essentially "applies" the permutation on an atom.
-Technically, this operation is never explicitly utilized within our framework;
+we will use to resolve contraints.
+We do not define the operation of ``applying'' a swap permutation on
+an atom, as it is never explicitly utilized within our framework;
 permuted atoms are handled through the Solver rules instead.
-However, we include its definition to offer the reader insight into interpreting atom expressions.
+However, the notion od applying swaps is included in the
+model definition.
 
 The constraints are precise descriptions of syntactical properties,
 describing the relationship between their arguments\-atoms and terms.
@@ -583,7 +558,8 @@ and the binding construction has no explicit argument, denoted by $\stbind$.
 
 \begin{figure}[htbp]
   \centering
-  \framebox[\textwidth]{
+  \begin{tabularx}{\textwidth}{|C|}
+    \hline
     \begin{subfigure}{0.45\textwidth}
       \begin{eqnarray*}
         \termMdl{\perm \apperm \atomv}{\tmEnv} & := &
@@ -608,7 +584,29 @@ and the binding construction has no explicit argument, denoted by $\stbind$.
         \shapeof{\symb}                        & := & \symb \\
       \end{eqnarray*}
     \end{subfigure}
-  }
+    \\ \vspace{-8mm}
+    \begin{subfigure}{0.47\textwidth}
+      \begin{eqnarray*}
+        \permMdl{\permid}{\tmEnv}(\sematom) & := & \sematom \\
+        \permMdl{\perm \++ \swap{\atomexp_1}{\atomexp_2}}{\tmEnv}(\sematom)   & := & \permMdl{\perm}{\tmEnv} (\sematom') \\
+        \text{where }\; \sematom' & := &  \permMdl{\permswap{\atomexp_1}{\atomexp_2}{}}{\tmEnv}(\sematom)  \\
+        & & \\
+      \end{eqnarray*}
+    \end{subfigure}
+    \begin{subfigure}{0.43\textwidth}
+      \begin{eqnarray*}
+        \permMdl{\permswap{\atomexp_1}{\atomexp_2}{}}{\tmEnv}(\sematom)  & := &
+          \begin{cases}
+            \sematom_2 & \text{if } \sematom = \sematom_1 \\
+            \sematom_1 & \text{if } \sematom = \sematom_2 \\
+            \sematom   & \text{otherwise}
+          \end{cases} \\
+        \text{where }\: \sematom_1 & := &  \permMdl{\atomexp_1}{\tmEnv} \\
+        \text{  and }\: \sematom_2 & := &  \permMdl{\atomexp_2}{\tmEnv} \\
+      \end{eqnarray*}
+    \end{subfigure}
+    \\ \hline
+  \end{tabularx}
   \caption{Interpretation of terms and shapes in the model}
   \label{fig:terms-shapes-interpretation}
 \end{figure}
@@ -616,35 +614,37 @@ The term interpretation function, denoted $\termMdl{\cdot}{\tmEnv}$,
 maps syntactic terms to semantic terms,
 utilizing the standard shifting of De Bruijn indices (denoted by { }$\shiftIdx$).
 It is parametrized by function $\tmEnv$ that maps atoms and variables to
-semantic shapes.\\
+semantic atoms and terms.
 The shape interpretation function, denoted $\shapeof{\cdot}$,
 maps semantic terms to semantic shapes by erasing names.
 
 \begin{figure}[htbp]
   \centering
-  \framebox[\textwidth]{
-    \begin{tabular}{lclr} \\
-      $\tmEnv \vDash \term_1 \ceq \term_2 $  & \textrm{iff} &
-        $\termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv}$ \\
-      $\tmEnv \vDash \atomexp \cfresh \term$ & \textrm{iff} &
+    \begin{tabularx}{\textwidth}{|XlclX|}
+      \hline & & & & \\
+      & $\tmEnv \vDash \term_1 \ceq \term_2 $  & \textrm{iff} &
+        $\termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv}$ & \\
+      & $\tmEnv \vDash \atomexp \cfresh \term$ & \textrm{iff} &
         $\termMdl{\atomexp}{\tmEnv} \notin
-          \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv})$ \\
-      $\tmEnv \vDash \term_1 \csheq \term_2$ & \textrm{iff} &
-        $\shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\
-      $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
+          \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv})$ & \\
+      & $\tmEnv \vDash \term_1 \csheq \term_2$ & \textrm{iff} &
+        $\shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
+      & $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
         $\shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
-          \shapeof{\termMdl{\term_2}{\tmEnv}}$ \\ \\
-    \end{tabular}
-  }
+          \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
+      & & & & \\ \hline
+    \end{tabularx}
   \caption{Constraint interpretation in the model}
   \label{fig:constraint-interpretation}
 \end{figure}
-With above machinery, establish the relation $\tmEnv \vDash \constr$
+With above machinery, we establish the relation $\tmEnv \vDash \constr$
 that interprets the constraints in our model, using some mapping $\tmEnv$.
 As a consequence of using of De Bruijn indices, we can trivially compute the
 $\mathsf{FreeAtoms}(\semterm)$ set and use it to check freshness.
 Note that  it's possible for terms of form $\tbind{a}{X}$ and $\tbind{b}{Y}$
 to be equal in this model.
+
+\pagebreak
 
 We will use metavariable $\cEnv$ to represent finite sets of constraints,
 and write $\tmEnv \vDash \cEnv$ if for all $\constr \in \cEnv$,
@@ -1117,8 +1117,7 @@ how the Solver reduces assumptions.
   \centering
   \framebox[\textwidth]{
     \begin{tabularx}{\textwidth}{Cr}
-      \\
-      $
+      \\ $
       \inference{
         \termv = \pi^{-1} \term, \cEnv ; \icEnv \solverRule \sconstr
       }{
@@ -1129,31 +1128,24 @@ how the Solver reduces assumptions.
         \atomv \ceq \pi^{-1} \atomexp, \cEnv ; \icEnv \solverRule \sconstr
       }{
         \pi \atomv \ceq \atomexp, \cEnv ; \icEnv \solverRule \sconstr
-      } $
-      & \scbrk{Perm}{Reduce} \\ \\
-      $
+      } $ \\ \\ $
       \inference{
         \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
       }{
         \termv = \pi \termv, \cEnv ; \icEnv \solverRule \sconstr
-      } $
-      & \scbrk{Perm}{Idempotent} \\ \\
-      $
+      } \qquad
       \inference{
         \emptyenv \solverRule \text{ idempotent on } \termv
         &
         \cEnv ; \icEnv \solverRule \sconstr
       }{
         \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
-      } $
-      & \scbrk{Perm}{Shortcircuit} \\ \\
-      $
+      } $ \\ \\ $
       \inference{
         (\forall \atomv \in \pi.\;\atomv = \pi \atomv \;\vee\;\atomv \cfresh \termv), \cEnv ; \icEnv \solverRule \sconstr
       }{
         \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \solverRule \sconstr
-      } $
-      & \scbrk{Perm}{Explode} \\ \\
+      } $ \\ \\
     \end{tabularx}
   }
   \caption{Permutation-reducing rules}
@@ -1243,6 +1235,9 @@ that can can arrive at a contradiction or extract assumptions from $\icEnv$ back
 Otherwise assumption are simply moved to the environment of irreducible
 constraints via procedure that we describe in the next section.
 
+But before that, we present an example of the Solver at work.
+TODO: describe.
+
 
 % $0.\quad a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \emptyenv \solverRule c \cfresh E $
 % $0'.\quad b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E $ \\
@@ -1293,7 +1288,6 @@ constraints via procedure that we describe in the next section.
     ]
     ]
     ]
-    ]
     \edge node { };
     [.{$b \ceq b,\: b \cneq c,\: c \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
     \edge node { };
@@ -1319,6 +1313,7 @@ constraints via procedure that we describe in the next section.
     [.{$b \ceq a \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
     \edge node { };
     [.{$\{b \ceq a\} \cup \{a \cneq b,\: a \cneq c\} = \lightning$} ]
+    ]
     ]
   ]
 ]
@@ -1713,17 +1708,17 @@ $\formphi$ & $::=$ & $\bot
 \end{tabular}
 \\ \\
 Quantification over atoms, terms, and logical variables of (on formulas of kind $\kProp$):
-\newcommand\fForallForm[2]{\forall_{#2} #1 .}
-\newcommand\fExistsForm[2]{\exists_{#2} #1 .}
+\newcommand\fForallProp[2]{\forall_{#2} #1 .}
+\newcommand\fExistsProp[2]{\exists_{#2} #1 .}
 
 \begin{tabular}{rrlr}
 $\formphi$ & $::=$ & $\ldots
                \bnfor \fForallAtom{\atomv} \formphi
                \bnfor \fForallTerm{\termv} \formphi
-               \bnfor \fForallForm{\propv}{\kind} \formphi
+               \bnfor \fForallProp{\propv}{\kind} \formphi
                \bnfor \fExistsAtom{\atomv} \formphi
                \bnfor \fExistsTerm{\termv} \formphi
-               \bnfor \fExistsForm{\propv}{\kind} \formphi
+               \bnfor \fExistsProp{\propv}{\kind} \formphi
                \bnfor \ldots$
     & (formulas)
 \end{tabular}
@@ -2116,16 +2111,16 @@ where we are adding $\constr$ to the kinding environment.
     \propv \notin \fv[\cEnv;\Theta] &
     \jgmnt[\cEnv;\Theta]{\formphi}
   }{
-    \jgmnt[\cEnv;\Theta]{\fForallForm{\propv}{\kind}\formphi}
-  }\:\scbrk{Forall}{FormI}
+    \jgmnt[\cEnv;\Theta]{\fForallProp{\propv}{\kind}\formphi}
+  }\:\scbrk{Forall}{PropI}
   \qquad
   \inference{
     \jgmnt[\cEnv;\Theta]{\psi \ofkind \kind}
     \\
-    \jgmnt[\cEnv;\Theta]{\fForallForm{\propv}{\kind}\formphi}
+    \jgmnt[\cEnv;\Theta]{\fForallProp{\propv}{\kind}\formphi}
   }{
     \jgmnt[\cEnv;\Theta]{\formphi \{\propv \mapsto \psi\}}
-  }\:\scbrk{Forall}{FormE}
+  }\:\scbrk{Forall}{PropE}
   $ \\ \\ \hline
   \end{tabularx}
   \caption{Natural deduction for the universal quantifier}
@@ -2172,17 +2167,17 @@ cannot occur in any assumption.
     \\
     \jgmnt[\cEnv;\Theta]{\formphi \{\propv \mapsto \propv'\}}
     }{
-    \jgmnt[\cEnv;\Theta]{\fExistsForm{\propv}{\kind}\formphi}
-  }\:\scbrk{Exists}{FormI}
+    \jgmnt[\cEnv;\Theta]{\fExistsProp{\propv}{\kind}\formphi}
+  }\:\scbrk{Exists}{PropI}
   \qquad
   \inference{
-    \qquad \jgmnt[\cEnv_1;\Theta_1]{\fExistsForm{\propv}{\kind}\formphi} \hfill \\
+    \qquad \jgmnt[\cEnv_1;\Theta_1]{\fExistsProp{\propv}{\kind}\formphi} \hfill \\
     \qquad \jgmnt[\cEnv_2;\Theta_2,\formphi \{\propv \mapsto \propv'\}, \propv' \ofkind \kind']{\psi} \hfill \\
     \propv' \notin \fv[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2] \\
     \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\kind \subkind \kind'}
   }{
       \jgmnt[\cEnv_1 \cup \cEnv_2;\Theta_2 \cup \Theta_2]{\psi}
-  }\:\scbrk{Exists}{FormE}
+  }\:\scbrk{Exists}{PropE}
   $ \\ \\ \hline
   \end{tabularx}
   \caption{Natural deduction for the existential quantifier}
@@ -2565,15 +2560,17 @@ val constr_i : proof_env -> constr -> proof
 \end{lstlisting}
 
 As in HOL theorem provers\cite{HOL},
-we treat \tt{proof} like an abstract data type,
+we treat \tt{proof} like an abstract data type\footnote{Technically, we implemented \texttt{\scriptsize proof} as a \it{private type}.
+This approach  let's the users of the library pattern match and ``see''
+the values of that type, while assuring that values are constructed only by
+the functions provided by the library.},
 which can only be manipulated through the functions provided by the \tt{Proof}.
-These functions act as smart constructors,
-and each and every rule of natural deduction described in previous chapter
-is implemented by a different function in \tt{Proof}.
-These functions can be used the the user directly to construct forward proofs,
+acting as smart constructors that ensure that all values of type \tt{proof}
+are correct proof trees, and thus module \tt{Proof} serves as the logical core for writing proofs.
+Each and every rule of natural deduction described in previous chapter
+is implemented by a different function in \tt{Proof},
+that are used the the user to directly construct forward proofs,
 i.e. those in which more complex conclusions are built from simpler, already proven facts.
-By employing the smart constructors, we ensure that all values of type \tt{proof}
-are correct, and thus module \tt{Proof} ca serves as the logical core for writing proofs.
 
 Human provers, working within intuitionistic logic, generally prefer to conduct proofs not in this \it{bottom-up} fashion,
 but through simplifying the goal to be proven until we reach the trivial matters.
@@ -2588,20 +2585,15 @@ To facilitate user interaction with our framework, we provide a practical \it{pr
 While simple, it is also powerful and easy to use.
 The interface defined in modules \lstt{Prover}, \lstt{ProverInternals}, and \lstt{Tactics} provides multiple \it{tactics}
 (functions that manipulate \it{prover state}) and ways to combine them.
-\begin{figure}[htbp]
-\begin{mdframed}
+\\
 \begin{lstlisting}[mathescape,language=OCaml]
 type prover_state = S_Unfinished of (goal * proof_context)
                   | S_Finished of proof
 
 type tactic = prover_state $\rightarrow$ prover_state
 \end{lstlisting}
-\end{mdframed}
-\caption{Basic interface of the Prover.}
-\label{fig:basic-prover}
-\end{figure}
 
-\newpage
+\pagebreak
 
 The unfinished leaves in the incomplete proof trees are represented by
 the empty proof constructor, denoted $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind\formphi}$,
