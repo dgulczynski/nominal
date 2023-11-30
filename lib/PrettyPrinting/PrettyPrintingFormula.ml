@@ -71,8 +71,8 @@ let rec pretty_formula = function
   | F_ConstrAnd (c, f) -> pretty_and (bracketed $ pretty_constr c) (pretty_formula f)
   | F_ForallAtom _ as f -> pretty_formula_forall_atom [] f
   | F_ForallTerm _ as f -> pretty_formula_forall_term [] f
-  | F_ForallForm (FV_Bind (_, _, k), _) as f -> pretty_formula_forall_form [] k f
-  | F_ExistsForm (FV_Bind (_, _, k), _) as f -> pretty_formula_exists_form [] k f
+  | F_ForallProp (FV_Bind (_, _, k), _) as f -> pretty_formula_forall_form [] k f
+  | F_ExistsProp (FV_Bind (_, _, k), _) as f -> pretty_formula_exists_form [] k f
   | F_ExistsAtom _ as f -> pretty_formula_exists_atom [] f
   | F_ExistsTerm _ as f -> pretty_formula_exists_term [] f
   | (F_FunAtom _ | F_FunTerm _ | F_Fun _) as f -> pretty_formula_fun [] f
@@ -122,7 +122,7 @@ and pretty_formula_forall_term vars = function
   | f -> pretty_quantifier_term forall vars (pretty_formula f)
 
 and pretty_formula_forall_form vars kind = function
-  | F_ForallForm ((FV_Bind (_, _, k) as p), f) when k = kind -> pretty_formula_forall_form (p :: vars) kind f
+  | F_ForallProp ((FV_Bind (_, _, k) as p), f) when k = kind -> pretty_formula_forall_form (p :: vars) kind f
   | f -> pretty_quantifier_form kind forall vars (pretty_formula f)
 
 and pretty_formula_exists_atom atoms = function
@@ -134,7 +134,7 @@ and pretty_formula_exists_term vars = function
   | f -> pretty_quantifier_term exists vars (pretty_formula f)
 
 and pretty_formula_exists_form vars kind = function
-  | F_ExistsForm ((FV_Bind (_, _, k) as p), f) when k = kind -> pretty_formula_exists_form (p :: vars) kind f
+  | F_ExistsProp ((FV_Bind (_, _, k) as p), f) when k = kind -> pretty_formula_exists_form (p :: vars) kind f
   | f -> pretty_quantifier_form kind exists vars (pretty_formula f)
 
 and pretty_formula_fun xs = function

@@ -51,10 +51,10 @@ let rec free_names_of_formula = function
   | F_AppTerm (f, t) -> merge_names (free_names_of_term t) (free_names_of_formula f)
   | F_FunAtom (A_Bind (_, A name), f)
   | F_FunTerm (V_Bind (_, V name), f)
-  | F_ForallForm (FV_Bind (_, name, _), f)
+  | F_ForallProp (FV_Bind (_, name, _), f)
   | F_ForallAtom (A_Bind (_, A name), f)
   | F_ForallTerm (V_Bind (_, V name), f)
-  | F_ExistsForm (FV_Bind (_, name, _), f)
+  | F_ExistsProp (FV_Bind (_, name, _), f)
   | F_ExistsAtom (A_Bind (_, A name), f)
   | F_ExistsTerm (V_Bind (_, V name), f) -> List.filter (( <> ) name) (free_names_of_formula f)
   | F_Fix (FV_Bind (_, fix_name, _), V_Bind (_, V x_name), _, f) ->

@@ -30,7 +30,7 @@ let intro state =
   | F_ConstrImpl (constr, f2) -> unfinished (env |> add_constr constr, f2) context
   | F_ForallAtom (a_bind, f') -> unfinished (env |> add_atom a_bind, f') context
   | F_ForallTerm (x_bind, f') -> unfinished (env |> add_var x_bind, f') context
-  | F_ForallForm (p_bind, f') -> unfinished (env |> add_fvar p_bind, f') context
+  | F_ForallProp (p_bind, f') -> unfinished (env |> add_fvar p_bind, f') context
   | _ -> raise_in_env env $ not_a_constr_implication f
 
 let intros = flip (List.fold_left (flip intro_named))
@@ -114,7 +114,7 @@ let generalize name state =
     unfinished (env |> remove_identifier x, F_ForallTerm (V_Bind (x_name, V x), f)) ctx
   | Some (Bind (p_name, K_FVar (p, k))) ->
     let ctx = PC_SpecializeForm (to_judgement (env |> remove_identifier p, f), fvar p, context state) in
-    unfinished (env |> remove_identifier p, F_ForallForm (FV_Bind (p_name, p, k), f)) ctx
+    unfinished (env |> remove_identifier p, F_ForallProp (FV_Bind (p_name, p, k), f)) ctx
   | Some (Bind (_x, K_Func)) -> raise $ ProofException "Functional symbols cannot be generalized"
   | None -> raise $ unbound_variable name
 
@@ -129,10 +129,10 @@ let exists witness state =
     let t = parse_term_in_env (identifiers env) witness in
     let context = PC_ExistsTerm (to_judgement (env, f), t, context state) in
     unfinished (env, (x |=> t) f_x) context
-  | F_ExistsForm (FV_Bind (_, x, x_kind), f_x) as f ->
+  | F_ExistsProp (FV_Bind (_, x, x_kind), f_x) as f ->
     let g = parse_formula_in_env (identifiers env) witness in
     kind_check_throw env x_kind g ;
-    let context = PC_ExistsForm (to_judgement (env, f), g, context state) in
+    let context = PC_ExistsProp (to_judgement (env, f), g, context state) in
     unfinished (env, (FV x |==> g) f_x) context
   | f -> raise_in_env env $ not_an_exists f
 

@@ -174,7 +174,7 @@ let forall_form_i (FV_Bind (x_name, x, x_kind) as x_bind) p =
   match env |> find_bind x_name with
   | None ->
     kind_check_throw env x_kind $ fvar x ;
-    P_Intro ((env |> remove_identifier x, F_ForallForm (x_bind, f)), p)
+    P_Intro ((env |> remove_identifier x, F_ForallProp (x_bind, f)), p)
   | Some f -> raise_in_env env $ cannot_generalize x_name f
 
 let forall_form_e g p =
@@ -210,7 +210,7 @@ let exists_form_i (FV_Bind (_, x, x_kind) as x_bind) g f_x p =
   kind_check_throw env x_kind g ;
   equiv_check_throw env f f' ;
   let env = env |> remove_identifier x |> remove_assm f_x in
-  P_Intro ((env, F_ExistsForm (x_bind, f_x)), p)
+  P_Intro ((env, F_ExistsProp (x_bind, f_x)), p)
 
 let exist_e p_exists witness p =
   let env, f = judgement p in
@@ -223,7 +223,7 @@ let exist_e p_exists witness p =
       match Utils.bind_by_name witness (identifiers env) with
       | Some (Bind (_, K_Atom w)) -> remove_identifier w %> remove_assm ((a |-> pure (A w)) f_a)
       | _ -> failwith ("not an atom " ^ witness) )
-    | F_ExistsForm (FV_Bind (_, x, x_kind), f_x) -> (
+    | F_ExistsProp (FV_Bind (_, x, x_kind), f_x) -> (
       match Utils.bind_by_name witness (identifiers env) with
       | Some (Bind (_, K_FVar (w, w_kind))) ->
         if x_kind <=: w_kind <| kind_checker_env env then

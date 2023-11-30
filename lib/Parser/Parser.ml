@@ -114,12 +114,12 @@ let rec pformula_to_formula env = function
     | Some K_Func -> raise $ wrong_use "Functional symbol" x "as a logical variable"
     | Some (K_FVar (i, _)) -> fvar i
     | None -> raise $ unbound_variable x )
-  | PF_ForallForm (p, k, f) ->
+  | PF_ForallProp (p, k, f) ->
     let p_bind, env = fresh_fvar_binder p k env in
-    F_ForallForm (p_bind, pformula_to_formula env f)
-  | PF_ExistsForm (p, k, f) ->
+    F_ForallProp (p_bind, pformula_to_formula env f)
+  | PF_ExistsProp (p, k, f) ->
     let p_bind, env = fresh_fvar_binder p k env in
-    F_ExistsForm (p_bind, pformula_to_formula env f)
+    F_ExistsProp (p_bind, pformula_to_formula env f)
   | PF_Fun (p, k, f) ->
     let p_bind, env = fresh_fvar_binder p k env in
     F_Fun (p_bind, pformula_to_formula env f)

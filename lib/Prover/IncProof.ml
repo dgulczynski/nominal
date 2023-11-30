@@ -21,7 +21,7 @@ type incproof =
   | PI_SpecializeForm of judgement * formula * incproof
   | PI_ExistsAtom of judgement * permuted_atom * incproof
   | PI_ExistsTerm of judgement * term * incproof
-  | PI_ExistsForm of judgement * formula * incproof
+  | PI_ExistsProp of judgement * formula * incproof
   | PI_Witness of judgement * incproof * string * incproof
   | PI_And of judgement * incproof list
   | PI_AndElim of judgement * incproof
@@ -49,7 +49,7 @@ type proof_context =
   | PC_WitnessUsage of judgement * incproof * string * proof_context
   | PC_ExistsAtom of judgement * permuted_atom * proof_context
   | PC_ExistsTerm of judgement * term * proof_context
-  | PC_ExistsForm of judgement * formula * proof_context
+  | PC_ExistsProp of judgement * formula * proof_context
   | PC_And of judgement * incproof zipper * proof_context
   | PC_AndElim of judgement * proof_context
   | PC_Or of judgement * proof_context
@@ -74,7 +74,7 @@ let judgement' = function
   | PI_SpecializeForm (jgmt, _, _)
   | PI_ExistsAtom (jgmt, _, _)
   | PI_ExistsTerm (jgmt, _, _)
-  | PI_ExistsForm (jgmt, _, _)
+  | PI_ExistsProp (jgmt, _, _)
   | PI_Witness (jgmt, _, _, _)
   | PI_And (jgmt, _)
   | PI_AndElim (jgmt, _)
@@ -99,7 +99,7 @@ let rec hasHoles = function
   | PI_SpecializeForm (_, _, p)
   | PI_ExistsAtom (_, _, p)
   | PI_ExistsTerm (_, _, p)
-  | PI_ExistsForm (_, _, p)
+  | PI_ExistsProp (_, _, p)
   | PI_AndElim (_, p)
   | PI_ConstrAndElimL (_, p)
   | PI_ConstrAndElimR (_, p)
@@ -120,7 +120,7 @@ let rec ctxHasHoles = function
   | PC_SpecializeForm (_, _, ctx)
   | PC_ExistsAtom (_, _, ctx)
   | PC_ExistsTerm (_, _, ctx)
-  | PC_ExistsForm (_, _, ctx)
+  | PC_ExistsProp (_, _, ctx)
   | PC_AndElim (_, ctx)
   | PC_ConstrAndElimL (_, ctx)
   | PC_ConstrAndElimR (_, ctx)
@@ -149,7 +149,7 @@ let rec root_judgement = function
   | PC_SpecializeForm (_, _, ctx)
   | PC_ExistsAtom (_, _, ctx)
   | PC_ExistsTerm (_, _, ctx)
-  | PC_ExistsForm (_, _, ctx)
+  | PC_ExistsProp (_, _, ctx)
   | PC_AndElim (_, ctx)
   | PC_ConstrAndElimL (_, ctx)
   | PC_ConstrAndElimR (_, ctx)
@@ -193,7 +193,7 @@ let rec normalize incproof =
   | PI_SpecializeForm (jgmt, g, universal_proof) -> proof_specialize_form jgmt g universal_proof
   | PI_ExistsAtom (jgmt, witness, witness_proof) -> proof_exists_atom jgmt witness witness_proof
   | PI_ExistsTerm (jgmt, witness, witness_proof) -> proof_exists_term jgmt witness witness_proof
-  | PI_ExistsForm (jgmt, witness, witness_proof) -> proof_exists_form jgmt witness witness_proof
+  | PI_ExistsProp (jgmt, witness, witness_proof) -> proof_exists_form jgmt witness witness_proof
   | PI_Witness (jgmt, exists_proof, witness, usage_proof) -> proof_witness jgmt exists_proof witness usage_proof
   | PI_And (jgmt, proofs) -> proof_and jgmt proofs
   | PI_AndElim (jgmt, proof) -> proof_and_elim jgmt proof
@@ -223,7 +223,7 @@ and proof_intro jgmt conclusion_proof =
     | _, F_Impl (premise, _) -> proven $ imp_i premise proof
     | _, F_ForallAtom (a, _) -> proven $ forall_atom_i a proof
     | _, F_ForallTerm (x, _) -> proven $ forall_term_i x proof
-    | _, F_ForallForm (x, _) -> proven $ forall_form_i x proof
+    | _, F_ForallProp (x, _) -> proven $ forall_form_i x proof
     | _, F_ConstrImpl (c, _) -> proven $ constr_imp_i c proof
     | env, f -> raise $ not_an_implication f (ProofEnv.all_identifiers env) )
   | incproof -> PI_Intro (jgmt, incproof)
@@ -270,8 +270,8 @@ and proof_exists_term jgmt witness witness_proof =
 
 and proof_exists_form jgmt witness witness_proof =
   match (snd jgmt, normalize witness_proof) with
-  | F_ExistsForm (x, f), PI_Proven witness_proof -> proven $ exists_form_i x witness f witness_proof
-  | _, incproof -> PI_ExistsForm (jgmt, witness, incproof)
+  | F_ExistsProp (x, f), PI_Proven witness_proof -> proven $ exists_form_i x witness f witness_proof
+  | _, incproof -> PI_ExistsProp (jgmt, witness, incproof)
 
 and proof_witness jgmt exists_proof witness usage_proof =
   match (normalize exists_proof, normalize usage_proof) with
@@ -374,7 +374,7 @@ let rec find_hole_in_proof context = function
   | PI_Witness _ as incproof -> Either.Left (incproof_to_proof incproof, context)
   | PI_ExistsAtom (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsAtom (jgmt, witness, context)) incproof
   | PI_ExistsTerm (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsTerm (jgmt, witness, context)) incproof
-  | PI_ExistsForm (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsForm (jgmt, witness, context)) incproof
+  | PI_ExistsProp (jgmt, witness, incproof) -> find_hole_in_proof (PC_ExistsProp (jgmt, witness, context)) incproof
   | PI_Proven proof -> Either.Left (proof, context)
   | PI_Hole goal -> Either.Right (goal, context)
   | PI_AndElim (jgmt, proof) -> find_hole_in_proof (PC_AndElim (jgmt, context)) proof
@@ -416,7 +416,7 @@ let rec meld incproof = function
   | PC_SpecializeForm (jgmt, g, ctx) -> meld (proof_specialize_form jgmt g incproof) ctx
   | PC_ExistsAtom (jgmt, witness, ctx) -> meld (proof_exists_atom jgmt witness incproof) ctx
   | PC_ExistsTerm (jgmt, witness, ctx) -> meld (proof_exists_term jgmt witness incproof) ctx
-  | PC_ExistsForm (jgmt, witness, ctx) -> meld (proof_exists_form jgmt witness incproof) ctx
+  | PC_ExistsProp (jgmt, witness, ctx) -> meld (proof_exists_form jgmt witness incproof) ctx
   | PC_WitnessExists (jgmt, ctx, witness, usage_proof) -> meld (proof_witness jgmt incproof witness usage_proof) ctx
   | PC_WitnessUsage (jgmt, exists_proof, witness, ctx) -> meld (proof_witness jgmt exists_proof witness incproof) ctx
   | PC_And (jgmt, proofs, ctx) ->

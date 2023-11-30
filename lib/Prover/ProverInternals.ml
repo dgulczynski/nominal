@@ -53,7 +53,7 @@ and find_goal_in_ctx incproof = function
   | PC_SpecializeForm (jgmt, g, ctx) -> find_goal_in_ctx (proof_specialize_form jgmt g incproof) ctx
   | PC_ExistsAtom (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_atom jgmt witness incproof) ctx
   | PC_ExistsTerm (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_term jgmt witness incproof) ctx
-  | PC_ExistsForm (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_form jgmt witness incproof) ctx
+  | PC_ExistsProp (jgmt, witness, ctx) -> find_goal_in_ctx (proof_exists_form jgmt witness incproof) ctx
   | PC_WitnessExists (jgmt, ctx, witness, usage_proof) ->
     find_goal_in_ctx (proof_witness jgmt incproof witness usage_proof) ctx
   | PC_WitnessUsage (jgmt, exists_proof, witness, ctx) ->

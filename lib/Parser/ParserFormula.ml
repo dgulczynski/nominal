@@ -43,7 +43,7 @@ let f_forall formula =
   match k with
   | Some PQ_Atom -> formula >>| List.fold_right (fun x f -> PF_ForallAtom (x, f)) xs
   | Some PQ_Term -> formula >>| List.fold_right (fun x f -> PF_ForallTerm (x, f)) xs
-  | Some (PQ_Kind k) -> formula >>| List.fold_right (fun x f -> PF_ForallForm (x, k, f)) xs
+  | Some (PQ_Kind k) -> formula >>| List.fold_right (fun x f -> PF_ForallProp (x, k, f)) xs
   | None -> raise % quantifier_without_kind_annotation "Forall" $ unwords xs
 
 let f_exists formula =
@@ -51,7 +51,7 @@ let f_exists formula =
   match k with
   | Some PQ_Atom -> formula >>| List.fold_right (fun x f -> PF_ExistsAtom (x, f)) xs
   | Some PQ_Term -> formula >>| List.fold_right (fun x f -> PF_ExistsTerm (x, f)) xs
-  | Some (PQ_Kind k) -> formula >>| List.fold_right (fun x f -> PF_ExistsForm (x, k, f)) xs
+  | Some (PQ_Kind k) -> formula >>| List.fold_right (fun x f -> PF_ExistsProp (x, k, f)) xs
   | None -> raise % quantifier_without_kind_annotation "Exists" $ unwords xs
 
 let f_constrand formula =
