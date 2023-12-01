@@ -210,7 +210,7 @@ and formation of least and greatest fixpoint.
   & & (lambda terms)
   \\ & & \\ \hline
 \end{tabularx}
-  \caption{Terms of untyped lambda calculus}
+  \caption{Terms of untyped lambda calculus.}
   \label{fig:lambda-calculus}
 \end{figure}
 As an example of Nominal Logic at work, consider the abstract syntax tree of untyped lambda calculus,
@@ -235,7 +235,7 @@ given by the grammar above, where $a$ ranges over an infinite set of names\-or r
       \\ &  \\
       \hline
 \end{tabularx}
-  \caption{Swapping procedure}
+  \caption{Swapping procedure.}
   \label{fig:swap}
 \end{figure}
 The definition of swapping atoms $a$ and $b$ in some tree $t$,
@@ -274,7 +274,7 @@ but simply changes them all the same exact way.
       }
       $ \\ & & & \\ \hline
     \end{tabularx}
-  \caption{Freshness relation}
+  \caption{Freshness relation.}
   \label{fig:fresh}
 \end{figure}
 Relation of \it{freshness} of atom $a$ in tree $t$, written $a \cfresh t$,
@@ -307,7 +307,7 @@ and is an \it{equivariant} relation, which can be shown by simplest induction.
     }
     $ & {} \\ & & & & \\ \hline
     \end{tabularx}
-  \caption{Alpha-equivalence relation}
+  \caption{Alpha-equivalence relation.}
   \label{fig:fresh}
 \end{figure}
 With \it{swapping} and \it{freshness} already established,
@@ -436,7 +436,7 @@ we must start with the simplest elements: \it{names}, \it{terms}, and \it{constr
       & (shapes) \\
     \end{tabularx}
   }
-  \caption{Syntax of constraint sublogic}
+  \caption{Syntax of constraint sublogic.}
   \label{fig:terms-constraints-syntax}
 \end{figure}
 The names are drawn from an infinite set of \it{atoms} (represented by lowercase letters)
@@ -477,7 +477,7 @@ Note that we do not restrict this construction to the form of $\tbind{\atomv} \t
     \end{subfigure}
   \\ \hline
   \end{tabularx}
-  \caption{Intepretation of applying a permutation and taking shape.}
+  \caption{Description of applying a permutation and taking shape.}
   \label{fig:permutation-shapes-interpretation}
 \end{figure}
 Additionally, when dealing with atom expressions with the identity permutation $\permid \;\atomv$,
@@ -516,7 +516,7 @@ concepts such as \it{freshness}, \it{variable binding}, and \it{structural} orde
     $\csymb \term$ & term $\term$ is equal to some functional symbol. \\
     \hline
   \end{tabularx}
-  \caption{Informal semantics of constraints}
+  \caption{Informal semantics of constraints.}
   \label{fig:informal-constraints-semantics}
 \end{figure}
 
@@ -538,7 +538,7 @@ concepts such as \it{freshness}, \it{variable binding}, and \it{structural} orde
       & (semantic shapes)
     \end{tabularx}
   }
-  \caption{Semantic representation of terms and shapes}
+  \caption{Semantic representation of terms and shapes.}
   \label{fig:semantic-terms-shapes}
 \end{figure}
 To build the mathematical model of terms and constraints,
@@ -600,7 +600,7 @@ and the binding construction has no explicit argument, denoted by $\stbind$.
     \end{subfigure}
     \\ \hline
   \end{tabularx}
-  \caption{Interpretation of terms and shapes in the model}
+  \caption{Interpretation of terms and shapes in the model.}
   \label{fig:terms-shapes-interpretation}
 \end{figure}
 The term interpretation function, denoted $\termMdl{\cdot}{\tmEnv}$,
@@ -627,7 +627,7 @@ maps semantic terms to semantic shapes by erasing names.
           \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
       & & & & \\ \hline
     \end{tabularx}
-  \caption{Constraint interpretation in the model}
+  \caption{Interpretation of constraints in the model.}
   \label{fig:constraint-interpretation}
 \end{figure}
 With the above machinery, we establish the relation $\tmEnv \vDash \constr$
@@ -667,7 +667,7 @@ such that $\constr_1, \dots, \constr_n$ are satisfied, would also satisfy $\cons
       & (solver constraints)
     \end{tabularx}
   }
-  \caption{Solver's internal representation of constraints}
+  \caption{Solver's internal representation of constraints.}
   \label{fig:solver-internal-representation}
 \end{figure}
 For the sake of convenience and implementation efficiency, the Solver operates
@@ -692,7 +692,7 @@ Moreover, we define some syntactic sugar.
       \end{tabular}
       \\ & \\ \hline
       \end{tabularx}
-  \caption{Desugaring of constraints' syntax }
+  \caption{Desugaring of constraints' syntax.}
   \label{fig:symbol-rules}
 \end{figure}
 
@@ -724,7 +724,7 @@ irreducible components that are straightforward to handle.
     & Variable $\termv$ is some functional symbol.
     \\ \hline
   \end{tabularx}
-  \caption{Irreducible constraints}
+  \caption{Irreducible constraints.}
   \label{fig:irreducible-constraints}
 \end{figure}
 
@@ -756,7 +756,7 @@ new assumptions and the goal.
         \cEnv ; \icEnv \solverRule \sconstr
       } $ \\ & & \\ \hline
     \end{tabularx}
-  \caption{Base cases of the Solver's judgement}
+  \caption{Base cases of the Solver's rules.}
   \label{fig:solver-base}
 \end{figure}
 \\
@@ -766,7 +766,7 @@ a state in which all the assumptions and the goal itself are reduced to irreduci
 which is then as simple as checking if the goal is trivial or if it
 occurs on the left side of the turnstile.
 
-\section{Goal-Reducing Rules}
+\section{Goal-reducing rules}
 We begin the description of Solver rules with the ones that break down the goal,
 as we find them more straightforward to follow.
 As stated previously, the actual procedure would start by reducing the assumptions
@@ -810,7 +810,7 @@ rather than a description of some inductive relation.
       }
       $ \\ \\ \hline
       \end{tabularx}
-  \caption{Equality-reduction rules}
+  \caption{Equality rules.}
   \label{fig:equality-reduction-rules}
 \end{figure}
 Checking equality of terms is rather straightforward and follows from the
@@ -869,7 +869,7 @@ and the left body must be equal to the right body with its argument swapped for 
     \end{tabular} \\
     \hline
     \end{tabularx}
-  \caption{Permutation-reduction rules}
+  \caption{Permutation-reduction rules.}
   \label{fig:permutation-reduction-rules}
 \end{figure}
 To compare a \it{pure} atom $\atomv$ with a permuted one, we employ the decidability of atom equality
@@ -937,7 +937,7 @@ whether it is untouched by the permutation ($\atomv \ceq \perm \atomv$) or if it
       \end{tabular}
       \\ \\ \hline
       \end{tabularx}
-  \caption{Freshness-reduction rules}
+  \caption{Freshness rules.}
   \label{fig:freshness-rules}
 \end{figure}
 Freshness follows the term structure and breaks down into an assumption check or a trivial case.
@@ -1007,7 +1007,7 @@ then we continue the solver procedure with an additional assumption.
       }
       $ \\ & \\ \hline
       \end{tabularx}
-  \caption{Shape and subshape rules}
+  \caption{Shape and subshape rules.}
   \label{fig:shape-rules}
 \end{figure}
 Shape equality is naturally structural.
@@ -1039,13 +1039,13 @@ Otherwise, we use assumptions in environment $\icEnv$ to identify all shapes tha
       }
       $ \\ & & \\ \hline
       \end{tabularx}
-  \caption{Symbol rules}
+  \caption{Symbol rules.}
   \label{fig:symbol-rules}
 \end{figure}
 Symbol constraints are really simple to check; it can either be that the term is already
 a symbol, or it is a variable that we assumed to be some symbol.
 
-\section{Assumption-Reducing Rules}
+\section{Assumption-reducing rules}
 But before the Solver can reduce the goal-constraint, it must first reduce all assumptions in the $\cEnv$ environment.
 We will now present the rules for reducing the constraints on the left side of the turnstile,
 which are mostly analogous to the goal-reducing rules.
@@ -1089,7 +1089,7 @@ which are mostly analogous to the goal-reducing rules.
   \end{tabular}
   \\ \\\hline
   \end{tabularx}
-  \caption{Selected equality and freshness assumption-reducing rules}
+  \caption{Selected equality and freshness assumption-reducing rules.}
   \label{fig:abstraction}
 \end{figure}
 Again, the binding term constructor is of most interest to us:
@@ -1102,8 +1102,7 @@ In contrast to the goal-reducing rules where we would be satisfied with
 just one branch succeeding, here we expect both possibilities to be satisfiable.
 To deal with atom swapping and freshness within the presence of a permutation,
 we reduce the atom by considering the swap cases, analogous to how we did in the
-goal-reducing assumptions. On the last page of this section, we show a short example describing
-how the Solver reduces assumptions.
+goal-reducing assumptions.
 
 \begin{figure}[htbp]
   \centering
@@ -1140,7 +1139,7 @@ how the Solver reduces assumptions.
       } $ \\ \\
     \end{tabularx}
   }
-  \caption{Permutation-reducing rules}
+  \caption{Permutation-reducing rules.}
   \label{fig:perm-reduction}
 \end{figure}
 We first deal with the left-hand side's permutation by inverting it and moving it to the right-hand side.
@@ -1216,7 +1215,7 @@ Only if this initial check fails, will it proceed to examine the permutation ato
     \end{tabular}
     \\ \hline
     \end{tabularx}
-  \caption{Dealing with irreducible assumptions}
+  \caption{Rules dealing with irreducible assumptions.}
   \label{fig:assumption-equality-rules}
 \end{figure}
 In the end, all assumptions reach the irreducible components that are handled through
@@ -1227,8 +1226,8 @@ that can lead to a contradiction or extract assumptions from $\icEnv$ back into 
 Otherwise, assumptions are simply moved to the environment of irreducible
 constraints via a procedure that we describe in the next section.
 
-Before delving into further details, we present an example showcasing the Solver in action.
-We will see how it decides that the constraints $(a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E})$
+Before delving into further details, we present an example showcasing the Solver in action, as depicted in Figure \ref{fig:solver-example} on the next page.
+We will see how it decides that the assumed constraints $(a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E})$
 collectively imply the satisfaction of the goal constraint $(c \cfresh E)$
 by performing a procedure resembling an exhaustive search on atom comparison.
 
@@ -1328,7 +1327,7 @@ As all branches resolved properly, the whole judgment is proved.
 \end{tikzpicture}
 }
 \caption{Example of running Solver.}
-\label{fig:example}
+\label{fig:solver-example}
 \end{figure}
 
 \newpage
@@ -1359,7 +1358,7 @@ $(\NeqAtoms_{\icEnv}
     $\Symbols$ & Set of shape-representative variables that are known to be some unknown functional symbols. \\
   \hline
   \end{tabularx}
-  \caption{Description of environment $\icEnv$}
+  \caption{Description of environment $\icEnv$.}
   \label{fig:assumption-equality-rules}
 \end{figure}
 
@@ -1397,7 +1396,7 @@ $(\NeqAtoms_{\icEnv}
     \\
     \end{tabular}
   \end{mdframed}
-  \caption{Interpretation of shapes and assumptions in $\icEnv$}
+  \caption{Interpretation of shapes and assumptions in $\icEnv$.}
   \label{fig:interpretation}
 \end{figure}
 With such environment structure, we now establish a method to compute the shape-representative variable and
@@ -1431,7 +1430,7 @@ Verifying whether a constraint is included in $\icEnv$ can then be accomplished 
     $ \\ \\
     \end{tabularx}
   }
-  \caption{Occurs check rules}
+  \caption{Occurs check rules.}
   \label{fig:subkinding-rules}
 \end{figure}
 Additionally, we establish rules for a~special occurs check procedure,
@@ -1483,7 +1482,7 @@ $\{\atomv \cneq \atomv'\} \cup \icEnv :=$
 \end{lstlisting} \\
       \hline
     \end{tabular}
-  \caption{Adding constraints to $\icEnv$}
+  \caption{Adding constraints to $\icEnv$.}
   \label{fig:adding-constraints}
 \end{figure}
 % To maintain a high-level description, we delegate the detailed implementation aspects to auxiliary functions responsible for substituting shape-variables within the given field of $\icEnv$.
@@ -1516,7 +1515,7 @@ remove any traces of $\termv$ from within the $\icEnv$ environment.
 \end{lstlisting} \\
       \hline
     \end{tabular}
-  \caption{Substitution in $\icEnv$}
+  \caption{Substitution in $\icEnv$.}
   \label{fig:substitution}
 \end{figure}
 Finally, we demonstrate how the substitution of variables and atoms is accomplished,
@@ -1546,7 +1545,7 @@ $\cEnv$ to be broken up by the \it{Solver}.
 \end{lstlisting} \\
       \hline
     \end{tabular}
-  \caption{Auxiliary functions in $\icEnv$}
+  \caption{Auxiliary functions in $\icEnv$.}
   \label{fig:solverenv-auxiliary}
 \end{figure}
 
@@ -1610,7 +1609,7 @@ $\kind$ & $::=$ & $\kProp
     & (kinds) \\
 \end{tabularx}
   }
-  \caption{Kinds grammar}
+  \caption{Syntax of kinds.}
   \label{fig:kinds-grammar}
 \end{figure}
 
@@ -1628,7 +1627,7 @@ $\formphi \ofkind \kForallTerm{\termv} \kind$ & \makecell[l]{$\formphi$ is a fun
 $\formphi \ofkind \kGuard{\constr} \kind$ & \makecell[l]{$\formphi$ is a formula of kind $\kind$ as long as $\constr$ is satisfied.}
 \\ \hline
 \end{tabularx}
-  \caption{Kinds semantics}
+  \caption{Semantics of kinds.}
   \label{fig:kinds-semantics}
 \end{figure}
 Notice that as constraints occur in kinds, we cannot simply give functions
@@ -1685,7 +1684,7 @@ kinding of the fixpoint formulas, which we will explain in later sections.
         }\:\scbrk{Subkind}{Guard}$ \\ \\
         \hline
     \end{tabular}
-  \caption{Subkinding Rules}
+  \caption{Subkinding rules.}
   \label{fig:subkinding-rules}
 \end{figure}
 We define the \it{subkinding} relation to relax the kinding rules.
@@ -1820,7 +1819,7 @@ $\formphi$ & $::=$ & $\ldots
     \\ & \\
     \hline
 \end{tabularx}
-  \caption{Selected kinding rules}
+  \caption{Selected kinding rules.}
   \label{fig:kinding}
 \end{figure}
 Naturally, constraints can act as propositions, as we can reason about their
@@ -1865,7 +1864,7 @@ $\formphi$ & $::=$ & $\ldots
 \quad\:\scbrk{Fixpoint}{Unwrap}$
   \\ \\ \hline
 \end{tabularx}
-  \caption{Fixpoint kinding rule}
+  \caption{Fixpoint kinding rule.}
   \label{fig:fixpoint-kinding}
 \end{figure}
 By the kinding rules, the fixpoint can only be recursively applied to structurally smaller terms,
@@ -1904,7 +1903,7 @@ $ \\ \\
 $
   \\ \\ \hline
 \end{tabularx}
-  \caption{Peano arithmetic predicates expressed with fixpoint}
+  \caption{Peano arithmetic predicates expressed with fixpoint.}
   \label{fig:peano-fixpoint}
 \end{figure}
 Notice how the constraint $(N \ceq {S \tapp M})$ guards the recursive call to $Nat$,
@@ -1927,7 +1926,7 @@ See additional interesting examples of using fixpoints included in the case stud
 \newcommand{\jgmnt[2]}[\cEnv;\Theta]{\ensuremath{#1 \vdash #2}}
 \newcommand{\cjgmnt[2]}[\cEnv]{\ensuremath{#1 \vDash #2}}
 \newcommand{\fv[1]}[\cEnv;\Theta]{\ensuremath{\operatorname{FV}(#1)}}
-\section{Natural Deduction}
+\section{Natural deduction}
 \begin{figure}[htbp]
   \centering
   \begin{tabularx}{\textwidth}{|C|}
@@ -1977,7 +1976,7 @@ See additional interesting examples of using fixpoints included in the case stud
   }\scbrk{}{OrE}
   $ \\ \\ \hline
   \end{tabularx}
-  \caption{Selected rules of natural deduction}
+  \caption{Selected rules of natural deduction.}
   \label{fig:deduction}
 \end{figure}
 Finally, we come to the definition of proof-theoretic rules of natural deduction.
@@ -2063,7 +2062,7 @@ if we supply it with contradictory assumptions.
   }\scbrk{Constr}{AndE2}
   $ \\ \\ \hline
   \end{tabularx}
-  \caption{Natural deduction for guard formulas}
+  \caption{Natural deduction for guard formulas.}
   \label{fig:deduction}
 \end{figure}
 We present constraint guard rules alongside implication and conjunction
@@ -2128,7 +2127,7 @@ where we are adding $\constr$ to the kinding environment.
   }\:\scbrk{Forall}{PropE}
   $ \\ \\ \hline
   \end{tabularx}
-  \caption{Natural deduction for the universal quantifier}
+  \caption{Natural deduction for the universal quantifier.}
   \label{fig:quantifiers}
 \end{figure}
 Inference rules for quantifiers are rather straightforward, with the only novelty
@@ -2184,7 +2183,7 @@ We also restrict the quantified name to be \it{fresh} in the environment\-it can
   }\:\scbrk{Exists}{PropE}
   $ \\ \\ \hline
   \end{tabularx}
-  \caption{Natural deduction for the existential quantifier}
+  \caption{Natural deduction for the existential quantifier.}
   \label{fig:quantifiers}
 \end{figure}
 
@@ -2217,7 +2216,7 @@ The axioms of our logic are strictly related to constraints:
   \\
   \hline
   \end{tabularx}
-  \caption{Axioms}
+  \caption{Axioms.}
   \label{fig:axioms}
 \end{figure}
 
@@ -2254,7 +2253,7 @@ $ \\ \\ $
   }\:\scbrk{Induction}{}
   $ \\ \\ \hline
 \end{tabularx}
-\caption{Flexibility rules}
+\caption{Flexibility rules.}
 \label{fig:flexibility}
 \end{figure}
 To make the framework more flexible, we introduce a way for using equivalent formulas, as well as a way to substitute atoms for atomic expression and variables for terms, if the solver can prove their equality. Finally, we define induction over term structure,
@@ -2295,7 +2294,7 @@ when & \lstt{compute} $\Sigma\tt{ }n\tt{ }{\formphi_1} \;\leadsto^{*}\; (n_1, \f
 and & \lstt{compute} $\Sigma\tt{ }n_1\tt{ }{\formphi_2} \;\leadsto^{*}\; (n_2, \psi_2)$
 \\ & \\ \hline
 \end{tabularx}
-  \caption{Computing weak head normal form}
+  \caption{Computing weak head normal form.}
   \label{fig:compute}
 \end{figure}
 Equivalence checking procedure starts by computing weak head normal form (WHNF).
@@ -2350,7 +2349,7 @@ $ \\ \\ $
   }
 $ \\ \\ \hline
 \end{tabularx}
-  \caption{Selected equivalence rules}
+  \caption{Selected equivalence rules.}
   \label{fig:compute}
 \end{figure}
 If we have a WHNF computed or if we've reached the limit of computation (when $ n \leqslant 0$),
@@ -2629,7 +2628,7 @@ assume that proper handling of multiple goals is achieved automatically.
   & \text{when} & $\cjgmnt[\Gamma]{\constr}$\\
   & & \\ \hline
 \end{tabularx}
-\caption{Basic tactics}
+\caption{Basic tactics.}
 \label{fig:tactics}
 \end{figure}
 Some typical tactics include the introduction of names and assumptions into the environment,
@@ -2659,7 +2658,7 @@ will also be included in Solver assumptions.
   & \text{ and} & $\Sigma' = \{\tt{H1} \ofkind \psi_1, \tt{H2} \ofkind \psi_2 \} \cup \Sigma''$ \\
   & & \\ \hline
   \end{tabularx}
-\caption{More ways to use \lstt{apply} tactic}
+\caption{More ways to use \lstt{apply} tactic.}
 \label{fig:more-tactics}
 \end{figure}
 External theorems can be applied via the tactic \lstt{apply\_thm} similarly to how an assumption is applied.
@@ -2680,7 +2679,7 @@ assumptions via the \lstt{apply\_in\_assm} tactic.
   & \text{where} & $\mathcal{T}$ is a proof of $\psi$ \\
   & & \\ \hline
   \end{tabularx}
-\caption{Adding assumptions}
+\caption{Tactics that add assumptions.}
 \label{fig:more-tactics}
 \end{figure}
 One can also introduce assumptions to the environment by \lstt{add\_assm},
@@ -2706,7 +2705,7 @@ analogously to \lstt{apply\_thm\_spec}.
   $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\tt{l:}\:\formphi_1) \vee (\tt{r:}\:\formphi_2)}}$ & $\leadsto$ & $\jgmnt[\Gamma; \Theta;\Sigma]{\hole\ofkind{\formphi_2}}$
   \\ & & \\\hline
   \end{tabularx}
-\caption{Tactis that disect the goal}
+\caption{Tactics that dissect the goal.}
   \label{fig:tactics}
 \end{figure}
 To progress the conjunction proofs, we provide tactics \lstt{destr\_goal} and.
@@ -2732,7 +2731,7 @@ For convenience and clarity, the \lstt{case} tactic allows us to focus on the ch
   & \text{when} & \tt{x} $\notin \fv[\Gamma; \Theta; \Sigma]$
   \\ & & \\\hline
   \end{tabularx}
-\caption{Tactics that disect assumptions}
+\caption{Tactics that dissect the assumptions.}
   \label{fig:tactics}
 \end{figure}
 Naturally, we can also case-analyze assumptions by \lstt{destr\_assm}.
@@ -2777,7 +2776,7 @@ actually any string can be given, as a unique internal identifier is generated.
    & \text{and} & $\jgmnt[\Gamma; \Theta; \Sigma]{\hole\ofkind{(\csymb {\tt{e}})\fImp{\formphi}}}$ \\
    & & \\ \hline
   \end{tabularx}
-\caption{More tactics and axioms}
+\caption{More tactics and axioms.}
   \label{fig:tactics}
 \end{figure}
 Finally, we can alter goals through generalization, by finding a witness, by
