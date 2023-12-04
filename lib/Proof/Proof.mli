@@ -170,9 +170,9 @@ val or_i : (string * formula) list -> proof -> proof
 (*                        Γ; Θ |- g                         *)
 val or_e : proof -> proof list -> proof
 
-(*  Γ; Θ, (∀ y:term. [y < x] => f(y)) |- f(x)  *)
-(* ------------------------------------------- *)
-(*          Γ; Θ |-  ∀ x :term. f(x)          *)
+(*  Γ; Θ, (∀ y :term. [y < x] => f(y)) |- f(x)  *)
+(* -------------------------------------------- *)
+(*            Γ; Θ |- ∀ x :term. f(x)           *)
 val induction_e : var_binder -> var_binder -> proof -> proof
 
 (*  Γ; Θ |- g    Γ; Θ |- f === g  *)

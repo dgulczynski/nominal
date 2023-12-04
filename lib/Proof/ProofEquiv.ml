@@ -56,7 +56,7 @@ let rec computeWHNF env n f =
     | F_Fix _ -> (env, n, f)
     | F_Var x -> (
       match lookup_formula env x with
-      | Some f -> computeWHNF env (n - 1) <| f
+      | Some f -> computeWHNF env (n - 1) f
       | None -> (env, n, f) )
     | F_AppTerm (f, t) -> (
       match computeWHNF env n f with
@@ -202,10 +202,10 @@ and equiv_syntactic env1 env2 n1 n2 f1 f2 =
   | F_AppAtom (f1, a1), F_AppAtom (f2, a2) -> a1 = a2 && f1 === f2
   | F_AppTerm (f1, t1), F_AppTerm (f2, t2) -> t1 = t2 && f1 === f2
   | F_AppAtom _, _ | F_AppTerm _, _ -> false
-  | ( F_Fix (FV_Bind (_, fix1, fix1_k), V_Bind (_, x1), x1_k, f1)
-    , F_Fix (FV_Bind (_, fix2, fix2_k), V_Bind (_, x2), x2_k, f2) ) ->
+  | ( F_Fix (FV_Bind (_, fix1, fix1_k), V_Bind (_, x1), f1_k, f1)
+    , F_Fix (FV_Bind (_, fix2, fix2_k), V_Bind (_, x2), f2_k, f2) ) ->
     (fix1_k <=: fix2_k) KindCheckerEnv.empty
-    && (x1_k <=: x2_k) KindCheckerEnv.empty
+    && (f1_k <=: f2_k) KindCheckerEnv.empty
     &&
     let x = fresh_var () and fix = fresh_fvar () in
     let sub1 = (x1 |=> var x) % (FV fix1 |==> F_Var fix) in

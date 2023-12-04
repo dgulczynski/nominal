@@ -1,0 +1,202 @@
+@Article{nominal-logic,
+ title={Nominal logic, a first order theory of names and binding},
+ journal={Information and Computation},
+ volume={186},
+ number={2},
+ pages={165-193},
+ year={2003},
+ note={Theoretical Aspects of Computer Software (TACS 2001)},
+ doi={10.1016/S0890-5401(03)00138-X},
+ author={{Andrew M. Pitts}},
+ keywords={Abstract syntax, Variable binding, Permutation, Fresh names},
+ abstract={This paper formalises within first-order logic some common practices in computer science to do with representing and reasoning about syntactical structures involving lexically scoped binding constructs. It introduces Nominal Logic, a version of first-order many-sorted logic with equality containing primitives for renaming via name-swapping, for freshness of names, and for name-binding. Its axioms express properties of these constructs satisfied by the FM-sets model of syntax involving binding, which was recently introduced by the author and M.J. Gabbay and makes use of the Fraenkel-Mostowski permutation model of set theory. Nominal Logic serves as a vehicle for making two general points. First, name-swapping has much nicer logical properties than more general, non-bijective forms of renaming while at the same time providing a sufficient foundation for a theory of structural induction/recursion for syntax modulo \alpha-equivalence. Secondly, it is useful for the practice of operational semantics to make explicit the equivariance property of assertions about syntax --- namely that their validity is invariant under name-swapping.}
+}
+@article{abstract-syntax-variable-binding,
+  title={A New Approach to Abstract Syntax with Variable Binding},
+  author={Murdoch J. Gabbay and Andrew M. Pitts},
+  journal={Formal Aspects of Computing},
+  year={2002},
+  publisher={Springer-Verlag},
+  volume={13},
+  pages={341-363},
+  number={3},
+  doi={10.1007/S001650200016},
+}
+@article{deBruijn,
+ title={Lambda calculus notation with nameless dummies, a tool for automatic formula manipulation, with application to the Church-Rosser theorem},
+ journal={Indagationes Mathematicae (Proceedings)},
+ volume={75},
+ number={5},
+ pages={381-392},
+ year={1972},
+ doi={10.1016/1385-7258(72)90034-0},
+ author={N.G {de Bruijn}},
+ abstract={In ordinary lambda calculus the occurrences of a bound variable are made recognizable by the use of one and the same (otherwise irrelevant) name at all occurrences. This convention is known to cause considerable trouble in cases of substitution. In the present paper a different notational system is developed, where occurrences of variables are indicated by integers giving the “distance” to the binding λ instead of a name attached to that λ. The system is claimed to be efficient for automatic formula manipulation as well as for metalingual discussion. As an example the most essential part of a proof of the Church-Rosser theorem is presented in this namefree calculus.}
+}
+@Inbook{HOL,
+author={Gordon, Michael J. C.},
+editor={Birtwistle, Graham
+and Subrahmanyam, P. A.},
+title={HOL: A Proof Generating System for Higher-Order Logic},
+bookTitle={VLSI Specification, Verification and Synthesis},
+year={1988},
+publisher={Springer US},
+address={Boston, MA},
+pages={73--128},
+abstract={HOL is a version of Robin Milner's LCF theorem proving system for higher-order logic. It is currently being used to investigate (1) how various levels of hardware behaviour can be rigorously modelled and (2) how the resulting behavioral representations can be the basis for verification by mechanized formal proof. This paper starts with a tutorial introduction to the meta-language ML. The version of higher-order logic implemented in the HOL system is then described. This is followed by an introduction to goal-directed proof with tactics and tacticals. Finally, there is a little example of the system in action which illustrates how HOL can be used for hardware verification.},
+doi={10.1007/978-1-4613-2007-4_3},
+}
+@InProceedings{autosubst,
+doi={10.1007/978-3-319-22102-1_24},
+author={Sch{\"a}fer, Steven
+and Tebbi, Tobias
+and Smolka, Gert},
+editor={Urban, Christian
+and Zhang, Xingyuan},
+title={Autosubst: Reasoning with de Bruijn Terms and Parallel Substitutions},
+booktitle={Interactive Theorem Proving},
+year={2015},
+publisher={Springer International Publishing},
+address={Cham},
+pages={359--374},
+abstract={Reasoning about syntax with binders plays an essential role in the formalization of the metatheory of programming languages. While the intricacies of binders can be ignored in paper proofs, formalizations involving binders tend to be heavyweight. We present a discipline for syntax with binders based on de Bruijn terms and parallel substitutions, with a decision procedure covering all assumption-free equational substitution lemmas. The approach is implemented in the Coq library Autosubst, which additionally derives substitution operations and proofs of substitution lemmas for custom term types. We demonstrate the effectiveness of the approach with several case studies, including part A of the POPLmark challenge.},
+}
+@article{sigma-calculus,
+author={Abadi, Martín and Cardelli, Luca and Curien, Pierre-Louis and Levy, Jean-Jacques},
+year={1991},
+pages={375 - 416},
+title={Explicit Substitutions},
+volume={1},
+journal={Journal of Functional Programming},
+doi={10.1017/S0956796800000186}
+}
+@article{locally-nameless,
+author={Charguéraud, Arthur},
+year={2012},
+pages={1-46},
+title={The Locally Nameless Representation},
+volume={49},
+journal={Journal of Automated Reasoning - JAR},
+doi={10.1007/s10817-011-9225-2}
+}
+@inproceedings{10.1145/1411204.1411226,
+author = {Chlipala, Adam},
+title = {Parametric Higher-Order Abstract Syntax for Mechanized Semantics},
+year = {2008},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+doi = {10.1145/1411204.1411226},
+abstract = {We present parametric higher-order abstract syntax (PHOAS), a new approach to formalizing the syntax of programming languages in computer proof assistants based on type theory. Like higher-order abstract syntax (HOAS), PHOAS uses the meta language's binding constructs to represent the object language's binding constructs. Unlike HOAS, PHOAS types are definable in general-purpose type theories that support traditional functional programming, like Coq's Calculus of Inductive Constructions. We walk through how Coq can be used to develop certified, executable program transformations over several statically-typed functional programming languages formalized with PHOAS; that is, each transformation has a machine-checked proof of type preservation and semantic preservation. Our examples include CPS translation and closure conversion for simply-typed lambda calculus, CPS translation for System F, and translation from a language with ML-style pattern matching to a simpler language with no variable-arity binding constructs. By avoiding the syntactic hassle associated with first-order representation techniques, we achieve a very high degree of proof automation.},
+booktitle = {Proceedings of the 13th ACM SIGPLAN International Conference on Functional Programming},
+pages = {143–156},
+numpages = {14},
+keywords = {dependent types, compiler verification, type-theoretic semantics, interactive proof assistants},
+location = {Victoria, BC, Canada},
+series = {ICFP '08}
+}
+
+@article{phoas,
+author = {Chlipala, Adam},
+title = {Parametric Higher-Order Abstract Syntax for Mechanized Semantics},
+year = {2008},
+issue_date = {September 2008},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {43},
+number = {9},
+doi = {10.1145/1411203.1411226},
+abstract = {We present parametric higher-order abstract syntax (PHOAS), a new approach to formalizing the syntax of programming languages in computer proof assistants based on type theory. Like higher-order abstract syntax (HOAS), PHOAS uses the meta language's binding constructs to represent the object language's binding constructs. Unlike HOAS, PHOAS types are definable in general-purpose type theories that support traditional functional programming, like Coq's Calculus of Inductive Constructions. We walk through how Coq can be used to develop certified, executable program transformations over several statically-typed functional programming languages formalized with PHOAS; that is, each transformation has a machine-checked proof of type preservation and semantic preservation. Our examples include CPS translation and closure conversion for simply-typed lambda calculus, CPS translation for System F, and translation from a language with ML-style pattern matching to a simpler language with no variable-arity binding constructs. By avoiding the syntactic hassle associated with first-order representation techniques, we achieve a very high degree of proof automation.},
+journal = {SIGPLAN Not.},
+month = {sep},
+pages = {143–156},
+numpages = {14},
+keywords = {interactive proof assistants, dependent types, compiler verification, type-theoretic semantics}
+}
+@inproceedings{hoas,
+author = {Pfenning, Frank and Elliott, Conal},
+year = {1988},
+month = {07},
+pages = {199-208},
+title = {Higher-Order Abstract Syntax},
+volume = {23},
+journal = {Sigplan Notices - SIGPLAN},
+doi = {10.1145/960116.54010}
+}
+@inproceedings{Pfenning99cade,
+  author = {Frank Pfenning and Carsten Sch{\"u}rmann},
+  title = {System Description: Twelf --- A Meta-Logical Framework for
+		  Deductive Systems},
+  editor = {H. Ganzinger},
+  pages = {202--206},
+  booktitle = {Proceedings of the 16th International Conference on
+		  Automated Deduction (CADE-16)},
+  year = 1999,
+  publisher = {Springer-Verlag LNAI 1632},
+  address = {Trento, Italy},
+  keywords = {LF, Elf},
+  urlpdf = {http://www.cs.cmu.edu/~fp/papers/cade99.pdf}
+}
+@InProceedings{twelf,
+author={Pfenning, Frank
+and Sch{\"u}rmann, Carsten},
+title={System Description: Twelf --- A Meta-Logical Framework for Deductive Systems},
+booktitle={Automated Deduction --- CADE-16},
+year={1999},
+publisher={Springer Berlin Heidelberg},
+address={Berlin, Heidelberg},
+pages={202--206},
+abstract={Twelf is a meta-logical framework for the specification, implementation, and meta-theory of deductive systems from the theory of programming languages and logics. It relies on the LF type theory and the judgments-as-types methodology for specification [HHP93], a constraint logic programming interpreter for implementation [Pfe91], and the meta-logic M2 for reasoning about object languages encoded in LF [SP98]. It is a significant extension and complete reimplementation of the Elf system [Pfe94].},
+doi={10.1007/3-540-48660-7_14}
+}
+@inproceedings{twelf-ml,
+author = {Lee, Daniel and Crary, Karl and Harper, Robert},
+year = {2007},
+month = {01},
+pages = {173-184},
+title = {Towards a mechanized metatheory of standard ML},
+volume = {42},
+isbn = {1595935754},
+journal = {ACM SIGPLAN Notices},
+doi = {10.1145/1190216.1190245}
+}
+@InProceedings{beluga,
+author={Pientka, Brigitte},
+editor={Blume, Matthias
+and Kobayashi, Naoki
+and Vidal, Germ{\'a}n},
+title={Beluga: Programming with Dependent Types, Contextual Data, and Contexts},
+booktitle={Functional and Logic Programming},
+year={2010},
+publisher={Springer Berlin Heidelberg},
+address={Berlin, Heidelberg},
+pages={1--12},
+abstract={The logical framework LF provides an elegant foundation for specifying formal systems and proofs and it is used successfully in a wide range of applications such as certifying code and mechanizing meta-theory of programming languages. However, incorporating LF technology into functional programming to allow programmers to specify and reason about formal guarantees of their programs from within the programming language itself has been a major challenge.},
+doi={10.1007/978-3-642-12251-4_1}
+}
+@article{beluga-relations,
+   title={A Case Study on Logical Relations using Contextual Types},
+   volume={185},
+   doi={10.4204/eptcs.185.3},
+   journal={Electronic Proceedings in Theoretical Computer Science},
+   publisher={Open Publishing Association},
+   author={Cave, Andrew and Pientka, Brigitte},
+   year={2015},
+   month=jul, pages={33--45} }
+
+@article{LF,
+author = {Harper, Robert and Honsell, Furio and Plotkin, Gordon},
+title = {A Framework for Defining Logics},
+year = {1993},
+issue_date = {Jan. 1993},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {40},
+number = {1},
+doi = {10.1145/138027.138060},
+abstract = {The Edinburgh Logical Framework (LF) provides a means to define (or present) logics. It is based on a general treatment of syntax, rules, and proofs by means of a typed λ-calculus with dependent types. Syntax is treated in a style similar to, but more general than, Martin-Lo¨f's system of arities. The treatment of rules and proofs focuses on his notion of a judgment. Logics are represented in LF via a new principle, the judgments as types principle, whereby each judgment is identified with the type of its proofs. This allows for a smooth treatment of discharge and variable occurence conditions and leads to a uniform treatment of rules and proofs whereby rules are viewed as proofs of higher-order judgments and proof checking is reduced to type checking. The practical benefit of our treatment of formal systems is that logic-independent tools, such as proof editors and proof checkers, can be constructed.},
+journal = {J. ACM},
+month = {jan},
+pages = {143--184},
+numpages = {42},
+keywords = {typed lambda calculus, formal systems, interactive theorem proving, proof checking}
+}

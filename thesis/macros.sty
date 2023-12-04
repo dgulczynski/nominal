@@ -1,0 +1,121 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Metavariables
+
+\def\atomv{a} % Atom variables
+\def\termv{X} % Term variables
+\def\propv{P} % Propositional variables
+\def\symb{f}  % Symbols
+\def\shape{s} % Shapes
+
+
+\def\perm{\pi}  % Permutations
+\def\atomexp{\alpha} % Atom expressions
+\def\term{t}    % Terms
+\def\constr{c}  % Constraints
+
+\def\sconstr{\mathcal{C}} % Solver constraints
+\def\sematom{A} % Semantic atoms
+\def\semterm{T} % Semantic terms
+\def\semshape{S} % Semantic shapes
+
+\def\cEnv{\Gamma}  % Set of constraints
+\def\icEnv{\Delta} % Set of irreducible constraints
+\def\kEnv{\Sigma}  % Kinding environment
+\def\emptyenv{\varnothing}
+
+\def\kind{\kappa} % Kinds
+
+\def\formphi{\varphi} % formulas
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand\doubleplus{+\kern-1.3ex+\kern0.8ex}
+\newcommand\mdoubleplus{\ensuremath{\mathbin{+\mkern-10mu+}}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Syntax
+\def\deff{::=}
+\def\bnfor{\ |\ }
+
+% Permutations
+\def\permid{\mathsf{id}}
+\newcommand\swap[2]{(#1\ #2)}
+\newcommand\permswap[3]{\swap{#1}{#2} #3}
+\def\apperm{\;}
+\def\++{\mdoubleplus}
+\newcommand\normal[1]{\downarrow #1}
+% Terms
+\newcommand\tbind[1]{#1.}
+\def\tapp{\;}
+
+% Constraints
+\def\ceq{=}
+\def\cneq{\neq}
+\def\cfresh{\,\#\,}
+\def\csheq{\sim}
+\def\cshlt{\prec}
+\def\csymb{\text{symbol }}
+
+% Semantic terms
+\def\stbind{\$}
+\def\stapp{@}
+
+% Shapes
+\def\shatom{\_}
+\def\shbind{\tbind{\shatom}}
+\def\shapp{@}
+
+% Kinds
+\def\kProp{\star}
+\def\karrow{\to}
+\newcommand\kForallAtom[1]{\forall_A #1 .\:}
+\newcommand\kForallTerm[1]{\forall_T #1 .\:}
+\newcommand\kGuard[1]{[#1]}
+
+% Formulas
+\newcommand*{\ScaledImplies}{\mathrel{\raisebox{0.2ex}{\scalebox{0.75}{\ensuremath{\Longrightarrow}}}}}
+\def\fImp{\ScaledImplies}
+\newcommand\fConstr[1]{#1}
+\newcommand\fCAnd[1]{[#1]\wedge}
+\newcommand\fCImp[1]{[#1]\fImp}
+\newcommand\fForallAtom[1]{\forall_A #1 .\:}
+\newcommand\fForallTerm[1]{\forall_T #1 .\:}
+\newcommand\fExistsAtom[1]{\exists_A #1 .\:}
+\newcommand\fExistsTerm[1]{\exists_T #1 .\:}
+\newcommand\fLamAtom[1]{\lambda_A #1 .\:}
+\newcommand\fLamTerm[1]{\lambda_T #1 .\:}
+\newcommand\fLamForm[2]{\lambda #1 :: #2.\:}
+\newcommand\fAppAtom[1]{\;#1}
+\newcommand\fAppTerm[1]{\;#1}
+\def\fApp{\;}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Semantic functions
+
+% Term and atom environment
+\def\tmEnv{\rho}
+
+% Translation of permutations and terms
+\newcommand\permMdl[2]{\llbracket #1 \rrbracket_{#2}}
+\newcommand\termMdl[2]{\llbracket #1 \rrbracket_{#2}}
+
+\newcommand\shapeof[1]{|#1|}
+
+% Domains
+\def\atomDom{\mathcal{A}}
+\def\termDom{\mathcal{T}}
+\newcommand\kindDom[1]{\mathcal{D}_{#1}}
+
+\def\PropAlg{\mathcal{H}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Relations
+
+\def\subkind{<:}
+\def\ofkind{::}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Other
+
+\newcommand\subst[2]{\{#1\mapsto#2\}}
+
+% Shifting De Bruijn indices
+\def\shiftIdx{\kern-3pt \uparrow}

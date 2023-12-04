@@ -510,7 +510,7 @@ let swap_lambda_typing'_thm =
   $ unwords
       [ "forall e env t :term. "
       ; "forall a b :atom. forall t' :term. "
-      ; " [b # a e] => "
+      ; " [b # e] => "
       ; " (Typing {e} {cons a t' env} t) => "
       ; " (Typing {[a b]e} {cons b t' env} t)" ]
 
