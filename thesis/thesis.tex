@@ -911,13 +911,14 @@ whether it is untouched by the permutation ($\atomv \ceq \perm \atomv$) or if it
       }
       $ & $
       \inference{
+        \csymb \termv \in \icEnv
       }{
-        \emptyenv ; \icEnv \solverRule \atomv \cfresh \symb
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \termv
       }
       $
       \end{tabular}
       \\ \\
-      \begin{tabular}{cc}
+      \begin{tabular}{ccc}
       $
       \inference{
         \atomv \cneq \atomexp ; \icEnv \solverRule \atomv \cfresh \term
@@ -932,6 +933,11 @@ whether it is untouched by the permutation ($\atomv \ceq \perm \atomv$) or if it
         \emptyenv ; \icEnv \solverRule \atomv \cfresh \term_2
       }{
         \emptyenv ; \icEnv \solverRule \atomv \cfresh \term_1 \term_2
+      }
+      $ & $
+      \inference{
+      }{
+        \emptyenv ; \icEnv \solverRule \atomv \cfresh \symb
       }
       $
       \end{tabular}
@@ -1126,7 +1132,7 @@ goal-reducing assumptions.
         \termv = \pi \termv, \cEnv ; \icEnv \solverRule \sconstr
       } \qquad
       \inference{
-        \emptyenv \solverRule \text{ idempotent on } \termv
+        \emptyenv ; \icEnv \solverRule \text{ idempotent on } \termv
         &
         \cEnv ; \icEnv \solverRule \sconstr
       }{
@@ -1226,7 +1232,7 @@ that can lead to a contradiction or extract assumptions from $\icEnv$ back into 
 Otherwise, assumptions are simply moved to the environment of irreducible
 constraints via a procedure that we describe in the next section.
 
-Before delving into further details, we present an example showcasing the Solver in action, as depicted in Figure \ref{fig:solver-example} on the next page.
+Before delving into further details, we present an example showcasing the Solver in action, as depicted in figure \ref{fig:solver-example} on the next page.
 We will see how it decides that the assumed constraints $(a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E})$
 collectively imply the satisfaction of the goal constraint $(c \cfresh E)$
 by performing a procedure resembling an exhaustive search on atom comparison.
@@ -3570,71 +3576,71 @@ contribute to the field of formal methods and reasoning based on Nominal Logic.
 Goal-reducing equality rules:
 $$\inference{
 }{
-  \cEnv ; \icEnv \vDash \atomv = \atomv
+  \emptyenv ; \icEnv \vDash \atomv = \atomv
 }
 \qquad
 \inference{
 }{
-  \cEnv ; \icEnv \vDash \termv = \termv
+  \emptyenv ; \icEnv \vDash \termv = \termv
 }
 \qquad
 \inference{
 }{
-  \cEnv ; \icEnv \vDash \symb = \symb
+  \emptyenv ; \icEnv \vDash \symb = \symb
 }
 $$
 $$
 \inference{
-  \cEnv ; \icEnv \vDash \term_1 = \term_2
+  \emptyenv ; \icEnv \vDash \term_1 = \term_2
   &
-  \cEnv ; \icEnv \vDash \term_1' = \term_2'
+  \emptyenv ; \icEnv \vDash \term_1' = \term_2'
 }{
-  \cEnv ; \icEnv \vDash \term_1 \term_1' = \term_2 \term_2'
+  \emptyenv ; \icEnv \vDash \term_1 \term_1' = \term_2 \term_2'
 }
 $$
 $$
 \inference{
-  \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
+  \emptyenv ; \icEnv \vDash \atomexp_1 \cfresh \tbind{\atomexp_2}\term_2
   \\
-  \cEnv ; \icEnv \vDash \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
+  \emptyenv ; \icEnv \vDash \term_1 = \permswap{\atomexp_1}{\atomexp_2} \term_2
 }{
-  \cEnv ; \icEnv \vDash \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
+  \emptyenv ; \icEnv \vDash \tbind{\atomexp_1} \term_1 = \tbind{\atomexp_2} \term_2
 }
 \qquad
 \inference{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     = \atomexp \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_2 = \atomexp \\
-  \atomv \ceq  \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 = \atomexp
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2; \icEnv \vDash \atomv     = \atomexp \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2; \icEnv \vDash \atomexp_2 = \atomexp \\
+  \atomv \ceq  \atomexp_2; \icEnv \vDash \atomexp_1 = \atomexp
 }{
-  \cEnv ; \icEnv \vDash \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
+  \emptyenv; \icEnv \vDash \atomv = \permswap{\atomexp_1}{\atomexp_2}{\atomexp}
 }
 $$
 $$
 \inference{
-  \cEnv ; \icEnv \vDash \atomv = \perm^{-1} \atomexp
+  \emptyenv; \icEnv \vDash \atomv = \perm^{-1} \atomexp
 }{
-  \cEnv ; \icEnv \vDash \perm \atomv = \atomexp
+  \emptyenv; \icEnv \vDash \perm \atomv = \atomexp
 }
 \qquad
 \inference{
-  \cEnv ; \icEnv \vDash \termv_1 = \pi_1^{-1} \pi_2 \termv_2
+  \emptyenv; \icEnv \vDash \termv_1 = \pi_1^{-1} \pi_2 \termv_2
 }{
-  \cEnv ; \icEnv \vDash \pi_1 \termv_1 = \pi_2 \termv_2
+  \emptyenv; \icEnv \vDash \pi_1 \termv_1 = \pi_2 \termv_2
 }
 $$
 $$
 \inference{
-  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
+  \emptyenv; \icEnv \vDash \pi \text{ idempotent on } \termv
 }{
-  \cEnv ; \icEnv \vDash \termv = \pi \termv
+  \emptyenv; \icEnv \vDash \termv = \pi \termv
 }
 \qquad
 \inference{
   \forall \atomv \in \pi.\;
-    \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
-    \cEnv ; \icEnv \vDash \atomv \cfresh \termv
+    \emptyenv; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
+    \emptyenv; \icEnv \vDash \atomv \cfresh \termv
   }{
-  \cEnv ; \icEnv \vDash \pi \text{ idempotent on } \termv
+  \emptyenv; \icEnv \vDash \pi \text{ idempotent on } \termv
 }
 $$
 \\
@@ -3643,146 +3649,172 @@ Goal-reducing freshness rules:
 $$\inference{
   \atomv_1 \cneq \atomv_2 \in \icEnv
 }{
-  \cEnv ; \icEnv \vDash \atomv_1 \cfresh \atomv_2
+  \emptyenv; \icEnv \vDash \atomv_1 \cfresh \atomv_2
 }
 \qquad
 \inference{
   \atomv \cfresh \termv \in \icEnv
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \termv
+  \emptyenv; \icEnv \vDash \atomv \cfresh \termv
+}
+\qquad
+\inference{
+  \csymb \termv \in \icEnv
+}{
+  \emptyenv ; \icEnv \solverRule \atomv \cfresh \termv
 }
 \qquad
 \inference{
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \symb
+  \emptyenv; \icEnv \vDash \atomv \cfresh \symb
 }
 $$
 $$\inference{
-  \atomv \cneq \atomexp, \cEnv ; \icEnv \vDash \atomv \cfresh \term
+  \atomv \cneq \atomexp; \icEnv \vDash \atomv \cfresh \term
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \tbind{\atomexp}{\term}
+  \emptyenv; \icEnv \vDash \atomv \cfresh \tbind{\atomexp}{\term}
 }
 \qquad
 \inference{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \term_1 &
-  \cEnv ; \icEnv \vDash \atomv \cfresh \term_2
+  \emptyenv; \icEnv \vDash \atomv \cfresh \term_1 &
+  \emptyenv; \icEnv \vDash \atomv \cfresh \term_2
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \term_1 \term_2
+  \emptyenv; \icEnv \vDash \atomv \cfresh \term_1 \term_2
 }
 $$
 $$
 \inference{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     \cfresh \atomexp \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \atomexp \\
-                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \atomexp
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2; \icEnv \vDash \atomv     \cfresh \atomexp \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2; \icEnv \vDash \atomexp_1 \cfresh \atomexp \\
+                          \atomv \ceq  \atomexp_2 ; \icEnv \vDash \atomexp_2 \cfresh \atomexp
 }{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \swap{\atomexp_1}{\atomexp_2} \atomexp
-}
-\qquad
-\inference{
-  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomv     \cfresh \pi \termv \\
-  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \cEnv ; \icEnv \vDash \atomexp_1 \cfresh \pi \termv \\
-                          \atomv \ceq  \atomexp_2 , \cEnv ; \icEnv \vDash \atomexp_2 \cfresh \pi \termv
-}{
-  \cEnv ; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{\pi} \termv
-}
-$$
-\\
-\\
-Goal reducing shape rules:
-$$
-\inference{
-}{
-  \cEnv ; \icEnv \vDash \shatom \csheq \shatom
+  \emptyenv; \icEnv \vDash \atomv \cfresh \swap{\atomexp_1}{\atomexp_2} \atomexp
 }
 \qquad
 \inference{
+  \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2; \icEnv \vDash \atomv     \cfresh \pi \termv \\
+  \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2; \icEnv \vDash \atomexp_1 \cfresh \pi \termv \\
+                          \atomv \ceq  \atomexp_2 ; \icEnv \vDash \atomexp_2 \cfresh \pi \termv
 }{
-  \cEnv ; \icEnv \vDash \symb \csheq \symb
+  \emptyenv; \icEnv \vDash \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2}{\pi} \termv
+}
+$$
+\pagebreak
+Goal-reducing shape rules:
+$$
+\inference{
+}{
+  \emptyenv; \icEnv \vDash \shatom \csheq \shatom
+}
+\qquad
+\inference{
+}{
+  \emptyenv; \icEnv \vDash \symb \csheq \symb
 }
 $$
 $$
 \inference{
   \termv_1 \csheq \termv_2 \in \icEnv
 }{
-  \cEnv ; \icEnv \vDash \termv_1 \csheq \termv_2
+  \emptyenv; \icEnv \vDash \termv_1 \csheq \termv_2
 }
 \qquad
 \inference{
   \termv  \csheq \shape' \in \icEnv &
-  \cEnv ; \icEnv \vDash \shape'  \csheq \shape
+  \emptyenv; \icEnv \vDash \shape'  \csheq \shape
 }{
-  \cEnv ; \icEnv \vDash \termv  \csheq \shape
+  \emptyenv; \icEnv \vDash \termv  \csheq \shape
 }
 $$
 $$\inference{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \csheq \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shbind \shape_1 \csheq \shbind \shape_2
+  \emptyenv; \icEnv \vDash \shbind \shape_1 \csheq \shbind \shape_2
 }
 \qquad
 \inference{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \csheq \shape_2
   &
-  \cEnv ; \icEnv \vDash \shape_1' \csheq \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1' \csheq \shape_2'
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \shape_1' \csheq \shape_2 \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1 \shape_1' \csheq \shape_2 \shape_2'
 }
 $$
 \\
 \\
 Goal-reducing subshape rules:
 $$\inference{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \csheq \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
 }
 \qquad
 \inference{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shbind \shape_2
 }
 $$
 $$\inference{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \csheq \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
 }
 \qquad
 \inference{
-  \cEnv ; \icEnv \vDash \shape_1 \csheq \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1 \csheq \shape_2'
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
 }
 \qquad
 \inference{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shape_2
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
 }
 \qquad
 \inference{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shape_2'
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \shape_2 \shape_2'
 }
 $$
 $$\inference{
   \shape_2 \cshlt \termv \in \icEnv
   &
-  \cEnv ; \icEnv \vDash \shape_2 \csheq \termv
+  \emptyenv; \icEnv \vDash \shape_2 \csheq \termv
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \termv
 }
 \qquad
 \inference{
   \shape_2 \cshlt \termv \in \icEnv
   &
-  \cEnv ; \icEnv \vDash \shape_2 \cshlt \termv
+  \emptyenv; \icEnv \vDash \shape_2 \cshlt \termv
 }{
-  \cEnv ; \icEnv \vDash \shape_1 \cshlt \termv
+  \emptyenv; \icEnv \vDash \shape_1 \cshlt \termv
 }
+$$
+\\
+Goal-reducing symbol rules:
+\\
+$$
+\inference{
+   }{
+     \emptyenv ; \icEnv \solverRule \csymb \symb
+   }
+\qquad
+   \inference{
+     \csymb \termv \in \icEnv
+   }{
+     \emptyenv ; \icEnv \solverRule \csymb \termv
+   }
+\qquad
+   \inference{
+     \csymb \termv \in \icEnv
+   }{
+     \emptyenv ; \icEnv \solverRule \atomv \cfresh \termv
+   }
 $$
 \\
 \\
@@ -3802,7 +3834,7 @@ $$
 }
 \qquad
 \inference{
-  \vDash \text{ idempotent on } \termv \\
+  \emptyenv ; \icEnv \vDash \pi \text{ idempotent on } \termv &
   \cEnv ; \icEnv \vDash \sconstr
 }{
    \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
@@ -3811,8 +3843,7 @@ $$
 $$
 \inference{
   (\forall \atomv \in \pi.\;
-    \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\;
-    \cEnv ; \icEnv \vDash \atomv \cfresh \termv), \cEnv ; \icEnv \vDash \sconstr
+    \cEnv ; \icEnv \vDash \atomv = \pi \atomv \;\vee\; \atomv \cfresh \termv), \cEnv ; \icEnv \vDash \sconstr
 }{
 \pi \text{ idempotent on } \termv, \cEnv ; \icEnv \vDash \sconstr
 }
@@ -3846,6 +3877,7 @@ $$
   \atomv \ceq \permswap{\atomexp_1}{\atomexp_2} \atomexp, \cEnv ; \icEnv \vDash \sconstr
 }
 $$
+\\
 $$
 \inference{
 }{
@@ -3868,8 +3900,6 @@ $$
 }{
    \tbind{\atomexp_1} \term_1 \ceq \tbind{\atomexp_2} \term_2 , \cEnv ; \icEnv \vDash \sconstr
 }
-\qquad
-\text{Other term constructors trivial}
 $$
 $$
 \inference{
@@ -3877,8 +3907,6 @@ $$
 }{
    \term_1 \term_1' \ceq \term_2 \term_2' , \cEnv ; \icEnv \vDash \sconstr
 }
-\qquad
-\text{Other term constructors trivial}
 $$
 $$
 \inference{
@@ -3892,8 +3920,6 @@ $$
 }{
   \symb\ceq \symb , \cEnv ; \icEnv \vDash \sconstr
 }
-\qquad
-\text{Other term constructors trivial}
 $$
 \\
 \\
@@ -3910,6 +3936,12 @@ $$
 }{
   \atomv \cfresh \termv, \; \cEnv ; \icEnv \vDash \sconstr
 }
+\qquad
+\inference{
+  \cEnv ; \icEnv \vDash \sconstr
+}{
+  \atomv \cfresh \symb, \cEnv ; \icEnv \vDash \sconstr
+}
 $$
 $$
 \inference{
@@ -3919,8 +3951,7 @@ $$
 }{
   \atomv \cfresh \permswap{\atomexp_1}{\atomexp_2} \atomexp, \cEnv ; \icEnv \vDash \sconstr
 }
-$$
-$$
+\qquad
 \inference{
   \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \cfresh \perm\termv, \cEnv ; \icEnv \vDash \sconstr \\
   \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \cfresh \perm\termv, \cEnv ; \icEnv \vDash \sconstr \\
@@ -3936,19 +3967,12 @@ $$
 }{
   \atomv \cfresh \tbind{\atomexp} \term , \cEnv ; \icEnv \vDash \sconstr
 }
-$$
-$$
+\qquad
 \inference{
   \atomv \cfresh \term_1 , \cEnv ; \icEnv \vDash \sconstr &
   \atomv \cfresh \term_2 , \cEnv ; \icEnv \vDash \sconstr
 }{
   \atomv \cfresh \term_1 \term_2 , \cEnv ; \icEnv \vDash \sconstr
-}
-\qquad
-\inference{
-  \cEnv ; \icEnv \vDash \sconstr
-}{
-  \atomv \cfresh \symb, \cEnv ; \icEnv \vDash \sconstr
 }
 $$
 \\
@@ -3974,16 +3998,11 @@ $$
   \atomv_1 \csheq \atomv_2, \cEnv ; \icEnv \vDash \sconstr
 }
 \qquad
-\text{Other term constructors trivial}
-$$
-$$
 \inference{
   \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr
 }{
   \shbind\term_1 \csheq \shbind\term_2, \cEnv ; \icEnv \vDash \sconstr
 }
-\qquad
-\text{Other term constructors trivial}
 $$
 $$
 \inference{
@@ -3993,8 +4012,6 @@ $$
 }{
   \term_1 \term_1' \csheq \term_2\term_2', \cEnv ; \icEnv \vDash \sconstr
 }
-\qquad
-\text{Other term constructors trivial}
 $$
 $$
 \inference{
@@ -4007,8 +4024,6 @@ $$
 }{
   \symb \csheq \symb , \cEnv ; \icEnv \vDash \sconstr
 }
-\qquad
-\text{Other term constructors trivial}
 $$
 \\
 \\
@@ -4028,8 +4043,7 @@ $$
 }{
   \term_1 \cshlt \shbind \term_2, \cEnv ; \icEnv \vDash \sconstr
 }
-$$
-$$
+\qquad
 \inference{
   \term_1 \csheq \term_2, \cEnv ; \icEnv \vDash \sconstr
   &
@@ -4042,6 +4056,7 @@ $$
   \term_1 \cshlt \term_2 \term_2', \cEnv ; \icEnv \vDash \sconstr
 }
 $$
+\\
 $$
 \inference{
 }{
@@ -4052,6 +4067,22 @@ $$
 }{
   \term \cshlt \symb, \cEnv ; \icEnv \vDash \sconstr
 }
+$$
+\\
+\\
+Assumption-reducing symbol rules:
+$$
+    \inference{
+      \cEnv ; \{\csymb \termv\} \cup \icEnv \vDash \sconstr
+    }{
+      \csymb \termv, \cEnv ; \icEnv \vDash \sconstr
+    }
+    \qquad
+    \inference{
+      \cEnv ; \icEnv \vDash \sconstr
+    }{
+      \csymb \symb, \cEnv ; \icEnv \vDash \sconstr
+    }
 $$
 
 \end{appendices}
