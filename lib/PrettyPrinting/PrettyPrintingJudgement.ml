@@ -7,7 +7,8 @@ open ProofEnv
 let pretty_judgement' pretty_assm (env, f) =
   with_binders (all_identifiers env)
   $ unlines
-      [ pretty_ocaml_list (List.map pretty_constr $ constraints env)
+      [ str ""
+      ; pretty_ocaml_list (List.map pretty_constr $ constraints env)
       ; pretty_ocaml_list (List.map pretty_assm $ assumptions env)
       ; with_prefix "⊢ " (pretty_formula f) ]
 

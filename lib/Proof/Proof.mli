@@ -36,7 +36,7 @@ val assumption : 'a env -> formula -> proof
 (*  Γ; Θ |- f1 => f2  *)
 val imp_i : formula -> proof -> proof
 
-(*  Γ1; Θ1 |- f1 => f2    Γ2; Θ2 |- f2  *)
+(*  Γ1; Θ1 |- f1    Γ2; Θ2 |- f1 => f2  *)
 (* ------------------------------------ *)
 (*        Γ1 ∪ Γ2; Θ1 ∪ Θ2 |- f2        *)
 val imp_e : proof -> proof -> proof

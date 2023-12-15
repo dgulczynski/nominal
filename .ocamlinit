@@ -14,6 +14,12 @@ open Nominal.Permutation
 open Nominal.Solver
 open Nominal.PrettyPrinting
 open Nominal.PrettyPrintingCore
+open Examples
+open Examples.LambdaCalculusCore
+open Examples.LambdaCalculusEnv
+open Examples.LambdaCalculusSub
+open Examples.LambdaCalculusUtils
+open Examples.LambdaCalculus
 
 let pp_print_constr = printer_to_pp_printer pretty_constr []
 

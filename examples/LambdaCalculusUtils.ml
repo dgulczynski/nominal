@@ -58,12 +58,11 @@ let canonical_form_thm =
 
 let canonical_form =
   proof' canonical_form_thm
-  |> intros ["v"; "t"; "Hv"; "Ht"]
-  |> destruct_assm "Ht"
+  |> intros ["v"; "t"; "Hv"] %> intro'
   |> intros' ["contra"; "a"; ""]
      %> ex_falso
      %> apply_thm_spec LambdaCalculusEnv.empty_contradiction ["a"; "t"]
-     %> apply_assm "contra"
+     %> assumption
   |> intros' ["Hlam"; "a"; "e"; "t1"; "t2"; ""; ""; ""]
      %> exists' ["a"; "e"]
      %> solve

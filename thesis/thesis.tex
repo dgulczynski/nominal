@@ -16,7 +16,7 @@
 między ręcznymi, a~komputerowymi systemami dowodowymi, zwracając uwagę na
 wyzwanie, jakim jest utrzymanie precyzji i przejrzystości podczas
 przeprowadzania matematycznego rozumowania w~obecności wiązania zmiennych.
-W~praktyce, przy przenoszeniu dowódów przeprowadzonych na papierze do formalnych
+W~praktyce, przy przenoszeniu dowodów przeprowadzonych na papierze do formalnych
 i rygorystycznych komputerowych systemów dowodowych, potencjalne trudności
 pojawiają się przy stosowaniu niejawnych założeń, a~w~szczególności przy
 używaniu nieprecyzyjnego pojęcia ``wystarczająco świeżych'' nazw zmiennych.
@@ -625,6 +625,8 @@ maps semantic terms to semantic shapes by erasing names.
       & $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
         $\shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ is a strict subshape of }
           \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
+      & $\tmEnv \vDash \csymb \term$ & \textrm{iff} &
+        $\shapeof{\termMdl{\term}{\tmEnv}} \textrm{ is a functional symbol }$ & \\
       & & & & \\ \hline
     \end{tabularx}
   \caption{Interpretation of constraints in the model.}
@@ -748,12 +750,12 @@ new assumptions and the goal.
       \inference{
         \sconstr \text{ is trivial}
       }{
-        \cEnv ; \icEnv \solverRule \sconstr
+        \emptyenv ; \icEnv \solverRule \sconstr
       } $ & $
       \inference{
         \sconstr \in \icEnv
       }{
-        \cEnv ; \icEnv \solverRule \sconstr
+        \emptyenv ; \icEnv \solverRule \sconstr
       } $ \\ & & \\ \hline
     \end{tabularx}
   \caption{Base cases of the Solver's rules.}
@@ -1807,7 +1809,7 @@ $\formphi$ & $::=$ & $\ldots
       \cEnv;\kEnv\vdash \formphi \ofkind \kForallTerm{\termv}\kind
     }{
       \cEnv;\kEnv\vdash \formphi \fAppTerm{\term} \ofkind \kind\subst{\termv}{\term}
-    }\:\scbrk{Kind}{FunAtom}$
+    }\:\scbrk{Kind}{AppTerm}$
     \\ & \\
     $\inference{
       \cEnv; \kEnv, \propv \ofkind \kind_1 \vdash \formphi \ofkind \kind_2
@@ -2887,7 +2889,7 @@ let term_predicate = (* Term e *)
   "fix Term(e): * =
      var: ($\exists$ a :atom. [e = a])
      $\vee$
-     lam: ($\exists$ a :atom.$\exists$ e' :term. [e = lam (a.e')] $\wedge$ (Term e'))
+     lam: ($\exists$ a :atom. $\exists$ e' :term. [e = lam (a.e')] $\wedge$ (Term e'))
      $\vee$
      app: ($\exists$ e1 e2 :term. [e = app e1 e2] $\wedge$ (Term e1) $\wedge$ (Term e2))"
 
