@@ -648,7 +648,7 @@ let empty_contradiction_thm = lambda_thm "forall a :atom. forall t :term. (InEnv
 
 let empty_contradiction =
   proof' empty_contradiction_thm
-  |> intro %> intro %> intros ["H"] %> destruct_assm "H"
+  |> intros ["a"; "t"; "H"] %> destruct_assm "H"
   |> intros' ["contra"; "env'"] %> solve
   |> intros' ["contra"; "b"; "s"; "env'"; ""] %> solve
   |> qed

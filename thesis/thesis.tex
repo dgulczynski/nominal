@@ -740,12 +740,15 @@ we break down the goal-constraint $\sconstr$ and repeat the reduction procedure 
 new assumptions and the goal.
 \begin{figure}[htpb]
   \centering
-    \begin{tabularx}{\textwidth}{|CCC|}
+    \begin{tabularx}{\textwidth}{|CCCC|}
     \hline & & \\ $
       \inference{
       }{
         \cEnv ; \lightning \solverRule \sconstr
       }
+      $ & $
+        \cEnv \vDash \sconstr \;\equiv\;
+        \cEnv ; \emptyenv \solverRule \sconstr
       $ & $
       \inference{
         \sconstr \text{ is trivial}
@@ -761,7 +764,136 @@ new assumptions and the goal.
   \caption{Base cases of the Solver's rules.}
   \label{fig:solver-base}
 \end{figure}
-\\
+\begin{figure}[htpb]
+  \centering
+    \begin{tabularx}{\textwidth}{|CcC|}
+      \hline & & \\
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\sconstr_N,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+  \edge node[] { };
+  [.{\dots}
+  ]
+  \edge node    { };
+  [.{$\sconstr_1,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+]
+\end{tikzpicture}
+& \begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\cEnv' ; \icEnv' \solverRule \sconstr'$}
+  ]
+]
+\end{tikzpicture}
+&
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\emptyenv ; \icEnv \solverRule \sconstr_0$}
+  \edge node    { };
+  [.{$\cEnv_N; \icEnv \solverRule \sconstr_N$}
+  ]
+  \edge node[] { };
+  [.{\dots}
+  ]
+  \edge node    { };
+  [.{$\cEnv_1 ; \icEnv \solverRule \sconstr_1$}
+  ]
+]
+\end{tikzpicture}
+\\ & & \\ & & \\
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\sconstr_N,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+  \edge node[] { };
+  [.{\dots}
+  ]
+  \edge node    { };
+  [.{$\sconstr_1,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+]
+\end{tikzpicture}
+& \begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\emptyenv ; \{ \csymb X \} \solverRule a \cfresh X $}
+  \edge node    { };
+  [.{$\emptyenv ; \icEnv \solverRule a \ceq a$}
+  ]
+]
+\end{tikzpicture}
+&
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$a \ceq b,\:\cEnv ; \{ a \cneq b \} \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\{a \ceq b\} \cup \{ a \cneq b \} = \lightning $}
+    \edge node    { };
+    [.{$\cEnv ; \lightning \solverRule \sconstr$}
+    ]
+  ]
+]
+\end{tikzpicture}
+\\ & & \\
+\hline
+    \end{tabularx}
+  \caption{Base cases of the Solver's rules.}
+  \label{fig:solver-base}
+\end{figure}
 This recursive procedure may stop at a contradictory environment $\lightning$,
 which short-circuits the procedure, or at
 a state in which all the assumptions and the goal itself are reduced to irreducible components,
