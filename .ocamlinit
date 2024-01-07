@@ -12,30 +12,29 @@ open Nominal.Tactics
 open Nominal.Types
 open Nominal.Permutation
 open Nominal.Solver
-open Nominal.PrettyPrinting
-open Nominal.PrettyPrintingCore
 open Examples
+open Examples.Induction
 open Examples.LambdaCalculusCore
 open Examples.LambdaCalculusEnv
 open Examples.LambdaCalculusSub
 open Examples.LambdaCalculusUtils
 open Examples.LambdaCalculus
 
-let pp_print_constr = printer_to_pp_printer pretty_constr []
+let pp_print_constr = PrettyPrintingCore.printer_to_pp_printer PrettyPrinting.pretty_constr []
 
-let pp_print_formula = printer_to_pp_printer pretty_formula []
+let pp_print_formula = PrettyPrintingCore.printer_to_pp_printer PrettyPrinting.pretty_formula []
 
-let pp_print_goal = printer_to_pp_printer pretty_goal []
+let pp_print_goal = PrettyPrintingCore.printer_to_pp_printer PrettyPrinting.pretty_goal []
 
-let pp_print_judgement = printer_to_pp_printer pretty_judgement []
+let pp_print_judgement = PrettyPrintingCore.printer_to_pp_printer PrettyPrinting.pretty_judgement []
 
-let pp_print_kind = printer_to_pp_printer pretty_kind []
+let pp_print_kind = PrettyPrintingCore.printer_to_pp_printer PrettyPrinting.pretty_kind []
 
-let pp_print_term = printer_to_pp_printer pretty_term []
+let pp_print_term = PrettyPrintingCore.printer_to_pp_printer PrettyPrinting.pretty_term []
 
-let pp_print_env fmt env = printer_to_pp_printer pretty_bound_env env fmt env
+let pp_print_env fmt env = PrettyPrintingCore.printer_to_pp_printer PrettyPrinting.pretty_bound_env env fmt env
 
-let pp_print_state = printer_to_pp_printer pretty_prover_state [] ;;
+let pp_print_state = PrettyPrintingCore.printer_to_pp_printer  pretty_prover_state [] ;;
 
 #install_printer pp_print_constr
 

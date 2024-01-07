@@ -12,6 +12,11 @@ open IncProof
 open ProverGoal
 open ProverInternals
 
+let theorem formula =
+  let env = empty snd in
+  try (env, parse_formula env formula)
+  with ParserCommon.ParserException e -> print_endline e ; failwith "Cannot parse theorem"
+
 let check_props env formulas = List.iter (kind_check_throw env K_Prop) formulas
 
 let check_input env goal =
