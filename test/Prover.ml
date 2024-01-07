@@ -174,6 +174,10 @@ let _ = test_theorem Examples.Arithmetic.plus_Sn_m_thm Examples.Arithmetic.plus_
 
 let _ = test_theorem Examples.Arithmetic.plus_symm_thm Examples.Arithmetic.plus_symm
 
+let _ = test_theorem Examples.Induction.ind_weak_thm Examples.Induction.ind_weak
+
+let _ = test_theorem Examples.Induction.ind_strong_thm Examples.Induction.ind_strong
+
 let _ = test_theorem Examples.LambdaCalculus.progress_thm Examples.LambdaCalculus.progress
 
 let _ = test_theorem Examples.LambdaCalculus.preservation_thm Examples.LambdaCalculus.preservation

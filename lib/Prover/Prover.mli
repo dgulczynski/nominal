@@ -4,6 +4,8 @@ open ProverInternals
 open IncProof
 open Types
 
+val theorem : string -> goal
+
 val proof : goal_env -> formula -> prover_state
 
 val intro : tactic
