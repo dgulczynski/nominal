@@ -178,6 +178,10 @@ let _ = test_theorem Examples.Induction.ind_weak_thm Examples.Induction.ind_weak
 
 let _ = test_theorem Examples.Induction.ind_strong_thm Examples.Induction.ind_strong
 
+let _ = test_theorem Examples.Induction.barengredt_ind_thm Examples.Induction.barengredt_ind
+
+let _ = test_theorem Examples.LambdaCalculusCore.lambda_ind_thm Examples.LambdaCalculusCore.lambda_ind
+
 let _ = test_theorem Examples.LambdaCalculus.progress_thm Examples.LambdaCalculus.progress
 
 let _ = test_theorem Examples.LambdaCalculus.preservation_thm Examples.LambdaCalculus.preservation

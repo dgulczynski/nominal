@@ -1,7 +1,9 @@
 open Nominal.Prelude
 open Nominal.Parser
 open Nominal.ProverGoal
+open Nominal.Prover
 open Nominal.ProofEnv
+open Nominal.Tactics
 
 let lambda_symbols = symbols ["lam"; "app"; "base"; "arrow"; "nil"; "cons"]
 
@@ -95,3 +97,53 @@ let lambda_env =
     ; ("Progressive", progressive_formula) ]
 
 let lambda_thm thm : goal = (lambda_env, parse_formula lambda_env thm)
+
+let term_involutive_thm = lambda_thm "forall t :term. forall a a' :atom. (Term t) => (Term {[a a']t})"
+
+let term_involutive =
+  proof' term_involutive_thm
+  |> by_induction "t'" "IH" %> repeat intro %> intro'
+  |> intros' ["H"; "b"] %> (case "var" %> exists "[a a']b" %> solve)
+  |> intros' ["H"; "b"; "e"; ""]
+     %> (case "lam" %> exists' ["[a a']b"; "[a a']e"] %> solve)
+     %> (apply_assm_spec "IH" ["e"; "a"; "a'"] %> solve %> apply_assm "H")
+  |> intros' ["H"; "e1"; "e2"; ""; ""]
+     %> (case "app" %> exists' ["[a a']e1"; "[a a']e2"] %> solve %> destruct_goal)
+     %> (apply_assm_spec "IH" ["e1"; "a"; "a'"] %> solve %> apply_assm "H_1")
+     %> (apply_assm_spec "IH" ["e2"; "a"; "a'"] %> solve %> apply_assm "H_2")
+  |> qed
+
+let lambda_ind_thm =
+  lambda_thm
+  $ unlines
+      [ "∀ P :(∀ _ :term. *).                             "
+      ; "     (∀ a :atom. P {a})                          "
+      ; "  => (∀ t1 t2 :term.                             "
+      ; "          (Term t1) => (Term t2)                 "
+      ; "       => (P t1) => (P t2)                       "
+      ; "       => P {app t1 t2})                         "
+      ; " => (∀ a :atom. ∀ t :term. "
+      ; " (Term t) "
+      ; " => (∀ c :term. ∃ a' :atom. [a' # c] ∧ (∃ t' :term. (Term t') ∧ ( [a.t = a'.t'] ∧ P t'))) "
+      ; " => P {lam (a.t)}) "
+      ; "  => (∀ t :term. (Term t) => P t)" ]
+
+let lambda_ind =
+  proof' lambda_ind_thm
+  |> repeat intro %> intros ["Hvar"; "Happ"; "Hlam"; "e"] %> generalize "e" %> by_induction "e'" "IH" %> intro'
+  |> intros' ["H"; "a"] %> apply_assm_spec "Hvar" ["a"]
+  |> intros' ["H"; "a"; "e'"; ""]
+     %> apply_assm_spec "Hlam" ["a"; "e'"]
+     %> apply_assm "H"
+     %> (intros ["ctx"] %> get_fresh_atom "a'" "ctx e'" %> exists' ["a'"] %> solve %> exists "[a a']e'")
+     %> destruct_goal
+     %> (apply_thm_spec term_involutive ["e'"; "a'"; "a"] %> apply_assm "H" %> solve)
+     %> (apply_assm_spec "IH" ["[a a']e'"] %> solve)
+     %> (apply_thm_spec term_involutive ["e'"; "a'"; "a"] %> apply_assm "H")
+  |> intros' ["H"; "e1"; "e2"; ""; ""]
+     %> apply_assm_spec "Happ" ["e1"; "e2"]
+     %> apply_assm "H_1"
+     %> apply_assm "H_2"
+     %> (apply_assm_spec "IH" ["e1"] %> solve %> apply_assm "H_1")
+     %> (apply_assm_spec "IH" ["e2"] %> solve %> apply_assm "H_2")
+  |> qed
