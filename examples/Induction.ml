@@ -94,4 +94,32 @@ let ind_weak =
   |> apply_assm "Happ"
   |> intros ["c"; "a"; "e"] %> intro %> apply_assm_spec "Hlam" ["a"; "e"]
   |> apply_assm "Hsym"
+
+let barengredt_ind_thm =
+  theorem
+  $ unlines
+      [ "∀ P :(∀ _ :term. *).  "
+      ; "     (∀ a :atom. P {a})"
+      ; "  => (∀ t1 t2 :term. (P t1) => (P t2) => P {t1 t2})"
+      ; "  => (∀ a :atom. ∀ t :term. "
+      ; "          (∀ c :term. ∃ a' :atom. ∃ t' :term. "
+      ; "             [a' # c] ∧ [a.t = a'.t'] ∧ P t')"
+      ; "        => P {a.t})"
+      ; "  => (∀ s :term. [symbol s] => P s)"
+      ; "  => ∀ t :term. P t" ]
+
+let barengredt_ind =
+  proof' barengredt_ind_thm
+  |> repeat intro %> intros ["Hatom"; "Happ"; "Hlam"; "Hsym"] %> by_induction "t0" "IH" %> inverse_term "t"
+  |> intros' ["H"; "a"] %> apply_assm_spec "Hatom" ["a"]
+  |> intros' ["H"; "a"; "e"]
+     %> (apply_assm_spec "Hlam" ["a"; "e"] %> intros ["ctx"])
+     %> get_fresh_atom "a'" "ctx e"
+     %> (exists' ["a'"; "[a a']e"] %> solve %> solve)
+     %> (apply_assm_spec "IH" ["[a a']e"] %> solve)
+  |> intros' ["H"; "e1"; "e2"]
+     %> apply_assm_spec "Happ" ["e1"; "e2"]
+     %> (apply_assm_spec "IH" ["e1"] %> solve)
+     %> (apply_assm_spec "IH" ["e2"] %> solve)
+  |> intros' ["H"] %> apply_assm_spec "Hsym" ["t"] %> solve
   |> qed

@@ -42,6 +42,7 @@ let specialize on_forall_atom on_forall_term on_forall_form =
     | F_ForallProp (p, f) -> on_forall_form p f
     | F_Impl (premise, f) -> (fun f -> F_Impl (premise, f)) <$> specialize' f
     | F_ConstrImpl (c, f) -> (fun f -> F_ConstrImpl (c, f)) <$> specialize' f
+    | F_ConstrAnd (c, f) -> (fun f -> F_ConstrAnd (c, f)) <$> specialize' f
     | f -> raise $ cannot_specialize f []
   in
   specialize'
