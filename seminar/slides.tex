@@ -32,6 +32,8 @@
 \usepackage{pgf}
 \usepackage{tikz-qtree}
 \usepackage{graphicx}
+\usepackage{colortbl}
+\usepackage{appendixnumberbeamer}
 \graphicspath{ {./images/} }
 
 %%%%% WŁASNE DEFINICJE I POLECENIA
@@ -145,8 +147,8 @@ Wydział Matematyki i Informatyki \\
 Instytut Informatyki
 }
 
-\date[2 Lutego 2024]
-{Seminarium Zakładu Języków Programowania, 2 Lutego 2024}
+\date[1 Marca 2024]
+{Seminarium Zakładu Języków Programowania, 1 Marca 2024}
 
 \titlegraphic{\hfill\includegraphics[width=1cm]{uwr-logo}}
 
@@ -173,28 +175,18 @@ Instytut Informatyki
 \begin{tabularx}{\textwidth}{LL}
   \begin{enumerate}
     \onslide<1->{\item Piszemy dla czytelnika}
-    \onslide<2->{\item Pomijamy detale}
-    \onslide<3->{\item Korzystamy z niejawnych założeń lub niedowiedzonych twierdzeń}
-    \onslide<4->{\item Prowadzimy rozumowanie w konwencji nazw zmiennych Barendregta}
+    \onslide<1->{\item Pomijamy detale}
+    \onslide<1->{\item Korzystamy z niejawnych założeń lub niedowiedzonych twierdzeń}
+    \onslide<2->{\item Prowadzimy rozumowanie w konwencji nazw zmiennych Barendregta}
   \end{enumerate}
   &
   \begin{enumerate}
     \onslide<1->{\item Piszemy dla komputera}
-    \onslide<2->{\item Musimy obsłużyć wszystkie detale}
-    \onslide<3->{\item Korzystamy tylko z jawnych założeń lub i dowiedzonych twierdzeń}
-    \onslide<4->{\item ?}
+    \onslide<1->{\item Musimy obsłużyć wszystkie detale}
+    \onslide<1->{\item Korzystamy tylko z jawnych założeń lub i dowiedzonych twierdzeń}
+    \onslide<2->{\item ?}
   \end{enumerate}
 \end{tabularx}
-\end{frame}
-
-\begin{frame}
-\includegraphics[width=\textwidth]{semantics}
-{\footnotesize źródło: Semantics lecture notes 2019/2020, Derek Dreyer, Universität des Saarlandes}
-\end{frame}
-
-\begin{frame}
-\includegraphics[width=\textwidth]{pierce-binding}
-{\footnotesize źródło: Types and Programming Languages, Benjamin C. Pierce, MIT Press.}
 \end{frame}
 
 \begin{frame}
@@ -203,13 +195,23 @@ Instytut Informatyki
 \end{frame}
 
 \begin{frame}
+\includegraphics[width=\textwidth]{pierce-binding}
+{\footnotesize źródło: Types and Programming Languages, Benjamin C. Pierce, MIT Press.}
+\end{frame}
+
+\begin{frame}
+\includegraphics[width=\textwidth]{semantics}
+{\footnotesize źródło: Semantics lecture notes 2019/2020, Derek Dreyer, Universität des Saarlandes}
+\end{frame}
+
+\begin{frame}
 \frametitle{Rozwiązania problemu wiązania zmiennych w systemach formalnych}
 % \begin{tabularx}{\textwidth}{LL}
   \begin{itemize}
   \onslide<1->{\item Rachunek kombinatorów}
-  \onslide<2->{\item Reprezentacja De Bruijna}
-  \onslide<3->{\item Higher-Order Abstract Syntax}
-  \onslide<4->{\item Techniki nominalne}
+  \onslide<1->{\item Reprezentacja De Bruijna}
+  \onslide<1->{\item Higher-Order Abstract Syntax}
+  \onslide<1->{\item Techniki nominalne}
   \end{itemize}
   % &
   % {\huge $\lambda x . e$}
@@ -240,7 +242,7 @@ without changing the validity of predicates involving them, will be called atoms
   \begin{tabularx}{\textwidth}{C}
     \hspace{9cm}
       $ t \; \deff \; a \mid \lambda a . t \mid t\;t$
-    \\ \\
+    \\
     \begin{tabular}{rcl}
     $\qquad\permswap{a}{b}{c}$ & $:=$
       & $ \begin{cases}
@@ -249,7 +251,7 @@ without changing the validity of predicates involving them, will be called atoms
         c & \text{wpp.}
       \end{cases}$
       $\quad$
-      \\
+       \\ \\
     \end{tabular}
     \begin{tabular}{rcl}
       $\qquad$
@@ -258,7 +260,7 @@ without changing the validity of predicates involving them, will be called atoms
       $\permswap{a}{b}{(t_1\; t_2)} $ & $:=$
       & $ (\permswap{a}{b}{t_1}) \; (\permswap{a}{b}{t_2}) $ \\
     \end{tabular}
-\\ \\ $
+\\ \arrayrulecolor{lightgray}\hline \\ $
       \inference{
         a \cneq b
       }{
@@ -281,7 +283,7 @@ without changing the validity of predicates involving them, will be called atoms
       }{
         a \cfresh \lambda b . t
       }
-      $ \\ \\ \\ $
+      $ \\ \\ \arrayrulecolor{lightgray}\hline \\ $
     \inference{
       \text{}
     }{
@@ -317,9 +319,9 @@ The fundamental assumption underlying Nominal Logic is that \textit{the only pre
         i innych podstawowych właściwości syntaktycznych, dzięki czemu może być \\
         używana jako baza do prowadzenia rozumowań o językach programowania.
   \\
-  \onslide<2->{\item Stajemy po środku i przedstawiamy wariant logiki nominalnej która oparta jest\\
+  \onslide<2->{\item {\color{blue} Stajemy po środku i przedstawiamy wariant logiki nominalnej która oparta jest\\
         o półautomatyczne narzędzie do zajmowania się wybranymi własności syntaktycznymi,
-        które nazywamy więzami.}
+        które nazywamy więzami.}}
   \\
   \item Ale najlepiej byłoby nie przejmować się w ogóle takimi sprawami, tak jak \\
         w konwencji Barendgreta, powiedzieć jedynie że zajmujemy się tylko \\
@@ -332,7 +334,7 @@ The fundamental assumption underlying Nominal Logic is that \textit{the only pre
   \begin{tabularx}{\linewidth}{|c|X|}
     \hline & \\
     $\atomexp \cfresh \term$ & Atom $\atomexp$ jest \it{świeży} w termie $\term$,
-      czyli nie występuje w  $\term$ jako wolna nazwa. \\ & \\
+      czyli nie ma wolnych wystąpień w $\term$ jako wolna nazwa. \\ & \\
     \hline & \\
     $\term_1 \ceq \term_2$ & Termy $\term_1$ i $\term_2$ są alfa-równoważne. \\ & \\
     \hline & \\
@@ -381,280 +383,73 @@ The fundamental assumption underlying Nominal Logic is that \textit{the only pre
       & (więzy) \\ \\
   \end{tabularx}
   }
-  \begin{tabularx}{12cm}{C|C}
-    \hline & \\
-      \begin{tabular}{rcl}
-        $\perm \apperm (\perm' \apperm \atomv) $ & $:=$ & $(\perm \++ \perm') \apperm \atomv$ \\
-        $\perm \apperm (\perm' \apperm \termv) $ & $:=$ & $(\perm \++ \perm') \apperm \termv$ \\
-        $\perm \apperm (\tbind{\atomexp} \term)$ & $:=$ & $\tbind{(\perm \apperm \atomexp)} (\perm \apperm \term)$ \\
-        $\perm \apperm (\term_1 \tapp \term_2) $ & $:=$ & $(\perm \apperm \term_1) \tapp (\perm \apperm \term_2)$ \\
-        $\perm \apperm \symb                   $ & $:=$ & $\symb$ \\
-      \end{tabular}
-      &
-      \begin{tabular}{rcl}
-        $\shapeof{\perm \apperm \atomv}   $& $:=$ & $\shatom$ \\
-        $\shapeof{\perm \apperm \termv}   $& $:=$ & $\termv $ \\
-        $\shapeof{\tbind{\atomexp} \term} $& $:=$ & $\shbind \shapeof{\term}$ \\
-        $\shapeof{\term_1 \tapp \term_2}  $& $:=$ & $\shapeof{\term_1} \tapp \shapeof{\term_2}$ \\
-        $\shapeof{\symb}                  $& $:=$ & $\symb$ \\
-      \end{tabular}
-  \end{tabularx}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Semantyczne termy}
-    \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
-      $\sematom$ & $\in$ & $SemAtom$
-      & (wolne atomy) \\
-      $n$ & $\in$ & $Nat$
-      & (związane atomy) \\
-      $\semterm$ & $\deff$ & $\sematom
-                        \bnfor n
-                        \bnfor \stbind \semterm
-                        \bnfor \semterm \stapp \semterm
-                        \bnfor \symb$
-      & (semantyczne termy) \\
-      $\semshape$ & $\deff$ & $\shatom
-                        \bnfor \stbind \semshape
-                        \bnfor \semshape \stapp \semshape
-                        \bnfor \symb$
-      & (semantyczne kształty) \\
-      $\tmEnv$ & $\in$ & $(Atom \rightarrow SemAtom) \times (Var \rightarrow SemTerm)$ & (interpretacje) \\ & &\\
-    \end{tabularx}
-\begin{tabularx}{\textwidth}{c|c}
-      \hline & \\
-      \begin{tabular}{rcl}
-        $\termMdl{\perm \apperm \atomv}{\tmEnv}   $& $:=$ & $\permMdl{\perm}{\tmEnv}(\tmEnv(\atomv))                                          $ \\
-        $\termMdl{\perm \apperm \termv}{\tmEnv}   $& $:=$ & $\permMdl{\perm}{\tmEnv}(\tmEnv(\termv))                                          $ \\
-        $\termMdl{\tbind{\atomexp} \term}{\tmEnv} $& $:=$ & $\stbind (\termMdl{\term}{\tmEnv} \shiftIdx) \subst{\termMdl{\atomexp}{\tmEnv}}{0}$ \\
-        $\termMdl{\term_1 \tapp \term_2}{\tmEnv}  $& $:=$ & $\termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv}                       $ \\
-        $\termMdl{\symb}{\tmEnv}                  $& $:=$ & $\symb                                                                            $\\
-         & & \\
-        $\shapeof{\sematom}                     $& $:=$ & $\shatom                                         $ \\
-        $\shapeof{n}                            $& $:=$ & $\shatom                                         $ \\
-        $\shapeof{\stbind \semterm}             $& $:=$ & $\stbind \shapeof{\semterm}                      $ \\
-        $\shapeof{\semterm_1 \stapp \semterm_2} $& $:=$ & $\shapeof{\semterm_1} \shapp \shapeof{\semterm_2}$ \\
-        $\shapeof{\symb}                        $& $:=$ & $\symb                                           $ \\
-      \end{tabular}
-      &
-      \begin{tabular}{rcl}
-      $\permMdl{\permid}{\tmEnv}(\sematom)                                $ & $:=$ & $\sematom                                                        $ \\ & & \\
-      $\permMdl{\perm \++ \swap{\atomexp_1}{\atomexp_2}}{\tmEnv}(\sematom)$ & $:=$ & $\permMdl{\perm}{\tmEnv} (\sematom')                             $ \\
-        \text{where }$\: \sematom_1$ & $:=$ &  $\permMdl{\atomexp_1}{\tmEnv}$ \\
-        \text{  and }$\: \sematom_2$ & $:=$ &  $\permMdl{\atomexp_2}{\tmEnv}$ \\
-        \text{  and }$\: \sematom'$  & $:=$ &
-          $\begin{cases}
-            \sematom_2 & \text{if } \sematom = \sematom_1 \\
-            \sematom_1 & \text{if } \sematom = \sematom_2 \\
-            \sematom   & \text{wpp.}
-          \end{cases}$
-          \\
-      \end{tabular}
-\end{tabularx}
+  % TODO: w jaki sposób przedstawić zwięźle solver
+\includegraphics[width=130mm]{solver}
 \end{frame}
 
 \begin{frame}
-\frametitle{Model logiki więzów}
-    \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
-      $\tmEnv$ & $\in$ & $(Atom \rightarrow SemAtom) \times (Var \rightarrow SemTerm)$
-      & (interpretacje) \\
-      $\cEnv $ & $\deff$ & $\emptyenv
-                        \bnfor \constr,\: \cEnv$
-      & (środowisko więzów) \\ & & & \\
-    \end{tabularx}
-\begin{tabularx}{\textwidth}{XlclX}
-      \hline & & & & \\
-      & $\tmEnv \vDash \atomexp \cfresh \term$ & \textrm{iff} &
-        $\termMdl{\atomexp}{\tmEnv} \notin
-          \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv})$ & \\
-      & & & & \\
-      & $\tmEnv \vDash \term_1 \ceq \term_2 $  & \textrm{iff} &
-        $\termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv}$ & \\
-      & & & & \\
-      & $\tmEnv \vDash \term_1 \csheq \term_2$ & \textrm{iff} &
-        $\shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
-      & & & & \\
-      & $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
-        $\shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ jest ścisłym podkształtem }
-          \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
-      & & & & \\
-      & $\tmEnv \vDash \csymb \term$ & \textrm{iff} &
-        $\shapeof{\termMdl{\term}{\tmEnv}} \textrm{ jest symbolem funkcyjnym }$ & \\
-      & & & & \\ \hline
-    \end{tabularx}
-    $$ \tmEnv \vDash \cEnv
-       \quad\textrm{iff}\quad
-       \forall \constr \in \cEnv.\: \tmEnv \vDash \constr
-    \qquad\qquad\qquad
-       \cEnv \vDash \constr
-       \quad\textrm{iff}\quad
-       \forall \tmEnv.\: \tmEnv \vDash \cEnv \fImp \tmEnv \vDash \constr
-    $$
-\end{frame}
-
-\begin{frame}
-\frametitle{Solver --- Syntaktyczny algorytm rozwiązywania więzów}
-\begin{tabularx}{\textwidth}{C}
-  $\sconstr \deff \atomexp \cfresh \term
-              \bnfor \term \ceq \term
-              \bnfor \shape \csheq \shape
-              \bnfor \shape \cshlt \shape
-              \bnfor \csymb \term
-    \qquad\qquad
-    \qquad\qquad
-    \cEnv \vDash \sconstr \;\stackrel{?}{\equiv}\;
-    \cEnv ; \emptyenv \solverRule \sconstr
-    $ \\ \\ \\
-      \fromany{$
-      \inference{  \phantom{\sconstr}
-      }{
-        \cEnv ; \lightning \solverRule \sconstr
-      }
-      $}
-      $\qquad$
+  % TODO: opowiedzieć, że to takie przeszukiwanie przestrzeni równości atomów
 \begin{tikzpicture}[
   level distance=.75in,
   sibling distance=.15in,
   % auto,
-  scale=0.85,
+  scale=0.5,
   edge from parent/.style={draw, thick,-latex},
   every tree node/.style={draw, align=center},
   grow'=down
 ]
 \Tree
-[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+[.{$a \cneq b,\: a \cneq c,\: b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \emptyenv \solverRule c \cfresh E$}
   \edge node    { };
-  [.{$\sconstr_N,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
-  ]
-  \edge node[] { };
-  [.{\dots}
-  ]
-  \edge node    { };
-  [.{$\sconstr_1,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  [.{$b \cfresh \tbind{a}\permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \cneq a,\: b \cfresh \permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \cfresh \permswap{b}{c}{E} \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \ceq c,\: b \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$c \cfresh E \:;\; \{a \cneq c \} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\emptyenv \:;\; \{a \cneq c,\: c \cfresh E \} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$(c \cfresh E) \in \{a \cneq c,\: c \cfresh E \}$} ]
+    ]
+    ]
+    ]
+    \edge node { };
+    [.{$b \ceq b,\: b \cneq c,\: c \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$b \cneq c,\: c \cfresh E \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$c \cfresh E \:;\; \{a \cneq b,\: a \cneq c,\: b \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\emptyenv\:;\; \{a \cneq b,\: a \cneq c,\: b \cneq c,\: c \cfresh E \} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$(c \cfresh E) \in \{a \cneq b,\: a \cneq c,\: b \cneq c,\: c \cfresh E \}$} ]
+    ]
+    ]
+    ]
+    ]
+    \edge node { };
+    [.{$b \cneq b,\: b \cneq c,\: b \cfresh E \:;\; \{a \cneq b,\: a \cneq c\}\solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\{b \cneq b\} \cup \{a \cneq b,\: a \cneq c\} = \lightning$} ]
+    ]
+    ]
+    ]
+    \edge node { };
+    [.{$b \ceq a \:;\; \{a \cneq b,\: a \cneq c\} \solverRule c \cfresh E$}
+    \edge node { };
+    [.{$\{b \ceq a\} \cup \{a \cneq b,\: a \cneq c\} = \lightning$} ]
+    ]
+    ]
   ]
 ]
 \end{tikzpicture}
-$\qquad$
-\begin{tikzpicture}[
-  level distance=.75in,
-  sibling distance=.15in,
-  % auto,
-  scale=0.85,
-  edge from parent/.style={draw, thick,-latex},
-  every tree node/.style={draw, align=center},
-  grow'=down
-]
-\Tree
-[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
-  \edge node    { };
-  [.{$\cEnv' ; \icEnv' \solverRule \sconstr'$}
-  ]
-]
-\end{tikzpicture}
-\\ \\ \\
-\begin{tikzpicture}[
-  level distance=.75in,
-  sibling distance=.15in,
-  % auto,
-  scale=0.85,
-  edge from parent/.style={draw, thick,-latex},
-  every tree node/.style={draw, align=center},
-  grow'=down
-]
-\Tree
-[.{$\emptyenv ; \icEnv \solverRule \sconstr_0$}
-  \edge node    { };
-  [.{$\cEnv_N; \icEnv \solverRule \sconstr_N$}
-  ]
-  \edge node[] { };
-  [.{\dots}
-  ]
-  \edge node    { };
-  [.{$\cEnv_1 ; \icEnv \solverRule \sconstr_1$}
-  ]
-]
-\end{tikzpicture}
-$\qquad$
-      \fromany{$
-      \inference{
-        \sconstr \text{ jest trywialne}
-      }{
-        \emptyenv ; \icEnv \solverRule \sconstr
-      }
-      $}
-$\qquad$
-      \fromany{$
-      \inference{
-      \sconstr \in \icEnv
-      }{
-        \emptyenv ; \icEnv \solverRule \sconstr
-      }$}
-    \end{tabularx}
-\end{frame}
-
-\begin{frame}
-\begin{tabularx}{\textwidth}{c|C}
-\begin{tikzpicture}[
-  level distance=.75in,
-  sibling distance=.15in,
-  % auto,
-  scale=0.65,
-  edge from parent/.style={draw, thick,-latex},
-  every tree node/.style={draw, align=center},
-  grow'=down
-]
-\Tree
-[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
-  \edge node    { };
-  [.{$\sconstr_N,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
-  ]
-  \edge node[] { };
-  [.{\dots}
-  ]
-  \edge node    { };
-  [.{$\sconstr_1,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
-  ]
-]
-\end{tikzpicture}
-& $
-    \inference{
-      \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
-      \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
-                              \atomv \ceq  \atomexp_2, \atomexp_1 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr
-    }{
-      \atomv \ceq \permswap{\atomexp_1}{\atomexp_2} \atomexp, \cEnv ; \icEnv \vDash \sconstr
-    }
-  $
-\\ &  \\ \hline & \\
-\begin{tikzpicture}[
-  level distance=.75in,
-  sibling distance=.15in,
-  % auto,
-  scale=0.65,
-  edge from parent/.style={draw, thick,-latex},
-  every tree node/.style={draw, align=center},
-  grow'=down
-]
-\Tree
-[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
-  \edge node    { };
-  [.{$\cEnv' ; \icEnv' \solverRule \sconstr'$}
-  ]
-]
-\end{tikzpicture}
-& \begin{tabular}{c}
-  $
-    \inference{
-      \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term}
-        \solverRule \sconstr\subst{\termv}{\term} \\ { }
-    }{
-      \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
-    % }\:\scbrk{Subst}{Term}$ \\ \\
-    }
-  $
-  \end{tabular}
-\\ & \\ \hline & \\ & \\ \dots & \dots \\ & \\
-    \end{tabularx}
 \end{frame}
 
 % \begin{frame}
@@ -684,14 +479,14 @@ $\varphi \:\deff$
           \bnfor \formphi \vee \formphi
           \bnfor \formphi \wedge \formphi
           \bnfor \formphi \fImp \formphi$ \\
-       \onslide<2->{
+       \onslide<1->{
        & $\bnfor \fForallAtom{\atomv} \formphi
           \bnfor \fForallTerm{\termv} \formphi
           \bnfor \fForallProp{\propv}{\kind} \formphi$ \\
        & $\bnfor \fExistsAtom{\atomv} \formphi
           \bnfor \fExistsTerm{\termv} \formphi
           \bnfor \fExistsProp{\propv}{\kind} \formphi$ \\}
-      \onslide<3->{
+      \onslide<1->{
        & $ \bnfor \fLamAtom{\atomv} \formphi
           \bnfor \fLamTerm{\termv} \formphi
           \bnfor \fLamForm{\propv}{\kind} \formphi$ \\
@@ -699,11 +494,11 @@ $\varphi \:\deff$
           \bnfor \formphi \fAppAtom{\atomexp}
           \bnfor \formphi \fAppTerm{\term}
           \bnfor \formphi \fApp \formphi$ \\ }
-       \onslide<4->{
+       \onslide<2->{
        & $\bnfor \fConstr{\constr}
           \bnfor \fCAnd{\constr} \formphi
           \bnfor \fCImp{\constr} \formphi$ \\ }
-       \onslide<5->{
+       \onslide<3->{
        & $\bnfor \fix{\propv}{\termv}{\kind}{\formphi} $ \\ }
 \end{tabularx}
 \end{frame}
@@ -792,26 +587,57 @@ $\varphi \:\deff$
                          \mid \term \tapp \term
                          \mid \symb
       \quad \text{(termy)}
-  $ \\ \\ $
+  $ \\ \\
+  \only<1> {$
   \inference{
     \jgmnt[\cEnv;\Theta, (\fForallTerm{\termv'} \fCImp{\termv' \cshlt \termv} \formphi(\termv'))]{\formphi(\termv)}
     }{
     \jgmnt[\cEnv;\Theta]{\fForallTerm{\termv} \formphi(\termv)}
   }\:\scbrk{}{Induction}
-  $ \\ \\ $
-  \
+  $
+  }
+  \only<2-> {
+  \begin{tabular}{l}
+  $\fForallProp{P \ofkind (\kForallTerm{\termv}{\kProp})\:}{}$ \\
+  $\quad (\fForallTerm{\termv} (\fForallTerm{Y} \fCImp{Y \cshlt \termv}{P (Y)}) \fImp {P ({\termv})})$ \\
+  $\quad \fImp \fForallTerm{\termv} {P ({\termv})}$ \\
+  \end{tabular}}
+  \\ \\ $
   $ \\
-  \only<2-3>{
+  \only<1-2>{
+    \phantom{
+      \begin{tabular}{l}
+      $\fForallProp{P \ofkind (\kForallTerm{\termv}{\kProp})\:}{}$ \\
+      $\phantom{\fImp}\;(\fForallAtom{\atomv} P({\atomv}))$ \\
+      $\fImp          (\fForallTerm{\termv_1, \termv_2} P ({\termv_1}) \fImp P ({\termv_2}) \fImp P({\termv_1 \tapp \termv_2}))$ \\
+      $\fImp$
+      \hspace{-1.25mm}\only<1>{
+        $(\fForallAtom{\atomv}\fForallTerm{\termv} P ({\termv}) \fImp P({\tbind{\atomv}{\termv}}))$
+      }
+      \hspace{-1.25mm}\only<2>{
+        $(${\color{red}$\fForallTerm{C}$}$\fForallAtom{\atomv}\fForallTerm{\termv}${\color{red}$\fCImp{\atomv \cfresh {C} }$}$\:P ({\termv}) \fImp P({\tbind{\atomv}{\termv}}))$
+      } \\
+      $\fImp          (\fForallTerm{\termv} \fCImp{\csymb \termv}{P ({\termv})})$ \\
+      $\quad \fImp \fForallTerm{\termv} {P ({\termv})}$ \\
+      \end{tabular}
+    }
+  }
+  \only<3->{
   \begin{tabular}{l}
   $\fForallProp{P \ofkind (\kForallTerm{\termv}{\kProp})\:}{}$ \\
   $\phantom{\fImp}\;(\fForallAtom{\atomv} P({\atomv}))$ \\
   $\fImp          (\fForallTerm{\termv_1, \termv_2} P ({\termv_1}) \fImp P ({\termv_2}) \fImp P({\termv_1 \tapp \termv_2}))$ \\
   $\fImp$
-  \hspace{-1.25mm}\only<2>{
+  \hspace{-1.25mm}\only<3>{
     $(\fForallAtom{\atomv}\fForallTerm{\termv} P ({\termv}) \fImp P({\tbind{\atomv}{\termv}}))$
   }
-  \hspace{-1.25mm}\only<3>{
+  \hspace{-1.25mm}\only<4>{
     $(${\color{red}$\fForallTerm{C}$}$\fForallAtom{\atomv}\fForallTerm{\termv}${\color{red}$\fCImp{\atomv \cfresh {C} }$}$\:P ({\termv}) \fImp P({\tbind{\atomv}{\termv}}))$
+  }
+  \hspace{-1.25mm}\only<5>{
+    $(\fForallAtom{\atomv}\fForallTerm{\termv}
+    (${\color{blue}$\fForallTerm{C}\fExistsAtom{\atomv'}\fExistsTerm{\termv'}\fCAnd{\atomv' \cfresh {C} }\fCAnd{\tbind{\atomv}{\termv} \ceq \tbind{\atomv'}{\termv'}}{P ({\termv'})}$}$)
+    \fImp P({\tbind{\atomv}{\termv}}))$
   } \\
   $\fImp          (\fForallTerm{\termv} \fCImp{\csymb \termv}{P ({\termv})})$ \\
   $\quad \fImp \fForallTerm{\termv} {P ({\termv})}$ \\
@@ -819,6 +645,19 @@ $\varphi \:\deff$
   }
   \end{tabularx}
 \end{frame}
+
+% let barengredt_ind_thm =
+%   theorem
+%   $ unlines
+%       [ "$\forall$ P :($\forall$ _ :term. *).  "
+%       ; "     ($\forall$ a :atom. P {a})"
+%       ; "  => ($\forall$ t1 t2 :term. (P t1) => (P t2) => P {t1 t2})"
+%       ; "  => ($\forall$ a :atom. $\forall$ t :term. "
+%       ; "          ($\forall$ c :term. $\exists$ a' :atom. $\exists$ t' :term. "
+%       ; "             [a' # c] $\wedge$ [a.t = a'.t'] $\wedge$ P t')"
+%       ; "        => P {a.t})"
+%       ; "  => ($\forall$ s :term. [symbol s] => P s)"
+%       ; "  => $\forall$ t :term. P t" ]
 
 \begin{frame}
 \frametitle{Rekursja --- punkt stały}
@@ -864,25 +703,26 @@ $ \\ \\ \\ $}
 \end{tabularx}
 \end{frame}
 
-\begin{frame}
-\frametitle{Implementacja}
-  \begin{tabularx}{\linewidth}{|c|X|}
-    \hline & \\
-    \tt{Proof}
-      & ``Interfejs dla sprawdzającego dowód'':
-          dedukcja naturalna zaimplementowana w postaci smart-konstruktorów
-          abstrakcyjnego typu danych \tt{proof}. \\ & \\
-    \hline & \\
-    \tt{IncProof}
-      & ``Interfejs dla prowadzącego dowód'':
-          drzewa niepełnych dowodów. \\ & \\
-    \hline & \\
-    \tt{Prover}
-      & ``Interfejs dla człowieka'':
-          asystent dowodzenia. \\ & \\
-    \hline
-  \end{tabularx}
-\end{frame}
+% \begin{frame}
+% \frametitle{Implementacja}
+  % TODO: put it inside demo
+  % \begin{tabularx}{\linewidth}{|c|X|}
+  %   \hline & \\
+  %   \tt{Proof}
+  %     & ``Interfejs dla sprawdzającego dowód'':
+  %         dedukcja naturalna zaimplementowana w postaci smart-konstruktorów
+  %         abstrakcyjnego typu danych \tt{proof}. \\ & \\
+  %   \hline & \\
+  %   \tt{IncProof}
+  %     & ``Interfejs dla prowadzącego dowód'':
+  %         drzewa niepełnych dowodów. \\ & \\
+  %   \hline & \\
+  %   \tt{Prover}
+  %     & ``Interfejs dla człowieka'':
+  %         asystent dowodzenia. \\ & \\
+  %   \hline
+  % \end{tabularx}
+% \end{frame}
 
 \lstset{literate={ż}{{\.z}}1}
 
@@ -949,14 +789,15 @@ let term_predicate = (* Term e *)
    app: ($\exists$ e1 e2 :term. [e = app e1 e2] $\wedge$ (Term e1) $\wedge$ (Term e2))"
 
 let lambda_ind_thm = lambda_thm
-  "$\forall$ P : ($\forall$ _ :term. prop).
-   $\forall$ ctx : term.
-        ($\forall$ a :atom. P {a})
-     $\fImp$ ($\forall$ e1 e2 :term. (Term e1) $\fImp$ (Term e2) $\fImp$
-          (P e1) $\fImp$ (P e2) $\fImp$ P {app t1 t2})
-     $\fImp$ ($\forall$ a :atom. $\forall$ e :term. (Term e) $\fImp$
-          [a # ctx] $\fImp$ (P e) $\fImp$ P {lam (a.e)})
-     $\fImp$ $\forall$ e :term. (Term e) $\fImp$ P e
+  "$\forall$ P :($\forall$ _ :term. *).
+     ($\forall$ a :atom. P {a})
+  $\fImp$ ($\forall$ t1 t2 :term. (Term t1) $\fImp$ (Term t2) $\fImp$
+       (P t1) $\fImp$ (P t2) $\fImp$ P {app t1 t2})
+  $\fImp$ ($\forall$ a :atom. $\forall$ t :term. (Term t) $\fImp$
+       ($\forall$ c :term. $\exists$ a' :atom. $\exists$ t' :term. (Term t') $\wedge$
+            ([a' # c] $\wedge$ [a.t = a'.t'] $\wedge$ P t'))
+       $\fImp$ P {lam (a.t)})
+  $\fImp$ ($\forall$ t :term. (Term t) $\fImp$ P t)
 \end{lstlisting}
 \end{frame}
 
@@ -1376,6 +1217,315 @@ let lambda_ind_thm = lambda_thm
   \it{\huge Koniec}
 }
 \end{frame}
+\appendix
 
+\begin{frame}
+\frametitle{Logika więzów}
+  \centering{
+  \begin{tabularx}{11cm}{rcl@{\extracolsep{\fill}}r}
+      \\
+      $\atomv$ & $\in$ & $Atom$ & (atomy) \\
+      $\termv$ & $\in$ & $Var$ & (zmienne) \\
+      $\symb$  & $\in$ & $Symb$ & (symbole funkcyjne) \\ \\
+      $\atomexp$ & $\deff$ & $\perm \apperm \atomv$
+      & (wyrażenia atomowe) \\
+      $\perm$    & $\deff$ & $\permid
+                          \mid \permswap{\atomexp}{\atomexp}{\perm}$
+      & (permutacje) \\
+      $\term$    & $\deff$ & $\atomexp
+                         \mid \perm \apperm \termv
+                         \mid \tbind{\atomexp} \term
+                         \mid \term \tapp \term
+                         \mid \symb$
+      & (termy) \\
+      $\shape$ & $\deff$ & $\shatom
+                     \bnfor \termv
+                     \bnfor \shbind \shape
+                     \bnfor \shape \tapp \shape
+                     \bnfor \symb$
+      & (kształty) \\
+      $\constr$  & $\deff$ & $\atomexp \cfresh \term
+                         \mid \term \ceq \term
+                         \mid \term \csheq \term
+                         \mid \term \cshlt \term
+                         \mid \csymb \term$
+      & (więzy) \\ \\
+  \end{tabularx}
+  }
+  \begin{tabularx}{12cm}{C|C}
+    \hline & \\
+      \begin{tabular}{rcl}
+        $\perm \apperm (\perm' \apperm \atomv) $ & $:=$ & $(\perm \++ \perm') \apperm \atomv$ \\
+        $\perm \apperm (\perm' \apperm \termv) $ & $:=$ & $(\perm \++ \perm') \apperm \termv$ \\
+        $\perm \apperm (\tbind{\atomexp} \term)$ & $:=$ & $\tbind{(\perm \apperm \atomexp)} (\perm \apperm \term)$ \\
+        $\perm \apperm (\term_1 \tapp \term_2) $ & $:=$ & $(\perm \apperm \term_1) \tapp (\perm \apperm \term_2)$ \\
+        $\perm \apperm \symb                   $ & $:=$ & $\symb$ \\
+      \end{tabular}
+      &
+      \begin{tabular}{rcl}
+        $\shapeof{\perm \apperm \atomv}   $& $:=$ & $\shatom$ \\
+        $\shapeof{\perm \apperm \termv}   $& $:=$ & $\termv $ \\
+        $\shapeof{\tbind{\atomexp} \term} $& $:=$ & $\shbind \shapeof{\term}$ \\
+        $\shapeof{\term_1 \tapp \term_2}  $& $:=$ & $\shapeof{\term_1} \tapp \shapeof{\term_2}$ \\
+        $\shapeof{\symb}                  $& $:=$ & $\symb$ \\
+      \end{tabular}
+  \end{tabularx}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Semantyczne termy}
+    \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
+      $\sematom$ & $\in$ & $SemAtom$
+      & (wolne atomy) \\
+      $n$ & $\in$ & $Nat$
+      & (związane atomy) \\
+      $\semterm$ & $\deff$ & $\sematom
+                        \bnfor n
+                        \bnfor \stbind \semterm
+                        \bnfor \semterm \stapp \semterm
+                        \bnfor \symb$
+      & (semantyczne termy) \\
+      $\semshape$ & $\deff$ & $\shatom
+                        \bnfor \stbind \semshape
+                        \bnfor \semshape \stapp \semshape
+                        \bnfor \symb$
+      & (semantyczne kształty) \\
+      $\tmEnv$ & $\in$ & $(Atom \rightarrow SemAtom) \times (Var \rightarrow SemTerm)$ & (interpretacje) \\ & &\\
+    \end{tabularx}
+\begin{tabularx}{\textwidth}{c|c}
+      \hline & \\
+      \begin{tabular}{rcl}
+        $\termMdl{\perm \apperm \atomv}{\tmEnv}   $& $:=$ & $\permMdl{\perm}{\tmEnv}(\tmEnv(\atomv))                                          $ \\
+        $\termMdl{\perm \apperm \termv}{\tmEnv}   $& $:=$ & $\permMdl{\perm}{\tmEnv}(\tmEnv(\termv))                                          $ \\
+        $\termMdl{\tbind{\atomexp} \term}{\tmEnv} $& $:=$ & $\stbind (\termMdl{\term}{\tmEnv} \shiftIdx) \subst{\termMdl{\atomexp}{\tmEnv}}{0}$ \\
+        $\termMdl{\term_1 \tapp \term_2}{\tmEnv}  $& $:=$ & $\termMdl{\term_1}{\tmEnv} \stapp \termMdl{\term_2}{\tmEnv}                       $ \\
+        $\termMdl{\symb}{\tmEnv}                  $& $:=$ & $\symb                                                                            $\\
+         & & \\
+        $\shapeof{\sematom}                     $& $:=$ & $\shatom                                         $ \\
+        $\shapeof{n}                            $& $:=$ & $\shatom                                         $ \\
+        $\shapeof{\stbind \semterm}             $& $:=$ & $\stbind \shapeof{\semterm}                      $ \\
+        $\shapeof{\semterm_1 \stapp \semterm_2} $& $:=$ & $\shapeof{\semterm_1} \shapp \shapeof{\semterm_2}$ \\
+        $\shapeof{\symb}                        $& $:=$ & $\symb                                           $ \\
+      \end{tabular}
+      &
+      \begin{tabular}{rcl}
+      $\permMdl{\permid}{\tmEnv}(\sematom)                                $ & $:=$ & $\sematom                                                        $ \\ & & \\
+      $\permMdl{\perm \++ \swap{\atomexp_1}{\atomexp_2}}{\tmEnv}(\sematom)$ & $:=$ & $\permMdl{\perm}{\tmEnv} (\sematom')                             $ \\
+        \text{where }$\: \sematom_1$ & $:=$ &  $\permMdl{\atomexp_1}{\tmEnv}$ \\
+        \text{  and }$\: \sematom_2$ & $:=$ &  $\permMdl{\atomexp_2}{\tmEnv}$ \\
+        \text{  and }$\: \sematom'$  & $:=$ &
+          $\begin{cases}
+            \sematom_2 & \text{if } \sematom = \sematom_1 \\
+            \sematom_1 & \text{if } \sematom = \sematom_2 \\
+            \sematom   & \text{wpp.}
+          \end{cases}$
+          \\
+      \end{tabular}
+\end{tabularx}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Model logiki więzów}
+    \begin{tabularx}{\textwidth}{rcl@{\extracolsep{\fill}}r}
+      $\tmEnv$ & $\ofkind$ & $(Atom \rightarrow SemAtom) \times (Var \rightarrow SemTerm)$
+      & (interpretacje) \\
+      $\cEnv $ & $\deff$ & $\emptyenv
+                        \bnfor \constr,\: \cEnv$
+      & (środowisko więzów) \\ & & & \\
+    \end{tabularx}
+\begin{tabularx}{\textwidth}{XlclX}
+      \hline & & & & \\
+      & $\tmEnv \vDash \atomexp \cfresh \term$ & \textrm{iff} &
+        $\termMdl{\atomexp}{\tmEnv} \notin
+          \mathsf{FreeAtoms}(\termMdl{\term}{\tmEnv})$ & \\
+      & & & & \\
+      & $\tmEnv \vDash \term_1 \ceq \term_2 $  & \textrm{iff} &
+        $\termMdl{\term_1}{\tmEnv} = \termMdl{\term_2}{\tmEnv}$ & \\
+      & & & & \\
+      & $\tmEnv \vDash \term_1 \csheq \term_2$ & \textrm{iff} &
+        $\shapeof{\termMdl{\term_1}{\tmEnv}} = \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
+      & & & & \\
+      & $\tmEnv \vDash \term_1 \cshlt \term_2$ & \textrm{iff} &
+        $\shapeof{\termMdl{\term_1}{\tmEnv}} \textrm{ jest ścisłym podkształtem }
+          \shapeof{\termMdl{\term_2}{\tmEnv}}$ & \\
+      & & & & \\
+      & $\tmEnv \vDash \csymb \term$ & \textrm{iff} &
+        $\shapeof{\termMdl{\term}{\tmEnv}} \textrm{ jest symbolem funkcyjnym }$ & \\
+      & & & & \\ \hline
+    \end{tabularx}
+    $$ \tmEnv \vDash \cEnv
+       \quad\textrm{iff}\quad
+       \forall \constr \in \cEnv.\: \tmEnv \vDash \constr
+    \qquad\qquad\qquad
+       \cEnv \vDash \constr
+       \quad\textrm{iff}\quad
+       \forall \tmEnv.\: \tmEnv \vDash \cEnv \fImp \tmEnv \vDash \constr
+    $$
+\end{frame}
+
+\begin{frame}
+\frametitle{Solver --- Syntaktyczny algorytm rozwiązywania więzów}
+\begin{tabularx}{\textwidth}{C}
+  $\sconstr \deff \atomexp \cfresh \term
+              \bnfor \term \ceq \term
+              \bnfor \shape \csheq \shape
+              \bnfor \shape \cshlt \shape
+              \bnfor \csymb \term
+    \qquad\qquad
+    \qquad\qquad
+    \cEnv \vDash \sconstr \;\stackrel{?}{\equiv}\;
+    \cEnv ; \emptyenv \solverRule \sconstr
+    $ \\ \\ \\
+      \fromany{$
+      \inference{  \phantom{\sconstr}
+      }{
+        \cEnv ; \lightning \solverRule \sconstr
+      }
+      $}
+      $\qquad$
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\sconstr_N,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+  \edge node[] { };
+  [.{\dots}
+  ]
+  \edge node    { };
+  [.{$\sconstr_1,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+]
+\end{tikzpicture}
+$\qquad$
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\cEnv' ; \icEnv' \solverRule \sconstr'$}
+  ]
+]
+\end{tikzpicture}
+\\ \\ \\
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.85,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\emptyenv ; \icEnv \solverRule \sconstr_0$}
+  \edge node    { };
+  [.{$\cEnv_N; \icEnv \solverRule \sconstr_N$}
+  ]
+  \edge node[] { };
+  [.{\dots}
+  ]
+  \edge node    { };
+  [.{$\cEnv_1 ; \icEnv \solverRule \sconstr_1$}
+  ]
+]
+\end{tikzpicture}
+$\qquad$
+      \fromany{$
+      \inference{
+        \sconstr \text{ jest trywialne}
+      }{
+        \emptyenv ; \icEnv \solverRule \sconstr
+      }
+      $}
+$\qquad$
+      \fromany{$
+      \inference{
+      \sconstr \in \icEnv
+      }{
+        \emptyenv ; \icEnv \solverRule \sconstr
+      }$}
+    \end{tabularx}
+\end{frame}
+
+\begin{frame}
+\begin{tabularx}{\textwidth}{c|C}
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.65,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\sconstr_N,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+  \edge node[] { };
+  [.{\dots}
+  ]
+  \edge node    { };
+  [.{$\sconstr_1,\dots,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  ]
+]
+\end{tikzpicture}
+& $
+    \inference{
+      \atomv \cneq \atomexp_1, \atomv \cneq \atomexp_2, \atomv     \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
+      \atomv \ceq  \atomexp_1, \atomv \cneq \atomexp_2, \atomexp_2 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr \\
+                              \atomv \ceq  \atomexp_2, \atomexp_1 \ceq \atomexp, \cEnv ; \icEnv \vDash \sconstr
+    }{
+      \atomv \ceq \permswap{\atomexp_1}{\atomexp_2} \atomexp, \cEnv ; \icEnv \vDash \sconstr
+    }
+  $
+\\ &  \\ \hline & \\
+\begin{tikzpicture}[
+  level distance=.75in,
+  sibling distance=.15in,
+  % auto,
+  scale=0.65,
+  edge from parent/.style={draw, thick,-latex},
+  every tree node/.style={draw, align=center},
+  grow'=down
+]
+\Tree
+[.{$\sconstr_0,\:\cEnv ; \icEnv \solverRule \sconstr$}
+  \edge node    { };
+  [.{$\cEnv' ; \icEnv' \solverRule \sconstr'$}
+  ]
+]
+\end{tikzpicture}
+& \begin{tabular}{c}
+  $
+    \inference{
+      \cEnv\subst{\termv}{\term} ; \icEnv\subst{\termv}{\term}
+        \solverRule \sconstr\subst{\termv}{\term} \\ { }
+    }{
+      \termv = \term, \cEnv ; \icEnv \solverRule \sconstr
+    % }\:\scbrk{Subst}{Term}$ \\ \\
+    }
+  $
+  \end{tabular}
+\\ & \\ \hline & \\ & \\ \dots & \dots \\ & \\
+    \end{tabularx}
+\end{frame}
 
 \end{document}
