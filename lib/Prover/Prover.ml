@@ -12,10 +12,11 @@ open IncProof
 open ProverGoal
 open ProverInternals
 
-let theorem formula =
-  let env = empty snd in
+let theorem' env formula =
   try (env, parse_formula env formula)
   with ParserCommon.ParserException e -> print_endline e ; failwith "Cannot parse theorem"
+
+let theorem = theorem' $ empty snd
 
 let check_props env formulas = List.iter (kind_check_throw env K_Prop) formulas
 
@@ -69,7 +70,7 @@ let specialize_proof proof specs env =
       let g = parse_formula_in_env identifiers_env spec in
       SpecForm (g, (FV p |==> g) f)
     in
-    match specialize on_forall_atom on_forall_term on_forall_form h with
+    match specialize on_forall_atom on_forall_term on_forall_form <| compute h with
     | SpecAtom (a, f) -> proof_specialize_atom (env, f) a proof
     | SpecTerm (t, f) -> proof_specialize_term (env, f) t proof
     | SpecForm (g, f) -> proof_specialize_form (env, f) g proof
@@ -348,3 +349,7 @@ let truth state =
     let ctx = context state in
     find_goal_in_ctx proof_truth ctx
   | env, f -> raise_in_env env $ formula_mismatch F_Top f
+
+let forget h_name state =
+  match goal state with
+  | env, f -> unfinished (remove_assm h_name env, f) (context state)

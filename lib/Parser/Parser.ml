@@ -162,7 +162,7 @@ let rec pformula_to_formula env = function
     F_Fix (FV_Bind (fix_name, fix_i, fix_k), V_Bind (x_name, V x), k, pformula_to_formula env'' f)
 
 let run_converter converter parser env source =
-  run_with_catch (on_parsing_error source) (converter env % parse parser) source
+  run_with_catch (on_parsing_error source) (converter env % parse parser) (String.trim source)
 
 let parse_term_in_env = run_converter pterm_to_term term
 

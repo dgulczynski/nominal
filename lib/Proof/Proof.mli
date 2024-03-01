@@ -192,6 +192,8 @@ val subst_var : var -> term -> judgement -> proof -> proof
 
 val truth_i : proof
 
+val admit : formula -> proof
+
 module Axiom : sig
   (* --------------------------------------- *)
   (*  |- ∀ a b :atom. (a = b) \/ (a =/= b)  *)

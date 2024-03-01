@@ -8,8 +8,8 @@ let pretty_judgement' pretty_assm (env, f) =
   with_binders (all_identifiers env)
   $ unlines
       [ str ""
-      ; pretty_ocaml_list (List.map pretty_constr $ constraints env)
-      ; pretty_ocaml_list (List.map pretty_assm $ assumptions env)
+      ; pretty_ocaml_vlist (List.map pretty_constr $ constraints env)
+      ; pretty_ocaml_vlist (List.map pretty_assm $ assumptions env)
       ; with_prefix "⊢ " (pretty_formula f) ]
 
 let pretty_judgement = pretty_judgement' pretty_formula

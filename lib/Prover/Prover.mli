@@ -6,6 +6,8 @@ open Types
 
 val theorem : string -> goal
 
+val theorem' : goal_env -> string -> goal
+
 val proof : goal_env -> formula -> prover_state
 
 val intro : tactic
@@ -63,3 +65,5 @@ val apply_in_assm : string -> string -> tactic
 val add_assm : string -> incproof -> tactic
 
 val truth : tactic
+
+val forget : string -> tactic

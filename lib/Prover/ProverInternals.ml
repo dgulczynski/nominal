@@ -137,6 +137,7 @@ let intro_named name state =
 let apply_internal ?(h_name = "") h_proof =
   let apply_impl_list env =
     let apply_next imp_proof f =
+      let f = compute f in
       let premise_proof = proof_hole env (premise f) in
       let judgement = to_judgement (env, conclusion f) in
       proof_apply judgement imp_proof premise_proof

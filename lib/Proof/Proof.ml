@@ -325,6 +325,8 @@ let subst_var x t (env, f) = subst env f (x |=> t) (var x =: t)
 
 let truth_i = P_Ax (empty id, F_Top)
 
+let admit f = P_Ax (empty id, f)
+
 module Axiom = struct
   let axiom_env = empty id
 

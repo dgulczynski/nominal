@@ -31,51 +31,87 @@ let constrs_eq_in_env env c1 c2 =
   | C_Symbol t1, C_Symbol t2 -> t1 =: t2
   | C_AtomEq _, _ | C_Shape _, _ | C_Subshape _, _ | C_AtomNeq _, _ | C_Eq _, _ | C_Fresh _, _ | C_Symbol _, _ -> false
 
-let rec computeWHNF env n f =
+let rec compute_app n f =
   if n <= 0 then
-    (env, 0, f)
+    f
   else
+    let compute = compute_app n in
+    let compute' = compute_app (n - 1) in
     match f with
-    | F_Top
-    | F_Bot
-    | F_And _
-    | F_Or _
-    | F_Impl _
-    | F_Constr _
-    | F_ConstrAnd _
-    | F_ConstrImpl _
-    | F_ForallProp _
-    | F_ForallTerm _
-    | F_ForallAtom _
-    | F_ExistsProp _
-    | F_ExistsTerm _
-    | F_ExistsAtom _
-    | F_Fun _
-    | F_FunTerm _
-    | F_FunAtom _
-    | F_Fix _ -> (env, n, f)
-    | F_Var x -> (
-      match lookup_formula env x with
-      | Some f -> computeWHNF env (n - 1) f
-      | None -> (env, n, f) )
-    | F_AppTerm (f, t) -> (
-      match computeWHNF env n f with
-      | env, n, F_FunTerm (V_Bind (_, x), f) when n > 0 -> computeWHNF env (n - 1) <| (x |=> t) f
-      | env, n, (F_Fix (bind, V_Bind (_, x), _, f) as body) when n > 0 ->
-        let env = add_to_mapping env {bind; body} in
-        computeWHNF env (n - 1) <| (x |=> t) f
-      | env, n, f -> (env, n, F_AppTerm (f, t)) )
+    | F_Top | F_Bot | F_Constr _ | F_Fun _ | F_FunTerm _ | F_FunAtom _ | F_Var _ | F_Fix _ -> f
+    | F_ForallTerm (x_bind, f) -> F_ForallTerm (x_bind, compute f)
+    | F_ExistsTerm (x_bind, f) -> F_ExistsTerm (x_bind, compute f)
+    | F_ForallAtom (a_bind, f) -> F_ForallAtom (a_bind, compute f)
+    | F_ExistsAtom (a_bind, f) -> F_ExistsAtom (a_bind, compute f)
+    | F_ForallProp (f_bind, f) -> F_ForallProp (f_bind, compute f)
+    | F_ExistsProp (f_bind, f) -> F_ExistsProp (f_bind, compute f)
+    | F_And fs -> F_And (List.map (on_snd compute) fs)
+    | F_Or fs -> F_Or (List.map (on_snd compute) fs)
+    | F_Impl (f1, f2) -> F_Impl (compute f1, compute f2)
+    | F_ConstrAnd (c, f) -> F_ConstrAnd (c, compute f)
+    | F_ConstrImpl (c, f) -> F_ConstrImpl (c, compute f)
     | F_AppAtom (f, b) -> (
-      match computeWHNF env n f with
-      | env, n, F_FunAtom (A_Bind (_, a), f) when n > 0 -> computeWHNF env (n - 1) <| (a |-> b) f
-      | env, n, f -> (env, n, F_AppAtom (f, b)) )
+      match compute f with
+      | F_FunAtom (A_Bind (_, a), f) -> compute' <| (a |-> b) f
+      | f -> F_AppAtom (f, b) )
+    | F_AppTerm (f, t) -> (
+      match compute f with
+      | F_FunTerm (V_Bind (_, x), f) -> compute' <| (x |=> t) f
+      | F_Fix (FV_Bind (_, fix, _), V_Bind (_, x), _, f) as f_fix -> compute' % (FV fix |==> f_fix) <| (x |=> t) f
+      | f -> F_AppTerm (f, t) )
     | F_App (f1, f2) -> (
-      match computeWHNF env n f1 with
-      | env, n, (F_Fun (FV_Bind (_, x, _), f) as f1) when n > 1 -> (
-        match computeWHNF env n f2 with
-        | env, 0, f2 -> (env, 0, F_App (f1, f2))
-        | env, n, f2 -> computeWHNF env (n - 1) <| (FV x |==> f2) f )
-      | env, n, f1 -> (env, n, F_App (f1, f2)) )
+      match (compute f1, compute f2) with
+      | F_Fun (FV_Bind (_, x, _), f1), f2 -> compute' <| (FV x |==> f2) f1
+      | f1, f2 -> F_App (f1, f2) )
+
+let rec computeWHNF env n f =
+  let env, n, f =
+    if n <= 0 then
+      (env, 0, f)
+    else
+      match f with
+      | F_Top
+      | F_Bot
+      | F_And _
+      | F_Or _
+      | F_Impl _
+      | F_Constr _
+      | F_ConstrAnd _
+      | F_ConstrImpl _
+      | F_ForallProp _
+      | F_ForallTerm _
+      | F_ForallAtom _
+      | F_ExistsProp _
+      | F_ExistsTerm _
+      | F_ExistsAtom _
+      | F_Fun _
+      | F_FunTerm _
+      | F_FunAtom _
+      | F_Fix _ -> (env, n, f)
+      | F_Var x -> (
+        match lookup_formula env x with
+        | Some f -> computeWHNF env (n - 1) f
+        | None -> (env, n, f) )
+      | F_AppTerm (f, t) -> (
+        match computeWHNF env n f with
+        | env, n, F_FunTerm (V_Bind (_, x), f) when n > 0 -> computeWHNF env (n - 1) <| (x |=> t) f
+        | env, n, (F_Fix (bind, V_Bind (_, x), _, f) as body) when n > 0 ->
+          let env = add_to_mapping env {bind; body} in
+          computeWHNF env (n - 1) <| (x |=> t) f
+        | env, n, f -> (env, n, F_AppTerm (f, t)) )
+      | F_AppAtom (f, b) -> (
+        match computeWHNF env n f with
+        | env, n, F_FunAtom (A_Bind (_, a), f) when n > 0 -> computeWHNF env (n - 1) <| (a |-> b) f
+        | env, n, f -> (env, n, F_AppAtom (f, b)) )
+      | F_App (f1, f2) -> (
+        match computeWHNF env n f1 with
+        | env, n, (F_Fun (FV_Bind (_, x, _), f) as f1) when n > 1 -> (
+          match computeWHNF env n f2 with
+          | env, 0, f2 -> (env, 0, F_App (f1, f2))
+          | env, n, f2 -> computeWHNF env (n - 1) <| (FV x |==> f2) f )
+        | env, n, f1 -> (env, n, F_App (f1, f2)) )
+  in
+  (env, n, compute_app n f)
 
 and equiv solver_env env1 env2 n1 n2 f1 f2 =
   equiv_syntactic env1 env2 n1 n2 f1 f2
@@ -232,3 +268,7 @@ let equiv_check_throw env f1 f2 =
     ()
   else
     raise_in_env env $ formula_mismatch f1 f2
+
+let compute f =
+  let _, _, f' = computeWHNF (empty id) equiv_depth f in
+  f'

@@ -28,6 +28,9 @@ val unlines : printer list -> printer
 val pretty_ocaml_list : printer list -> printer
 (** Print list like OCaml would *)
 
+val pretty_ocaml_vlist : printer list -> printer
+(** Print list like OCaml would, but always vertically *)
+
 val parenthesized : printer -> printer
 
 val bracketed : printer -> printer

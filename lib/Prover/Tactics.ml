@@ -91,3 +91,8 @@ let get_fresh_atom a fresh_in =
 let inverse_term e =
   let h_name = fresh_assm_name () in
   add_assm_thm_spec h_name Proof.Axiom.term_inversion [e] %> destruct_assm h_name
+
+let admit state =
+  let admitted = Proof.admit $ goal_formula state in
+  print_string "WARNING: Using admit in proof!\n" ;
+  apply_thm admitted state

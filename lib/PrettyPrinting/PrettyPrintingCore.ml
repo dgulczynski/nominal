@@ -95,6 +95,19 @@ let pretty_ocaml_list =
   in
   pretty_list' ocaml_style ~left:"[" ~sep:";" ~right:"]"
 
+let pretty_ocaml_vlist =
+  let ocaml_vstyle =
+    { list with
+      wrap_body= `Force_breaks_rec
+    ; align_closing= true
+    ; stick_to_label= true
+    ; space_after_opening= true
+    ; space_before_closing= true
+    ; space_before_separator= true
+    ; separators_stick_left= true }
+  in
+  pretty_list' ocaml_vstyle ~left:"[" ~sep:";" ~right:"]"
+
 let pretty_label label body env =
   let label_style = {Easy_format.label with indent_after_label= 2; label_break= `Never} in
   Label ((label env, label_style), body env)
