@@ -26,12 +26,13 @@ let typing_terms =
 
 let canonical_form'_thm =
   lambda_thm
-  $ unwords
-      [ "forall v t :term."
-      ; " (Value v) =>"
-      ; " (Typing v nil t) =>"
-      ; " (exists a :atom. exists e t1 t2 :term."
-      ; "   [v = lam (a.e)] ∧ [t = arrow t1 t2] ∧ (Typing e {cons a t1 nil} t2))" ]
+    {|
+      forall v t :term.
+         (Value v) =>
+         (Typing v nil t) =>
+           exists a :atom. exists e t1 t2 :term.
+             [v = lam (a.e)] ∧ [t = arrow t1 t2] ∧ (Typing e {cons a t1 nil} t2)
+    |}
 
 let canonical_form' =
   proof' canonical_form'_thm
@@ -50,11 +51,13 @@ let canonical_form' =
 
 let canonical_form_thm =
   lambda_thm
-  $ unwords
-      [ "forall v t :term."
-      ; " (Value v) =>"
-      ; " (Typing v nil t) =>"
-      ; " (exists a :atom. exists e :term. [v = lam (a.e)] ∧ (Term e))" ]
+    {|
+      forall v t :term.
+         (Value v) =>
+         (Typing v nil t) =>
+           exists a :atom. exists e :term.
+             [v = lam (a.e)] ∧ (Term e)
+    |}
 
 let canonical_form =
   proof' canonical_form_thm
@@ -77,10 +80,11 @@ let canonical_form =
 
 let lambda_typing_inversion_thm =
   lambda_thm
-  $ unwords
-      [ "forall a : atom. forall e env t1 t2 : term."
-      ; " (Typing {lam (a.e)} env {arrow t1 t2}) =>"
-      ; "  (Typing e {cons a t1 env} t2)" ]
+    {|
+      forall a : atom. forall e env t1 t2 : term.
+        (Typing {lam (a.e)} env {arrow t1 t2}) =>
+        (Typing e {cons a t1 env} t2)
+     |}
 
 let lambda_typing_inversion =
   proof' lambda_typing_inversion_thm
@@ -89,6 +93,30 @@ let lambda_typing_inversion =
   |> intros' ["Hlam"; "b"; "e_b"; "t1b"; "t2b"; ""; ""; ""]
      %> apply_thm_spec LambdaCalculusEnv.swap_lambda_typing ["b"; "e_b"; "a"; "e"; "env"; "t1"; "t2"]
      (* [b.e_b = a.e] => Typing e_b {cons b t1 env} t2 => Typing e {cons a t1 env} t2 *)
+     %> solve
+     %> assumption
+  |> intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate (* lam (a.e) is not an app *)
+  |> qed
+
+let lambda_typing_inversion'_thm =
+  lambda_thm
+    {|
+      forall a : atom. forall e env t : term.
+         (Typing {lam (a.e)} env t) =>
+            exists t1 t2 : term.
+               [t = arrow t1 t2] ∧ (Type t1) ∧ (Typing e {cons a t1 env} t2)
+    |}
+
+let lambda_typing_inversion' =
+  proof' lambda_typing_inversion'_thm
+  |> repeat intro %> intro'
+  |> intros' ["contra"; "_"; ""] %> discriminate (* lam (a.e) is not a var *)
+  |> intros' ["Hlam"; "b"; "e_b"; "t1"; "t2"; ""; ""; ""]
+     %> exists' ["t1"; "t2"]
+     %> solve
+     %> destruct_goal
+     %> assumption
+     %> apply_thm_spec LambdaCalculusEnv.swap_lambda_typing ["b"; "e_b"; "a"; "e"; "env"; "t1"; "t2"]
      %> solve
      %> assumption
   |> intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate (* lam (a.e) is not an app *)

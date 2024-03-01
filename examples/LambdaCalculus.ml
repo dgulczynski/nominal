@@ -77,7 +77,7 @@ let preservation_thm = lambda_thm "forall e e' env t :term. (Typing e env t) => 
 (* And one trivial lemma:                                                                          *)
 (* 2. (Lambda typing inversion lemma):                                                             *)
 (*   Deduce typing of a body in env with added argument from the typing of whole abstraction       *)
-(*     i.e. (Typing e_a {cons a t1 env} t2) and [b # a e_a] implies (Typing e_b {cons b t1} t2)    *)
+(*     i.e. (Typing {lam (a.e_a)} env {arrow t1 t2}) implies (Typing e_a {cons a t1 env} t2)       *)
 let preservation =
   let deduce_app_typing =
     destruct_assm "Htyp"

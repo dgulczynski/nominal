@@ -26,6 +26,16 @@ let env_inclusion_cons_both =
      %> apply_assm "Hnext"
   |> qed
 
+let typing_atoms_lemma_thm = lambda_thm "forall a : atom. forall t env : term. (Typing {a} env t) => (InEnv env a t)"
+
+let typing_atoms_lemma =
+  proof' typing_atoms_lemma_thm
+  |> repeat intro %> intro'
+  |> intros' ["Hcurrent"; "a'"; ""] %> apply_assm "Hcurrent"
+  |> intros' ["contra"; "_a"; "_e"; "_t1"; "_t2"; ""] %> discriminate
+  |> intros' ["contra"; "_e1"; "_e2"; "_t2"; ""] %> discriminate
+  |> qed
+
 let weakening_lemma_thm =
   lambda_thm "forall e env1 t env2 : term. (Typing e env1 t) => (EnvInclusion env1 env2) => (Typing e env2 t)"
 
@@ -507,12 +517,13 @@ let swap_lambda_typing_lemma =
 
 let swap_lambda_typing'_thm =
   lambda_thm
-  $ unwords
-      [ "forall e env t :term. "
-      ; "forall a b :atom. forall t' :term. "
-      ; " [b # e] => "
-      ; " (Typing {e} {cons a t' env} t) => "
-      ; " (Typing {[a b]e} {cons b t' env} t)" ]
+    {|
+      forall e env t :term.
+      forall a b :atom. forall t' :term.
+         [b # e] =>
+         (Typing {e} {cons a t' env} t) =>
+         (Typing {[a b]e} {cons b t' env} t)
+    |}
 
 let swap_lambda_typing' =
   proof' swap_lambda_typing'_thm
